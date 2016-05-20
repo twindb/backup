@@ -4,6 +4,8 @@ build_dir = .build
 src_dir = twindb-backup-${version}
 top_dir = /root/rpmbuild
 
+.PHONY: rpmmacros
+
 all:
 	@echo "Ready"
 
@@ -15,16 +17,20 @@ install:
 	install -m 644 -o root twindb-backup "${DESTDIR}/etc/cron.d"
 	test -f "${DESTDIR}/etc/twindb/twindb-backup.cfg" || install -m 600 -o root twindb-backup.cfg "${DESTDIR}/etc/twindb"
 
-rpm: rpmmacros check-rpmbuild
+rpm: rpmmacros check-rpmbuild top_dir
 	rm -rf "${build_dir}"
 	mkdir -p "${build_dir}/${src_dir}"
 	cp -R * "${build_dir}/${src_dir}"
 	tar zcf "${top_dir}/SOURCES/${src_dir}.tar.gz" -C "${build_dir}" "${src_dir}"
 	rpmbuild -ba twindb-backup.spec
-	rpm --addsign ${top_dir}/RPMS/noarch/twindb-backup-${version}-${release}.noarch.rpm
+	# rpm --addsign ${top_dir}/RPMS/noarch/twindb-backup-${version}-${release}.noarch.rpm
 
 check-rpmbuild:
 	 @if test -z "`which rpmbuild`"; then echo -e "Error: rpmbuild is not found. Please install package rpm-build:\nyum install rpm-build"; exit -1; fi
+
+top_dir:
+	mkdir -p "${top_dir}/SOURCES"
+
 sign: rpm
 	rpm --addsign ${top_dir}/RPMS/noarch/twindb-backup-*
 

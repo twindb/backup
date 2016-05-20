@@ -1,5 +1,5 @@
 Name:		twindb-backup
-Version:	1.0.6
+Version:	1.1.0
 Release:	1
 Summary:	Scripts to backup TwinDB infrastructure server
 
