@@ -110,7 +110,7 @@ function check_ssh() {
 }
 
 function check_aws() {
-    aws s3 ls "s3://${BUCKET}" || aws s3 mb "s3://${BUCKET}"
+    aws s3 ls "s3://${BUCKET}" >> /dev/null || aws s3 mb "s3://${BUCKET}"
 }
 
 function backup_mysql() {
