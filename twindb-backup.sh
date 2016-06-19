@@ -73,9 +73,9 @@ function get_ssh_key_path() {
 
 SSH="ssh $ssh_opt -l ${ssh_user} -i `get_ssh_key_path`"
 MYSQLDUMP="mysqldump"
-if test -f "${mysql_defaults_file}"
+if test -f ${mysql_defaults_file}
 then
-    MYSQLDUMP_ARGS="--defaults-file='${mysql_defaults_file}' -A"
+    MYSQLDUMP_ARGS="--defaults-file=${mysql_defaults_file} -A"
 else
     MYSQLDUMP_ARGS=" -A"
 fi
