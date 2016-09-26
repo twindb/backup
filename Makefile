@@ -1,8 +1,9 @@
 version = "`grep Version: twindb-backup.spec | awk '{ print $$2}' | head -1`"
 release = "`grep Release: twindb-backup.spec | awk '{ print $$2}' | head -1`"
-build_dir = .build
+pwd := $(shell pwd)
+build_dir = ${pwd}/.build
 src_dir = twindb-backup-${version}
-top_dir = /root/rpmbuild
+top_dir = ${build_dir}/rpmbuild
 
 all:
 	@echo "Ready"
@@ -21,7 +22,7 @@ rpm: check-rpmbuild
 	mkdir -p "${top_dir}/SOURCES"
 	cp -R * "${build_dir}/${src_dir}"
 	tar zcf "${top_dir}/SOURCES/${src_dir}.tar.gz" -C "${build_dir}" "${src_dir}"
-	rpmbuild -ba twindb-backup.spec
+	rpmbuild --define '_topdir ${top_dir}' -ba twindb-backup.spec
 
 check-rpmbuild:
 	 @which rpmbuild || yum -y install rpm-build
@@ -33,7 +34,7 @@ sign: rpm
 docker-rpm:
 	sudo docker run -v `pwd`:/twindb-backup:rw  centos:centos${OS_VERSION} /bin/bash -c \
 	"yum -y install rpm-build; cp -R /twindb-backup /tmp/ ; make -C /tmp/twindb-backup rpm && cp -R /tmp/twindb-backup/.build /twindb-backup/"
-	find .build
+	find ${build_dir}
 
 deb: check-fpm
 	rm -rf /tmp/installdir
