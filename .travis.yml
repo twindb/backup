@@ -14,7 +14,7 @@ before_install:
   - sleep 5
   - sudo docker pull centos:centos${OS_VERSION}
 
-script: make rpm
+script: make docker-rpm
 
 deploy:
   provider: packagecloud

@@ -37,6 +37,10 @@ sign: rpm
 rpmmacros:
 	if ! test -f ~/.rpmmacros ; then cp rpmmacros ~/.rpmmacros; fi
 
+# Build RPM inside a docker container
+docker-rpm:
+	sudo docker run centos:centos${OS_VERSION} /bin/bash -c "yum -y install rpm-build"
+
 deb: check-fpm
 	rm -rf /tmp/installdir
 	mkdir /tmp/installdir
