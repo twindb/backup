@@ -40,7 +40,7 @@ rpmmacros:
 # Build RPM inside a docker container
 docker-rpm:
 	sudo docker run -v `pwd`:/twindb-backup:rw  centos:centos${OS_VERSION} /bin/bash -c \
-	"yum -y install rpm-build; pwd; ls -la"
+	"yum -y install rpm-build; make -C /twindb-backup rpm"
 
 deb: check-fpm
 	rm -rf /tmp/installdir
