@@ -26,7 +26,7 @@ rpm: rpmmacros check-rpmbuild top_dir
 	# rpm --addsign ${top_dir}/RPMS/noarch/twindb-backup-${version}-${release}.noarch.rpm
 
 check-rpmbuild:
-	 @if test -z "`which rpmbuild`"; then echo -e "Error: rpmbuild is not found. Please install package rpm-build:\nyum install rpm-build"; exit -1; fi
+	 @which rpmbuild || yum -y install rpm-build
 
 top_dir:
 	mkdir -p "${top_dir}/SOURCES"
