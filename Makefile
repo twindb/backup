@@ -15,7 +15,7 @@ install:
 	install -m 644 -o root twindb-backup "${DESTDIR}/etc/cron.d"
 	test -f "${DESTDIR}/etc/twindb/twindb-backup.cfg" || install -m 600 -o root twindb-backup.cfg "${DESTDIR}/etc/twindb"
 
-rpm: check-rpmbuild top_dir
+rpm: check-rpmbuild
 	rm -rf "${build_dir}"
 	mkdir -p "${build_dir}/${src_dir}"
 	mkdir -p "${top_dir}/SOURCES"
