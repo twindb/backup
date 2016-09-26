@@ -33,7 +33,7 @@ sign: rpm
 # Build RPM inside a docker container
 docker-rpm:
 	sudo docker run -v `pwd`:/twindb-backup:rw  centos:centos${OS_VERSION} /bin/bash -c \
-	"yum -y install rpm-build; cp -R /twindb-backup /tmp/ ; make -C /tmp/twindb-backup rpm && cp -R /tmp/twindb-backup/.build /twindb-backup/"
+	"yum -y install rpm-build make; cp -R /twindb-backup /tmp/ ; make -C /tmp/twindb-backup rpm && cp -R /tmp/twindb-backup/.build /twindb-backup/"
 	find ${build_dir}
 
 deb: check-fpm
