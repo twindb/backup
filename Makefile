@@ -15,9 +15,10 @@ install:
 	install -m 644 -o root twindb-backup "${DESTDIR}/etc/cron.d"
 	test -f "${DESTDIR}/etc/twindb/twindb-backup.cfg" || install -m 600 -o root twindb-backup.cfg "${DESTDIR}/etc/twindb"
 
-rpm: rpmmacros check-rpmbuild top_dir
+rpm: check-rpmbuild top_dir
 	rm -rf "${build_dir}"
 	mkdir -p "${build_dir}/${src_dir}"
+	mkdir -p "${top_dir}/SOURCES"
 	cp -R * "${build_dir}/${src_dir}"
 	tar zcf "${top_dir}/SOURCES/${src_dir}.tar.gz" -C "${build_dir}" "${src_dir}"
 	rpmbuild -ba twindb-backup.spec
@@ -31,7 +32,7 @@ sign: rpm
 # Build RPM inside a docker container
 docker-rpm:
 	sudo docker run -v `pwd`:/twindb-backup:rw  centos:centos${OS_VERSION} /bin/bash -c \
-	"yum -y install rpm-build; make -C /twindb-backup rpm"
+	"yum -y install rpm-build; cp -R /twindb-backup /tmp/ make -C /tmp/twindb-backup rpm && cp -R /tmp/twindb-backup/.build /twindb-backup/"
 
 deb: check-fpm
 	rm -rf /tmp/installdir
