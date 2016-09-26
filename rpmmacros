@@ -1,6 +1,0 @@
-%_signature         gpg
-%_gpg_name          packager@twindb.com
-%vendor             TwinDB LLC
-%packager           packager@twindb.com
-%_topdir            /root/rpmbuild/
-%_tmppath           /root/rpmbuild/tmp

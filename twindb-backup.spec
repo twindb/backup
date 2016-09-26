@@ -5,7 +5,7 @@ Summary:	Scripts to backup TwinDB infrastructure server
 
 Group:		Applications/Databases
 Vendor:     TwinDB LLC
-License:    Commercial
+License:    Apache Software License 2.0
 URL:		https://twindb.com
 Source0:	%{name}-%{version}.tar.gz
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)

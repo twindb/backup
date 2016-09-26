@@ -4,8 +4,6 @@ build_dir = .build
 src_dir = twindb-backup-${version}
 top_dir = /root/rpmbuild
 
-.PHONY: rpmmacros
-
 all:
 	@echo "Ready"
 
@@ -23,19 +21,12 @@ rpm: rpmmacros check-rpmbuild top_dir
 	cp -R * "${build_dir}/${src_dir}"
 	tar zcf "${top_dir}/SOURCES/${src_dir}.tar.gz" -C "${build_dir}" "${src_dir}"
 	rpmbuild -ba twindb-backup.spec
-	# rpm --addsign ${top_dir}/RPMS/noarch/twindb-backup-${version}-${release}.noarch.rpm
 
 check-rpmbuild:
 	 @which rpmbuild || yum -y install rpm-build
 
-top_dir:
-	mkdir -p "${top_dir}/SOURCES"
-
 sign: rpm
 	rpm --addsign ${top_dir}/RPMS/noarch/twindb-backup-*
-
-rpmmacros:
-	if ! test -f ~/.rpmmacros ; then cp rpmmacros ~/.rpmmacros; fi
 
 # Build RPM inside a docker container
 docker-rpm:
