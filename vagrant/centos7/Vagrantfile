@@ -17,7 +17,7 @@ Vagrant.configure(2) do |config|
     db01.vm.box = "bento/centos-7.1"
     db01.vm.hostname = "db01"
     db01.vm.provision :shell, path: "bootstrap.sh"
-    db01.vm.synced_folder "../..", "/home/vagrant/src/backup"
+    db01.vm.synced_folder "../..", "/twindb-backup"
   end
 
   # Disable automatic box update checking. If you disable this, then

@@ -4,7 +4,7 @@ set -exu
 
 packages="python-pip rpm-build ruby-devel gcc"
 
-rpm -Uvh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-6.noarch.rpm
+rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 
 yum -y install ${packages}
 pip install --upgrade pip
