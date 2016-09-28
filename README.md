@@ -11,8 +11,6 @@
 
 
 ```
-#!shell
-
 # yum install twindb-backup
 ```
 
@@ -21,8 +19,6 @@ twindb-backup is not included in the APT repo as of time of writing this README.
 
 
 ```
-#!shell
-
 # make deb
 ```
 
@@ -31,8 +27,6 @@ Then install it:
 
 
 ```
-#!shell
-
 # dpkg -i twindb-backup-1.0.4-1_noarch.deb
 ```
 
@@ -43,15 +37,24 @@ The script is configured in `/etc/twindb/twindb-backup.cfg`.
 
 
 ```
-#!shell
-
 # Source
 backup_dirs="/etc /root /home"
 backup_mysql=TRUE
 
 # Destination
-backup_host=a.b.c.d
-ssh_user="ec2-user"
+# Uncomment one
+# backup_destination="s3"
+backup_destination="ssh"
+
+# S3 destination settings
+#AWS_ACCESS_KEY_ID="XXXXX"
+#AWS_SECRET_ACCESS_KEY="YYYYY"
+#AWS_DEFAULT_REGION="us-east-1"
+#BUCKET="twindb-backups"
+
+# SSH destination settings
+backup_host=127.0.0.1
+ssh_user="root"
 backup_dir=/path/to/twindb-server-backups
 
 # MySQL
