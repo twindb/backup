@@ -9,8 +9,8 @@ backup_mysql=TRUE
 # Destination
 
 # Uncomment one
-backup_destination="s3"
-#backup_destination="ssh"
+#backup_destination="s3"
+backup_destination="ssh"
 
 # S3 destination settings
 AWS_ACCESS_KEY_ID="XXXXX"
@@ -158,6 +158,11 @@ function backup_files() {
 
 function cleanup_old_backups() {
 
+    if ! test -d $1
+    then
+        return
+    fi
+
     case ${suffix} in
         "hourly")
             mtime=$(( ${hourly_copies} * 1 * 60 ))
@@ -184,6 +189,7 @@ function cleanup_old_backups() {
     fi
 }
 
+set +u
 if  (! test -z "$1") && (
     [ "$1" = "hourly" ]  || \
     [ "$1" = "daily" ]   || \
@@ -198,9 +204,11 @@ else
     exit -1
 fi
 
+set -u
+
 if [ "${backup_destination}" == "ssh" ]
 then
-    mysql_backup_dir="${backup_dir}/${mysql_backup_dir}"
+    mysql_backup_dir="${backup_dir}/`hostname`/$suffix/mysql"
     files_backup_dir="${backup_dir}/`hostname`/$suffix"
 else
     mysql_backup_dir="${suffix}/`hostname`/mysql"
