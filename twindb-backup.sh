@@ -5,12 +5,15 @@ set -eu
 # Source
 backup_dirs="/etc /root /home"
 backup_mysql=TRUE
+backup_files=TRUE
 
 # Destination
 
 # Uncomment one
 #backup_destination="s3"
 backup_destination="ssh"
+keep_local_copy="NO"
+local_directory="/var/backup"
 
 # S3 destination settings
 AWS_ACCESS_KEY_ID="XXXXX"
@@ -59,7 +62,7 @@ start_time=`date +%s`
 
 scriptname=$(basename $0)
 pidfile="/var/run/${scriptname}.pid"
-ssh_opt="-o StrictHostKeyChecking=no"
+ssh_opt="-o StrictHostKeyChecking=no -o PasswordAuthentication=no"
 
 function get_ssh_key_path() {
     case ${OSTYPE} in
@@ -81,7 +84,7 @@ else
 fi
 
 trap "rm -f ${pidfile}" INT
-trap "rm -f ${pidfile}" ERR
+trap "echo 'Exit with error'; rm -f ${pidfile}" ERR
 trap "rm -f ${pidfile}" EXIT
 
 function vlog() {
@@ -92,6 +95,11 @@ function check_ssh() {
     local storage_timeout=3600
     while true
     do
+        if test -z $(${SSH} ${backup_host} echo 123 2>/dev/null)
+        then
+            echo "Failed to connect to destination server"
+            exit -1
+        fi
         r=`${SSH} ${backup_host} echo 123 2>/dev/null`
         now=`date +%s`
         if [ $(( $now - $start_time )) -gt ${storage_timeout} ]
@@ -114,16 +122,25 @@ function check_aws() {
 }
 
 function backup_mysql() {
-    if [ "${backup_mysql}" = TRUE ]
+
+    mysql_backup_file=$1
+    mysql_backup_dir="`dirname ${mysql_backup_file}`"
+    if [ ${backup_destination} == "ssh" ]
     then
-        mysql_backup_file=$1
-        mysql_backup_dir="`dirname ${mysql_backup_file}`"
-        if [ ${backup_destination} == "ssh" ]
+        ${SSH} ${backup_host} mkdir -p "${mysql_backup_dir}"
+        if [ ${keep_local_copy} == "NO" ]
         then
-            ${SSH} ${backup_host} mkdir -p "${mysql_backup_dir}"
             ${MYSQLDUMP} ${MYSQLDUMP_ARGS} | gzip -c - | ${SSH} ${backup_host} "cat - > $mysql_backup_file"
         else
+            mkdir -p "${local_directory}"
+            ${MYSQLDUMP} ${MYSQLDUMP_ARGS} | gzip -c - | tee "${local_directory}/mysql-latest.tar.gz" | ${SSH} ${backup_host} "cat - > $mysql_backup_file"
+        fi
+    else
+        if [ ${keep_local_copy} == "NO" ]
+        then
             ${MYSQLDUMP} ${MYSQLDUMP_ARGS} | gzip -c - | aws s3 cp - "s3://${BUCKET}/${mysql_backup_file}"
+        else
+            ${MYSQLDUMP} ${MYSQLDUMP_ARGS} | gzip -c - | tee "${local_directory}/mysql-latest.tar.gz" | aws s3 cp - "s3://${BUCKET}/${mysql_backup_file}"
         fi
     fi
 }
@@ -254,16 +271,26 @@ echo ${pid} 1>&8
 # wait random time between 0 and 600 seconds to avoid storm starts
 max_delay=600
 let wait_time=$RANDOM*$max_delay/32767
-if [ ${backup_destination} == "ssh" ]
+
+
+if [ ${backup_mysql} == TRUE ]
 then
-    sleep ${wait_time}
-    check_ssh
-    cleanup_old_backups "${files_backup_dir}"
-    #try create
-    ${SSH} ${backup_host} true || (vlog "Can not ssh to ${backup_host}"; exit -1)
-    ${SSH} ${backup_host} mkdir -p "${backup_dir}/`hostname`"
-else
-    check_aws
+    backup_mysql "${mysql_backup_file}"
 fi
-backup_mysql "${mysql_backup_file}"
-backup_files "${files_backup_dir}"
+
+if [ ${backup_files} == "TRUE" ]
+then
+    if [ ${backup_destination} == "ssh" ]
+    then
+        sleep ${wait_time}
+        check_ssh
+        cleanup_old_backups "${files_backup_dir}"
+        #try create
+        ${SSH} ${backup_host} true || (vlog "Can not ssh to ${backup_host}"; exit -1)
+        ${SSH} ${backup_host} mkdir -p "${backup_dir}/`hostname`"
+    else
+        check_aws
+    fi
+
+    backup_files "${files_backup_dir}"
+fi
