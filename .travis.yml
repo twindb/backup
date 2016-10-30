@@ -15,7 +15,8 @@ before_install:
   - sudo docker pull centos:centos${OS_VERSION}
 
 script:
-    tox
+    yum -y install python-tox &&
+    tox &&
     make docker-rpm
 
 deploy:
