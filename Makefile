@@ -25,7 +25,7 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 PYTHON := $(shell rpm --eval '%{__python}')
 PYTHON_LIB := $(shell rpm --eval '%{python_sitelib}')
-RHEL := $(shell rpm --eval '%{rhel}')
+RHEL := $(shell if test -z "${OS_VERSION}"; then rpm --eval '%{rhel}'; else echo ${OS_VERSION}; fi)
 pwd := $(shell pwd)
 build_dir = ${pwd}/build
 top_dir = ${build_dir}/rpmbuild
@@ -114,6 +114,9 @@ rpm: ## Build rpm
 	mkdir -p "${top_dir}/SOURCES"
 	$(PYTHON) setup.py sdist --dist-dir "${top_dir}/SOURCES"
 	rpmbuild --define '_topdir ${top_dir}' --define 'version ${version}' --define 'PY_MAJOR ${PY_MAJOR}' -ba support/twindb-backup.spec
+
+rhel:
+	echo ${RHEL}
 
 docker-rpm: ## Build rpm in a docker container
 	sudo docker run -v `pwd`:/twindb-backup:rw  centos:centos${RHEL} /bin/bash -c \
