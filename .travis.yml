@@ -15,7 +15,7 @@ before_install:
   - sudo docker pull centos:centos${OS_VERSION}
 
 script:
-  - yum -y install pytest && make test
+  - cat /etc/redhat-release
 
 deploy:
   provider: packagecloud
