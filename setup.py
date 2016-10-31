@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+from pip.req import parse_requirements
 from setuptools import setup, find_packages
 
 del os.link
@@ -15,12 +16,8 @@ requirements = [
     'Click>=6.0', 'boto3', 'mysql'
 ]
 
-test_requirements = [
-    'bumpversion',
-    'flake8',
-    'tox',
-    'pytest'
-]
+test_requirements = [str(ir.req) for ir in
+                     parse_requirements('requirements_dev.txt', session=False)]
 
 setup(
     name='twindb-backup',
