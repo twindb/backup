@@ -23,6 +23,14 @@ endef
 export PRINT_HELP_PYSCRIPT
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
+PYTHON := $(shell rpm --eval '%{__python}')
+PYTHON_LIB := $(shell rpm --eval '%{python_sitelib}')
+pwd := $(shell pwd)
+build_dir = ${pwd}/build
+top_dir = ${build_dir}/rpmbuild
+version = $(shell python -c 'from twindb_backup import __version__; print(__version__)')
+PY_MAJOR = $(shell python -c 'import sys; print(sys.version[:3])')
+
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
@@ -52,14 +60,14 @@ lint: ## check style with flake8
 
 test: ## run tests quickly with the default Python
 	py.test
-	
+
 
 test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
 	coverage run --source twindb_backup py.test
-	
+
 		coverage report -m
 		coverage html
 		$(BROWSER) htmlcov/index.html
@@ -85,4 +93,24 @@ dist: clean ## builds source and wheel package
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+	if test -z "${DESTDIR}" ; \
+	then $(PYTHON) setup.py install \
+		--prefix /usr \
+		--install-lib $(PYTHON_LIB); \
+	else $(PYTHON) setup.py install \
+		--prefix /usr \
+		--install-lib $(PYTHON_LIB) \
+		--root "${DESTDIR}" ; \
+		mkdir -p "${DESTDIR}/etc/cron.d/" ; \
+	fi
+
+rpm:
+	rm -rf "${build_dir}"
+	mkdir -p "${top_dir}/SOURCES"
+	$(PYTHON) setup.py sdist --dist-dir "${top_dir}/SOURCES"
+	rpmbuild --define '_topdir ${top_dir}' --define 'version ${version}' --define 'PY_MAJOR ${PY_MAJOR}' -ba support/twindb-backup.spec
+
+docker-rpm:
+	sudo docker run -v `pwd`:/twindb-backup:rw  centos:centos${OS_VERSION} /bin/bash -c \
+		"yum -y install rpm-build make; cp -R /twindb-backup /tmp/ ; make -C /tmp/twindb-backup rpm && cp -R /tmp/twindb-backup/build /twindb-backup/"
+	find ${build_dir}

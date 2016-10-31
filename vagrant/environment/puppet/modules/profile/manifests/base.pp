@@ -75,7 +75,8 @@ password=qwerty
     'Percona-Server-devel-56', 'Percona-Server-shared-56', 'percona-toolkit',
     'percona-xtrabackup',
     'python-pip',
-    'gcc', 'python-devel', 'zlib-devel', 'openssl-devel']
+    'gcc', 'python-devel', 'zlib-devel', 'openssl-devel',
+    'rpm-build']
 
   package { $packages:
     ensure => installed,

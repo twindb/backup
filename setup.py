@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
+from setuptools import setup, find_packages
 
-from setuptools import setup
+del os.link
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -10,24 +12,25 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    'Click>=6.0', 'logutils', 'boto3', 'mysql'
+    'Click>=6.0', 'boto3', 'mysql'
 ]
 
 test_requirements = [
-    # TODO: put package test requirements here
+    'bumpversion',
+    'flake8',
+    'tox',
+    'pytest'
 ]
 
 setup(
-    name='twindb_backup',
+    name='twindb-backup',
     version='2.0.0',
     description="TwinDB Backup tool for files, MySQL et al.",
     long_description=readme + '\n\n' + history,
     author="TwinDB Development Team",
     author_email='dev@twindb.com',
     url='https://github.com/twindb/twindb_backup',
-    packages=[
-        'twindb_backup',
-    ],
+    packages=find_packages(exclude=('tests*',)),
     package_dir={'twindb_backup':
                  'twindb_backup'},
     entry_points={
@@ -48,10 +51,6 @@ setup(
         "Programming Language :: Python :: 2",
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
     ],
     test_suite='tests',
     tests_require=test_requirements

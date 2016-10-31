@@ -12,7 +12,7 @@ before_install:
   - sudo docker pull centos:centos${OS_VERSION}
 
 script:
-  - cat /etc/redhat-release
+  - make docker-rpm
 
 deploy:
   provider: packagecloud
