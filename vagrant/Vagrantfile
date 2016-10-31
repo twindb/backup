@@ -1,0 +1,55 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+nodes = [
+    { :hostname   => 'master',
+      :ip         => '192.168.35.250',
+      :box        => 'bento/centos-7.1',
+      :ram        => 3072
+    },
+    { :hostname   => 'slave',
+      :ip         => '192.168.35.251',
+      :box        => 'bento/centos-7.1',
+      :ram        => 3072
+    }
+]
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = '2'
+
+$script = <<SCRIPT
+rpm -Uhv https://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
+for i in 1 2 3
+do
+    yum -y install puppet && break
+done
+SCRIPT
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+    nodes.each do |node|
+        config.vm.define node[:hostname] do |nodeconfig|
+            nodeconfig.vm.box = node[:box]
+            nodeconfig.vm.hostname = node[:hostname] + '.box'
+            nodeconfig.vm.network :private_network, ip: node[:ip]
+            if node[:mysql_port]
+                nodeconfig.vm.network :forwarded_port, host: node[:mysql_port], guest: 3306
+            end
+
+            memory = node[:ram] ? node[:ram] : 256
+            nodeconfig.vm.provider :virtualbox do |vb|
+                vb.customize [
+                                 'modifyvm', :id,
+                                 '--cpuexecutioncap', '40',
+                                 '--memory', memory.to_s,
+                             ]
+
+            end
+        end
+        config.vm.synced_folder '..', '/twindb_backup'
+    end
+
+    config.vm.provision 'shell', inline: $script
+    config.vm.provision :puppet do |puppet|
+        puppet.environment_path = 'environment'
+        puppet.environment = 'puppet'
+    end
+end
