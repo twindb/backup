@@ -122,7 +122,7 @@ docker-rpm: ## Build rpm in a docker container
 	sudo docker run -v `pwd`:/twindb-backup:rw  centos:centos${RHEL} /bin/bash -c \
 		"yum -y install epel-release ; \
 		yum -y install 'gcc' 'python-devel' 'zlib-devel' 'openssl-devel' \
-			rpm-build make python-setuptools python-pip mariadb-devel; \
+			rpm-build make python-setuptools python-pip /usr/bin/mysql_config; \
 		cp -Rv /twindb-backup /tmp/ ; \
 		make -C /tmp/twindb-backup test rpm ; \
 		cp -R /tmp/twindb-backup/build /twindb-backup/"
