@@ -32,7 +32,7 @@ setup(
                  'twindb_backup'},
     entry_points={
         'console_scripts': [
-            'twindb_backup=twindb_backup.cli:main'
+            'twindb-backup=twindb_backup.cli:main'
         ]
     },
     include_package_data=True,

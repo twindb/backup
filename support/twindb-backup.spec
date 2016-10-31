@@ -53,7 +53,7 @@ echo "Building twindb-backup"
 %files
 %defattr(-,root,root,-)
 %doc
-%{_bindir}/twindb_backup
+%{_bindir}/twindb-backup
 %{python_sitelib}/twindb_backup
 %{python_sitelib}/twindb_backup-%{version}-py%{PY_MAJOR}.egg-info
 

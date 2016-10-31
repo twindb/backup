@@ -25,6 +25,7 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 PYTHON := $(shell rpm --eval '%{__python}')
 PYTHON_LIB := $(shell rpm --eval '%{python_sitelib}')
+RHEL := $(shell rpm --eval '%{rhel}')
 pwd := $(shell pwd)
 build_dir = ${pwd}/build
 top_dir = ${build_dir}/rpmbuild
@@ -108,17 +109,17 @@ install: clean ## install the package to the active Python's site-packages
 		mkdir -p "${DESTDIR}/etc/cron.d/" ; \
 	fi
 
-rpm:
+rpm: ## Build rpm
 	rm -rf "${build_dir}"
 	mkdir -p "${top_dir}/SOURCES"
 	$(PYTHON) setup.py sdist --dist-dir "${top_dir}/SOURCES"
 	rpmbuild --define '_topdir ${top_dir}' --define 'version ${version}' --define 'PY_MAJOR ${PY_MAJOR}' -ba support/twindb-backup.spec
 
-docker-rpm:
-	sudo docker run -v `pwd`:/twindb-backup:rw  centos:centos${OS_VERSION} /bin/bash -c \
+docker-rpm: ## Build rpm in a docker container
+	sudo docker run -v `pwd`:/twindb-backup:rw  centos:centos${RHEL} /bin/bash -c \
 		"yum -y install epel-release ; \
 		yum -y install 'gcc' 'python-devel' 'zlib-devel' 'openssl-devel' \
-			rpm-build make python-setuptools python-pip; \
+			rpm-build make python-setuptools python-pip mariadb-devel; \
 		cp -Rv /twindb-backup /tmp/ ; \
 		make -C /tmp/twindb-backup test rpm ; \
 		cp -R /tmp/twindb-backup/build /twindb-backup/"

@@ -6,6 +6,7 @@ include HISTORY.rst
 include LICENSE
 include README.rst
 include Makefile
+include requirements_dev.txt
 
 recursive-include tests *
 recursive-exclude * __pycache__
