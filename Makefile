@@ -61,7 +61,7 @@ lint: ## check style with flake8
 test-deps:
 	pip install -r requirements.txt
 	pip install -r requirements_dev.txt
-	
+
 test: test-deps ## run tests quickly with the default Python
 	py.test
 
@@ -116,5 +116,5 @@ rpm:
 
 docker-rpm:
 	sudo docker run -v `pwd`:/twindb-backup:rw  centos:centos${OS_VERSION} /bin/bash -c \
-		"yum -y install rpm-build make python-setuptools; cp -Rv /twindb-backup /tmp/ ; make -C /tmp/twindb-backup test rpm && cp -R /tmp/twindb-backup/build /twindb-backup/"
+		"yum -y install rpm-build make python-setuptools python-pip; cp -Rv /twindb-backup /tmp/ ; make -C /tmp/twindb-backup test rpm && cp -R /tmp/twindb-backup/build /twindb-backup/"
 	find ${build_dir}
