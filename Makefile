@@ -60,8 +60,10 @@ lint: ## check style with flake8
 	flake8 twindb_backup tests
 
 test-deps:
-	pip install -r requirements.txt
-	pip install -r requirements_dev.txt
+	pip install --upgrade pip
+	pip install --upgrade distribute
+	pip install --upgrade -r requirements.txt
+	pip install --upgrade -r requirements_dev.txt
 
 test: test-deps ## run tests quickly with the default Python
 	py.test
