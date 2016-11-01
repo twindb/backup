@@ -1,8 +1,7 @@
 import ConfigParser
-import glob
 import os
 from subprocess import Popen, PIPE
-from twindb_backup import log, get_directories_to_backup
+from twindb_backup import log, get_directories_to_backup, delete_local_files
 from twindb_backup.destination.base_destination import BaseDestination, \
     DestinationError
 from twindb_backup.source.file_source import FileSource
@@ -124,13 +123,16 @@ class Ssh(BaseDestination):
                 self._delete_file(obj)
 
             try:
+                keep_copies = config.getint('retention_local',
+                                            '%s_copies' % run_type)
+                log.debug('Will keep %d local copies' % keep_copies)
                 keep_local_path = config.get('destination', 'keep_local_path')
                 dir_backups = "{local_path}/{prefix}/files/{file}*".format(
                     local_path=keep_local_path,
                     prefix=src.get_prefix(),
                     file=src.sanitize_filename()
                 )
-                self._delete_local_files(dir_backups, keep_copies)
+                delete_local_files(dir_backups, keep_copies)
 
             except ConfigParser.NoOptionError:
                 pass
@@ -159,25 +161,18 @@ class Ssh(BaseDestination):
             self._delete_file(obj)
 
         try:
+            keep_copies = config.getint('retention_local',
+                                        '%s_copies' % run_type)
+            log.debug('Will keep %d local copies' % keep_copies)
             keep_local_path = config.get('destination', 'keep_local_path')
             dir_backups = "{local_path}/{prefix}/mysql/mysql-*".format(
                 local_path=keep_local_path,
                 prefix=src.get_prefix()
             )
-            self._delete_local_files(dir_backups, keep_copies)
+            delete_local_files(dir_backups, keep_copies)
 
         except ConfigParser.NoOptionError:
             pass
-
-    @staticmethod
-    def _delete_local_files(dir_backups, keep_copies):
-        local_files = sorted(glob.glob(dir_backups))
-        log.debug('Local copies: %r', local_files)
-
-        to_delete = local_files[:-keep_copies]
-        for fl in to_delete:
-            log.debug('Deleting: %s', fl)
-            os.unlink(fl)
 
     def _delete_file(self, obj):
         cmd = self._ssh_command + ["rm %s" % obj]
