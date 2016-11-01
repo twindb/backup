@@ -2,3 +2,4 @@ bumpversion
 flake8
 tox
 pytest
+mock

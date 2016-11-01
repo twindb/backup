@@ -60,8 +60,9 @@ lint: ## check style with flake8
 	flake8 twindb_backup tests
 
 test-deps:
-	pip install -r requirements.txt
-	pip install -r requirements_dev.txt
+	pip install --upgrade -r requirements.txt
+	pip install --upgrade -r requirements_dev.txt
+	pip install -U setuptools
 
 test: test-deps ## run tests quickly with the default Python
 	py.test
@@ -107,6 +108,9 @@ install: clean ## install the package to the active Python's site-packages
 		--install-lib $(PYTHON_LIB) \
 		--root "${DESTDIR}" ; \
 		mkdir -p "${DESTDIR}/etc/cron.d/" ; \
+		install -m 644 -o root support/twindb-backup.cron "${DESTDIR}/etc/cron.d/twindb-backup" ; \
+		mkdir -p "${DESTDIR}/etc/twindb/" ; \
+		install -m 600 -o root support/twindb-backup.cfg "${DESTDIR}/etc/twindb" ; \
 	fi
 
 rpm: ## Build rpm

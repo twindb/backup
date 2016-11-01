@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import ConfigParser
+import glob
 import logging
+import os
 
 __author__ = 'TwinDB Development Team'
 __email__ = 'dev@twindb.com'
-__version__ = '2.0.2'
+__version__ = '2.1.0'
 
 log = logging.getLogger(__name__)
 
@@ -36,3 +38,17 @@ def get_directories_to_backup(config):
         log.debug('Not backing up files')
 
     return backup_dirs
+
+
+def delete_local_files(dir_backups, keep_copies):
+    local_files = sorted(glob.glob(dir_backups))
+    log.debug('Local copies: %r', local_files)
+
+    if keep_copies == 0:
+        to_delete = local_files
+    else:
+        to_delete = local_files[:-keep_copies]
+
+    for fl in to_delete:
+        log.debug('Deleting: %s', fl)
+        os.unlink(fl)
