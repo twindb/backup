@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import ConfigParser
+import os
 import MySQLdb
 import time
 
@@ -148,6 +149,9 @@ def backup_everything(run_type, config):
     :param config: ConfigParser instance
     """
     try:
+        max_files = 4096
+        log.debug('Setting max files limit to %d' % max_files)
+        os.system('ulimit -n %d' % max_files)
         backup_files(run_type, config)
         backup_mysql(run_type, config)
         get_destination(config).apply_retention_policy(config)
