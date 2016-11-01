@@ -40,15 +40,18 @@ def get_directories_to_backup(config):
     return backup_dirs
 
 
+def get_files_to_delete(all_files, keep_copies):
+    log.debug('Retain %d files', keep_copies)
+    if keep_copies == 0:
+        return all_files
+    else:
+        return all_files[:-keep_copies]
+
+
 def delete_local_files(dir_backups, keep_copies):
     local_files = sorted(glob.glob(dir_backups))
     log.debug('Local copies: %r', local_files)
 
-    if keep_copies == 0:
-        to_delete = local_files
-    else:
-        to_delete = local_files[:-keep_copies]
-
-    for fl in to_delete:
+    for fl in get_files_to_delete(local_files, keep_copies):
         log.debug('Deleting: %s', fl)
         os.unlink(fl)
