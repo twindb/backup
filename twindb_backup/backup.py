@@ -149,9 +149,10 @@ def backup_everything(run_type, config):
     :param config: ConfigParser instance
     """
     try:
-        max_files = 4096
+        max_files = 1048576
         log.debug('Setting max files limit to %d' % max_files)
-        os.system('ulimit -n %d' % max_files)
+        os.system('ulimit -Hn %d' % max_files)
+        os.system('ulimit -Sn %d' % max_files)
         backup_files(run_type, config)
         backup_mysql(run_type, config)
         get_destination(config).apply_retention_policy(config)
