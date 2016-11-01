@@ -37,5 +37,3 @@ class BaseDestination(object):
 
     def _apply_policy_for_mysql(self, config, run_type):
         raise DestinationError('Not implemented')
-
-

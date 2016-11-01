@@ -184,4 +184,3 @@ class Ssh(BaseDestination):
         log.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd)
         proc.communicate()
-

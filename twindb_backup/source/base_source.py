@@ -28,4 +28,3 @@ class BaseSource(object):
 
     def get_procs(self):
         return self.procs
-

@@ -54,6 +54,8 @@ echo "Building twindb-backup"
 %defattr(-,root,root,-)
 %doc
 %{_bindir}/twindb-backup
+%config(noreplace) %attr(600, root, root) %{_sysconfdir}/twindb/twindb-backup.cfg
+%config(noreplace) %attr(644, root, root) %{_sysconfdir}/cron.d/twindb-backup
 %{python_sitelib}/twindb_backup
 %{python_sitelib}/twindb_backup-%{version}-py%{PY_MAJOR}.egg-info
 

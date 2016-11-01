@@ -107,6 +107,9 @@ install: clean ## install the package to the active Python's site-packages
 		--install-lib $(PYTHON_LIB) \
 		--root "${DESTDIR}" ; \
 		mkdir -p "${DESTDIR}/etc/cron.d/" ; \
+		install -m 644 -o root support/twindb-backup.cron "${DESTDIR}/etc/cron.d/twindb-backup" ; \
+		mkdir -p "${DESTDIR}/etc/twindb/" ; \
+		install -m 600 -o root support/twindb-backup.cfg "${DESTDIR}/etc/twindb" ; \
 	fi
 
 rpm: ## Build rpm

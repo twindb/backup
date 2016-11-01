@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ConfigParser import ConfigParser, NoOptionError
+from ConfigParser import ConfigParser
 import os
 import click
 from twindb_backup import setup_logging, log
@@ -35,11 +35,8 @@ def main(cfg, debug, config):
 def backup(cfg, run_type):
     """Run backup job"""
     log.debug(run_type)
-    #try:
     if cfg.getboolean('intervals', "run_%s" % run_type):
         backup_everything(run_type, cfg)
-    #except NoOptionError:
-    #    log.error('Unknown run type %s', run_type)
 
 
 @main.command()
@@ -54,4 +51,3 @@ def ls(cfg):
 def restore(cfg):
     """Restore from backup"""
     log.debug('%r', cfg)
-
