@@ -43,6 +43,8 @@ def backup(cfg, run_type):
         log.debug(run_type)
         if cfg.getboolean('intervals', "run_%s" % run_type):
             backup_everything(run_type, cfg)
+        else:
+            log.debug('Not running because run_%s is no', run_type)
     except IOError as err:
         if err.errno == errno.EAGAIN:
             log.warning('Another instance of twindb-backup is running?')

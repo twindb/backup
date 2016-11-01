@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import ConfigParser
-import os
+from resource import getrlimit, RLIMIT_NOFILE, setrlimit
+
 import MySQLdb
 import time
 
@@ -57,12 +58,16 @@ def backup_files(run_type, config):
         log.debug('copying %s', d)
         src = FileSource(d, run_type)
         dst = get_destination(config)
-        try:
-            keep_local = config.get('destination', 'keep_local_path')
-        except ConfigParser.NoOptionError:
-            keep_local = None
 
-        dst.save(src.get_stream(), src.get_name(), keep_local=keep_local)
+        with src.get_stream() as stream:
+            try:
+                keep_local = config.get('destination', 'keep_local_path')
+            except ConfigParser.NoOptionError:
+                keep_local = None
+
+            dst.save(stream, src.get_name(), keep_local=keep_local)
+
+        src.apply_retention_policy(dst, config, run_type)
 
 
 def enable_wsrep_desync(mysql_defaults_file):
@@ -127,18 +132,23 @@ def backup_mysql(run_type, config):
             if dst.save(src.get_stream(), dst_name, keep_local=keep_local):
                 log.error('Failed to save backup copy %s', dst_name)
 
-            for proc in src.get_procs():
-                cout, cerr = proc.communicate()
-                if proc.returncode:
-                    if cout:
-                        log.info(cout)
-                    if cerr:
-                        log.error(cerr)
             if desync_enabled:
                 disable_wsrep_desync(mysql_defaults_file)
 
+            src.apply_retention_policy(dst, config, run_type)
     except ConfigParser.NoOptionError:
         log.debug('Not backing up MySQL')
+
+
+def set_open_fileslimit():
+    max_files = getrlimit(RLIMIT_NOFILE)[0]
+    while True:
+        try:
+            setrlimit(RLIMIT_NOFILE, (max_files, max_files))
+            max_files += 1
+        except ValueError:
+            break
+    log.debug('Setting max files limit to %d' % max_files)
 
 
 def backup_everything(run_type, config):
@@ -148,15 +158,13 @@ def backup_everything(run_type, config):
     :param run_type: hourly, daily, etc
     :param config: ConfigParser instance
     """
+    set_open_fileslimit()
+
     try:
-        max_files = 1048576
-        log.debug('Setting max files limit to %d' % max_files)
-        os.system('ulimit -Hn %d' % max_files)
-        os.system('ulimit -Sn %d' % max_files)
         backup_files(run_type, config)
         backup_mysql(run_type, config)
-        get_destination(config).apply_retention_policy(config)
+        # get_destination(config).apply_retention_policy(config)
 
     except ConfigParser.NoSectionError as err:
-        log.error('Config file must define seciont "source": %s', err)
+        log.error('Config file must define section "source": %s', err)
         exit(-1)

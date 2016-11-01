@@ -1,13 +1,14 @@
 import shlex
 from subprocess import Popen, PIPE
-import time
-from twindb_backup import log
+from twindb_backup import log, get_files_to_delete
 from twindb_backup.source.base_source import BaseSource
 
 
 class MySQLSource(BaseSource):
     def __init__(self, defaults_file, run_type):
         self.defaults = defaults_file
+        self._suffix = 'xbstream.gz'
+        self._media_type = 'mysql'
         super(MySQLSource, self).__init__(run_type)
 
     def get_stream(self):
@@ -23,7 +24,6 @@ class MySQLSource(BaseSource):
             proc_innobackupex = Popen(shlex.split(cmd),
                                       stderr=PIPE,
                                       stdout=PIPE)
-            self.procs.append(proc_innobackupex)
         except OSError as err:
             log.error('Failed to run %s: %s', cmd, err)
             raise
@@ -33,20 +33,33 @@ class MySQLSource(BaseSource):
             log.debug('Running %s', cmd)
             proc_gzip = Popen(shlex.split(cmd), stdin=proc_innobackupex.stdout,
                               stderr=PIPE, stdout=PIPE)
-            self.procs.append(proc_gzip)
         except OSError as err:
             log.error('Failed to run %s: %s', cmd, err)
             raise
 
         return proc_gzip.stdout
 
-    def get_name(self, ):
+    def get_name(self):
         """
         Generate relative destination file name
 
         :return: file name
         """
-        return "{prefix}/mysql/mysql-{time}.xbstream.gz".format(
-            prefix=self.get_prefix(),
-            time=time.strftime('%Y-%m-%d_%H_%M_%S')
+        return self._get_name('mysql')
+
+    def apply_retention_policy(self, dst, config, run_type):
+
+        prefix = "{remote_path}/{prefix}/mysql/mysql-".format(
+            remote_path=dst.remote_path,
+            prefix=self.get_prefix()
         )
+        keep_copies = config.getint('retention',
+                                    '%s_copies' % run_type)
+
+        objects = dst.list_files(prefix)
+
+        for fl in get_files_to_delete(objects, keep_copies):
+            log.debug('Deleting remote file %s' % fl)
+            dst.delete(fl)
+
+        self._delete_local_files('mysql', config)
