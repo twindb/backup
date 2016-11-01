@@ -6,7 +6,7 @@ import os
 
 __author__ = 'TwinDB Development Team'
 __email__ = 'dev@twindb.com'
-__version__ = '2.1.2'
+__version__ = '2.1.3'
 
 log = logging.getLogger(__name__)
 
