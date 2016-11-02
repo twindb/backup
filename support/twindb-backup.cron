@@ -1,6 +1,6 @@
 MAILTO=nagios@twindb.com
-@hourly  root twindb-backup.sh hourly
-@daily   root twindb-backup.sh daily
-@weekly  root twindb-backup.sh weekly
-@monthly root twindb-backup.sh monthly
-@yearly  root twindb-backup.sh yearly
+@hourly  root twindb-backup backup hourly
+@daily   root twindb-backup backup daily
+@weekly  root twindb-backup backup weekly
+@monthly root twindb-backup backup monthly
+@yearly  root twindb-backup backup yearly

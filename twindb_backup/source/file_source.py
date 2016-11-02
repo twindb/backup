@@ -29,6 +29,7 @@ class FileSource(BaseSource):
             cout, cerr = proc.communicate()
             if proc.returncode:
                 log.error('Failed to read from %s: %s' % (self.path, cerr))
+                exit(1)
             else:
                 log.debug('Successfully streamed %s', self.path)
 

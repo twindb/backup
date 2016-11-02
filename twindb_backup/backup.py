@@ -124,13 +124,14 @@ def backup_mysql(run_type, config):
             dst = get_destination(config)
             dst_name = src.get_name()
 
-            try:
-                keep_local = config.get('destination', 'keep_local_path')
-            except ConfigParser.NoOptionError:
-                keep_local = None
+            with src.get_stream() as stream:
+                try:
+                    keep_local = config.get('destination', 'keep_local_path')
+                except ConfigParser.NoOptionError:
+                    keep_local = None
 
-            if dst.save(src.get_stream(), dst_name, keep_local=keep_local):
-                log.error('Failed to save backup copy %s', dst_name)
+                if dst.save(stream, dst_name, keep_local=keep_local):
+                    log.error('Failed to save backup copy %s', dst_name)
 
             if desync_enabled:
                 disable_wsrep_desync(mysql_defaults_file)
@@ -163,7 +164,6 @@ def backup_everything(run_type, config):
     try:
         backup_files(run_type, config)
         backup_mysql(run_type, config)
-        # get_destination(config).apply_retention_policy(config)
 
     except ConfigParser.NoSectionError as err:
         log.error('Config file must define section "source": %s', err)
