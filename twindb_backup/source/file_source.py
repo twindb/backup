@@ -1,25 +1,41 @@
 import shlex
+from contextlib import contextmanager
 from subprocess import Popen, PIPE
-import time
-from twindb_backup import log
+from twindb_backup import log, get_files_to_delete
 from twindb_backup.source.base_source import BaseSource
 
 
 class FileSource(BaseSource):
     def __init__(self, path, run_type):
         self.path = path
+        self._suffix = 'tar.gz'
+        self._media_type = 'files'
         super(FileSource, self).__init__(run_type)
 
+    @contextmanager
     def get_stream(self):
         """
         Get a PIPE handler with content of the source
         :return:
         """
         cmd = "tar zcf - %s" % self.path
-        log.debug('Running %s', cmd)
-        proc = Popen(shlex.split(cmd), stderr=PIPE, stdout=PIPE)
-        self.procs.append(proc)
-        return proc.stdout
+        try:
+            log.debug('Running %s', cmd)
+            proc = Popen(shlex.split(cmd), stderr=PIPE, stdout=PIPE)
+            self.procs.append(proc)
+
+            yield proc.stdout
+
+            cout, cerr = proc.communicate()
+            if proc.returncode:
+                log.error('Failed to read from %s: %s' % (self.path, cerr))
+                exit(1)
+            else:
+                log.debug('Successfully streamed %s', self.path)
+
+        except OSError as err:
+            log.error('Failed to run %s: %s', cmd, err)
+            exit(1)
 
     def get_name(self):
         """
@@ -27,11 +43,29 @@ class FileSource(BaseSource):
 
         :return: file name
         """
-        return "{prefix}/files/{file}-{time}.tar.gz".format(
-            prefix=self.get_prefix(),
-            file=self.sanitize_filename(),
-            time=time.strftime('%Y-%m-%d_%H_%M_%S')
-        )
+        return self._get_name(self._sanitize_filename())
 
-    def sanitize_filename(self):
+    def _sanitize_filename(self):
         return self.path.rstrip('/').replace('/', '_')
+
+    def apply_retention_policy(self, dst, config, run_type):
+
+        if dst.remote_path:
+            remote_path = dst.remote_path + '/'
+        else:
+            remote_path = ''
+        prefix = "{remote_path}{prefix}/files/{file}".format(
+            remote_path=remote_path,
+            prefix=self.get_prefix(),
+            file=self._sanitize_filename()
+        )
+        keep_copies = config.getint('retention',
+                                    '%s_copies' % run_type)
+
+        backups_list = dst.list_files(prefix)
+        log.debug('Remote copied: %r', backups_list)
+        for fl in get_files_to_delete(backups_list, keep_copies):
+            log.debug('Deleting remote file %s' % fl)
+            dst.delete(fl)
+
+        self._delete_local_files(self._sanitize_filename(), config)
