@@ -12,15 +12,10 @@ To install TwinDB Backup, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install twindb_backup
+    # rpm -Uhv https://twindb.com/twindb-release-latest.noarch.rpm
+    # yum install twindb-backup
 
-This is the preferred method to install TwinDB Backup, as it will always install the most recent stable release. 
-
-If you don't have `pip`_ installed, this `Python installation guide`_ can guide
-you through the process.
-
-.. _pip: https://pip.pypa.io
-.. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
+This is the preferred method to install TwinDB Backup, as it will always install the most recent stable release.
 
 
 From sources
@@ -44,7 +39,7 @@ Once you have a copy of the source, you can install it with:
 
 .. code-block:: console
 
-    $ python setup.py install
+    $ make install
 
 
 .. _Github repo: https://github.com/twindb/twindb_backup
