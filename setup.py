@@ -21,7 +21,7 @@ test_requirements = [str(ir.req) for ir in
 
 setup(
     name='twindb-backup',
-    version='2.1.4',
+    version='2.1.5',
     description="TwinDB Backup tool for files, MySQL et al.",
     long_description=readme + '\n\n' + history,
     author="TwinDB Development Team",
