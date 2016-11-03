@@ -45,11 +45,11 @@ How do I get set up?
 ~~~~~~~~~~~~~~~~~~~~
 
 **twindb-backup** is distributed via the YUM repository.
-Check instructions_ on how to set up the repository.
 Once the repo is configured install the ``twindb-backup`` package.
 
 .. code-block:: console
 
+    # yum install https://twindb.com/twindb-release-latest.noarch.rpm
     # yum install twindb-backup
 
 

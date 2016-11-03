@@ -4,6 +4,14 @@
 Installation
 ============
 
+Requirements
+------------
+
+TwinDB Backup package will pull all necessary dependencies except ``aws`` tool. We recommend to install it from PyPi.
+
+.. code-block:: console
+
+    # pip install awscli
 
 Stable release
 --------------
@@ -12,7 +20,7 @@ To install TwinDB Backup, run this command in your terminal:
 
 .. code-block:: console
 
-    # rpm -Uhv https://twindb.com/twindb-release-latest.noarch.rpm
+    # yum install https://twindb.com/twindb-release-latest.noarch.rpm
     # yum install twindb-backup
 
 This is the preferred method to install TwinDB Backup, as it will always install the most recent stable release.
