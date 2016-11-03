@@ -2,7 +2,6 @@
 History
 =======
 
-2.0.0 (2016-09-28)
-------------------
+See `GitHub commits history`_.
 
-* First release on PyPI.
+.. _GitHub commits history: https://github.com/twindb/backup/commits/master
