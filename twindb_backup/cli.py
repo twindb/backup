@@ -6,6 +6,7 @@ import fcntl
 import errno
 from twindb_backup import setup_logging, log
 from twindb_backup.backup import backup_everything
+from twindb_backup.ls import list_available_backups
 
 pass_cfg = click.make_pass_decorator(ConfigParser, ensure=True)
 LOCK_FILE = '/var/run/twindb-backup.lock'
@@ -56,7 +57,7 @@ def backup(cfg, run_type):
 @pass_cfg
 def ls(cfg):
     """List available backup copies"""
-    log.debug('%r', cfg)
+    list_available_backups(cfg)
 
 
 @main.command()

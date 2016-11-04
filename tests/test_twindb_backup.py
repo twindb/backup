@@ -1,6 +1,7 @@
+from ConfigParser import ConfigParser, NoOptionError
 import mock as mock
 import pytest
-from twindb_backup import delete_local_files
+from twindb_backup import delete_local_files, get_directories_to_backup
 
 __author__ = 'aleks'
 
@@ -30,3 +31,50 @@ def test_delete_local_files(mock_glob, mock_os, keep, calls):
 
     delete_local_files('/foo', keep)
     mock_os.unlink.assert_has_calls(calls)
+
+
+@pytest.mark.parametrize('config_text, dirs', [
+    (
+        """
+[source]
+backup_dirs=/etc /root /home
+        """,
+        ['/etc', '/root', '/home']
+
+    ),
+    (
+        """
+[source]
+backup_dirs="/etc /root /home"
+        """,
+        ['/etc', '/root', '/home']
+
+    ),
+    (
+        """
+[source]
+backup_dirs='/etc /root /home'
+        """,
+        ['/etc', '/root', '/home']
+
+    ),
+    (
+        """
+[source]
+        """,
+        []
+
+    ),
+    (
+        """
+        """,
+        []
+
+    )
+])
+def test_get_directories_to_backup(config_text, dirs, tmpdir):
+    config_file = tmpdir.join('foo.cfg')
+    config_file.write(config_text)
+    cparser = ConfigParser()
+    cparser.read(str(config_file))
+    assert get_directories_to_backup(cparser) == dirs

@@ -11,7 +11,7 @@ __version__ = '2.1.5'
 log = logging.getLogger(__name__)
 
 
-def setup_logging(logger, debug=False):
+def setup_logging(logger, debug=False):     # pragma: no cover
 
     fmt_str = "%(asctime)s: %(levelname)s:" \
               " %(module)s.%(funcName)s():%(lineno)d: %(message)s"
@@ -34,7 +34,7 @@ def get_directories_to_backup(config):
         backup_dirs = backup_dirs_value.strip('"\'').split()
         log.debug('Directories to backup %r', backup_dirs)
 
-    except ConfigParser.NoOptionError:
+    except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
         log.debug('Not backing up files')
 
     return backup_dirs

@@ -55,8 +55,23 @@ class Ssh(BaseDestination):
 
         return proc.returncode
 
-    def list_files(self, prefix):
-        cmd = self._ssh_command + ["ls %s*" % prefix]
+    def list_files(self, prefix, recursive=False):
+
+        if recursive:
+            ls_cmd = ["ls -R %s*" % prefix]
+        else:
+            ls_cmd = ["ls %s*" % prefix]
+
+        cmd = self._ssh_command + ls_cmd
+        log.debug('Running %s', ' '.join(cmd))
+        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+        cout, cerr = proc.communicate()
+
+        return sorted(cout.split())
+
+    def find_files(self, prefix):
+
+        cmd = self._ssh_command + ["find %s*" % prefix]
         log.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
         cout, cerr = proc.communicate()
