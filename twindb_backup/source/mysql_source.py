@@ -73,8 +73,13 @@ class MySQLSource(BaseSource):
 
     def apply_retention_policy(self, dst, config, run_type):
 
-        prefix = "{remote_path}/{prefix}/mysql/mysql-".format(
-            remote_path=dst.remote_path,
+        if dst.remote_path:
+            remote_path = dst.remote_path + '/'
+        else:
+            remote_path = ''
+
+        prefix = "{remote_path}{prefix}/mysql/mysql-".format(
+            remote_path=remote_path,
             prefix=self.get_prefix()
         )
         keep_copies = config.getint('retention',
