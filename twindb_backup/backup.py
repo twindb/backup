@@ -93,6 +93,18 @@ def enable_wsrep_desync(mysql_defaults_file):
         return False
 
 
+def execute_show_wsrep_local_recv_queue(cursor):
+    cursor.execute("show global status like 'wsrep_local_recv_queue'")
+
+
+def execute_wsrep_desync_off(cursor):
+    cursor.execute("set global wsrep_desync=OFF")
+
+
+def execute_wsrep_desync_off_on_timeout(cursor):
+    cursor.execute("set global wsrep_desync=OFF")
+
+
 def disable_wsrep_desync(mysql_defaults_file):
     """
     Wait till wsrep_local_recv_queue is zero
@@ -100,20 +112,27 @@ def disable_wsrep_desync(mysql_defaults_file):
 
     :param mysql_defaults_file:
     """
-    timeout = time.time() + 900
+    max_time = time.time() + 900
     try:
         db = MySQLdb.connect(host='127.0.0.1',
                              read_default_file=mysql_defaults_file)
         c = db.cursor()
-        while time.time() < timeout:
+
+        while time.time() < max_time:
+            execute_show_wsrep_local_recv_queue(c)
             c.execute("show global status like 'wsrep_local_recv_queue'")
-            if c.fetchone()[1] == 0:
+
+            if int(c.fetchone()[1]) == 0:
                 log.debug('wsrep_local_recv_queue is zero')
-                c.execute("set global wsrep_desync=OFF")
+                execute_wsrep_desync_off(c)
                 return
+
             time.sleep(1)
+
         log.debug('Timeout expired. Disabling wsrep_desync')
-        c.execute("set global wsrep_desync=OFF")
+
+        execute_wsrep_desync_off_on_timeout(c)
+
     except MySQLdb.Error as err:
         log.error(err)
     except TypeError:

@@ -1,10 +1,12 @@
 from ConfigParser import ConfigParser
+import logging
+import MySQLdb
 import mock as mock
 import pytest
 import time
 from twindb_backup import delete_local_files, get_directories_to_backup, \
     get_timeout
-from twindb_backup.backup import run_backup_job
+from twindb_backup.backup import run_backup_job, disable_wsrep_desync
 
 __author__ = 'aleks'
 
@@ -134,3 +136,27 @@ run_yearly=yes
 
     run_backup_job(cparser, 'hourly', lock_file=lock_file)
     mock_backup_everything.assert_called_once_with('hourly', cparser)
+
+
+@mock.patch('twindb_backup.backup.execute_wsrep_desync_off')
+@mock.patch('twindb_backup.backup.time')
+@mock.patch.object(MySQLdb, 'connect')
+def test_disable_wsrep_desync(mock_connect, mock_time,
+                              mock_execute_wsrep_desync_off):
+    logging.basicConfig()
+
+    mock_cursor = mock.Mock()
+    mock_cursor.fetchone.return_value = ('wsrep_local_recv_queue', '0')
+
+    mock_db = mock.Mock()
+    mock_db.cursor.return_value = mock_cursor
+
+    mock_connect.return_value = mock_db
+
+    mock_time.time.side_effect = [
+        1, 2, 901
+    ]
+
+    disable_wsrep_desync('foo')
+
+    mock_execute_wsrep_desync_off.assert_called_once_with(mock_cursor)
