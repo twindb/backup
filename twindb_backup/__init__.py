@@ -6,7 +6,7 @@ import os
 
 __author__ = 'TwinDB Development Team'
 __email__ = 'dev@twindb.com'
-__version__ = '2.1.7'
+__version__ = '2.1.8'
 LOCK_FILE = '/var/run/twindb-backup.lock'
 
 log = logging.getLogger(__name__)
