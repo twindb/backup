@@ -7,6 +7,7 @@ import os
 __author__ = 'TwinDB Development Team'
 __email__ = 'dev@twindb.com'
 __version__ = '2.1.5'
+LOCK_FILE = '/var/run/twindb-backup.lock'
 
 log = logging.getLogger(__name__)
 
@@ -55,3 +56,14 @@ def delete_local_files(dir_backups, keep_copies):
     for fl in get_files_to_delete(local_files, keep_copies):
         log.debug('Deleting: %s', fl)
         os.unlink(fl)
+
+
+def get_timeout(run_type):
+    timeouts = {
+        'hourly': 3600 / 2,
+        'daily': 24 * 3600 / 2,
+        'weekly': 7 * 24 * 3600 / 2,
+        'monthly': 30 * 24 * 3600 / 2,
+        'yearly': 365 * 24 * 3600 / 2
+    }
+    return timeouts[run_type]
