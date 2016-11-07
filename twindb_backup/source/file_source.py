@@ -63,7 +63,7 @@ class FileSource(BaseSource):
                                     '%s_copies' % run_type)
 
         backups_list = dst.list_files(prefix)
-        log.debug('Remote copied: %r', backups_list)
+        log.debug('Remote copies: %r', backups_list)
         for fl in get_files_to_delete(backups_list, keep_copies):
             log.debug('Deleting remote file %s' % fl)
             dst.delete(fl)
