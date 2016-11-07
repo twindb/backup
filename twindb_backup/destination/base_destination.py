@@ -75,7 +75,11 @@ class BaseDestination(object):
         return proc.returncode
 
     @abstractmethod
-    def list_files(self, prefix):
+    def list_files(self, prefix, recursive=False):
+        pass
+
+    @abstractmethod
+    def find_files(self, prefix):
         pass
 
     @abstractmethod

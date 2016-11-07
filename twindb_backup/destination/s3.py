@@ -37,11 +37,19 @@ class S3(BaseDestination):
         cmd = ["aws", "s3", "cp", "-", remote_name]
         return self._save(cmd, handler, keep_local, name)
 
-    def list_files(self, prefix):
+    def list_files(self, prefix, recursive=False):
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(self.bucket)
         log.debug('Listing s3://%s/%s', bucket.name, prefix)
         return sorted(bucket.objects.filter(Prefix=prefix))
+
+    def find_files(self, prefix):
+        s3 = boto3.resource('s3')
+        bucket = s3.Bucket(self.bucket)
+        log.debug('Listing s3://%s/%s', bucket.name, prefix)
+        files = ["s3://%s/%s" % (self.bucket, f.key)
+                 for f in sorted(bucket.objects.filter(Prefix=prefix))]
+        return files
 
     def delete(self, obj):
         s3 = boto3.resource('s3')

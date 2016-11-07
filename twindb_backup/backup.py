@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 import ConfigParser
+from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 
 import MySQLdb
 import time
+import signal
+import fcntl
+import errno
 
-from twindb_backup import log, get_directories_to_backup
+from twindb_backup import log, get_directories_to_backup, get_timeout, \
+    LOCK_FILE
 from twindb_backup.destination.s3 import S3
 from twindb_backup.destination.ssh import Ssh
 from twindb_backup.source.file_source import FileSource
@@ -168,3 +173,34 @@ def backup_everything(run_type, config):
     except ConfigParser.NoSectionError as err:
         log.error('Config file must define section "source": %s', err)
         exit(-1)
+
+
+@contextmanager
+def timeout(seconds):
+    def timeout_handler(signum, frame):
+        pass
+
+    original_handler = signal.signal(signal.SIGALRM, timeout_handler)
+
+    try:
+        signal.alarm(seconds)
+        yield
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, original_handler)
+
+
+def run_backup_job(cfg, run_type, lock_file=LOCK_FILE):
+    with timeout(get_timeout(run_type)):
+        try:
+            fd = open(lock_file, 'w')
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            log.debug(run_type)
+            if cfg.getboolean('intervals', "run_%s" % run_type):
+                backup_everything(run_type, cfg)
+            else:
+                log.debug('Not running because run_%s is no', run_type)
+        except IOError as err:
+            if err.errno != errno.EINTR:
+                raise err
+            log.error('Another instance of twindb-backup is running?')
