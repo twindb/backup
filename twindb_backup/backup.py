@@ -222,4 +222,8 @@ def run_backup_job(cfg, run_type, lock_file=LOCK_FILE):
         except IOError as err:
             if err.errno != errno.EINTR:
                 raise err
-            log.error('Another instance of twindb-backup is running?')
+            msg = 'Another instance of twindb-backup is running?'
+            if run_type == 'hourly':
+                log.debug(msg)
+            else:
+                log.error(msg)
