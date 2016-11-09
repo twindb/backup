@@ -1,5 +1,7 @@
+from contextlib import contextmanager
 import os
 import boto3 as boto3
+from subprocess import Popen, PIPE
 from twindb_backup import log
 from twindb_backup.destination.base_destination import BaseDestination, \
     DestinationError
@@ -56,3 +58,28 @@ class S3(BaseDestination):
         bucket = s3.Bucket(self.bucket)
         log.debug('deleting {0}:{1}'.format(bucket.name, obj.key))
         obj.delete()
+
+    @contextmanager
+    def get_stream(self, path):
+        """
+        Get a PIPE handler with content of the backup copy streamed from
+        the destination
+        :return:
+        """
+        cmd = ["aws", "s3", "cp", path, "-"]
+        try:
+            log.debug('Running %s', " ".join(cmd))
+            proc = Popen(cmd, stderr=PIPE, stdout=PIPE)
+
+            yield proc.stdout
+
+            cout, cerr = proc.communicate()
+            if proc.returncode:
+                log.error('Failed to read from %s: %s' % (path, cerr))
+                exit(1)
+            else:
+                log.debug('Successfully streamed %s', path)
+
+        except OSError as err:
+            log.error('Failed to run %s: %s', cmd, err)
+            exit(1)
