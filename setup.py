@@ -12,16 +12,15 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = [
-    'Click>=6.0', 'boto3', 'mysql'
-]
+requirements = [str(ir.req) for ir in
+                parse_requirements('requirements.txt', session=False)]
 
 test_requirements = [str(ir.req) for ir in
                      parse_requirements('requirements_dev.txt', session=False)]
 
 setup(
     name='twindb-backup',
-    version='2.1.9',
+    version='2.2.0',
     description="TwinDB Backup tool for files, MySQL et al.",
     long_description=readme + '\n\n' + history,
     author="TwinDB Development Team",

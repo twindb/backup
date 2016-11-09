@@ -76,7 +76,7 @@ password=qwerty
     'percona-xtrabackup',
     'python-pip',
     'gcc', 'python-devel', 'zlib-devel', 'openssl-devel',
-    'rpm-build']
+    'rpm-build','docker']
 
   package { $packages:
     ensure => installed,
@@ -110,4 +110,10 @@ password=qwerty
     before => File["/home/${profile::base::user}/.my.cnf"],
     unless => 'mysql -e "SHOW GRANTS FOR dba@localhost"'
   }
+
+    service { 'docker':
+        ensure => running,
+        enable => true,
+        require => Package['docker']
+    }
 }

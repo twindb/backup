@@ -125,10 +125,12 @@ rhel:
 docker-rpm: ## Build rpm in a docker container
 	sudo docker run -v `pwd`:/twindb-backup:rw  centos:centos${RHEL} /bin/bash -c \
 		"yum -y install epel-release ; \
-		yum -y install 'gcc' 'python-devel' 'zlib-devel' 'openssl-devel' \
+		for i in 1 2 3 4 5; do \
+			yum -y install 'gcc' 'python-devel' 'zlib-devel' 'openssl-devel' \
 			rpm-build make python-setuptools python-pip \
 			/usr/bin/mysql_config \
-			/usr/include/mysql/my_config.h; \
+			/usr/include/mysql/my_config.h && break ; \
+		done ; \
 		cp -Rv /twindb-backup /tmp/ ; \
 		make -C /tmp/twindb-backup test rpm ; \
 		cp -R /tmp/twindb-backup/build /twindb-backup/"
