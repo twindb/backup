@@ -5,6 +5,7 @@ import click
 from twindb_backup import setup_logging, log
 from twindb_backup.backup import run_backup_job
 from twindb_backup.ls import list_available_backups
+from twindb_backup.restore import restore_from_mysql, restore_from_file
 
 pass_cfg = click.make_pass_decorator(ConfigParser, ensure=True)
 
@@ -46,8 +47,38 @@ def ls(cfg):
     list_available_backups(cfg)
 
 
-@main.command()
+@main.group('restore')
 @pass_cfg
 def restore(cfg):
     """Restore from backup"""
-    log.debug('%r', cfg)
+    log.debug('restore: %r', cfg)
+
+
+@restore.command('mysql')
+@click.argument('backup_copy', required=False)
+@click.option('--dst', help='Directory where to restore the backup copy',
+              default='.', show_default=True)
+@pass_cfg
+def restore_mysql(cfg, dst, backup_copy):
+    """Restore from mysql backup"""
+    log.debug('mysql: %r', cfg)
+    if backup_copy:
+        restore_from_mysql(cfg, backup_copy, dst)
+    else:
+        log.info('No backup copy specified. Choose one from below:')
+        list_available_backups(cfg)
+
+
+@restore.command('file')
+@click.argument('backup_copy', required=False)
+@click.option('--dst', help='Directory where to restore the backup copy',
+              default='.', show_default=True)
+@pass_cfg
+def restore_file(cfg, dst, backup_copy):
+    """Restore from file backup"""
+    log.debug('file: %r', cfg)
+    if backup_copy:
+        restore_from_file(cfg, backup_copy, dst)
+    else:
+        log.info('No backup copy specified. Choose one from below:')
+        list_available_backups(cfg)
