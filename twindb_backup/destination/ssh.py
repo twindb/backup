@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import os
 from subprocess import Popen, PIPE
 from twindb_backup import log
@@ -83,3 +84,28 @@ class Ssh(BaseDestination):
         log.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd)
         proc.communicate()
+
+    @contextmanager
+    def get_stream(self, path):
+        """
+        Get a PIPE handler with content of the backup copy streamed from
+        the destination
+        :return:
+        """
+        cmd = self._ssh_command + ["cat %s" % path]
+        try:
+            log.debug('Running %s', " ".join(cmd))
+            proc = Popen(cmd, stderr=PIPE, stdout=PIPE)
+
+            yield proc.stdout
+
+            cout, cerr = proc.communicate()
+            if proc.returncode:
+                log.error('Failed to read from %s: %s' % (path, cerr))
+                exit(1)
+            else:
+                log.debug('Successfully streamed %s', path)
+
+        except OSError as err:
+            log.error('Failed to run %s: %s', cmd, err)
+            exit(1)

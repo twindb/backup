@@ -1,3 +1,0 @@
-Click>=6.0
-boto3
-mysql
