@@ -85,3 +85,45 @@ class BaseDestination(object):
     @abstractmethod
     def delete(self, obj):
         pass
+
+    @property
+    def _empty_status(self):
+        return {
+            'hourly': {},
+            'daily': {},
+            'weekly': {},
+            'monthly': {},
+            'yearly': {}
+        }
+
+    def status(self, status=None):
+        """
+        Read or save backup status. Status is a dictionary with available
+        backups and their properties. If status is None the function
+        will read status from the remote storage.
+        Otherwise it will store the status remotely.
+
+        :param status: dictionary like
+            {
+                'hourly': [
+                    {
+                        'filename': '/remote/path',
+                        'binlog': 'mysql-bin.000001',
+                        'position': 43670
+                    }
+                ]
+            }
+        :return: dictionary with the status
+        """
+        if status:
+            return self._write_status(status)
+        else:
+            return self._read_status()
+
+    @abstractmethod
+    def _write_status(self, status):
+        pass
+
+    @abstractmethod
+    def _read_status(self):
+        pass

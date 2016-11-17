@@ -1,8 +1,12 @@
+import base64
 from contextlib import contextmanager
+import json
 import os
+import socket
 from subprocess import Popen, PIPE
 from twindb_backup import log
-from twindb_backup.destination.base_destination import BaseDestination
+from twindb_backup.destination.base_destination import BaseDestination, \
+    DestinationError
 
 
 class Ssh(BaseDestination):
@@ -23,6 +27,10 @@ class Ssh(BaseDestination):
                              '-p', str(self.port),
                              '-i', key,
                              self.host]
+        self.status_path = "{remote_path}/{hostname}/status".format(
+            remote_path=self.remote_path,
+            hostname=socket.gethostname()
+        )
 
     def save(self, handler, name, keep_local=None):
         """
@@ -72,7 +80,7 @@ class Ssh(BaseDestination):
 
     def find_files(self, prefix):
 
-        cmd = self._ssh_command + ["find %s*" % prefix]
+        cmd = self._ssh_command + ["find %s* -type f" % prefix]
         log.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
         cout, cerr = proc.communicate()
@@ -108,4 +116,62 @@ class Ssh(BaseDestination):
 
         except OSError as err:
             log.error('Failed to run %s: %s', cmd, err)
+            exit(1)
+
+    def _write_status(self, status):
+        raw_status = base64.b64encode(json.dumps(status))
+        cmd = self._ssh_command + [
+            "echo {raw_status} > "
+            "{status_file}".format(raw_status=raw_status,
+                                   status_file=self.status_path)
+        ]
+        proc = Popen(cmd)
+        cout, cerr = proc.communicate()
+        if proc.returncode:
+            log.error('Failed to write backup status')
+            log.error(cerr)
+            exit(1)
+        return status
+
+    def _read_status(self):
+        if not self._status_exists():
+            return self._empty_status
+        else:
+            cmd = self._ssh_command + ["cat %s" % self.status_path]
+            proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+            cout, cerr = proc.communicate()
+            if proc.returncode:
+                log.error('Failed to read backup status: %d: %s' % (
+                    proc.returncode,
+                    cerr
+                ))
+                exit(1)
+            return json.loads(base64.b64decode(cout))
+
+    def _status_exists(self):
+        cmd = self._ssh_command + \
+              ["bash -c 'if test -s %s; "
+               "then echo exists; "
+               "else echo not_exists; "
+               "fi'" % self.status_path]
+
+        try:
+            log.debug('Running %r' % cmd)
+            proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+            cout, cerr = proc.communicate()
+            if proc.returncode:
+                log.error('Failed to read backup status: %d: %s' % (
+                    proc.returncode,
+                    cerr
+                ))
+                exit(1)
+            if cout.strip() == 'exists':
+                return True
+            elif cout.strip() == 'not_exists':
+                return False
+            else:
+                raise DestinationError('Unrecognized response: %s' % cout)
+
+        except OSError as err:
+            log.error('Failed to run %s: %s' % (" ".join(cmd), err))
             exit(1)

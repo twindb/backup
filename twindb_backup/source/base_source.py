@@ -24,7 +24,7 @@ class BaseSource(object):
         """
 
     def get_prefix(self):
-        return "{run_type}/{hostname}".format(
+        return "{hostname}/{run_type}".format(
             run_type=self.run_type,
             hostname=socket.gethostname()
         )

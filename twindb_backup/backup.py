@@ -30,7 +30,6 @@ def backup_files(run_type, config):
                 keep_local = None
 
             dst.save(stream, src.get_name(), keep_local=keep_local)
-
         src.apply_retention_policy(dst, config, run_type)
 
 
@@ -103,8 +102,9 @@ def backup_mysql(run_type, config):
         if config.getboolean('source', 'backup_mysql'):
             mysql_defaults_file = config.get('mysql', 'mysql_defaults_file')
             desync_enabled = enable_wsrep_desync(mysql_defaults_file)
-            src = MySQLSource(mysql_defaults_file, run_type)
             dst = get_destination(config)
+
+            src = MySQLSource(mysql_defaults_file, run_type, config, dst)
             dst_name = src.get_name()
 
             with src.get_stream() as stream:
@@ -118,6 +118,19 @@ def backup_mysql(run_type, config):
 
             if desync_enabled:
                 disable_wsrep_desync(mysql_defaults_file)
+
+            status = dst.status()
+            src_name = src.get_name()
+            status[run_type][src_name] = {
+                'binlog': src.binlog_coordinate[0],
+                'position': src.binlog_coordinate[1],
+                'lsn': src.lsn
+            }
+
+            if src.incremental:
+                status[run_type][src_name]['parent'] = src.parent
+
+            dst.status(status)
 
             src.apply_retention_policy(dst, config, run_type)
     except ConfigParser.NoOptionError:
