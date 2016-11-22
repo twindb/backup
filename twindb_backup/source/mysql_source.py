@@ -200,7 +200,7 @@ class MySQLSource(BaseSource):
         log.debug('prefix = %s' % prefix)
         log.debug('file   = %s' % fl)
         prefix = prefix.rstrip('/')
-        ref_filename = fl.replace(prefix + '/', '', 1)
+        ref_filename = str(fl).replace(prefix + '/', '', 1)
         result_status = status
         try:
             del(result_status[self.run_type][ref_filename])
