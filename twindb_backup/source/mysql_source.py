@@ -123,8 +123,7 @@ class MySQLSource(BaseSource):
                     filename = line.split()[4].strip(",'")
                     position = int(line.split()[6].strip(",'"))
                     return filename, position
-        raise MySQLSourceError('Could not find binlog position '
-                               'in XtraBackup error output %s' % err_log)
+        return None, None
 
     @staticmethod
     def get_lsn(err_log):
