@@ -1,7 +1,11 @@
+import base64
 from contextlib import contextmanager
+import json
 import os
+import socket
 import boto3 as boto3
 from subprocess import Popen, PIPE
+from botocore.exceptions import ClientError
 from twindb_backup import log
 from twindb_backup.destination.base_destination import BaseDestination, \
     DestinationError
@@ -22,6 +26,9 @@ class S3(BaseDestination):
         os.environ["AWS_ACCESS_KEY_ID"] = self.access_key_id
         os.environ["AWS_SECRET_ACCESS_KEY"] = self.secret_access_key
         os.environ["AWS_DEFAULT_REGION"] = self.default_region
+        self.status_path = "{hostname}/status".format(
+            hostname=socket.gethostname()
+        )
 
     def save(self, handler, name, keep_local=None):
         """
@@ -83,3 +90,34 @@ class S3(BaseDestination):
         except OSError as err:
             log.error('Failed to run %s: %s', cmd, err)
             exit(1)
+
+    def _write_status(self, status):
+        raw_status = base64.b64encode(json.dumps(status))
+
+        s3 = boto3.resource('s3')
+        status_object = s3.Object(self.bucket, self.status_path)
+        status_object.put(Body=raw_status)
+
+        return status
+
+    def _read_status(self):
+        if not self._status_exists():
+            return self._empty_status
+        else:
+            s3 = boto3.resource('s3')
+            status_object = s3.Object(self.bucket, self.status_path)
+            content = status_object.get()['Body'].read()
+            return json.loads(base64.b64decode(content))
+
+    def _status_exists(self):
+        s3 = boto3.resource('s3')
+        status_object = s3.Object(self.bucket, self.status_path)
+        try:
+            if status_object.content_length > 0:
+                return True
+        except ClientError as err:
+            if err.response['ResponseMetadata']['HTTPStatusCode'] == 404:
+                return False
+            else:
+                raise
+        return False

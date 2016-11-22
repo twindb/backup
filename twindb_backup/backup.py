@@ -11,6 +11,7 @@ import errno
 
 from twindb_backup import log, get_directories_to_backup, get_timeout, \
     LOCK_FILE
+from twindb_backup.destination.local import Local
 from twindb_backup.source.file_source import FileSource
 from twindb_backup.source.mysql_source import MySQLSource
 from twindb_backup.util import get_destination
@@ -30,7 +31,6 @@ def backup_files(run_type, config):
                 keep_local = None
 
             dst.save(stream, src.get_name(), keep_local=keep_local)
-
         src.apply_retention_policy(dst, config, run_type)
 
 
@@ -103,15 +103,17 @@ def backup_mysql(run_type, config):
         if config.getboolean('source', 'backup_mysql'):
             mysql_defaults_file = config.get('mysql', 'mysql_defaults_file')
             desync_enabled = enable_wsrep_desync(mysql_defaults_file)
-            src = MySQLSource(mysql_defaults_file, run_type)
             dst = get_destination(config)
+
+            src = MySQLSource(mysql_defaults_file, run_type, config, dst)
             dst_name = src.get_name()
 
+            try:
+                keep_local = config.get('destination', 'keep_local_path')
+            except ConfigParser.NoOptionError:
+                keep_local = None
+
             with src.get_stream() as stream:
-                try:
-                    keep_local = config.get('destination', 'keep_local_path')
-                except ConfigParser.NoOptionError:
-                    keep_local = None
 
                 if dst.save(stream, dst_name, keep_local=keep_local):
                     log.error('Failed to save backup copy %s', dst_name)
@@ -119,7 +121,25 @@ def backup_mysql(run_type, config):
             if desync_enabled:
                 disable_wsrep_desync(mysql_defaults_file)
 
-            src.apply_retention_policy(dst, config, run_type)
+            status = dst.status()
+            src_name = src.get_name()
+            status[run_type][src_name] = {
+                'binlog': src.binlog_coordinate[0],
+                'position': src.binlog_coordinate[1],
+                'lsn': src.lsn,
+                'type': src.type
+            }
+
+            if src.incremental:
+                status[run_type][src_name]['parent'] = src.parent
+
+            src.apply_retention_policy(dst, config, run_type, status)
+
+            dst.status(status)
+            if keep_local:
+                dst = Local(keep_local)
+                dst.status(status)
+
     except ConfigParser.NoOptionError:
         log.debug('Not backing up MySQL')
 

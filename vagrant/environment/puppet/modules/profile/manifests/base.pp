@@ -66,8 +66,7 @@ password=qwerty
   }
 
     package { 'epel-release':
-        provider => rpm,
-        source => 'http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-8.noarch.rpm'
+        ensure => installed
     }
 
   $packages = [ 'vim-enhanced', 'nmap-ncat',
@@ -116,4 +115,5 @@ password=qwerty
         enable => true,
         require => Package['docker']
     }
+
 }

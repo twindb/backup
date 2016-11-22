@@ -3,12 +3,31 @@ import logging
 import MySQLdb
 import mock as mock
 import pytest
-import time
 from twindb_backup import delete_local_files, get_directories_to_backup, \
     get_timeout
 from twindb_backup.backup import run_backup_job, disable_wsrep_desync
+from twindb_backup.source.mysql_source import MySQLSource
 
-__author__ = 'aleks'
+
+@pytest.fixture
+def innobackupex_error_log():
+    return """
+161122 03:08:50 Executing FLUSH NO_WRITE_TO_BINLOG ENGINE LOGS...
+xtrabackup: The latest check point (for incremental): '19747438'
+xtrabackup: Stopping log copying thread.
+.161122 03:08:50 >> log scanned up to (19747446)
+
+161122 03:08:50 Executing UNLOCK BINLOG
+161122 03:08:50 Executing UNLOCK TABLES
+161122 03:08:50 All tables unlocked
+161122 03:08:50 Backup created in directory '/twindb_backup/.'
+MySQL binlog position: filename 'mysql-bin.000001', position '80960', GTID of the last change '2e8afc7a-af69-11e6-8aaf-080027f6b007:1-178'
+161122 03:08:50 [00] Streaming backup-my.cnf
+161122 03:08:50 [00]        ...done
+161122 03:08:50 [00] Streaming xtrabackup_info
+161122 03:08:50 [00]        ...done
+xtrabackup: Transaction log of lsn (19747438) to (19747446) was copied.
+161122 03:08:50 completed OK!    """
 
 
 @pytest.mark.parametrize('keep, calls', [
@@ -113,7 +132,8 @@ def test_get_timeout(run_type, timeout):
 
 @mock.patch('twindb_backup.backup.backup_everything')
 @mock.patch('twindb_backup.backup.get_timeout')
-def test_run_backup_job_gets_lock(mock_get_timeout, mock_backup_everything, tmpdir):
+def test_run_backup_job_gets_lock(mock_get_timeout, mock_backup_everything,
+                                  tmpdir):
     config_content = """
 [source]
 backup_dirs=/etc /root /home
@@ -160,3 +180,16 @@ def test_disable_wsrep_desync(mock_connect, mock_time,
     disable_wsrep_desync('foo')
 
     mock_execute_wsrep_desync_off.assert_called_once_with(mock_cursor)
+
+
+def test_get_binlog_coordinates(innobackupex_error_log, tmpdir):
+    err_log = tmpdir.join('err.log')
+    err_log.write(innobackupex_error_log)
+    assert MySQLSource.get_binlog_coordinates(str(err_log)) \
+        == ('mysql-bin.000001', 80960)
+
+
+def test_get_lsn(innobackupex_error_log, tmpdir):
+    err_log = tmpdir.join('err.log')
+    err_log.write(innobackupex_error_log)
+    assert MySQLSource.get_lsn(str(err_log)) == 19747438

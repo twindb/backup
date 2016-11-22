@@ -25,6 +25,7 @@ Requires:   python >= 2.6.0
 Requires:   python-click
 Requires:   MySQL-python
 Requires:   python2-boto3
+Requires:   python-psutil
 
 Requires:   chkconfig
 
