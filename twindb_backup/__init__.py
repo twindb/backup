@@ -8,6 +8,7 @@ __author__ = 'TwinDB Development Team'
 __email__ = 'dev@twindb.com'
 __version__ = '2.2.0'
 LOCK_FILE = '/var/run/twindb-backup.lock'
+INTERVALS = ['hourly', 'daily', 'weekly', 'monthly', 'yearly']
 
 log = logging.getLogger(__name__)
 

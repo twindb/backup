@@ -1,17 +1,28 @@
+import ConfigParser
+import json
 import shlex
 from subprocess import Popen, PIPE
+import os
+import tempfile
+import errno
 import psutil
-from twindb_backup import log
+from twindb_backup import log, INTERVALS
+from twindb_backup.destination.base_destination import DestinationError
+from twindb_backup.destination.local import Local
 from twindb_backup.util import get_destination, mkdir_p
 
-__author__ = 'aleks'
+
+def get_backup_type(status, key):
+    log.debug('status = %s' % json.dumps(status, indent=4, sort_keys=True))
+    log.debug('key = %s' % key)
+    for run_type in INTERVALS:
+        if key in status[run_type]:
+            return status[run_type][key]['type']
+
+    raise DestinationError('Unknown backup type for backup copy %s' % key)
 
 
-def restore_from_mysql(config, backup_copy, dst_dir):
-    log.info('Restoring %s in %s' % (backup_copy, dst_dir))
-    mkdir_p(dst_dir)
-    dst = get_destination(config)
-
+def restore_from_mysql_full(dst, backup_copy, dst_dir, redo_only=False):
     with dst.get_stream(backup_copy) as handler:
         try:
             gunzip_cmd = "gunzip"
@@ -58,8 +69,12 @@ def restore_from_mysql(config, backup_copy, dst_dir):
     try:
         xtrabackup_cmd = ['innobackupex',
                           '--use-memory=%d' % (mem_usage.available/2),
-                          '--apply-log',
-                          dst_dir]
+                          '--apply-log']
+        if redo_only:
+            xtrabackup_cmd += ['--redo-only']
+        xtrabackup_cmd += [dst_dir]
+
+        log.debug('Running %s' % ' '.join(xtrabackup_cmd))
         xtrabackup_proc = Popen(xtrabackup_cmd,
                                 stdout=None,
                                 stderr=None)
@@ -75,6 +90,108 @@ def restore_from_mysql(config, backup_copy, dst_dir):
         log.error('Failed to prepare backup in %s: %s', dst_dir, err)
         exit(1)
 
+
+def restore_from_mysql_incremental(dst, backup_copy, dst_dir):
+    full_copy = dst.get_full_copy_name(backup_copy)
+    restore_from_mysql_full(dst, full_copy, dst_dir, redo_only=True)
+    inc_dir = tempfile.mkdtemp()
+    try:
+        with dst.get_stream(backup_copy) as handler:
+            try:
+                gunzip_cmd = "gunzip"
+                log.debug('Running %s', gunzip_cmd)
+                gunzip_proc = Popen(shlex.split(gunzip_cmd),
+                                    stdin=handler,
+                                    stdout=PIPE,
+                                    stderr=PIPE,
+                                    cwd=inc_dir)
+                try:
+                    xbstream_cmd = ['xbstream', '-x']
+                    xbstream_proc = Popen(xbstream_cmd,
+                                          stdin=gunzip_proc.stdout,
+                                          stdout=PIPE,
+                                          stderr=PIPE,
+                                          cwd=inc_dir)
+                    cout, cerr = xbstream_proc.communicate()
+                    ret = xbstream_proc.returncode
+                    if ret:
+                        log.error('%r exited with code %d'
+                                  % (xbstream_cmd, ret))
+                        if cout:
+                            log.error('STDOUT: %s' % cout)
+                        if cerr:
+                            log.error('STDERR: %s' % cerr)
+                        exit(1)
+
+                except OSError as err:
+                    log.error('Failed to unarchive %s: %s', backup_copy, err)
+                    exit(1)
+                cout, cerr = gunzip_proc.communicate()
+                ret = gunzip_proc.returncode
+                if ret:
+                    log.error('%s exited with code %d' % (gunzip_cmd, ret))
+                    if cout:
+                        log.error('STDOUT: %s' % cout)
+                    if cerr:
+                        log.error('STDERR: %s' % cerr)
+                    exit(1)
+            except OSError as err:
+                log.error('Failed to decompress %s: %s', backup_copy, err)
+                exit(1)
+
+        mem_usage = psutil.virtual_memory()
+        try:
+            xtrabackup_cmd = ['innobackupex',
+                              '--use-memory=%d' % (mem_usage.available / 2),
+                              '--apply-log', dst_dir, '--incremental-dir',
+                              inc_dir]
+            log.debug('Running %s' % ' '.join(xtrabackup_cmd))
+            xtrabackup_proc = Popen(xtrabackup_cmd,
+                                    stdout=None,
+                                    stderr=None)
+            xtrabackup_proc.communicate()
+            ret = xtrabackup_proc.returncode
+            if ret:
+                log.error('%s exited with code %d' %
+                          (
+                              " ".join(xtrabackup_cmd),
+                              ret
+                          ))
+        except OSError as err:
+            log.error('Failed to prepare backup in %s: %s', dst_dir, err)
+            exit(1)
+    finally:
+        try:
+            pass
+        except OSError as exc:
+            if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
+                raise  # re-raise exception
+
+
+def restore_from_mysql(config, backup_copy, dst_dir):
+    log.info('Restoring %s in %s' % (backup_copy, dst_dir))
+    mkdir_p(dst_dir)
+
+    try:
+        keep_local_path = config.get('destination', 'keep_local_path')
+        if os.path.exists(backup_copy) \
+                and backup_copy.startswith(keep_local_path):
+            dst = Local(keep_local_path)
+        else:
+            dst = get_destination(config)
+    except ConfigParser.NoOptionError:
+        dst = get_destination(config)
+
+    remote_path = dst.remote_path.rstrip('/')
+    log.debug('remote_path = %s' % remote_path)
+    key = backup_copy.replace(remote_path + '/', '', 1)
+    status = dst.status()
+
+    if get_backup_type(status, key) == "full":
+        restore_from_mysql_full(dst, backup_copy, dst_dir)
+    else:
+        restore_from_mysql_incremental(dst, backup_copy, dst_dir)
+
     log.info('Successfully restored %s in %s' % (backup_copy, dst_dir))
     log.info('Now copy content of %s to MySQL datadir: '
              'cp -R %s/* /var/lib/mysql/' % (dst_dir, dst_dir))
@@ -87,7 +204,12 @@ def restore_from_mysql(config, backup_copy, dst_dir):
 def restore_from_file(config, backup_copy, dst_dir):
     log.info('Restoring %s in %s' % (backup_copy, dst_dir))
     mkdir_p(dst_dir)
-    dst = get_destination(config)
+
+    if os.path.exists(backup_copy):
+        dst = Local(backup_copy)
+    else:
+        dst = get_destination(config)
+
     cmd = "tar zvxf -"
     with dst.get_stream(backup_copy) as handler:
         try:

@@ -12,18 +12,22 @@ from twindb_backup.source.mysql_source import MySQLSource
 @pytest.fixture
 def innobackupex_error_log():
     return """
-161111 03:59:08 Executing UNLOCK BINLOG
-161111 03:59:08 Executing UNLOCK TABLES
-161111 03:59:08 All tables unlocked
-161111 03:59:08 Backup created in directory '/twindb_backup/.'
-MySQL binlog position: filename 'mysql-bin.000001', position '43670', GTID of the last change 'd4e19a54-a7c1-11e6-98c6-080027f6b007:1-97'
-161111 03:59:08 [00] Streaming backup-my.cnf
-161111 03:59:08 [00]        ...done
-161111 03:59:08 [00] Streaming xtrabackup_info
-161111 03:59:08 [00]        ...done
-xtrabackup: Transaction log of lsn (19629228) to (19629236) was copied.
-161111 03:59:08 completed OK!
-    """
+161122 03:08:50 Executing FLUSH NO_WRITE_TO_BINLOG ENGINE LOGS...
+xtrabackup: The latest check point (for incremental): '19747438'
+xtrabackup: Stopping log copying thread.
+.161122 03:08:50 >> log scanned up to (19747446)
+
+161122 03:08:50 Executing UNLOCK BINLOG
+161122 03:08:50 Executing UNLOCK TABLES
+161122 03:08:50 All tables unlocked
+161122 03:08:50 Backup created in directory '/twindb_backup/.'
+MySQL binlog position: filename 'mysql-bin.000001', position '80960', GTID of the last change '2e8afc7a-af69-11e6-8aaf-080027f6b007:1-178'
+161122 03:08:50 [00] Streaming backup-my.cnf
+161122 03:08:50 [00]        ...done
+161122 03:08:50 [00] Streaming xtrabackup_info
+161122 03:08:50 [00]        ...done
+xtrabackup: Transaction log of lsn (19747438) to (19747446) was copied.
+161122 03:08:50 completed OK!    """
 
 
 @pytest.mark.parametrize('keep, calls', [
@@ -182,10 +186,10 @@ def test_get_binlog_coordinates(innobackupex_error_log, tmpdir):
     err_log = tmpdir.join('err.log')
     err_log.write(innobackupex_error_log)
     assert MySQLSource.get_binlog_coordinates(str(err_log)) \
-        == ('mysql-bin.000001', 43670)
+        == ('mysql-bin.000001', 80960)
 
 
 def test_get_lsn(innobackupex_error_log, tmpdir):
     err_log = tmpdir.join('err.log')
     err_log.write(innobackupex_error_log)
-    assert MySQLSource.get_lsn(str(err_log)) == 19629236
+    assert MySQLSource.get_lsn(str(err_log)) == 19747438

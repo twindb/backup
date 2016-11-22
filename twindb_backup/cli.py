@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from ConfigParser import ConfigParser
+import json
 import os
 import click
 from twindb_backup import setup_logging, log
 from twindb_backup.backup import run_backup_job
 from twindb_backup.ls import list_available_backups
 from twindb_backup.restore import restore_from_mysql, restore_from_file
+from twindb_backup.util import get_destination
 
 pass_cfg = click.make_pass_decorator(ConfigParser, ensure=True)
 
@@ -47,6 +49,14 @@ def ls(cfg):
     list_available_backups(cfg)
 
 
+@main.command()
+@pass_cfg
+def status(cfg):
+    """Print backups status"""
+    dst = get_destination(cfg)
+    print(json.dumps(dst.status(), indent=4, sort_keys=True))
+
+
 @main.group('restore')
 @pass_cfg
 def restore(cfg):
@@ -62,7 +72,9 @@ def restore(cfg):
 def restore_mysql(cfg, dst, backup_copy):
     """Restore from mysql backup"""
     log.debug('mysql: %r', cfg)
+
     if backup_copy:
+        ensure_empty(dst)
         restore_from_mysql(cfg, backup_copy, dst)
     else:
         log.info('No backup copy specified. Choose one from below:')
@@ -77,8 +89,22 @@ def restore_mysql(cfg, dst, backup_copy):
 def restore_file(cfg, dst, backup_copy):
     """Restore from file backup"""
     log.debug('file: %r', cfg)
+
     if backup_copy:
+        ensure_empty(dst)
         restore_from_file(cfg, backup_copy, dst)
     else:
         log.info('No backup copy specified. Choose one from below:')
         list_available_backups(cfg)
+
+
+def ensure_empty(path):
+    try:
+        if os.listdir(path):
+            log.error('Directory %s is not empty' % path)
+            exit(1)
+    except OSError as err:
+        if err.errno == 2:  # OSError: [Errno 2] No such file or directory
+            pass
+        else:
+            raise

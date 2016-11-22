@@ -5,7 +5,7 @@ from contextlib import contextmanager
 
 from subprocess import Popen, PIPE
 
-from twindb_backup import log
+from twindb_backup import log, INTERVALS
 
 
 class DestinationError(Exception):
@@ -127,3 +127,18 @@ class BaseDestination(object):
     @abstractmethod
     def _read_status(self):
         pass
+
+    @abstractmethod
+    def _status_exists(self):
+        pass
+
+    def get_full_copy_name(self, file_path):
+        remote_path = self.remote_path.rstrip('/')
+        log.debug('remote_path = %s' % remote_path)
+        key = file_path.replace(remote_path + '/', '', 1)
+        for run_type in INTERVALS:
+            if key in self.status()[run_type]:
+                parent = self.status()[run_type][key]['parent']
+                return "%s/%s" % (self.remote_path, parent)
+
+        raise DestinationError('Failed to find parent of %s' % file_path)

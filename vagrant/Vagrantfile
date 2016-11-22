@@ -5,11 +5,6 @@ nodes = [
       :ip         => '192.168.35.250',
       :box        => 'bento/centos-7.1',
       :ram        => 3072
-    },
-    { :hostname   => 'slave',
-      :ip         => '192.168.35.251',
-      :box        => 'bento/centos-7.1',
-      :ram        => 3072
     }
 ]
 

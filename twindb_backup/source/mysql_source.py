@@ -90,7 +90,7 @@ class MySQLSource(BaseSource):
         """
         return self._get_name('mysql')
 
-    def apply_retention_policy(self, dst, config, run_type):
+    def apply_retention_policy(self, dst, config, run_type, status):
 
         if dst.remote_path:
             remote_path = dst.remote_path + '/'
@@ -109,8 +109,11 @@ class MySQLSource(BaseSource):
         for fl in get_files_to_delete(objects, keep_copies):
             log.debug('Deleting remote file %s' % fl)
             dst.delete(fl)
+            status = self._delete_from_status(status, remote_path, fl)
 
         self._delete_local_files('mysql', config)
+
+        return status
 
     @staticmethod
     def get_binlog_coordinates(err_log):
@@ -132,8 +135,10 @@ class MySQLSource(BaseSource):
         """
         with open(err_log) as f:
             for line in f:
-                if line.startswith('xtrabackup: Transaction log of lsn'):
-                    lsn = line.split()[7].strip("()")
+                pattern = 'xtrabackup: ' \
+                          'The latest check point (for incremental):'
+                if line.startswith(pattern):
+                    lsn = line.split()[7].strip("'")
                     return int(lsn)
         raise MySQLSourceError('Could not find LSN'
                                ' in XtraBackup error output %s' % err_log)
@@ -152,15 +157,21 @@ class MySQLSource(BaseSource):
 
         :return: "full" or "incremental"
         """
-        cmp = ['hourly', 'daily', 'weekly', 'monthly', 'yearly']
         try:
             full_backup = self.config.get('mysql', 'full_backup')
-            if cmp.index(full_backup) <= cmp.index(self.run_type):
+            if self._intervals.index(full_backup) <= \
+                    self._intervals.index(self.run_type):
+                return "full"
+            elif not self._parent_exists():
                 return "full"
             else:
                 return "incremental"
         except (NoOptionError, ValueError):
             return 'full'
+
+    @property
+    def type(self):
+        return self._get_backup_type()
 
     @property
     def status(self):
@@ -175,3 +186,25 @@ class MySQLSource(BaseSource):
     def parent_lsn(self):
         full_backup = self.config.get('mysql', 'full_backup')
         return self.status[full_backup][self.parent]['lsn']
+
+    def _parent_exists(self):
+        full_backup = self.config.get('mysql', 'full_backup')
+        full_backup_index = self._intervals.index(full_backup)
+        for i in xrange(full_backup_index, len(self._intervals)):
+            if len(self.dst.status()[self._intervals[i]]) > 0:
+                return True
+
+        return False
+
+    def _delete_from_status(self, status, prefix, fl):
+        log.debug('status = %r' % status)
+        log.debug('prefix = %s' % prefix)
+        log.debug('file   = %s' % fl)
+        prefix = prefix.rstrip('/')
+        ref_filename = fl.replace(prefix + '/', '', 1)
+        result_status = status
+        try:
+            del(result_status[self.run_type][ref_filename])
+        except KeyError:
+            pass
+        return result_status

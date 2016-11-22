@@ -11,6 +11,7 @@ import errno
 
 from twindb_backup import log, get_directories_to_backup, get_timeout, \
     LOCK_FILE
+from twindb_backup.destination.local import Local
 from twindb_backup.source.file_source import FileSource
 from twindb_backup.source.mysql_source import MySQLSource
 from twindb_backup.util import get_destination
@@ -107,11 +108,12 @@ def backup_mysql(run_type, config):
             src = MySQLSource(mysql_defaults_file, run_type, config, dst)
             dst_name = src.get_name()
 
+            try:
+                keep_local = config.get('destination', 'keep_local_path')
+            except ConfigParser.NoOptionError:
+                keep_local = None
+
             with src.get_stream() as stream:
-                try:
-                    keep_local = config.get('destination', 'keep_local_path')
-                except ConfigParser.NoOptionError:
-                    keep_local = None
 
                 if dst.save(stream, dst_name, keep_local=keep_local):
                     log.error('Failed to save backup copy %s', dst_name)
@@ -124,15 +126,20 @@ def backup_mysql(run_type, config):
             status[run_type][src_name] = {
                 'binlog': src.binlog_coordinate[0],
                 'position': src.binlog_coordinate[1],
-                'lsn': src.lsn
+                'lsn': src.lsn,
+                'type': src.type
             }
 
             if src.incremental:
                 status[run_type][src_name]['parent'] = src.parent
 
-            dst.status(status)
+            src.apply_retention_policy(dst, config, run_type, status)
 
-            src.apply_retention_policy(dst, config, run_type)
+            dst.status(status)
+            if keep_local:
+                dst = Local(keep_local)
+                dst.status(status)
+
     except ConfigParser.NoOptionError:
         log.debug('Not backing up MySQL')
 
