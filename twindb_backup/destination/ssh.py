@@ -14,7 +14,7 @@ class Ssh(BaseDestination):
                  user='root',
                  remote_path=None):
         super(Ssh, self).__init__()
-        self.remote_path = remote_path
+        self.remote_path = remote_path.rstrip('/')
         self.user = user
         self.key = key
         self.port = port
