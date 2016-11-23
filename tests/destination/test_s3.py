@@ -14,3 +14,9 @@ def test_get_status_empty(mock_status_exists):
         'monthly': {},
         'yearly': {}
     }
+
+
+def test_basename():
+    dst = S3('bucketname', 'b', 'c')
+    assert dst.basename('s3://bucketname/some_dir/some_file.txt') == \
+        'some_dir/some_file.txt'

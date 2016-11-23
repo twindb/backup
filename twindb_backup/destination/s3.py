@@ -20,6 +20,7 @@ class S3(BaseDestination):
                  default_region='us-east-1'):
         super(S3, self).__init__()
         self.bucket = bucket
+        self.remote_path = 's3://{bucket}'.format(bucket=self.bucket)
         self.access_key_id = access_key_id
         self.secret_access_key = secret_access_key
         self.default_region = default_region

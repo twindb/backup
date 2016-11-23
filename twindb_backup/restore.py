@@ -182,9 +182,7 @@ def restore_from_mysql(config, backup_copy, dst_dir):
     except ConfigParser.NoOptionError:
         dst = get_destination(config)
 
-    remote_path = dst.remote_path.rstrip('/')
-    log.debug('remote_path = %s' % remote_path)
-    key = backup_copy.replace(remote_path + '/', '', 1)
+    key = dst.basename(backup_copy)
     status = dst.status()
 
     if get_backup_type(status, key) == "full":

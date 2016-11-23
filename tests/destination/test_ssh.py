@@ -62,3 +62,9 @@ def test_get_status_empty(mock_status_exists):
         'monthly': {},
         'yearly': {}
     }
+
+
+def test_basename():
+    dst = Ssh(remote_path='/foo/bar')
+    assert dst.basename('/foo/bar/some_dir/some_file.txt') \
+        == 'some_dir/some_file.txt'

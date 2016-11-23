@@ -142,3 +142,6 @@ class BaseDestination(object):
                 return "%s/%s" % (self.remote_path, parent)
 
         raise DestinationError('Failed to find parent of %s' % file_path)
+
+    def basename(self, filename):
+        return filename.replace(self.remote_path + '/', '', 1)
