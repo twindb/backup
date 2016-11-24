@@ -17,7 +17,7 @@ class S3Error(DestinationError):
 
 class S3(BaseDestination):
     def __init__(self, bucket, access_key_id, secret_access_key,
-                 default_region='us-east-1'):
+                 default_region='us-east-1', hostname=socket.gethostname()):
         super(S3, self).__init__()
         self.bucket = bucket
         self.remote_path = 's3://{bucket}'.format(bucket=self.bucket)
@@ -28,7 +28,7 @@ class S3(BaseDestination):
         os.environ["AWS_SECRET_ACCESS_KEY"] = self.secret_access_key
         os.environ["AWS_DEFAULT_REGION"] = self.default_region
         self.status_path = "{hostname}/status".format(
-            hostname=socket.gethostname()
+            hostname=hostname
         )
 
     def save(self, handler, name, keep_local=None):
@@ -53,12 +53,16 @@ class S3(BaseDestination):
         log.debug('Listing s3://%s/%s', bucket.name, prefix)
         return sorted(bucket.objects.filter(Prefix=prefix))
 
-    def find_files(self, prefix):
+    def find_files(self, prefix, run_type):
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(self.bucket)
-        log.debug('Listing s3://%s/%s', bucket.name, prefix)
-        files = ["s3://%s/%s" % (self.bucket, f.key)
-                 for f in sorted(bucket.objects.filter(Prefix=prefix))]
+        log.debug('Listing %s', prefix)
+        files = []
+
+        for f in sorted(bucket.objects.filter(Prefix='')):
+            if "/" + run_type + "/" in f.key:
+                files.append("s3://%s/%s" % (self.bucket, f.key))
+
         return files
 
     def delete(self, obj):

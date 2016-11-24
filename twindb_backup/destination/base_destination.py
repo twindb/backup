@@ -79,7 +79,7 @@ class BaseDestination(object):
         pass
 
     @abstractmethod
-    def find_files(self, prefix):
+    def find_files(self, prefix, run_type):
         pass
 
     @abstractmethod

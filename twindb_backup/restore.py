@@ -9,7 +9,8 @@ import psutil
 from twindb_backup import log, INTERVALS
 from twindb_backup.destination.base_destination import DestinationError
 from twindb_backup.destination.local import Local
-from twindb_backup.util import get_destination, mkdir_p
+from twindb_backup.util import get_destination, mkdir_p, \
+    get_hostname_from_backup_copy
 
 
 def get_backup_type(status, key):
@@ -178,7 +179,11 @@ def restore_from_mysql(config, backup_copy, dst_dir):
                 and backup_copy.startswith(keep_local_path):
             dst = Local(keep_local_path)
         else:
-            dst = get_destination(config)
+            hostname = get_hostname_from_backup_copy(backup_copy)
+            if not hostname:
+                raise DestinationError('Failed to get hostname from %s'
+                                       % backup_copy)
+            dst = get_destination(config, hostname=hostname)
     except ConfigParser.NoOptionError:
         dst = get_destination(config)
 
