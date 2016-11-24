@@ -1,7 +1,12 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 nodes = [
-    { :hostname   => 'master',
+    { :hostname   => 'master1',
+      :ip         => '192.168.35.250',
+      :box        => 'bento/centos-7.1',
+      :ram        => 3072
+    },
+    { :hostname   => 'master2',
       :ip         => '192.168.35.250',
       :box        => 'bento/centos-7.1',
       :ram        => 3072
@@ -23,7 +28,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     nodes.each do |node|
         config.vm.define node[:hostname] do |nodeconfig|
             nodeconfig.vm.box = node[:box]
-            nodeconfig.vm.hostname = node[:hostname] + '.box'
+            nodeconfig.vm.hostname = node[:hostname]
             nodeconfig.vm.network :private_network, ip: node[:ip]
             if node[:mysql_port]
                 nodeconfig.vm.network :forwarded_port, host: node[:mysql_port], guest: 3306

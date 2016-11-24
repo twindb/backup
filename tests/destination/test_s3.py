@@ -20,3 +20,7 @@ def test_basename():
     dst = S3('bucketname', 'b', 'c')
     assert dst.basename('s3://bucketname/some_dir/some_file.txt') == \
         'some_dir/some_file.txt'
+
+
+def test_find_files():
+    dst = S3('bucketname', 'b', 'c')
