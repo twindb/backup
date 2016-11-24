@@ -1,12 +1,13 @@
 import ConfigParser
 import errno
 import os
-from twindb_backup import log
+import socket
+from twindb_backup import log, INTERVALS
 from twindb_backup.destination.s3 import S3
 from twindb_backup.destination.ssh import Ssh
 
 
-def get_destination(config):
+def get_destination(config, hostname=socket.gethostname()):
     destination = None
     try:
         destination = config.get('destination', 'backup_destination')
@@ -30,7 +31,7 @@ def get_destination(config):
         user = config.get('ssh', 'ssh_user')
         remote_path = config.get('ssh', 'backup_dir')
         return Ssh(host=host, port=port, user=user, remote_path=remote_path,
-                   key=ssh_key)
+                   key=ssh_key, hostname=hostname)
 
     elif destination == "s3":
         bucket = config.get('s3', 'BUCKET').strip('"\'')
@@ -39,7 +40,7 @@ def get_destination(config):
                                        'AWS_SECRET_ACCESS_KEY').strip('"\'')
         default_region = config.get('s3', 'AWS_DEFAULT_REGION').strip('"\'')
         return S3(bucket, access_key_id, secret_access_key,
-                  default_region=default_region)
+                  default_region=default_region, hostname=hostname)
 
     else:
         log.critical('Destination %s is not supported' % destination)
@@ -54,3 +55,11 @@ def mkdir_p(path):
             pass
         else:
             raise
+
+
+def get_hostname_from_backup_copy(backup_copy):
+    chunks = backup_copy.split('/')
+    for run_type in INTERVALS:
+        if run_type in chunks:
+            return chunks[chunks.index(run_type) - 1]
+    return None

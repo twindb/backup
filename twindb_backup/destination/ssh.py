@@ -12,7 +12,7 @@ from twindb_backup.destination.base_destination import BaseDestination, \
 class Ssh(BaseDestination):
     def __init__(self, host='127.0.0.1', port=22, key='/root/.id_rsa',
                  user='root',
-                 remote_path=None):
+                 remote_path=None, hostname=socket.gethostname()):
         super(Ssh, self).__init__()
         self.remote_path = remote_path.rstrip('/')
         self.user = user
@@ -29,7 +29,7 @@ class Ssh(BaseDestination):
                              self.host]
         self.status_path = "{remote_path}/{hostname}/status".format(
             remote_path=self.remote_path,
-            hostname=socket.gethostname()
+            hostname=hostname
         )
 
     def save(self, handler, name, keep_local=None):
@@ -78,9 +78,12 @@ class Ssh(BaseDestination):
 
         return sorted(cout.split())
 
-    def find_files(self, prefix):
+    def find_files(self, prefix, run_type):
 
-        cmd = self._ssh_command + ["find %s* -type f" % prefix]
+        cmd = self._ssh_command + ["find {prefix}/*/{run_type} -type f".
+                                   format(prefix=prefix,
+                                          run_type=run_type)
+                                   ]
         log.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
         cout, cerr = proc.communicate()
