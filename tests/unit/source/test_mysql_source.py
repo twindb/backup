@@ -12,17 +12,17 @@ def test_apply_retention_policy(mock_get_files_to_delete,
                                 mock_get_prefix,
                                 tmpdir):
     mock_get_files_to_delete.return_value = []
-    mock_get_prefix.return_value = 'hourly/master.box'
+    mock_get_prefix.return_value = 'master.box/hourly'
     my_cnf = tmpdir.join('my.cnf')
     mock_config = mock.Mock()
     src = MySQLSource(str(my_cnf), 'hourly', mock.Mock(), mock.Mock())
     mock_dst = mock.Mock()
-    mock_dst.remote_path = ''
+    mock_dst.remote_path = '/foo/bar'
 
     src.apply_retention_policy(mock_dst, mock_config, 'hourly', mock.Mock())
 
     mock_delete_local_files.assert_called_once_with('mysql', mock_config)
-    mock_dst.list_files.assert_called_once_with('hourly/master.box/mysql/mysql-')
+    mock_dst.list_files.assert_called_once_with('/foo/bar/master.box/hourly/mysql/mysql-')
 
 
 @pytest.mark.parametrize('config_content,run_type,backup_type,status', [

@@ -60,19 +60,24 @@ class BaseDestination(object):
         with self._get_input_handler(handler, keep_local, name) \
                 as input_handler:
             log.debug('Running %s', ' '.join(cmd))
-            proc = Popen(cmd, stdin=input_handler, stdout=PIPE, stderr=PIPE)
-            cout_ssh, cerr_ssh = proc.communicate()
+            try:
+                proc = Popen(cmd, stdin=input_handler,
+                             stdout=PIPE,
+                             stderr=PIPE)
+                cout_ssh, cerr_ssh = proc.communicate()
 
-            if proc.returncode:
-                log.error('%s exited with error code %d',
-                          ' '.join(cmd), proc.returncode)
-                if cout_ssh:
-                    log.info(cout_ssh)
-                if cerr_ssh:
-                    log.error(cerr_ssh)
+                if proc.returncode:
+                    log.error('%s exited with error code %d',
+                              ' '.join(cmd), proc.returncode)
+                    if cout_ssh:
+                        log.info(cout_ssh)
+                    if cerr_ssh:
+                        log.error(cerr_ssh)
+                    exit(1)
+                return proc.returncode
+            except OSError as err:
+                log.error('Failed to run %s: %s', ' '.join(cmd), err)
                 exit(1)
-
-        return proc.returncode
 
     @abstractmethod
     def list_files(self, prefix, recursive=False):

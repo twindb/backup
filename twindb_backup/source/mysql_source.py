@@ -92,13 +92,8 @@ class MySQLSource(BaseSource):
 
     def apply_retention_policy(self, dst, config, run_type, status):
 
-        if dst.remote_path:
-            remote_path = dst.remote_path + '/'
-        else:
-            remote_path = ''
-
-        prefix = "{remote_path}{prefix}/mysql/mysql-".format(
-            remote_path=remote_path,
+        prefix = "{remote_path}/{prefix}/mysql/mysql-".format(
+            remote_path=dst.remote_path,
             prefix=self.get_prefix()
         )
         keep_copies = config.getint('retention',
@@ -109,7 +104,7 @@ class MySQLSource(BaseSource):
         for fl in get_files_to_delete(objects, keep_copies):
             log.debug('Deleting remote file %s' % fl)
             dst.delete(fl)
-            status = self._delete_from_status(status, remote_path, fl)
+            status = self._delete_from_status(status, dst.remote_path, fl)
 
         self._delete_local_files('mysql', config)
 
@@ -199,8 +194,12 @@ class MySQLSource(BaseSource):
         log.debug('status = %r' % status)
         log.debug('prefix = %s' % prefix)
         log.debug('file   = %s' % fl)
-        prefix = prefix.rstrip('/')
-        ref_filename = str(fl).replace(prefix + '/', '', 1)
+        try:
+            ref_filename = fl.key
+        except AttributeError:
+            prefix = prefix.rstrip('/')
+            ref_filename = str(fl).replace(prefix + '/', '', 1)
+
         result_status = status
         try:
             del(result_status[self.run_type][ref_filename])

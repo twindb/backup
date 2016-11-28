@@ -169,8 +169,8 @@ def backup_everything(run_type, config):
         backup_mysql(run_type, config)
 
     except ConfigParser.NoSectionError as err:
-        log.error('Config file must define section "source": %s', err)
-        exit(-1)
+        log.error(err)
+        exit(1)
 
 
 @contextmanager
