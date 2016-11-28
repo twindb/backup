@@ -50,8 +50,10 @@ class S3(BaseDestination):
     def list_files(self, prefix, recursive=False):
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(self.bucket)
-        log.debug('Listing s3://%s/%s', bucket.name, prefix)
-        return sorted(bucket.objects.filter(Prefix=prefix))
+        log.debug('Listing %s', prefix)
+        norm_prefix = prefix.replace('s3://%s/' % bucket.name, '')
+        log.debug('norm_prefix = %s' % norm_prefix)
+        return sorted(bucket.objects.filter(Prefix=norm_prefix))
 
     def find_files(self, prefix, run_type):
         s3 = boto3.resource('s3')
@@ -68,7 +70,7 @@ class S3(BaseDestination):
     def delete(self, obj):
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(self.bucket)
-        log.debug('deleting {0}:{1}'.format(bucket.name, obj.key))
+        log.debug('deleting s3://{0}/{1}'.format(bucket.name, obj.key))
         obj.delete()
 
     @contextmanager
