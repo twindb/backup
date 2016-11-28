@@ -17,6 +17,7 @@ python-pip
 /usr/bin/mysql_config
 /usr/include/mysql/my_config.h
 Percona-Server-server-56
+Percona-Server-devel-56
 percona-xtrabackup
 "
 for i in $(seq 5)
