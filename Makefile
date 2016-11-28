@@ -65,8 +65,10 @@ test-deps:
 	pip install -U setuptools
 
 test: test-deps ## run tests quickly with the default Python
-	py.test
+	py.test tests/unit
 
+test-integration: test-deps ## run integration tests
+	py.test tests/integration
 
 test-all: ## run tests on every Python version with tox
 	tox
@@ -131,7 +133,7 @@ docker-rpm: ## Build rpm in a docker container
 			/usr/bin/mysql_config \
 			/usr/include/mysql/my_config.h && break ; \
 		done ; \
-		cp -Rv /twindb-backup /tmp/ ; \
-		make -C /tmp/twindb-backup test rpm ; \
+		cp -Rv /twindb-backup /tmp/ ; pip install /tmp/twindb-backup; \
+		make -C /tmp/twindb-backup test test-integration rpm ; \
 		cp -R /tmp/twindb-backup/build /twindb-backup/"
 	find ${build_dir}
