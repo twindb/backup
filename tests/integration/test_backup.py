@@ -78,12 +78,13 @@ def test_take_file_backup(config_content_files_only, tmpdir):
            'ls']
     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
     cout, cerr = proc.communicate()
-    assert 's3://twindb-backup-test/master1/hourly/files/_foo_bar' in cout
+    assert '/hourly/files/_foo_bar' in cout
 
     copy = None
 
     for line in cout.split('\n'):
-        if line.startswith('s3://twindb-backup-test/master1/hourly/files/_foo_bar'):
+        if line.startswith('s3://twindb-backup-test/') \
+                and '/hourly/files/_foo_bar' in line:
             copy = line
             break
 

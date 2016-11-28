@@ -125,7 +125,7 @@ rhel:
 	echo ${RHEL}
 
 docker-rpm: ## Build rpm in a docker container
-	sudo docker run -v `pwd`:/twindb-backup:rw  centos:centos${RHEL} /bin/bash -c \
+	@sudo docker run -v `pwd`:/twindb-backup:rw -e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" -e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" -e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" centos:centos${RHEL} /bin/bash -c \
 		"yum -y install epel-release ; \
 		for i in 1 2 3 4 5; do \
 			yum -y install 'gcc' 'python-devel' 'zlib-devel' 'openssl-devel' \
