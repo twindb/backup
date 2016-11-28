@@ -131,9 +131,11 @@ docker-rpm: ## Build rpm in a docker container
 			yum -y install 'gcc' 'python-devel' 'zlib-devel' 'openssl-devel' \
 			rpm-build make python-setuptools python-pip \
 			/usr/bin/mysql_config \
-			/usr/include/mysql/my_config.h && break ; \
+			/usr/include/mysql/my_config.h \
+			mariadb-server && break ; \
 		done ; \
+		mysql_install_db ; /usr/libexec/mysqld --user=root & while true ; do mysqladmin ping && break; done ; \
 		cp -Rv /twindb-backup /tmp/ ; pip install /tmp/twindb-backup; \
-		make -C /tmp/twindb-backup test test-integration rpm ; \
+		make -C /tmp/twindb-backup test test-integration rpm && \
 		cp -R /tmp/twindb-backup/build /twindb-backup/"
 	find ${build_dir}

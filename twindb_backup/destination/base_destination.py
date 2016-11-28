@@ -61,7 +61,9 @@ class BaseDestination(object):
                 as input_handler:
             log.debug('Running %s', ' '.join(cmd))
             try:
-                proc = Popen(cmd, stdin=input_handler, stdout=PIPE, stderr=PIPE)
+                proc = Popen(cmd, stdin=input_handler,
+                             stdout=PIPE,
+                             stderr=PIPE)
                 cout_ssh, cerr_ssh = proc.communicate()
 
                 if proc.returncode:
