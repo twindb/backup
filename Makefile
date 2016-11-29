@@ -68,7 +68,8 @@ test: test-deps ## run tests quickly with the default Python
 	py.test tests/unit
 
 test-integration: test-deps ## run integration tests
-	py.test tests/integration
+	pip show twindb-backup || pip install -e .
+	py.test -xv tests/integration
 
 test-all: ## run tests on every Python version with tox
 	tox
