@@ -1,11 +1,12 @@
 import json
 import os
+import random
 import shlex
 import socket
 from subprocess import call, Popen, PIPE
 import pytest
 
-BUCKET = 'twindb-backup-test'
+BUCKET = 'twindb-backup-test-%d' % random.randint(0, 1000000)
 
 
 @pytest.fixture
@@ -119,7 +120,12 @@ yearly_copies=0
 
 
 def setup_module():
-    cmd = "aws s3 rm --recursive s3://%s" % BUCKET
+    cmd = "aws s3 mb s3://%s" % BUCKET
+    assert call(shlex.split(cmd)) == 0
+
+
+def teardown_module():
+    cmd = "aws s3 rb --force s3://%s" % BUCKET
     assert call(shlex.split(cmd)) == 0
 
 
@@ -138,7 +144,7 @@ def test_take_file_backup(config_content_files_only, tmpdir):
     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
     cout, cerr = proc.communicate()
     hostname = socket.gethostname()
-    assert 's3://twindb-backup-test/%s/hourly/files/_foo_bar' % hostname in cout
+    assert 's3://%s/%s/hourly/files/_foo_bar' % (BUCKET, hostname) in cout
 
     copy = None
 
