@@ -1,4 +1,5 @@
 import ConfigParser
+import base64
 import json
 import shlex
 from subprocess import Popen, PIPE
@@ -21,6 +22,19 @@ def get_backup_type(status, key):
             return status[run_type][key]['type']
 
     raise DestinationError('Unknown backup type for backup copy %s' % key)
+
+
+def get_my_cnf(status, key):
+    log.debug('status = %s' % json.dumps(status, indent=4, sort_keys=True))
+    log.debug('key = %s' % key)
+    try:
+        for run_type in INTERVALS:
+            if key in status[run_type]:
+                return base64.b64decode(status[run_type][key]['config'])
+    except KeyError:
+        pass
+    log.warning('my.cnf for %s is not found' % key)
+    return None
 
 
 def restore_from_mysql_full(dst, backup_copy, dst_dir, redo_only=False):
@@ -195,12 +209,19 @@ def restore_from_mysql(config, backup_copy, dst_dir):
     else:
         restore_from_mysql_incremental(dst, backup_copy, dst_dir)
 
+    my_cnf = get_my_cnf(status, key)
+    if my_cnf:
+        with open(dst_dir + '/my.cnf', 'w') as fp:
+            fp.write(my_cnf)
+
     log.info('Successfully restored %s in %s' % (backup_copy, dst_dir))
     log.info('Now copy content of %s to MySQL datadir: '
              'cp -R %s/* /var/lib/mysql/' % (dst_dir, dst_dir))
     log.info('Fix permissions: chown -R mysql:mysql /var/lib/mysql/')
     log.info('Make sure innodb_log_file_size and innodb_log_files_in_group '
              'in %s/backup-my.cnf and in /etc/my.cnf are same' % dst_dir)
+    if my_cnf:
+        log.info('Original my.cnf is restore in %s/my.cnf' % dst_dir)
     log.info('Then you can start MySQL normally')
 
 
