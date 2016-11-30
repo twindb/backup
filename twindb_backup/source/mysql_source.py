@@ -206,3 +206,11 @@ class MySQLSource(BaseSource):
         except KeyError:
             pass
         return result_status
+
+    @staticmethod
+    def get_my_cnf():
+        try:
+            with open('/etc/my.cnf') as fp:
+                return fp.read()
+        except IOError:
+            return ''

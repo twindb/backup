@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import ConfigParser
+import base64
 from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 
@@ -127,7 +128,8 @@ def backup_mysql(run_type, config):
                 'binlog': src.binlog_coordinate[0],
                 'position': src.binlog_coordinate[1],
                 'lsn': src.lsn,
-                'type': src.type
+                'type': src.type,
+                'config': base64.b64encode(src.get_my_cnf())
             }
 
             if src.incremental:
