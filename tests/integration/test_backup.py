@@ -5,6 +5,7 @@ import shlex
 import socket
 from subprocess import call, Popen, PIPE
 import pytest
+from twindb_backup.destination.s3 import S3
 
 BUCKET = 'twindb-backup-test-%d' % random.randint(0, 1000000)
 
@@ -97,8 +98,8 @@ run_monthly=no
 run_yearly=yes
 
 [retention]
-hourly_copies=2
-daily_copies=1
+hourly_copies={hourly_copies}
+daily_copies={daily_copies}
 weekly_copies=1
 monthly_copies=1
 yearly_copies=1
@@ -109,22 +110,18 @@ daily_copies=1
 weekly_copies=0
 monthly_copies=0
 yearly_copies=0
-    """.format(
-            AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
-            AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
-            BUCKET=BUCKET
-        )
+    """
     except KeyError as err:
         print('Environment variable %s must be defined' % err)
         exit(1)
 
 
-def setup_module():
+def setup_function():
     cmd = "aws s3 mb s3://%s" % BUCKET
     assert call(shlex.split(cmd)) == 0
 
 
-def teardown_module():
+def teardown_function():
     cmd = "aws s3 rb --force s3://%s" % BUCKET
     assert call(shlex.split(cmd)) == 0
 
@@ -172,7 +169,14 @@ def test_take_file_backup(config_content_files_only, tmpdir):
 def test_take_mysql_backup(config_content_mysql_only, tmpdir):
 
     config = tmpdir.join('twindb-backup.cfg')
-    config.write(config_content_mysql_only)
+    content = config_content_mysql_only.format(
+        AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+        AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+        BUCKET=BUCKET,
+        daily_copies=1,
+        hourly_copies=2
+    )
+    config.write(content)
     cmd = ['twindb-backup',
            '--config', str(config),
            'backup', 'hourly']
@@ -192,7 +196,14 @@ def test_take_mysql_backup(config_content_mysql_only, tmpdir):
 def test_take_mysql_backup_retention(config_content_mysql_only, tmpdir):
 
     config = tmpdir.join('twindb-backup.cfg')
-    config.write(config_content_mysql_only)
+    content = config_content_mysql_only.format(
+        AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+        AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+        BUCKET=BUCKET,
+        daily_copies=1,
+        hourly_copies=2
+    )
+    config.write(content)
     cmd = ['twindb-backup', '--config', str(config), 'backup', 'daily']
     assert call(cmd) == 0
 
@@ -219,3 +230,35 @@ def test_take_mysql_backup_retention(config_content_mysql_only, tmpdir):
 
     assert len(status['daily'].keys()) == 1
     assert len(status['hourly'].keys()) == 2
+
+
+def test_s3_find_files_returns_sorted(config_content_mysql_only, tmpdir):
+
+    config = tmpdir.join('twindb-backup.cfg')
+    content = config_content_mysql_only.format(
+        AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+        AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+        BUCKET=BUCKET,
+        daily_copies=5,
+        hourly_copies=2
+    )
+    config.write(content)
+    cmd = ['twindb-backup', '--config', str(config), 'backup', 'daily']
+    n_runs = 3
+    for x in xrange(n_runs):
+        assert call(cmd) == 0
+
+    dst = S3(BUCKET, os.environ['AWS_ACCESS_KEY_ID'],
+             os.environ['AWS_SECRET_ACCESS_KEY'])
+    for x in xrange(10):
+        result = dst.find_files(dst.remote_path, 'daily')
+        assert len(result) == n_runs
+        assert result == sorted(result)
+        prefix = "{remote_path}/{hostname}/{run_type}/mysql/mysql-".format(
+            remote_path=dst.remote_path,
+            hostname=socket.gethostname(),
+            run_type='daily'
+        )
+        objects = [f.key for f in dst.list_files(prefix)]
+        assert len(objects) == n_runs
+        assert objects == sorted(objects)
