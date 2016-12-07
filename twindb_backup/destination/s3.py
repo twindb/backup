@@ -1,6 +1,7 @@
 import base64
 from contextlib import contextmanager
 import json
+from operator import attrgetter
 import os
 import socket
 import boto3 as boto3
@@ -53,7 +54,8 @@ class S3(BaseDestination):
         log.debug('Listing %s', prefix)
         norm_prefix = prefix.replace('s3://%s/' % bucket.name, '')
         log.debug('norm_prefix = %s' % norm_prefix)
-        return sorted(bucket.objects.filter(Prefix=norm_prefix))
+        return sorted(bucket.objects.filter(Prefix=norm_prefix),
+                      key=attrgetter('key'))
 
     def find_files(self, prefix, run_type):
         s3 = boto3.resource('s3')
@@ -61,11 +63,12 @@ class S3(BaseDestination):
         log.debug('Listing %s', prefix)
         files = []
 
-        for f in sorted(bucket.objects.filter(Prefix='')):
+        all_objects = bucket.objects.filter(Prefix='')
+        for f in all_objects:
             if "/" + run_type + "/" in f.key:
                 files.append("s3://%s/%s" % (self.bucket, f.key))
 
-        return files
+        return sorted(files)
 
     def delete(self, obj):
         s3 = boto3.resource('s3')
