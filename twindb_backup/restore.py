@@ -211,7 +211,7 @@ def restore_from_mysql(config, backup_copy, dst_dir):
 
     my_cnf = get_my_cnf(status, key)
     if my_cnf:
-        with open(dst_dir + '/my.cnf', 'w') as fp:
+        with open(dst_dir + '/my.cnf.orig', 'w') as fp:
             fp.write(my_cnf)
 
     log.info('Successfully restored %s in %s' % (backup_copy, dst_dir))
