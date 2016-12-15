@@ -14,27 +14,33 @@ from twindb_backup.util import get_destination, mkdir_p, \
     get_hostname_from_backup_copy
 
 
-def get_backup_type(status, key):
-    log.debug('status = %s' % json.dumps(status, indent=4, sort_keys=True))
-    log.debug('key = %s' % key)
-    for run_type in INTERVALS:
-        if key in status[run_type]:
-            return status[run_type][key]['type']
-
-    raise DestinationError('Unknown backup type for backup copy %s' % key)
-
-
-def get_my_cnf(status, key):
+def _get_status_key(status, key, variable):
     log.debug('status = %s' % json.dumps(status, indent=4, sort_keys=True))
     log.debug('key = %s' % key)
     try:
         for run_type in INTERVALS:
             if key in status[run_type]:
-                return base64.b64decode(status[run_type][key]['config'])
+                return status[run_type][key][variable]
     except KeyError:
         pass
-    log.warning('my.cnf for %s is not found' % key)
+    log.warning('key %s is not found' % key)
     return None
+
+
+def get_galera_version(status, key):
+    return _get_status_key(status, key, 'wsrep_provider_version')
+
+
+def get_backup_type(status, key):
+    backup_type = _get_status_key(status, key, 'type')
+    if backup_type:
+        return backup_type
+
+    raise DestinationError('Unknown backup type for backup copy %s' % key)
+
+
+def get_my_cnf(status, key):
+    return base64.b64decode(_get_status_key(status, key, 'config'))
 
 
 def restore_from_mysql_full(dst, backup_copy, dst_dir, redo_only=False):
@@ -183,6 +189,16 @@ def restore_from_mysql_incremental(dst, backup_copy, dst_dir):
                 raise  # re-raise exception
 
 
+def gen_grastate(path, version, uuid, seqno):
+    with open(path, 'w') as fp:
+        fp.write("""# GALERA saved state
+version: {version}
+uuid:    {uuid}
+seqno:   {seqno}
+cert_index:
+""".format(version=version, uuid=uuid, seqno=seqno))
+
+
 def restore_from_mysql(config, backup_copy, dst_dir):
     log.info('Restoring %s in %s' % (backup_copy, dst_dir))
     mkdir_p(dst_dir)
@@ -213,6 +229,17 @@ def restore_from_mysql(config, backup_copy, dst_dir):
     if my_cnf:
         with open(dst_dir + '/my.cnf.orig', 'w') as fp:
             fp.write(my_cnf)
+
+    if os.path.exists(dst_dir + '/xtrabackup_galera_info'):
+        version = get_galera_version(status, key)
+
+        with open(dst_dir + '/xtrabackup_galera_info') as fp:
+            galera_info = fp.read()
+            uuid = galera_info.split(':')[0]
+            seqno = galera_info.split(':')[1]
+
+        gen_grastate(dst_dir + '/grastate.dat',
+                     version, uuid, seqno)
 
     log.info('Successfully restored %s in %s' % (backup_copy, dst_dir))
     log.info('Now copy content of %s to MySQL datadir: '

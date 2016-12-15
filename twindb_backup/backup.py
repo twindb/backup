@@ -135,6 +135,9 @@ def backup_mysql(run_type, config):
             if src.incremental:
                 status[run_type][src_name]['parent'] = src.parent
 
+            if src.galera:
+                status[run_type][src_name]['wsrep_provider_version'] = src.wsrep_provider_version
+
             src.apply_retention_policy(dst, config, run_type, status)
 
             dst.status(status)

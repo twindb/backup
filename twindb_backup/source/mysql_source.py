@@ -4,6 +4,7 @@ import os
 import shlex
 from subprocess import Popen, PIPE
 import tempfile
+import MySQLdb
 from twindb_backup import log, get_files_to_delete
 from twindb_backup.source.base_source import BaseSource
 
@@ -29,19 +30,30 @@ class MySQLSource(BaseSource):
         Get a PIPE handler with content of the source
         :return:
         """
-        cmd_common = "innobackupex --defaults-file=%s --stream xbstream " \
-                     "--host 127.0.0.1 " \
-                     % self.defaults
+        cmd = [
+            "innobackupex",
+            "--defaults-file=%s" % self.defaults,
+            "--stream=xbstream",
+            "--host=127.0.0.1"
+            ]
+
+        if self._is_galera():
+            cmd.append("--galera-info")
+            cmd.append("--no-backup-locks")
+
         if self.full:
-            cmd = cmd_common + " ."
+            cmd.append(".")
         else:
-            cmd = cmd_common + "--incremental . --incremental-lsn=%d" \
-                               % self.parent_lsn
+            cmd = cmd + [
+                "--incremental",
+                ".",
+                "--incremental-lsn=%d" % self.parent_lsn
+            ]
 
         try:
-            log.debug('Running %s', cmd)
+            log.debug('Running %s', ' '.join(cmd))
             stderr_file = tempfile.NamedTemporaryFile(delete=False)
-            proc_innobackupex = Popen(shlex.split(cmd),
+            proc_innobackupex = Popen(cmd,
                                       stderr=stderr_file,
                                       stdout=PIPE)
             cmd = "gzip -c -"
@@ -214,3 +226,39 @@ class MySQLSource(BaseSource):
                 return fp.read()
         except IOError:
             return ''
+
+    @property
+    def wsrep_provider_version(self):
+
+        db = MySQLdb.connect(host='127.0.0.1',
+                             read_default_file=self.defaults)
+        c = db.cursor()
+        c.execute("SHOW STATUS LIKE 'wsrep_provider_version'")
+        row = c.fetchone()
+        if row:
+            return row[1].split('(')[0]
+
+        return None
+
+    @property
+    def galera(self):
+        return self._is_galera()
+
+    def _is_galera(self):
+        try:
+            db = MySQLdb.connect(host='127.0.0.1',
+                                 read_default_file=self.defaults)
+            c = db.cursor()
+            c.execute("SELECT @@wsrep_on")
+            row = c.fetchone()
+            if row[0] == 1 or row[0] == 'ON':
+                return True
+            else:
+                return False
+
+        except MySQLdb.Error as err:
+            if err.args[0] == 1193:
+                log.debug('Galera is not supported or not enabled')
+                return False
+            else:
+                raise
