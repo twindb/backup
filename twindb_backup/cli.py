@@ -3,7 +3,7 @@ from ConfigParser import ConfigParser
 import json
 import os
 import click
-from twindb_backup import setup_logging, log
+from twindb_backup import setup_logging, log, __version__
 from twindb_backup.backup import run_backup_job
 from twindb_backup.ls import list_available_backups
 from twindb_backup.restore import restore_from_mysql, restore_from_file
@@ -12,14 +12,25 @@ from twindb_backup.util import get_destination
 pass_cfg = click.make_pass_decorator(ConfigParser, ensure=True)
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.option('--debug', help='Print debug messages', is_flag=True,
               default=False)
 @click.option('--config', help='TwinDB Backup config file.',
               default='/etc/twindb/twindb-backup.cfg',
               show_default=True)
+@click.option('--version', help='Show tool version and exit.', is_flag=True,
+              default=False)
 @pass_cfg
-def main(cfg, debug, config):
+@click.pass_context
+def main(ctx, cfg, debug, config, version):
+    if not ctx.invoked_subcommand:
+        if version:
+            print(__version__)
+            exit(0)
+        else:
+            print(ctx.get_help())
+            exit(-1)
+
     setup_logging(log, debug=debug)
 
     if os.path.exists(config):
