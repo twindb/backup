@@ -27,3 +27,4 @@ deploy:
   dist: el/${OS_VERSION}
   skip_cleanup: true
   local-dir: build/rpmbuild
+  package_glob: *.rpm
