@@ -164,8 +164,24 @@ def restore_from_mysql_incremental(dst, backup_copy, dst_dir):
         try:
             xtrabackup_cmd = ['innobackupex',
                               '--use-memory=%d' % (mem_usage.available / 2),
-                              '--apply-log', dst_dir, '--incremental-dir',
-                              inc_dir]
+                              '--apply-log', '--redo-only', dst_dir,
+                              '--incremental-dir', inc_dir]
+            log.debug('Running %s' % ' '.join(xtrabackup_cmd))
+            xtrabackup_proc = Popen(xtrabackup_cmd,
+                                    stdout=None,
+                                    stderr=None)
+            xtrabackup_proc.communicate()
+            ret = xtrabackup_proc.returncode
+            if ret:
+                log.error('%s exited with code %d' %
+                          (
+                              " ".join(xtrabackup_cmd),
+                              ret
+                          ))
+
+            xtrabackup_cmd = ['innobackupex',
+                              '--use-memory=%d' % (mem_usage.available / 2),
+                              '--apply-log', dst_dir]
             log.debug('Running %s' % ' '.join(xtrabackup_cmd))
             xtrabackup_proc = Popen(xtrabackup_cmd,
                                     stdout=None,
