@@ -35,6 +35,18 @@ PY_MAJOR = $(shell python -c 'import sys; print(sys.version[:3])')
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
+.PHONY: virtualenv
+virtualenv: ## create virtual environment typically used for development purposes
+	virtualenv env --setuptools --prompt='(twindb_backup)'
+
+.PHONY: bootstrap
+bootstrap: ## bootstrap the development environment
+	pip install -U "setuptools==32.3.1"
+	pip install -U "pip==9.0.1"
+	pip install -U "pip-tools>=1.6.0"
+	pip-sync requirements.txt requirements_dev.txt
+	pip install --editable .
+
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
 
 
