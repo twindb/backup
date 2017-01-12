@@ -4,6 +4,8 @@
 .kitchen.local.yml
 vendor/bundle
 pkg/*
+keys/
+cache/
 .vagrant
 bin/*
 files/**/cache/

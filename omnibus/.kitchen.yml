@@ -3,7 +3,7 @@ driver:
   forward_agent: yes
   customize:
     cpus: 2
-    memory: 1024
+    memory: 2048
   synced_folders:
     - ['.', '/home/vagrant/twindb-backup']
 
