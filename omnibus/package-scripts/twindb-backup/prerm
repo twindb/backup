@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# Perform necessary twindb-backup setup steps
+# prior to installing package.
+#
+
+PROGNAME=`basename $0`
+
+LINUX_DISTRIBUTION=$(grep -Eo "(Debian|Ubuntu|RedHat|CentOS|openSUSE|Amazon|SUSE)" /etc/issue)
+
+remove_py_compiled_files()
+{
+    # Delete all the .pyc files in the embedded dir that are part of the twindb-backup package
+    if [ -f "/opt/twindb-backup/embedded/.py_compiled_files.txt" ]; then
+        # (commented lines are filtered out)
+        cat /opt/twindb-backup/embedded/.py_compiled_files.txt | grep -v '^#' | xargs rm -f
+    fi
+}
+
+error_exit()
+{
+  echo "${PROGNAME}: ${1:-"Unknown Error"}" 1>&2
+  exit 1
+}
+
+if [ -f "/etc/debian_version" ] || [ "$LINUX_DISTRIBUTION" == "Debian" ] || [ "$LINUX_DISTRIBUTION" == "Ubuntu" ]; then
+  remove_py_compiled_files
+elif [ -f "/etc/redhat-release" ] || [ "$LINUX_DISTRIBUTION" == "RedHat" ] || [ "$LINUX_DISTRIBUTION" == "CentOS" ] || [ "$LINUX_DISTRIBUTION" == "openSUSE" ] || [ "$LINUX_DISTRIBUTION" == "Amazon" ] || [ "$LINUX_DISTRIBUTION" == "SUSE" ]; then
+  case "$*" in
+        0)
+          # We're uninstalling.
+          remove_py_compiled_files
+          ;;
+        1)
+          # We're upgrading. Do nothing.
+          # The preinst script has taken care of removing the .pyc/.pyo files
+          ;;
+        *)
+          ;;
+  esac
+else
+    echo "[ ${Red}FAILED ${RCol}]\tYour system is currently not supported by this script.";
+    exit 1;
+fi
+
+exit 0

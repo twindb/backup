@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# Perform necessary twindb-backup removal steps
+# after package is uninstalled.
+#
+
+LINUX_DISTRIBUTION=$(grep -Eo "(Debian|Ubuntu|RedHat|CentOS|openSUSE|Amazon|SUSE)" /etc/issue)
+
+if [ -f "/etc/debian_version" ] || [ "$LINUX_DISTRIBUTION" == "Debian" ] || [ "$LINUX_DISTRIBUTION" == "Ubuntu" ]; then
+    set -e
+
+    if [ "$1" = purge ]; then
+        rm -rf /opt/twindb-backup
+        rm -rf /var/log/twindb-backup
+        rm -rf /etc/twindb-backup
+    fi
+elif [ -f "/etc/redhat-release" ] || [ "$LINUX_DISTRIBUTION" == "RedHat" ] || [ "$LINUX_DISTRIBUTION" == "CentOS" ] || [ "$LINUX_DISTRIBUTION" == "openSUSE" ] || [ "$LINUX_DISTRIBUTION" == "Amazon" ] || [ "$LINUX_DISTRIBUTION" == "SUSE" ]; then
+    case "$*" in
+      0)
+        # We're uninstalling.
+        ;;
+      1)
+        # We're upgrading.
+        ;;
+      *)
+        ;;
+    esac
+else
+      echo "[ ${Red}FAILED ${RCol}]\tYour system is currently not supported by this script.";
+      exit 1;
+fi
+
+echo "twindb-backup has been uninstalled!"
+
+exit 0

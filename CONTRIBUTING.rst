@@ -64,11 +64,11 @@ Ready to contribute? Here's how to set up TwinDB Backup for local development.
 
     $ git clone git@github.com:your_name_here/backup.git twindb_backup
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Install your local copy into a virtualenv::
 
-    $ mkvirtualenv twindb_backup
-    $ cd twindb_backup/
-    $ python setup.py develop
+    $ make virtualenv
+    $ source env/bin/activate
+    $ make bootstrap
 
 4. Create a branch for local development::
 

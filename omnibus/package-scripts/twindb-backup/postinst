@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# Perform necessary twindb-backup setup steps
+# after package is installed.
+#
+
+PROGNAME=`basename $0`
+INSTALL_DIR=/opt/twindb-backup
+LOG_DIR=/var/log/twindb-backup
+
+DISTRIBUTION=$(grep -Eo "(Debian|Ubuntu|RedHat|CentOS|openSUSE|Amazon|SUSE)" /etc/issue 2>/dev/null || uname -s)
+
+error_exit()
+{
+  echo "${PROGNAME}: ${1:-"Unknown Error"}" 1>&2
+  exit 1
+}
+
+mkdir -p ${LOG_DIR} || error_exit "Cannot create ${LOG_DIR}!"
+
+# Create symlinks to the various agent's components
+ln -sf $INSTALL_DIR/bin/twindb-backup /usr/bin/twindb-backup
+chown -R root:root /usr/bin/twindb-backup
+chmod 755 /usr/bin/twindb-backup
+
+echo "Thank you for installing twindb-backup!"
+
+exit 0
