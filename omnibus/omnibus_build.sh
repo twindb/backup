@@ -10,12 +10,8 @@ PACKAGER_NAME="TwinDB Packager (TwinDB packager key)"
 PACKAGER_EMAIL="packager@twindb.com"
 PROJECT_NAME=twindb-backup
 LOG_LEVEL=${LOG_LEVEL:-"info"}
-PROJECT_DIR=$(dirname $(realpath $0))
 
 set -e
-
-# We must run this script from the omnibus project directory
-cd $PROJECT_DIR
 
 # Clean up omnibus artifacts
 rm -rf /var/cache/omnibus/pkg/*
@@ -38,6 +34,9 @@ git --git-dir=/var/cache/omnibus/cache/git_cache/opt/twindb-backup tag -d `git -
 git config --global user.email "$PACKAGER_EMAIL"
 git config --global user.name "$PACKAGER_NAME"
 
+git clone https://github.com/twindb/backup.git twindb-backup
+
 # Install the gems we need, with stubs in bin/
-bundle update # Make sure to update to the latest version of omnibus-software
+cd twindb-backup/omnibus
+bundle install --binstubs
 bin/omnibus build -l=$LOG_LEVEL $PROJECT_NAME
