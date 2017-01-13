@@ -31,6 +31,4 @@ while [ ${timeout} -gt 0 ] ; do mysqladmin ping && break; sleep 1; timeout=$((${
 cp -Rv /twindb-backup /tmp/
 pip install /tmp/twindb-backup
 
-make -C /tmp/twindb-backup test test-integration rpm
-
-cp -R /tmp/twindb-backup/build /twindb-backup/
+make -C /tmp/twindb-backup test test-integration

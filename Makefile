@@ -25,7 +25,6 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 PYTHON := $(shell rpm --eval '%{__python}')
 PYTHON_LIB := $(shell rpm --eval '%{python_sitelib}')
-RHEL := $(shell if test -z "${OS_VERSION}"; then rpm --eval '%{rhel}'; else echo ${OS_VERSION}; fi)
 PLATFORM := $(shell if test -z "${PLATFORM}"; then echo "centos"; else echo ${PLATFORM}; fi)
 pwd := $(shell pwd)
 build_dir = ${pwd}/build
@@ -35,6 +34,7 @@ PY_MAJOR = $(shell python -c 'import sys; print(sys.version[:3])')
 LOG_LEVEL := info
 OMNIBUS_BRANCH := $(shell if test -z "${OMNIBUS_BRANCH}"; then echo "master"; else echo ${OMNIBUS_BRANCH}; fi)
 OMNIBUS_SOFTWARE_BRANCH := $(shell if test -z "${OMNIBUS_SOFTWARE_BRANCH}"; then echo "master"; else echo ${OMNIBUS_SOFTWARE_BRANCH}; fi)
+DOCKER_IMAGE := $(shell if test -z "${DOCKER_IMAGE}"; then echo "centos:centos7"; else echo ${DOCKER_IMAGE}; fi)
 
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
@@ -62,7 +62,6 @@ bootstrap: ## bootstrap the development environment
 	pip install --editable .
 
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
-
 
 clean-build: ## remove build artifacts
 	rm -fr build/
@@ -147,18 +146,13 @@ install: clean ## install the package to the active Python's site-packages
 		install -m 600 -o root support/twindb-backup.cfg "${DESTDIR}/etc/twindb" ; \
 	fi
 
-rpm: ## Build rpm
-	rm -rf "${build_dir}"
-	mkdir -p "${top_dir}/SOURCES"
-	$(PYTHON) setup.py sdist --dist-dir "${top_dir}/SOURCES"
-	rpmbuild --define '_topdir ${top_dir}' --define 'version ${version}' --define 'PY_MAJOR ${PY_MAJOR}' -ba support/twindb-backup.spec
-
-rhel:
-	echo ${RHEL}
-
-docker-rpm: ## Build rpm in a docker container
-	@sudo docker run -v `pwd`:/twindb-backup:rw -e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" -e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" -e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" centos:centos${RHEL} /bin/bash /twindb-backup/support/bootstrap-docker.sh
-	find ${build_dir}
+docker-test: ## Test twindb-backup in a docker container
+	@sudo docker run \
+		-v `pwd`:/twindb-backup:rw \
+		-e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
+		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
+		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
+		${DOCKER_IMAGE} /bin/bash /twindb-backup/support/docker-test.sh
 
 package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
 	rm -rf pkg
