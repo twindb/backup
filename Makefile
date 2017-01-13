@@ -33,6 +33,8 @@ top_dir = ${build_dir}/rpmbuild
 version = $(shell python -c 'from twindb_backup import __version__; print(__version__)')
 PY_MAJOR = $(shell python -c 'import sys; print(sys.version[:3])')
 LOG_LEVEL := info
+OMNIBUS_BRANCH := $(shell if test -z "${OMNIBUS_BRANCH}"; then echo "master"; else echo ${OMNIBUS_BRANCH}; fi)
+OMNIBUS_SOFTWARE_BRANCH := $(shell if test -z "${OMNIBUS_SOFTWARE_BRANCH}"; then echo "master"; else echo ${OMNIBUS_SOFTWARE_BRANCH}; fi)
 
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
