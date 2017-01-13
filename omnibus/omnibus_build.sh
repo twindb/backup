@@ -13,6 +13,14 @@ LOG_LEVEL=${LOG_LEVEL:-"info"}
 
 set -e
 
+# Setup git config
+git config --global user.email "$PACKAGER_EMAIL"
+git config --global user.name "$PACKAGER_NAME"
+
+# Pull in the latest changes
+cd /twindb-backup
+git pull
+
 # Clean up omnibus artifacts
 rm -rf /var/cache/omnibus/pkg/*
 
@@ -30,13 +38,7 @@ fi
 # to tweak omnibus-git-cache directly for that).
 git --git-dir=/var/cache/omnibus/cache/git_cache/opt/twindb-backup tag -d `git --git-dir=/var/cache/omnibus/cache/git_cache/opt/twindb-backup tag -l | grep twindb-backup` || true
 
-# Setup git config
-git config --global user.email "$PACKAGER_EMAIL"
-git config --global user.name "$PACKAGER_NAME"
-
-git clone https://github.com/twindb/backup.git twindb-backup
-
 # Install the gems we need, with stubs in bin/
-cd twindb-backup/omnibus
-bundle install --binstubs
+cd omnibus
+bundle update
 bin/omnibus build -l=$LOG_LEVEL $PROJECT_NAME

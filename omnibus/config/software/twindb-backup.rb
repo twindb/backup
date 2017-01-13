@@ -52,6 +52,7 @@ build do
   command 'chmod 600 /etc/twindb/twindb-backup.cfg'
 
   # cron definition file
+  mkdir '/etc/cron.d'
   copy 'support/twindb-backup.cron', '/etc/cron.d/twindb-backup'
 
   touch '/usr/bin/twindb-backup'
