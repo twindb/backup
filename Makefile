@@ -26,11 +26,15 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 PYTHON := $(shell rpm --eval '%{__python}')
 PYTHON_LIB := $(shell rpm --eval '%{python_sitelib}')
 RHEL := $(shell if test -z "${OS_VERSION}"; then rpm --eval '%{rhel}'; else echo ${OS_VERSION}; fi)
+PLATFORM := $(shell if test -z "${PLATFORM}"; then echo "centos"; else echo ${PLATFORM}; fi)
 pwd := $(shell pwd)
 build_dir = ${pwd}/build
 top_dir = ${build_dir}/rpmbuild
 version = $(shell python -c 'from twindb_backup import __version__; print(__version__)')
 PY_MAJOR = $(shell python -c 'import sys; print(sys.version[:3])')
+LOG_LEVEL := info
+OMNIBUS_BRANCH := $(shell if test -z "${OMNIBUS_BRANCH}"; then echo "master"; else echo ${OMNIBUS_BRANCH}; fi)
+OMNIBUS_SOFTWARE_BRANCH := $(shell if test -z "${OMNIBUS_SOFTWARE_BRANCH}"; then echo "master"; else echo ${OMNIBUS_SOFTWARE_BRANCH}; fi)
 
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
@@ -64,6 +68,8 @@ clean-build: ## remove build artifacts
 	rm -fr build/
 	rm -fr dist/
 	rm -fr .eggs/
+	rm -rf pkg/
+	rm -rf cache/
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
 
@@ -77,6 +83,9 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .tox/
 	rm -f .coverage
 	rm -fr htmlcov/
+
+clean-docker:
+	docker rm twindb-backup-build-${PLATFORM}
 
 lint: ## check style with flake8
 	flake8 twindb_backup tests
@@ -150,3 +159,10 @@ rhel:
 docker-rpm: ## Build rpm in a docker container
 	@sudo docker run -v `pwd`:/twindb-backup:rw -e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" -e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" -e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" centos:centos${RHEL} /bin/bash /twindb-backup/support/bootstrap-docker.sh
 	find ${build_dir}
+
+package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
+	rm -rf pkg
+
+	mkdir -p pkg
+	mkdir -p "cache/${PLATFORM}"
+	@sudo docker run --name "twindb-backup-build-${PLATFORM}" -e LOG_LEVEL=${LOG_LEVEL} -v ${pwd}/pkg:/twindb-backup/omnibus/pkg -v ${pwd}/keys:/keys -v "${pwd}/cache/${PLATFORM}:/var/cache/omnibus" "twindb/backup-omnibus-${PLATFORM}"
