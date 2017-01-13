@@ -46,16 +46,10 @@ build do
           " --prefix=#{install_dir}/embedded" \
           " --install-scripts=#{install_dir}/bin", env: env
 
-  # configuration files
-  mkdir '/etc/twindb'
-  copy 'support/twindb-backup.cfg', '/etc/twindb/twindb-backup.cfg'
-  command 'chmod 600 /etc/twindb/twindb-backup.cfg'
-
-  # cron definition file
-  mkdir '/etc/cron.d'
-  copy 'support/twindb-backup.cron', '/etc/cron.d/twindb-backup'
-
-  touch '/usr/bin/twindb-backup'
+  # support files
+  mkdir "#{install_dir}/support"
+  copy 'support/twindb-backup.cfg', "#{install_dir}/support/"
+  copy 'support/twindb-backup.cron', "#{install_dir}/support/"
 
   # Remove the .pyc and .pyo files from the package and list them in a file
   # so that the prerm script knows which compiled files to remove

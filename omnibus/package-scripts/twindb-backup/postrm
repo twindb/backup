@@ -4,30 +4,41 @@
 # after package is uninstalled.
 #
 
+PREFIX="/usr"
 LINUX_DISTRIBUTION=$(grep -Eo "(Debian|Ubuntu|RedHat|CentOS|openSUSE|Amazon|SUSE)" /etc/issue)
 
-if [ -f "/etc/debian_version" ] || [ "$LINUX_DISTRIBUTION" == "Debian" ] || [ "$LINUX_DISTRIBUTION" == "Ubuntu" ]; then
-    set -e
+cleanup_symlinks() {
+  binaries="twindb-backup"
+  for binary in $binaries; do
+    rm -f $PREFIX/bin/$binary
+  done
+}
 
-    if [ "$1" = purge ]; then
-        rm -rf /opt/twindb-backup
-        rm -rf /var/log/twindb-backup
-        rm -rf /etc/twindb-backup
-    fi
+if [ -f "/etc/debian_version" ] || [ "$LINUX_DISTRIBUTION" == "Debian" ] || [ "$LINUX_DISTRIBUTION" == "Ubuntu" ]; then
+  set -e
+
+  if [ "$1" = purge ]; then
+    rm -rf /opt/twindb-backup
+    rm -rf /var/log/twindb-backup
+    rm -rf /etc/twindb-backup
+
+    cleanup_symlinks
+  fi
 elif [ -f "/etc/redhat-release" ] || [ "$LINUX_DISTRIBUTION" == "RedHat" ] || [ "$LINUX_DISTRIBUTION" == "CentOS" ] || [ "$LINUX_DISTRIBUTION" == "openSUSE" ] || [ "$LINUX_DISTRIBUTION" == "Amazon" ] || [ "$LINUX_DISTRIBUTION" == "SUSE" ]; then
-    case "$*" in
-      0)
-        # We're uninstalling.
-        ;;
-      1)
-        # We're upgrading.
-        ;;
-      *)
-        ;;
-    esac
+  case "$*" in
+    0)
+      # We're uninstalling.
+      cleanup_symlinks
+      ;;
+    1)
+      # We're upgrading.
+      ;;
+    *)
+      ;;
+  esac
 else
-      echo "[ ${Red}FAILED ${RCol}]\tYour system is currently not supported by this script.";
-      exit 1;
+  echo "[ ${Red}FAILED ${RCol}]\tYour system is currently not supported by this script.";
+  exit 1;
 fi
 
 echo "twindb-backup has been uninstalled!"
