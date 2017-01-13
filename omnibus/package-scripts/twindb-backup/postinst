@@ -18,7 +18,7 @@ error_exit()
 
 mkdir -p ${LOG_DIR} || error_exit "Cannot create ${LOG_DIR}!"
 
-# Create symlinks to the various agent's components
+# Create symlinks to the various twindb-backup components
 ln -sf $INSTALL_DIR/bin/twindb-backup /usr/bin/twindb-backup
 chown -R root:root /usr/bin/twindb-backup
 chmod 755 /usr/bin/twindb-backup
