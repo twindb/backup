@@ -165,4 +165,12 @@ package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
 
 	mkdir -p pkg
 	mkdir -p "cache/${PLATFORM}"
-	@sudo docker run --name "twindb-backup-build-${PLATFORM}" -e LOG_LEVEL=${LOG_LEVEL} -v ${pwd}/pkg:/twindb-backup/omnibus/pkg -v ${pwd}/keys:/keys -v "${pwd}/cache/${PLATFORM}:/var/cache/omnibus" "twindb/backup-omnibus-${PLATFORM}"
+
+	@sudo docker run --name "twindb-backup-build-${PLATFORM}" \
+		-e LOG_LEVEL=${LOG_LEVEL} \
+		-e OMNIBUS_BRANCH=$OMNIBUS_BRANCH \
+		-e OMNIBUS_SOFTWARE_BRANCH=$OMNIBUS_SOFTWARE_BRANCH \
+		-v ${pwd}/pkg:/twindb-backup/omnibus/pkg \
+		-v ${pwd}/keys:/keys \
+		-v "${pwd}/cache/${PLATFORM}:/var/cache/omnibus" \
+		"twindb/backup-omnibus-${PLATFORM}"
