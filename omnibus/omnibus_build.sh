@@ -6,10 +6,13 @@
 #
 ############################
 
+PROJECT_DIR=/twindb-backup
 PACKAGER_NAME="TwinDB Packager (TwinDB packager key)"
 PACKAGER_EMAIL="packager@twindb.com"
 PROJECT_NAME=twindb-backup
 LOG_LEVEL=${LOG_LEVEL:-"info"}
+
+export OMNIBUS_BRANCH=${OMNIBUS_BRANCH:-"master"}
 
 set -e
 
@@ -18,8 +21,12 @@ git config --global user.email "$PACKAGER_EMAIL"
 git config --global user.name "$PACKAGER_NAME"
 
 # Pull in the latest changes
-cd /twindb-backup
+cd $PROJECT_DIR
+
+# Allow to use a different dd-agent-omnibus branch
 git fetch --all
+git checkout $OMNIBUS_BRANCH
+git reset --hard origin/$OMNIBUS_BRANCH
 
 # Clean up omnibus artifacts
 rm -rf /var/cache/omnibus/pkg/*
