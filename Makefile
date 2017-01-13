@@ -26,6 +26,7 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 PYTHON := $(shell rpm --eval '%{__python}')
 PYTHON_LIB := $(shell rpm --eval '%{python_sitelib}')
 RHEL := $(shell if test -z "${OS_VERSION}"; then rpm --eval '%{rhel}'; else echo ${OS_VERSION}; fi)
+PLATFORM := $(shell if test -z "${PLATFORM}"; then echo "centos"; else echo ${PLATFORM}; fi)
 pwd := $(shell pwd)
 build_dir = ${pwd}/build
 top_dir = ${build_dir}/rpmbuild
@@ -161,5 +162,5 @@ package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
 	rm -rf pkg
 
 	mkdir -p pkg
-	mkdir -p "cache/$PLATFORM"
+	mkdir -p "cache/${PLATFORM}"
 	@sudo docker run --name "twindb-backup-build-${PLATFORM}" -e LOG_LEVEL=${LOG_LEVEL} -v ${pwd}/pkg:/twindb-backup/omnibus/pkg -v ${pwd}/keys:/keys -v "${pwd}/cache/${PLATFORM}:/var/cache/omnibus" "twindb/backup-omnibus-${PLATFORM}"
