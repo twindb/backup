@@ -19,7 +19,7 @@ git config --global user.name "$PACKAGER_NAME"
 
 # Pull in the latest changes
 cd /twindb-backup
-git pull
+git fetch --all
 
 # Clean up omnibus artifacts
 rm -rf /var/cache/omnibus/pkg/*
