@@ -28,7 +28,7 @@ else
   source path: ENV['LOCAL_TWINDB_BACKUP_REPO']
 end
 
-twindb_backup_branch = ENV['TWINDB_BACKUP_BRANCH']
+twindb_backup_branch = ENV['OMNIBUS_SOFTWARE_BRANCH']
 if twindb_backup_branch.nil? || twindb_backup_branch.empty?
   default_version 'master'
 else

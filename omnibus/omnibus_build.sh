@@ -13,6 +13,7 @@ PROJECT_NAME=twindb-backup
 LOG_LEVEL=${LOG_LEVEL:-"info"}
 
 export OMNIBUS_BRANCH=${OMNIBUS_BRANCH:-"master"}
+export OMNIBUS_SOFTWARE_BRANCH=${OMNIBUS_SOFTWARE_BRANCH:-"master"}
 
 set -e
 
