@@ -24,7 +24,6 @@ skip_transitive_dependency_licensing true
 dependency "openssl"
 dependency "zlib"
 dependency "ncurses"
-dependency "cmake"
 
 source  :url => "http://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-#{default_version}.tar.gz",
         :md5 => "7fbf37928ef651e005b80e820a055385"

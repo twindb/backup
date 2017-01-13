@@ -83,17 +83,6 @@ if redhat?
   runtime_dependency 'logrotate'
 end
 
-# Config file for twindb-backup
-extra_package_file '/etc/twindb/twindb-backup.cfg'
-
-# Cron definition for twindb-backup
-extra_package_file '/etc/cron.d/twindb-backup'
-
-# Just a dummy file that needs to be in the RPM package list if we don't want it to be removed
-# during RPM upgrades. (the old files from the RPM file listthat are not in the new RPM file
-# list will get removed, that's why we need this one here)
-extra_package_file '/usr/bin/twindb-backup'
-
 # twindb-backup
 dependency 'twindb-backup'
 
