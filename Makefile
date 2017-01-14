@@ -152,7 +152,7 @@ docker-test: ## Test twindb-backup in a docker container
 		-e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
 		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
 		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
-		${DOCKER_IMAGE} /bin/bash /twindb-backup/support/docker-test.sh
+		${DOCKER_IMAGE} /bin/bash /twindb-backup/support/docker-test-${PLATFORM}.sh
 
 package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
 	rm -rf pkg
