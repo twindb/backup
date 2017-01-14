@@ -128,9 +128,13 @@ def backup_mysql(run_type, config):
                 'binlog': src.binlog_coordinate[0],
                 'position': src.binlog_coordinate[1],
                 'lsn': src.lsn,
-                'type': src.type,
-                'config': base64.b64encode(src.get_my_cnf())
+                'type': src.type
             }
+            status[run_type][src_name]['config'] = []
+            for path, content in src.get_my_cnf():
+                status[run_type][src_name]['config'].append({
+                    path: base64.b64encode(content)
+                })
 
             if src.incremental:
                 status[run_type][src_name]['parent'] = src.parent

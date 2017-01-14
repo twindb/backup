@@ -121,4 +121,5 @@ def test_restore_mysql_inc_creates_logfiles(config_content_mysql_only,
     assert os.path.exists(dst_dir + '/mysql/user.MYD')
     assert os.path.exists(dst_dir + '/backup-my.cnf')
     assert os.path.exists(dst_dir + '/xtrabackup_logfile')
-    assert os.path.exists(dst_dir + '/my.cnf.orig')
+    assert os.path.exists(dst_dir + '/_config/etc/my.cnf') or \
+        os.path.exists(dst_dir + '/_config/etc/mysql/my.cnf')

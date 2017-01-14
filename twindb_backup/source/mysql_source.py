@@ -221,11 +221,16 @@ class MySQLSource(BaseSource):
 
     @staticmethod
     def get_my_cnf():
-        try:
-            with open('/etc/my.cnf') as fp:
-                return fp.read()
-        except IOError:
-            return ''
+        mysql_configs = [
+            '/etc/my.cnf',
+            '/etc/mysql/my.cnf'
+        ]
+        for cnf in mysql_configs:
+            try:
+                with open(cnf) as fp:
+                    yield cnf, fp.read()
+            except IOError:
+                continue
 
     @property
     def wsrep_provider_version(self):
