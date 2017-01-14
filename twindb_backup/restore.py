@@ -40,7 +40,10 @@ def get_backup_type(status, key):
 
 
 def get_my_cnf(status, key):
-    return base64.b64decode(_get_status_key(status, key, 'config'))
+    for cnf in _get_status_key(status, key, 'config'):
+        k = cnf.keys()[0]
+        v = base64.b64decode(cnf[k])
+        yield k, v
 
 
 def restore_from_mysql_full(dst, backup_copy, dst_dir, redo_only=False):
@@ -241,10 +244,15 @@ def restore_from_mysql(config, backup_copy, dst_dir):
     else:
         restore_from_mysql_incremental(dst, backup_copy, dst_dir)
 
-    my_cnf = get_my_cnf(status, key)
-    if my_cnf:
-        with open(dst_dir + '/my.cnf.orig', 'w') as fp:
-            fp.write(my_cnf)
+    config_dir = os.path.join(dst_dir, "_config")
+    for path, content in get_my_cnf(status, key):
+        config_sub_dir = os.path.join(config_dir,
+                                      os.path.dirname(path).lstrip('/'))
+        os.makedirs(config_sub_dir)
+
+        with open(os.path.join(config_sub_dir,
+                               os.path.basename(path)), 'w') as fp:
+            fp.write(content)
 
     if os.path.exists(dst_dir + '/xtrabackup_galera_info'):
         version = get_galera_version(status, key)
@@ -263,8 +271,10 @@ def restore_from_mysql(config, backup_copy, dst_dir):
     log.info('Fix permissions: chown -R mysql:mysql /var/lib/mysql/')
     log.info('Make sure innodb_log_file_size and innodb_log_files_in_group '
              'in %s/backup-my.cnf and in /etc/my.cnf are same' % dst_dir)
-    if my_cnf:
-        log.info('Original my.cnf is restore in %s/my.cnf' % dst_dir)
+
+    if os.path.exists(config_dir):
+        log.info('Original my.cnf is restored in %s' % config_dir)
+
     log.info('Then you can start MySQL normally')
 
 
