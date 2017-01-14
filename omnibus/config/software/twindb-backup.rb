@@ -47,9 +47,8 @@ build do
           " --install-scripts=#{install_dir}/bin", env: env
 
   # support files
-  mkdir "#{install_dir}/support"
-  copy 'support/twindb-backup.cfg', "#{install_dir}/support/"
-  copy 'support/twindb-backup.cron', "#{install_dir}/support/"
+  copy 'support/twindb-backup.cfg', "#{install_dir}/"
+  copy 'support/twindb-backup.cron', "#{install_dir}/"
 
   # Remove the .pyc and .pyo files from the package and list them in a file
   # so that the prerm script knows which compiled files to remove

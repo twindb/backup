@@ -20,7 +20,6 @@ name "twindb-backup"
 maintainer "TwinDB Packager (TwinDB packager key) <packager@twindb.com>"
 homepage "https://twindb.com"
 
-# Defaults to C:/twindb-backup on Windows
 # and /opt/twindb-backup on all other platforms
 install_dir "/opt/twindb-backup"
 
