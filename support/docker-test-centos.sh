@@ -1,27 +1,21 @@
 #!/usr/bin/env bash
 
 set -eux
-yum -y install epel-release
-yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm
+yum install -y epel-release
+yum install -y  http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm
 
 
-PACKAGES="
-gcc
-python-devel
-zlib-devel
-openssl-devel
-rpm-build
-make
-python-setuptools
-python-pip
-Percona-Server-server-56
-Percona-Server-devel-56
-percona-xtrabackup
-"
-for i in $(seq 5)
-do
-    yum -y install ${PACKAGES} && break
-done
+yum install -y \
+  gcc \
+  python-devel \
+  zlib-devel \
+  openssl-devel \
+  make \
+  python-setuptools \
+  python-pip \
+  Percona-Server-server-56 \
+  Percona-Server-devel-56 \
+  percona-xtrabackup
 
 mysql_install_db && mysqld --user=root &
 
