@@ -30,4 +30,6 @@ timeout=300
 while [ ${timeout} -gt 0 ] ; do mysqladmin ping && break; sleep 1; timeout=$((${timeout} - 1)); done
 
 cd /twindb-backup
-make bootstrap test test-integration
+pip install --editable .
+
+make test test-integration
