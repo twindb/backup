@@ -74,10 +74,12 @@ dependency 'MySQL-python'
 # Debian
 if debian?
   dependency 'libyaml'
+  runtime_dependency 'openssh-client'
 end
 
 # RHEL/CentOS
 if redhat?
+  runtime_dependency 'openssh-clients'
   runtime_dependency 'initscripts'
   runtime_dependency 'cronie'
   runtime_dependency 'logrotate'
