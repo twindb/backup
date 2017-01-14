@@ -188,6 +188,9 @@ def test_take_mysql_backup(config_content_mysql_only, tmpdir):
     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
     cout, cerr = proc.communicate()
 
+    print('STDOUT:', cout)
+    print('STDERR:', cerr)
+
     key = json.loads(cout)['hourly'].keys()[0]
 
     assert key
