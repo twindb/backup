@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+require "./lib/ostools.rb"
+
 name "twindb-backup"
 maintainer "TwinDB Packager (TwinDB packager key) <packager@twindb.com>"
 homepage "https://twindb.com"
