@@ -84,7 +84,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 
 clean-docker:
-	docker rm twindb-backup-build-${PLATFORM}
+	@sudo docker rm twindb-backup-build-${PLATFORM}
 
 lint: ## check style with flake8
 	flake8 twindb_backup tests
