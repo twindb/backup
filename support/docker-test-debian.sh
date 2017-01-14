@@ -29,7 +29,5 @@ mysql_install_db && mysqld --user=root &
 timeout=300
 while [ ${timeout} -gt 0 ] ; do mysqladmin ping && break; sleep 1; timeout=$((${timeout} - 1)); done
 
-cp -Rv /twindb-backup /tmp/
-pip install /tmp/twindb-backup
-
-make -C /tmp/twindb-backup test test-integration
+cd /twindb-backup
+make bootstrap test test-integration
