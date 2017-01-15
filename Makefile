@@ -96,7 +96,7 @@ test-deps:
 	pip install --upgrade -r requirements_dev.txt
 	pip install -U setuptools
 
-test: test-deps ## run tests quickly with the default Python
+test: bootstrap ## run tests quickly with the default Python
 	pytest --cov=./twindb_backup tests/unit
 	codecov
 	# bash <(curl -s https://codecov.io/bash)
