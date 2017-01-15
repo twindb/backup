@@ -99,7 +99,7 @@ test-deps:
 test: test-deps ## run tests quickly with the default Python
 	pytest --cov=./twindb_backup tests/unit
 	codecov
-	bash <(curl -s https://codecov.io/bash)
+	# bash <(curl -s https://codecov.io/bash)
 
 test-integration: test-deps ## run integration tests
 	pip show twindb-backup || pip install -e .
