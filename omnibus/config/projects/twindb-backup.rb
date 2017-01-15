@@ -14,11 +14,12 @@
 # limitations under the License.
 #
 
+require "./lib/ostools.rb"
+
 name "twindb-backup"
 maintainer "TwinDB Packager (TwinDB packager key) <packager@twindb.com>"
 homepage "https://twindb.com"
 
-# Defaults to C:/twindb-backup on Windows
 # and /opt/twindb-backup on all other platforms
 install_dir "/opt/twindb-backup"
 
@@ -74,10 +75,12 @@ dependency 'MySQL-python'
 # Debian
 if debian?
   dependency 'libyaml'
+  runtime_dependency 'openssh-client'
 end
 
 # RHEL/CentOS
 if redhat?
+  runtime_dependency 'openssh-clients'
   runtime_dependency 'initscripts'
   runtime_dependency 'cronie'
   runtime_dependency 'logrotate'
