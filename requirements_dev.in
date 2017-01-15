@@ -4,3 +4,5 @@ tox
 pytest
 mock
 coverage
+codecov
+pytest-cov

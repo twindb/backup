@@ -6,6 +6,9 @@ TwinDB Backup
 .. image:: https://img.shields.io/travis/twindb/backup.svg
     :target: https://travis-ci.org/twindb/backup
 
+.. image:: https://img.shields.io/codecov/c/github/twindb/backup.svg
+    :target: https://codecov.io/gh/twindb/backup
+
 .. image:: https://readthedocs.org/projects/twindb-backup/badge/?version=master
     :target: https://twindb-backup.readthedocs.io/en/master/?badge=master
     :alt: Documentation Status
