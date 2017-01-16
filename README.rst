@@ -51,12 +51,14 @@ How do I get set up?
 Once the repository for your operating system is configured, install the ``twindb-backup`` package.
 
 **On CentOS and RedHat**
+
 .. code-block:: console
 
     # curl -s https://packagecloud.io/install/repositories/twindb/main/script.rpm.sh | sudo bash
     # yum install twindb-backup
 
 **On Debian and Ubuntu**
+
 .. code-block:: console
 
     # curl -s https://packagecloud.io/install/repositories/twindb/main/script.deb.sh | sudo bash
