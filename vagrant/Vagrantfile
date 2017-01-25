@@ -3,12 +3,12 @@
 nodes = [
     { :hostname   => 'master1',
       :ip         => '192.168.35.250',
-      :box        => 'bento/centos-7.1',
+      :box        => 'bento/centos-7.3',
       :ram        => 3072
     },
     { :hostname   => 'master2',
       :ip         => '192.168.35.250',
-      :box        => 'bento/centos-7.1',
+      :box        => 'bento/centos-7.3',
       :ram        => 3072
     }
 ]
@@ -17,11 +17,24 @@ nodes = [
 VAGRANTFILE_API_VERSION = '2'
 
 $script = <<SCRIPT
-rpm -Uhv https://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
-for i in 1 2 3
-do
-    yum -y install puppet && break
-done
+
+function install_package() {
+
+    for i in 1 2 3
+    do
+        yum -y install $1 && break
+    done
+}
+
+function install_puppet(){
+
+    rpm -Uhv https://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
+    install_package puppet
+
+}
+
+which puppet || install_puppet
+
 SCRIPT
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
