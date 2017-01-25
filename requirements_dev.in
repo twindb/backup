@@ -6,3 +6,4 @@ mock
 coverage
 codecov
 pytest-cov
+Sphinx

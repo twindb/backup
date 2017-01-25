@@ -4,9 +4,9 @@
 #
 #    pip-compile --no-index --output-file requirements.txt requirements.in
 #
-awscli==1.11.36
-boto3==1.4.3
-botocore==1.4.93          # via awscli, boto3, s3transfer
+awscli==1.11.42
+boto3==1.4.4
+botocore==1.5.5           # via awscli, boto3, s3transfer
 Click==6.7
 colorama==0.3.7           # via awscli
 docutils==0.13.1          # via awscli, botocore
