@@ -138,18 +138,13 @@ class S3(BaseDestination):
         tmpdir = tempfile.mkdtemp()
 
         try:
-            log.debug('Fetching object %s from bucket %s' %
-                      (object_key, self.bucket))
-
             fifo_path = os.path.join(tmpdir, 's3_stream_pipe')
             os.mkfifo(fifo_path)
 
-            with open(fifo_path, 'wb') as fifo:
-                self._download_object(fifo, object_key)
+            self._download_object(fifo_path, object_key)
 
+            with open(fifo_path, 'r') as fifo:
                 yield fifo
-
-            log.debug('Successfully streamed %s', path)
         except Exception as e:
             log.error('Failed to read from %s: %s' % (path, e))
             exit(1)
@@ -179,12 +174,15 @@ class S3(BaseDestination):
         return self._validate_upload(object_key)
 
     @run_async
-    def _download_object(self, file_obj, object_key):
-        try:
-            self._s3_client.download_fileobj(self.bucket, object_key, file_obj)
-        except Exception as e:
-            log.error('Failed to read from s3://{0}/{1}: {2}'.format(
-                self.bucket, object_key, e))
+    def _download_object(self, fifo_path, object_key):
+        log.debug('Fetching object %s from bucket %s' %
+                  (object_key, self.bucket))
+
+        with open(fifo_path, 'wb') as fifo:
+            self._s3_client.download_fileobj(self.bucket, object_key, fifo)
+
+        log.debug('Successfully streamed s3://{bucket}/{name}',
+                  self.bucket, object_key)
 
     def _validate_upload(self, object_key):
         """Validates that upload of an object was successful. Raises an
