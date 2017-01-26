@@ -10,6 +10,8 @@ from botocore.exceptions import ClientError
 from boto3.s3.transfer import TransferConfig
 from io import BytesIO
 from operator import attrgetter
+import sys
+import traceback
 from twindb_backup import log
 from twindb_backup.destination.base_destination import BaseDestination, \
     DestinationError
@@ -137,6 +139,7 @@ class S3(BaseDestination):
             log.debug('Successfully streamed %s' % path)
         except Exception as e:
             log.error('Failed to read from %s: %s' % (path, e))
+            traceback.print_exc(file=sys.stdout)
             exit(1)
         finally:
             if 'Body' in response:
