@@ -1,18 +1,19 @@
 import base64
-from contextlib import contextmanager
+import boto3 as boto3
 import json
-from operator import attrgetter
 import os
 import socket
-import boto3 as boto3
 
 from botocore.client import Config
-from subprocess import Popen, PIPE
+from contextlib import contextmanager
 from botocore.exceptions import ClientError
 from boto3.s3.transfer import TransferConfig
+from operator import attrgetter
+from subprocess import Popen, PIPE
 from twindb_backup import log
 from twindb_backup.destination.base_destination import BaseDestination, \
     DestinationError
+from urlparse import urlparse
 
 
 S3_CONNECT_TIMEOUT = 60
@@ -119,23 +120,29 @@ class S3(BaseDestination):
         the destination
         :return:
         """
-        cmd = ["aws", "s3", "cp", path, "-"]
+        parsed_url = urlparse(path)
+        bucket_name = parsed_url.hostname
+        object_key = parsed_url.path.lstrip('/')
+
+        response = {}
+
         try:
-            log.debug('Running %s', " ".join(cmd))
-            proc = Popen(cmd, stderr=PIPE, stdout=PIPE)
+            log.debug('Fetching object %s from bucket %s' %
+                      (object_key, bucket_name))
 
-            yield proc.stdout
+            response = self._s3_client.get_object(Bucket=bucket_name,
+                                                  Key=object_key)
+            self.validate_client_response(response)
 
-            cout, cerr = proc.communicate()
-            if proc.returncode:
-                log.error('Failed to read from %s: %s' % (path, cerr))
-                exit(1)
-            else:
-                log.debug('Successfully streamed %s', path)
+            yield response['Body']
 
-        except OSError as err:
-            log.error('Failed to run %s: %s', cmd, err)
+            log.debug('Successfully streamed %s', path)
+        except Exception as e:
+            log.error('Failed to read from %s: %s' % (path, e))
             exit(1)
+        finally:
+            if 'Body' in response:
+                response['Body'].close()
 
     def _upload_object(self, file_obj, object_key):
         """Upload objects to S3 in streaming fashion.
@@ -168,20 +175,30 @@ class S3(BaseDestination):
         )
 
         log.debug("Validating upload to %s" % remote_name)
+
         response = self._s3_client.get_object(Bucket=self.bucket,
                                               Key=object_key)
-
-        try:
-            http_status_code = response['ResponseMetadata']['HTTPStatusCode']
-        except Exception as e:
-            raise S3Error('Invalid response: %s' % e)
-
-        if http_status_code != 200:
-            raise S3Error('Error code: %s' % http_status_code)
+        self.validate_client_response(response)
 
         log.debug("Upload successfully validated")
 
         return True
+
+    @staticmethod
+    def validate_client_response(response):
+        """Validates the response returned by the client. Raises an exception
+            if the response code is not 200
+
+        :param dict response: The response that needs to be validated
+        """
+        try:
+            http_status_code = response['ResponseMetadata']['HTTPStatusCode']
+        except Exception as e:
+            raise S3Error('S3 client returned invalid response: %s' % e)
+
+        if http_status_code != 200:
+            raise S3Error('S3 client returned error code: %s' %
+                          http_status_code)
 
     @staticmethod
     def get_transfer_config():
