@@ -67,15 +67,6 @@ class S3(BaseDestination):
         client = session.client('s3', region_name=self.default_region,
                                 config=s3_config)
 
-        # Now we make a call to confirm that the client is authenticated,
-        # otherwise boto3 doesn't tell us if the client is actually connected
-        try:
-            client.list_buckets()
-        except ClientError as e:
-            log.error('S3 Client could not connect to the region %s: %s' %
-                      (self.default_region, e))
-            exit(1)
-
         return client
 
     def save(self, handler, name, keep_local=None):
