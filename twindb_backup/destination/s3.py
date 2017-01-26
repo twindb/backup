@@ -2,20 +2,17 @@ import base64
 import boto3 as boto3
 import json
 import os
-import shutil
 import socket
-import tempfile
 
 from botocore.client import Config
 from contextlib import contextmanager
-from functools import wraps
 from botocore.exceptions import ClientError
 from boto3.s3.transfer import TransferConfig
+from io import BytesIO
 from operator import attrgetter
 from twindb_backup import log
 from twindb_backup.destination.base_destination import BaseDestination, \
     DestinationError
-from threading import Thread
 from urlparse import urlparse
 
 
@@ -37,17 +34,6 @@ S3_UPLOAD_IO_QUEUE_SIZE = 200
 
 # The max size of each chunk in the io queue.
 S3_UPLOAD_IO_CHUNKS_SIZE_BYTES = 256 * 1024
-
-
-def run_async(func):
-    @wraps(func)
-    def async_func(*args, **kwargs):
-        func_hl = Thread(target=func, args=args, kwargs=kwargs)
-        func_hl.start()
-
-        return func_hl
-
-    return async_func
 
 
 class S3Error(DestinationError):
@@ -135,21 +121,26 @@ class S3(BaseDestination):
         :return:
         """
         object_key = urlparse(path).path.lstrip('/')
-        tmpdir = tempfile.mkdtemp()
+        response = {}
 
         try:
-            fifo_path = os.path.join(tmpdir, 's3_stream_pipe')
-            os.mkfifo(fifo_path)
+            log.debug('Fetching object %s from bucket %s' %
+                      (object_key, self.bucket))
 
-            self._download_object(fifo_path, object_key)
+            response = self._s3_client.get_object(Bucket=self.bucket,
+                                                  Key=object_key)
+            self.validate_client_response(response)
 
-            with open(fifo_path, 'r') as fifo:
-                yield fifo
+            bytes_stream = BytesIO(response['Body'].read())
+            yield bytes_stream
+
+            log.debug('Successfully streamed %s' % path)
         except Exception as e:
             log.error('Failed to read from %s: %s' % (path, e))
             exit(1)
         finally:
-            shutil.rmtree(tmpdir)
+            if 'Body' in response:
+                response['Body'].close()
 
     def _upload_object(self, file_obj, object_key):
         """Upload objects to S3 in streaming fashion.
@@ -172,17 +163,6 @@ class S3(BaseDestination):
         log.debug("Successfully streamed to %s" % remote_name)
 
         return self._validate_upload(object_key)
-
-    @run_async
-    def _download_object(self, fifo_path, object_key):
-        log.debug('Fetching object %s from bucket %s' %
-                  (object_key, self.bucket))
-
-        with open(fifo_path, 'wb') as fifo:
-            self._s3_client.download_fileobj(self.bucket, object_key, fifo)
-
-        log.debug('Successfully streamed s3://{bucket}/{name}',
-                  self.bucket, object_key)
 
     def _validate_upload(self, object_key):
         """Validates that upload of an object was successful. Raises an
