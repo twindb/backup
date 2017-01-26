@@ -2,6 +2,9 @@ import ConfigParser
 import errno
 import os
 import socket
+
+from functools import wraps
+from threading import Thread
 from twindb_backup import log, INTERVALS
 from twindb_backup.destination.s3 import S3
 from twindb_backup.destination.ssh import Ssh
@@ -63,3 +66,14 @@ def get_hostname_from_backup_copy(backup_copy):
         if run_type in chunks:
             return chunks[chunks.index(run_type) - 1]
     return None
+
+
+def run_async(func):
+    @wraps(func)
+    def async_func(*args, **kwargs):
+        func_hl = Thread(target = func, args = args, kwargs = kwargs)
+        func_hl.start()
+
+        return func_hl
+
+    return async_func

@@ -2,17 +2,19 @@ import base64
 import boto3 as boto3
 import json
 import os
+import shutil
 import socket
+import tempfile
 
 from botocore.client import Config
 from contextlib import contextmanager
 from botocore.exceptions import ClientError
 from boto3.s3.transfer import TransferConfig
 from operator import attrgetter
-from subprocess import Popen, PIPE
 from twindb_backup import log
 from twindb_backup.destination.base_destination import BaseDestination, \
     DestinationError
+from twindb_backup.util import run_async
 from urlparse import urlparse
 
 
@@ -120,29 +122,27 @@ class S3(BaseDestination):
         the destination
         :return:
         """
-        parsed_url = urlparse(path)
-        bucket_name = parsed_url.hostname
-        object_key = parsed_url.path.lstrip('/')
-
-        response = {}
+        object_key = urlparse(path).path.lstrip('/')
+        tmpdir = tempfile.mkdtemp()
 
         try:
             log.debug('Fetching object %s from bucket %s' %
-                      (object_key, bucket_name))
+                      (object_key, self.bucket))
 
-            response = self._s3_client.get_object(Bucket=bucket_name,
-                                                  Key=object_key)
-            self.validate_client_response(response)
+            fifo_path = os.path.join(tmpdir, 's3_stream_pipe')
+            os.mkfifo(fifo_path)
 
-            yield response['Body']
+            with open(fifo_path, 'wb') as fifo:
+                self._download_object(fifo, object_key)
+
+                yield fifo
 
             log.debug('Successfully streamed %s', path)
         except Exception as e:
             log.error('Failed to read from %s: %s' % (path, e))
             exit(1)
         finally:
-            if 'Body' in response:
-                response['Body'].close()
+            shutil.rmtree(tmpdir)
 
     def _upload_object(self, file_obj, object_key):
         """Upload objects to S3 in streaming fashion.
@@ -165,6 +165,14 @@ class S3(BaseDestination):
         log.debug("Successfully streamed to %s" % remote_name)
 
         return self._validate_upload(object_key)
+
+    @run_async
+    def _download_object(self, file_obj, object_key):
+        try:
+            self._s3_client.download_fileobj(self.bucket, object_key, file_obj)
+        except Exception as e:
+            log.error('Failed to read from s3://{0}/{1}: {2}'.format(
+                self.bucket, object_key, e))
 
     def _validate_upload(self, object_key):
         """Validates that upload of an object was successful. Raises an
