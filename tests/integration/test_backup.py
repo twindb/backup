@@ -1,10 +1,11 @@
 import json
 import os
+import pytest
 import random
 import shlex
 import socket
+
 from subprocess import call, Popen, PIPE
-import pytest
 from twindb_backup.destination.s3 import S3
 
 BUCKET = 'twindb-backup-test-%d' % random.randint(0, 1000000)
@@ -115,15 +116,23 @@ yearly_copies=0
         print('Environment variable %s must be defined' % err)
         exit(1)
 
+# THis is the s3 client that is used in remainder of the tests.
+s3_client = None
+
 
 def setup_function():
-    cmd = "aws s3 mb s3://%s" % BUCKET
-    assert call(shlex.split(cmd)) == 0
+    global s3_client
+
+    s3_client = S3(BUCKET, os.environ['AWS_ACCESS_KEY_ID'],
+                   os.environ['AWS_SECRET_ACCESS_KEY'])
+    assert s3_client.create_bucket()
 
 
 def teardown_function():
-    cmd = "aws s3 rb --force s3://%s" % BUCKET
-    assert call(shlex.split(cmd)) == 0
+    global s3_client
+
+    if s3_client:
+        assert s3_client.delete_bucket()
 
 
 def test_take_file_backup(config_content_files_only, tmpdir):

@@ -2,7 +2,6 @@ import json
 import os
 import pytest
 import random
-import shlex
 
 from subprocess import call, PIPE, Popen
 from twindb_backup.destination.s3 import S3
@@ -83,7 +82,7 @@ def setup_function():
 
 def teardown_function():
     global s3_client
-    
+
     if s3_client:
         assert s3_client.delete_bucket()
 
