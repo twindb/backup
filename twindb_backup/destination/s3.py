@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from botocore.exceptions import ClientError
 from boto3.s3.transfer import TransferConfig
 from io import BytesIO
+from multiprocessing import Process
 from operator import attrgetter
 import sys
 import traceback
@@ -123,27 +124,39 @@ class S3(BaseDestination):
         :return:
         """
         object_key = urlparse(path).path.lstrip('/')
-        response = {}
+        download_proc = None
+
+        def download_object(s3_client, bucket_name, key, read_fd, write_fd):
+            # The read end of the pipe must be closed in the child process
+            # before we start writing to it.
+            os.close(read_fd)
+
+            with os.fdopen(write_fd, 'wb') as write_pipe:
+                s3_client.download_fileobj(bucket_name, key, write_pipe)
 
         try:
             log.debug('Fetching object %s from bucket %s' %
                       (object_key, self.bucket))
 
-            response = self._s3_client.get_object(Bucket=self.bucket,
-                                                  Key=object_key)
-            self.validate_client_response(response)
+            read_pipe, write_pipe = os.pipe()
 
-            bytes_stream = BytesIO(response['Body'].read())
-            yield bytes_stream
+            download_proc = Process(target=download_object,
+                                    args=(self._s3_client, self.bucket,
+                                          object_key, read_pipe, write_pipe))
+            download_proc.start()
+
+            # The write end of the pipe must be closed in this process before
+            # we start reading from it.
+            os.close(write_pipe)
+            yield read_pipe
 
             log.debug('Successfully streamed %s' % path)
         except Exception as e:
             log.error('Failed to read from %s: %s' % (path, e))
-            traceback.print_exc(file=sys.stdout)
             exit(1)
         finally:
-            if 'Body' in response:
-                response['Body'].close()
+            if download_proc:
+                download_proc.join()
 
     def _upload_object(self, file_obj, object_key):
         """Upload objects to S3 in streaming fashion.
