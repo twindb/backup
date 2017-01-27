@@ -70,6 +70,52 @@ class S3(BaseDestination):
 
         return client
 
+    def create_bucket(self):
+        """Creates the bucket in s3 that will store the backups.
+
+        :return bool: True on success, False on failure
+        """
+        bucket_exists = True
+
+        try:
+            self._s3_client.head_bucket(Bucket=self.bucket)
+        except ClientError as e:
+            # We come here meaning we did not find the bucket
+            try:
+                if e.response['ResponseMetadata']['HTTPStatusCode'] == 404:
+                    bucket_exists = False
+            except:
+                raise e
+
+        if not bucket_exists:
+            response = self._s3_client.create_bucket(Bucket=self.bucket)
+            self.validate_client_response(response)
+
+        return True
+
+    def delete_bucket(self):
+        """Delete the bucket in s3 that was storing the backups.
+
+        :return bool: True on success, False on failure
+        """
+        bucket_exists = True
+
+        try:
+            self._s3_client.head_bucket(Bucket=self.bucket)
+        except ClientError as e:
+            # We come here meaning we did not find the bucket
+            try:
+                if e.response['ResponseMetadata']['HTTPStatusCode'] == 404:
+                    bucket_exists = False
+            except:
+                raise e
+
+        if bucket_exists:
+            response = self._s3_client.delete_bucket(Bucket=self.bucket)
+            self.validate_client_response(response)
+
+        return True
+
     def save(self, handler, name, keep_local=None):
         """
         Read from handler and save it to Amazon S3
