@@ -298,7 +298,7 @@ class S3(BaseDestination):
         except Exception as e:
             raise S3Error('S3 client returned invalid response: %s' % e)
 
-        if http_status_code != 200:
+        if http_status_code not in [200, 204]:
             raise S3Error('S3 client returned error code: %s' %
                           http_status_code)
 
