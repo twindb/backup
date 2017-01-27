@@ -132,7 +132,7 @@ def teardown_function():
     global s3_client
 
     if s3_client:
-        assert s3_client.delete_bucket()
+        assert s3_client.delete_bucket(force=True)
 
 
 def test_take_file_backup(config_content_files_only, tmpdir):

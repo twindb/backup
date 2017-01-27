@@ -93,9 +93,11 @@ class S3(BaseDestination):
 
         return True
 
-    def delete_bucket(self):
+    def delete_bucket(self, force=False):
         """Delete the bucket in s3 that was storing the backups.
 
+        :param bool force: If the bucket is non-empty then delete the objects
+            before deleting the bucket.
         :return bool: True on success, False on failure
         """
         bucket_exists = True
@@ -111,6 +113,14 @@ class S3(BaseDestination):
                 raise e
 
         if bucket_exists:
+            if force:
+                paginator = self._s3_client.get_paginator('list_objects')
+                response = paginator.paginate(Bucket=self.bucket)
+
+                for item in response.search('Contents'):
+                    self._s3_client.delete_object(Bucket=self.bucket,
+                                                  Key=item['Key'])
+
             response = self._s3_client.delete_bucket(Bucket=self.bucket)
             self.validate_client_response(response)
 
