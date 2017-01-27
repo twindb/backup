@@ -8,11 +8,8 @@ from botocore.client import Config
 from contextlib import contextmanager
 from botocore.exceptions import ClientError
 from boto3.s3.transfer import TransferConfig
-from io import BytesIO
 from multiprocessing import Process
 from operator import attrgetter
-import sys
-import traceback
 from twindb_backup import log
 from twindb_backup.destination.base_destination import BaseDestination, \
     DestinationError
@@ -198,6 +195,41 @@ class S3(BaseDestination):
 
         return True
 
+    def _write_status(self, status):
+        raw_status = base64.b64encode(json.dumps(status))
+
+        response = self._s3_client.put_object(Body=raw_status,
+                                              Bucket=self.bucket,
+                                              Key=self.status_path)
+
+        self.validate_client_response(response)
+
+        return status
+
+    def _read_status(self):
+        if not self._status_exists():
+            return self._empty_status
+        else:
+            response = self._s3_client.get_object(Bucket=self.bucket,
+                                                  Key=self.status_path)
+            self.validate_client_response(response)
+
+            content = response['Body'].read()
+            return json.loads(base64.b64decode(content))
+
+    def _status_exists(self):
+        s3 = boto3.resource('s3')
+        status_object = s3.Object(self.bucket, self.status_path)
+        try:
+            if status_object.content_length > 0:
+                return True
+        except ClientError as err:
+            if err.response['ResponseMetadata']['HTTPStatusCode'] == 404:
+                return False
+            else:
+                raise
+        return False
+
     @staticmethod
     def validate_client_response(response):
         """Validates the response returned by the client. Raises an exception
@@ -224,34 +256,3 @@ class S3(BaseDestination):
             io_chunksize=S3_UPLOAD_IO_CHUNKS_SIZE_BYTES)
 
         return transfer_config
-
-    def _write_status(self, status):
-        raw_status = base64.b64encode(json.dumps(status))
-
-        s3 = boto3.resource('s3')
-        status_object = s3.Object(self.bucket, self.status_path)
-        status_object.put(Body=raw_status)
-
-        return status
-
-    def _read_status(self):
-        if not self._status_exists():
-            return self._empty_status
-        else:
-            s3 = boto3.resource('s3')
-            status_object = s3.Object(self.bucket, self.status_path)
-            content = status_object.get()['Body'].read()
-            return json.loads(base64.b64decode(content))
-
-    def _status_exists(self):
-        s3 = boto3.resource('s3')
-        status_object = s3.Object(self.bucket, self.status_path)
-        try:
-            if status_object.content_length > 0:
-                return True
-        except ClientError as err:
-            if err.response['ResponseMetadata']['HTTPStatusCode'] == 404:
-                return False
-            else:
-                raise
-        return False
