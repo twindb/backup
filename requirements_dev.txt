@@ -6,7 +6,7 @@
 #
 alabaster==0.7.9          # via sphinx
 appdirs==1.4.0            # via setuptools
-argparse==1.4.0           # via codecov
+argparse==1.4.0           # via codecov, unittest2
 babel==2.3.4              # via sphinx
 bumpversion==0.5.3
 codecov==2.0.5
@@ -18,6 +18,7 @@ flake8==3.2.1
 funcsigs==1.0.2           # via mock
 imagesize==0.7.1          # via sphinx
 jinja2==2.9.4             # via sphinx
+linecache2==1.0.0         # via traceback2
 markupsafe==0.23          # via jinja2
 mccabe==0.5.3             # via flake8
 mock==2.0.0
@@ -33,10 +34,12 @@ pytest-cov==2.4.0
 pytest==3.0.6
 pytz==2016.10             # via babel
 requests==2.13.0          # via codecov, sphinx
-six==1.10.0               # via mock, packaging, setuptools, sphinx
+six==1.10.0               # via mock, packaging, setuptools, sphinx, unittest2
 snowballstemmer==1.2.1    # via sphinx
 sphinx==1.5.2
 tox==2.5.0
+traceback2==1.4.0         # via unittest2
+unittest2==1.1.0
 virtualenv==15.1.0        # via tox
 
 # The following packages are considered to be unsafe in a requirements file:

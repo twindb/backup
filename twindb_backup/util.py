@@ -1,8 +1,11 @@
 import ConfigParser
 import errno
 import os
+import pymysql
 import socket
 
+from contextlib import contextmanager
+from pymysql.cursors import DictCursor
 from twindb_backup import log, INTERVALS
 from twindb_backup.destination.s3 import S3
 from twindb_backup.destination.ssh import Ssh
@@ -64,3 +67,42 @@ def get_hostname_from_backup_copy(backup_copy):
         if run_type in chunks:
             return chunks[chunks.index(run_type) - 1]
     return None
+
+
+@contextmanager
+def get_connection(host=None, port=None, user=None, password=None,
+                   defaults_file=None, mysql_sock=None, connect_timeout=10):
+    db = None
+    try:
+        if defaults_file:
+            db = pymysql.connect(
+                read_default_file=defaults_file,
+                connect_timeout=connect_timeout
+            )
+        elif mysql_sock:
+            db = pymysql.connect(
+                unix_socket=mysql_sock,
+                user=user,
+                passwd=password,
+                cursorclass=DictCursor
+            )
+        elif port:
+            db = pymysql.connect(
+                host=host,
+                port=port,
+                user=user,
+                passwd=password,
+                cursorclass=DictCursor
+            )
+        else:
+            db = pymysql.connect(
+                host=host,
+                user=user,
+                passwd=password,
+                cursorclass=DictCursor
+            )
+
+        yield db
+    finally:
+        if db:
+            db.close()

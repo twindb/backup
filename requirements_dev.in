@@ -7,3 +7,4 @@ coverage
 codecov
 pytest-cov
 Sphinx
+unittest2
