@@ -57,7 +57,7 @@ class S3(BaseDestination):
         )
 
         # Setup an authenticated S3 client that we will use throughout
-        self._s3_client = self.setup_s3_client()
+        self.s3_client = self.setup_s3_client()
 
     def setup_s3_client(self):
         """Creates an authenticated s3 client."""
@@ -78,7 +78,7 @@ class S3(BaseDestination):
         bucket_exists = True
 
         try:
-            self._s3_client.head_bucket(Bucket=self.bucket)
+            self.s3_client.head_bucket(Bucket=self.bucket)
         except ClientError as e:
             # We come here meaning we did not find the bucket
             try:
@@ -88,7 +88,7 @@ class S3(BaseDestination):
                 raise e
 
         if not bucket_exists:
-            response = self._s3_client.create_bucket(Bucket=self.bucket)
+            response = self.s3_client.create_bucket(Bucket=self.bucket)
             self.validate_client_response(response)
 
         return True
@@ -103,7 +103,7 @@ class S3(BaseDestination):
         bucket_exists = True
 
         try:
-            self._s3_client.head_bucket(Bucket=self.bucket)
+            self.s3_client.head_bucket(Bucket=self.bucket)
         except ClientError as e:
             # We come here meaning we did not find the bucket
             try:
@@ -114,14 +114,14 @@ class S3(BaseDestination):
 
         if bucket_exists:
             if force:
-                paginator = self._s3_client.get_paginator('list_objects')
+                paginator = self.s3_client.get_paginator('list_objects')
                 response = paginator.paginate(Bucket=self.bucket)
 
                 for item in response.search('Contents'):
-                    self._s3_client.delete_object(Bucket=self.bucket,
-                                                  Key=item['Key'])
+                    self.s3_client.delete_object(Bucket=self.bucket,
+                                                 Key=item['Key'])
 
-            response = self._s3_client.delete_bucket(Bucket=self.bucket)
+            response = self.s3_client.delete_bucket(Bucket=self.bucket)
             self.validate_client_response(response)
 
         return True
@@ -194,7 +194,7 @@ class S3(BaseDestination):
             read_pipe, write_pipe = os.pipe()
 
             download_proc = Process(target=download_object,
-                                    args=(self._s3_client, self.bucket,
+                                    args=(self.s3_client, self.bucket,
                                           object_key, read_pipe, write_pipe))
             download_proc.start()
 
@@ -227,8 +227,8 @@ class S3(BaseDestination):
         s3_transfer_config = self.get_transfer_config()
 
         log.debug("Starting to stream to %s" % remote_name)
-        self._s3_client.upload_fileobj(file_obj, self.bucket, object_key,
-                                       Config=s3_transfer_config)
+        self.s3_client.upload_fileobj(file_obj, self.bucket, object_key,
+                                      Config=s3_transfer_config)
         log.debug("Successfully streamed to %s" % remote_name)
 
         return self._validate_upload(object_key)
@@ -243,8 +243,8 @@ class S3(BaseDestination):
 
         log.debug("Validating upload to %s" % remote_name)
 
-        response = self._s3_client.get_object(Bucket=self.bucket,
-                                              Key=object_key)
+        response = self.s3_client.get_object(Bucket=self.bucket,
+                                             Key=object_key)
         self.validate_client_response(response)
 
         log.debug("Upload successfully validated")
@@ -254,9 +254,9 @@ class S3(BaseDestination):
     def _write_status(self, status):
         raw_status = base64.b64encode(json.dumps(status))
 
-        response = self._s3_client.put_object(Body=raw_status,
-                                              Bucket=self.bucket,
-                                              Key=self.status_path)
+        response = self.s3_client.put_object(Body=raw_status,
+                                             Bucket=self.bucket,
+                                             Key=self.status_path)
 
         self.validate_client_response(response)
 
@@ -266,8 +266,8 @@ class S3(BaseDestination):
         if not self._status_exists():
             return self._empty_status
         else:
-            response = self._s3_client.get_object(Bucket=self.bucket,
-                                                  Key=self.status_path)
+            response = self.s3_client.get_object(Bucket=self.bucket,
+                                                 Key=self.status_path)
             self.validate_client_response(response)
 
             content = response['Body'].read()

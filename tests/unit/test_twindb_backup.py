@@ -1,9 +1,7 @@
-import logging
 import mock as mock
 import pytest
 
 from ConfigParser import ConfigParser
-from pymysql.err import InternalError
 from twindb_backup import delete_local_files, get_directories_to_backup, \
     get_timeout
 from twindb_backup.backup import run_backup_job
@@ -157,87 +155,6 @@ run_yearly=yes
 
     run_backup_job(cparser, 'hourly', lock_file=lock_file)
     mock_backup_everything.assert_called_once_with('hourly', cparser)
-
-
-@mock.patch('twindb_backup.source.mysql_source.get_connection')
-def test__enable_wsrep_desync_sets_wsrep_desync_to_on(mock_connect):
-    logging.basicConfig()
-
-    mock_cursor = mock.MagicMock()
-
-    mock_connect.return_value.__enter__.return_value. \
-        cursor.return_value.__enter__.return_value = mock_cursor
-
-    source = MySQLSource(None, None, None, None)
-    source.enable_wsrep_desync()
-
-    mock_cursor.execute.assert_called_with("SET GLOBAL wsrep_desync=ON")
-
-
-@mock.patch('twindb_backup.source.mysql_source.get_connection')
-def test__disable_wsrep_desync_sets_wsrep_desync_to_off(mock_connect):
-    logging.basicConfig()
-
-    mock_cursor = mock.MagicMock()
-    mock_cursor.fetchall.return_value = [
-        {'Variable_name': 'wsrep_local_recv_queue', 'Value': '0'},
-    ]
-
-    mock_connect.return_value.__enter__.return_value.\
-        cursor.return_value.__enter__.return_value = mock_cursor
-
-    source = MySQLSource(None, None, None, None)
-    source.disable_wsrep_desync()
-
-    mock_cursor.execute.assert_any_call("SHOW GLOBAL STATUS LIKE "
-                                        "'wsrep_local_recv_queue'")
-    mock_cursor.execute.assert_called_with("SET GLOBAL wsrep_desync=OFF")
-
-
-@mock.patch('twindb_backup.source.mysql_source.get_connection')
-def test__is_galera_returns_true_on_galera_node(mock_connect):
-    logging.basicConfig()
-
-    mock_cursor = mock.MagicMock()
-    mock_cursor.fetchone.return_value = {'wsrep_on': 'ON'}
-
-    mock_connect.return_value.__enter__.return_value. \
-        cursor.return_value.__enter__.return_value = mock_cursor
-
-    source = MySQLSource(None, None, None, None)
-    assert source.is_galera()
-
-
-@mock.patch('twindb_backup.source.mysql_source.get_connection')
-def test__is_galera_returns_true_on_galera_node(mock_connect):
-    logging.basicConfig()
-
-    mock_cursor = mock.MagicMock()
-    mock_cursor.execute.side_effect = InternalError(1193,
-                                                    "Unknown system variable "
-                                                    "'wsrep_on'")
-
-    mock_connect.return_value.__enter__.return_value. \
-        cursor.return_value.__enter__.return_value = mock_cursor
-
-    source = MySQLSource(None, None, None, None)
-    assert source.is_galera() is False
-
-
-@mock.patch('twindb_backup.source.mysql_source.get_connection')
-def test__wsrep_provider_version_returns_correct_version(mock_connect):
-    logging.basicConfig()
-
-    mock_cursor = mock.MagicMock()
-    mock_cursor.fetchall.return_value = [
-        {'Variable_name': 'wsrep_provider_version', 'Value': '3.19(rb98f92f)'},
-    ]
-
-    mock_connect.return_value.__enter__.return_value. \
-        cursor.return_value.__enter__.return_value = mock_cursor
-
-    source = MySQLSource(None, None, None, None)
-    assert source.wsrep_provider_version == '3.19'
 
 
 @pytest.mark.parametrize('error_log, binlog_coordinate', [
