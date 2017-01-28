@@ -25,11 +25,38 @@ def test__delete_bucket_deletes_the_bucket():
         s3.s3_client.head_bucket(Bucket='test-bucket')
 
 
+@mock_s3
+def test__list_files_returns_sorted_list():
+    s3 = S3('test-bucket', 'access_key', 'secret_key')
+    s3.create_bucket()
+
+    s3.s3_client.put_object(Body='hello world', Bucket='test-bucket',
+                            Key='object_1')
+
+    files_list = s3.list_files(prefix='')
+    assert len(files_list) == 1
+
+
+@mock_s3
+def test__find_files_returns_sorted_list_of_files():
+    s3 = S3('test-bucket', 'access_key', 'secret_key')
+    s3.create_bucket()
+
+    s3.s3_client.put_object(Body='hello world', Bucket='test-bucket',
+                            Key='test_server/hourly/file1.txt')
+    s3.s3_client.put_object(Body='hello world', Bucket='test-bucket',
+                            Key='test_server/hourly/file2.txt')
+    s3.s3_client.put_object(Body='hello world', Bucket='test-bucket',
+                            Key='test_server/daily/file1.txt')
+
+    files_list = s3.find_files(prefix='', run_type='hourly')
+    assert len(files_list) == 2
+    assert files_list[0] == 's3://test-bucket/test_server/hourly/file1.txt'
+
+
 @mock.patch.object(S3, '_status_exists')
-@mock.patch.object(S3, 'setup_s3_client')
-def test_get_status_empty(mock_status_exists, mock_setup_s3_client):
+def test_get_status_empty(mock_status_exists):
     mock_status_exists.return_value = False
-    mock_setup_s3_client.return_value = None
 
     dst = S3('a', 'b', 'c')
     assert dst.status() == {
@@ -41,17 +68,11 @@ def test_get_status_empty(mock_status_exists, mock_setup_s3_client):
     }
 
 
-@mock.patch.object(S3, 'setup_s3_client')
-def test_basename(mock_setup_s3_client):
-    mock_setup_s3_client.return_value = None
-
+def test_basename():
     dst = S3('bucket', 'b', 'c')
     assert dst.basename('s3://bucket/some_dir/some_file.txt') == \
         'some_dir/some_file.txt'
 
 
-@mock.patch.object(S3, 'setup_s3_client')
 def test_find_files(mock_setup_s3_client):
-    mock_setup_s3_client.return_value = None
-
     dst = S3('bucket', 'b', 'c')
