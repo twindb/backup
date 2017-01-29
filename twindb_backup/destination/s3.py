@@ -183,7 +183,7 @@ class S3(BaseDestination):
     def get_stream(self, path):
         """
         Get a PIPE handler with content of the backup copy streamed from
-        the destination
+        the destination.
         :return:
         """
         object_key = urlparse(path).path.lstrip('/')
