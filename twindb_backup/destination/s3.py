@@ -144,9 +144,12 @@ class S3(BaseDestination):
     def list_files(self, prefix, recursive=False):
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(self.bucket)
+
         log.debug('Listing %s', prefix)
+
         norm_prefix = prefix.replace('s3://%s/' % bucket.name, '')
         log.debug('norm_prefix = %s' % norm_prefix)
+
         return sorted(bucket.objects.filter(Prefix=norm_prefix),
                       key=attrgetter('key'))
 
@@ -164,10 +167,17 @@ class S3(BaseDestination):
         return sorted(files)
 
     def delete(self, obj):
+        """Deletes a s3 object.
+
+        :param S3.Object obj: The s3 object to delete.
+        :return bool: True on success, False on failure
+        """
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(self.bucket)
+
         log.debug('deleting s3://{0}/{1}'.format(bucket.name, obj.key))
-        obj.delete()
+
+        return obj.delete()
 
     @contextmanager
     def get_stream(self, path):

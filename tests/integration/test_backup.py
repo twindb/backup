@@ -1,14 +1,13 @@
 import json
 import os
 import pytest
-import random
 import shlex
 import socket
 
 from subprocess import call, Popen, PIPE
 from twindb_backup.destination.s3 import S3
 
-BUCKET = 'twindb-backup-test-%d' % random.randint(0, 1000000)
+BUCKET = 'twindb-backup-test-travis-%s' % os.environ['TRAVIS_JOB_NUMBER']
 
 
 @pytest.fixture
@@ -136,7 +135,6 @@ def teardown_function():
 
 
 def test_take_file_backup(config_content_files_only, tmpdir):
-
     config = tmpdir.join('twindb-backup.cfg')
     config.write(config_content_files_only)
     cmd = ['twindb-backup',

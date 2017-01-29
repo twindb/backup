@@ -16,7 +16,6 @@ from twindb_backup.util import get_destination
 
 
 def backup_files(run_type, config):
-
     for d in get_directories_to_backup(config):
         log.debug('copying %s', d)
         src = FileSource(d, run_type)

@@ -49,7 +49,6 @@ class FileSource(BaseSource):
         return self.path.rstrip('/').replace('/', '_')
 
     def apply_retention_policy(self, dst, config, run_type):
-
         if dst.remote_path:
             remote_path = dst.remote_path + '/'
         else:
