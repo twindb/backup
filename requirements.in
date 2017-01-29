@@ -3,3 +3,4 @@ PyMySQL
 boto3
 psutil
 contextlib2
+pyasn1
