@@ -114,15 +114,19 @@ class S3(BaseDestination):
 
         if bucket_exists:
             if force:
-                paginator = self.s3_client.get_paginator('list_objects')
-                response = paginator.paginate(Bucket=self.bucket)
-
-                for item in response.search('Contents'):
-                    self.s3_client.delete_object(Bucket=self.bucket,
-                                                 Key=item['Key'])
+                self.delete_all_objects()
 
             response = self.s3_client.delete_bucket(Bucket=self.bucket)
             self.validate_client_response(response)
+
+        return True
+
+    def delete_all_objects(self):
+        paginator = self.s3_client.get_paginator('list_objects')
+        response = paginator.paginate(Bucket=self.bucket)
+
+        for item in response.search('Contents'):
+            self.s3_client.delete_object(Bucket=self.bucket, Key=item['Key'])
 
         return True
 

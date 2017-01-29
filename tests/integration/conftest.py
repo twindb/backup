@@ -8,14 +8,14 @@ BUCKET = 'twindb-backup-test-travis-%s' % os.environ['TRAVIS_JOB_NUMBER']
 
 
 @pytest.fixture(scope='session')
-def s3_bucket():
-    s3_client = S3(BUCKET, os.environ['AWS_ACCESS_KEY_ID'],
-                   os.environ['AWS_SECRET_ACCESS_KEY'])
-    assert s3_client.create_bucket()
+def s3_client():
+    client = S3(BUCKET, os.environ['AWS_ACCESS_KEY_ID'],
+                os.environ['AWS_SECRET_ACCESS_KEY'])
+    assert client.create_bucket()
 
-    yield s3_client.bucket
+    yield client
 
-    s3_client.delete_bucket(force=True)
+    client.delete_bucket(force=True)
 
 
 @pytest.fixture
@@ -26,7 +26,7 @@ def foo_bar_dir():
 
 
 @pytest.fixture
-def config_content_files_only(s3_bucket, foo_bar_dir):
+def config_content_files_only(s3_client, foo_bar_dir):
     try:
         return """
 [source]
@@ -64,7 +64,7 @@ yearly_copies=0
     """.format(
             AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
             AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
-            BUCKET=s3_bucket
+            BUCKET=s3_client.bucket
         )
     except KeyError as err:
         print('Environment variable %s must be defined' % err)

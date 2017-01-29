@@ -4,14 +4,14 @@ import os
 from subprocess import call, PIPE, Popen
 
 
-def test__restore_mysql_inc_creates_log_files(s3_bucket, tmpdir,
+def test__restore_mysql_inc_creates_log_files(s3_client, tmpdir,
                                               config_content_mysql_only):
 
     config = tmpdir.join('twindb-backup.cfg')
     content = config_content_mysql_only.format(
         AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
         AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
-        BUCKET=s3_bucket,
+        BUCKET=s3_client.bucket,
         daily_copies=1,
         hourly_copies=2
     )
@@ -32,7 +32,7 @@ def test__restore_mysql_inc_creates_log_files(s3_bucket, tmpdir,
     status = json.loads(cout)
 
     key = status['hourly'].keys()[0]
-    backup_copy = 's3://' + s3_bucket + '/' + key
+    backup_copy = 's3://' + s3_client.bucket + '/' + key
     dst_dir = str(tmpdir.mkdir('dst'))
     cmd = ['twindb-backup',
            '--config', str(config),
