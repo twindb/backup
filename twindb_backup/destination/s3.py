@@ -88,6 +88,7 @@ class S3(BaseDestination):
                 raise e
 
         if not bucket_exists:
+            log.info('Created bucket %s' % self.bucket)
             response = self.s3_client.create_bucket(Bucket=self.bucket)
             self.validate_client_response(response)
 
@@ -113,11 +114,16 @@ class S3(BaseDestination):
                 raise e
 
         if bucket_exists:
+            log.info('Deleting bucket %s' % self.bucket)
+
             if force:
+                log.info('Deleting the objects in the bucket %s' % self.bucket)
                 self.delete_all_objects()
 
             response = self.s3_client.delete_bucket(Bucket=self.bucket)
             self.validate_client_response(response)
+
+            log.info('Bucket %s successfully deleted' % self.bucket)
 
         return True
 
@@ -163,12 +169,17 @@ class S3(BaseDestination):
         log.debug('Listing %s', prefix)
         files = []
 
-        all_objects = bucket.objects.filter(Prefix='')
-        for f in all_objects:
-            if "/" + run_type + "/" in f.key:
-                files.append("s3://%s/%s" % (self.bucket, f.key))
+        try:
+            all_objects = bucket.objects.filter(Prefix='')
+            for f in all_objects:
+                if "/" + run_type + "/" in f.key:
+                    files.append("s3://%s/%s" % (self.bucket, f.key))
 
-        return sorted(files)
+            return sorted(files)
+        except Exception as e:
+            log.error('Failed to list objects in bucket %s: %s' %
+                      (self.bucket, e))
+            raise
 
     def delete(self, obj):
         """Deletes a s3 object.
