@@ -46,12 +46,12 @@ virtualenv: ## create virtual environment typically used for development purpose
 	virtualenv env --setuptools --prompt='(twindb_backup)'
 
 .PHONY: rebuild-requirements
-rebuild-requirements:
+rebuild-requirements: ## Rebuild requirements files requirements.txt and requirements_dev.txt
 	pip-compile --verbose --no-index --output-file requirements.txt requirements.in
 	pip-compile --verbose --no-index --output-file requirements_dev.txt requirements_dev.in
 
 .PHONY: upgrade-requirements
-upgrade-requirements:
+upgrade-requirements: ## Upgrade requirements
 	pip-compile --upgrade --verbose --no-index --output-file requirements.txt requirements.in
 	pip-compile --upgrade --verbose --no-index --output-file requirements_dev.txt requirements_dev.in
 
@@ -96,8 +96,10 @@ test-deps:
 	pip install --upgrade -r requirements_dev.txt
 	pip install -U setuptools
 
-test: test-deps ## run tests quickly with the default Python
-	py.test tests/unit
+test: bootstrap ## run tests quickly with the default Python
+	pytest --cov=./twindb_backup tests/unit
+	codecov
+	# bash <(curl -s https://codecov.io/bash)
 
 test-integration: test-deps ## run integration tests
 	pip show twindb-backup || pip install -e .
@@ -154,6 +156,15 @@ docker-test: ## Test twindb-backup in a docker container
 		-e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
 		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
 		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
+		-e "CI"=${CI} \
+		-e "TRAVIS"=${TRAVIS} \
+		-e "TRAVIS_BRANCH"=${TRAVIS_BRANCH} \
+		-e "TRAVIS_COMMIT"=${TRAVIS_COMMIT} \
+		-e "TRAVIS_JOB_NUMBER"=${TRAVIS_JOB_NUMBER} \
+		-e "TRAVIS_PULL_REQUEST"=${TRAVIS_PULL_REQUEST} \
+		-e "TRAVIS_JOB_ID"=${TRAVIS_JOB_ID} \
+		-e "TRAVIS_REPO_SLUG"=${TRAVIS_REPO_SLUG} \
+		-e "TRAVIS_TAG"=${TRAVIS_TAG} \
 		${DOCKER_IMAGE} /bin/bash /twindb-backup/support/docker-test-${PLATFORM}.sh
 
 package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"

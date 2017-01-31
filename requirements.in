@@ -1,5 +1,6 @@
 Click>=6.0
+PyMySQL
 boto3
-MySQL-python
 psutil
-awscli
+contextlib2
+pyasn1

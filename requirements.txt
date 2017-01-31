@@ -4,19 +4,16 @@
 #
 #    pip-compile --no-index --output-file requirements.txt requirements.in
 #
-awscli==1.11.36
-boto3==1.4.3
-botocore==1.4.93          # via awscli, boto3, s3transfer
-Click==6.7
-colorama==0.3.7           # via awscli
-docutils==0.13.1          # via awscli, botocore
+boto3==1.4.4
+botocore==1.5.5           # via boto3, s3transfer
+click==6.7
+contextlib2==0.5.4
+docutils==0.13.1          # via botocore
 futures==3.0.5            # via s3transfer
 jmespath==0.9.0           # via boto3, botocore
-MySQL-python==1.2.5
 psutil==5.0.1
-pyasn1==0.1.9             # via rsa
+pyasn1==0.1.9
+pymysql==0.7.9
 python-dateutil==2.6.0    # via botocore
-PyYAML==3.12              # via awscli
-rsa==3.4.2                # via awscli
-s3transfer==0.1.10        # via awscli, boto3
+s3transfer==0.1.10        # via boto3
 six==1.10.0               # via python-dateutil
