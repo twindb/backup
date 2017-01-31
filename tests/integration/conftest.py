@@ -1,10 +1,12 @@
 import pytest
 import os
+import random
 
 from subprocess import call
 from twindb_backup.destination.s3 import S3
 
-BUCKET = 'twindb-backup-test-travis-%s' % os.environ['TRAVIS_JOB_NUMBER']
+BUCKET = 'twindb-backup-test-travis-%s' % \
+         os.environ.get('TRAVIS_JOB_NUMBER', random.randint(0, 1000000))
 
 
 @pytest.fixture(scope='session')

@@ -303,7 +303,7 @@ class S3(BaseDestination):
     @staticmethod
     def validate_client_response(response):
         """Validates the response returned by the client. Raises an exception
-            if the response code is not 200
+            if the response code is not 200 or 204
 
         :param dict response: The response that needs to be validated
         """
