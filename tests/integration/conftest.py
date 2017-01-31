@@ -21,10 +21,15 @@ def s3_client():
 
 
 @pytest.fixture
-def foo_bar_dir():
-    assert call('rm -rf /foo/bar', shell=True) == 0
-    assert call('mkdir -p /foo/bar', shell=True) == 0
-    assert call('echo $RANDOM > /foo/bar/file', shell=True) == 0
+def foo_bar_dir(tmpdir):
+    test_dir = tmpdir.join('foo/bar')
+
+    assert call('rm -rf %s' % str(test_dir), shell=True) == 0
+    assert call('mkdir -p %s' % str(test_dir), shell=True) == 0
+    assert call('echo $RANDOM > %s' %
+                str(test_dir.join('file')), shell=True) == 0
+
+    return str(test_dir)
 
 
 @pytest.fixture
@@ -32,7 +37,7 @@ def config_content_files_only(s3_client, foo_bar_dir):
     try:
         return """
 [source]
-backup_dirs=/foo/bar
+backup_dirs={TEST_DIR}
 
 [destination]
 backup_destination=s3
@@ -64,6 +69,7 @@ weekly_copies=0
 monthly_copies=0
 yearly_copies=0
     """.format(
+            TEST_DIR=foo_bar_dir,
             AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
             AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
             BUCKET=s3_client.bucket

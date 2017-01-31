@@ -132,6 +132,9 @@ class S3(BaseDestination):
         response = paginator.paginate(Bucket=self.bucket)
 
         for item in response.search('Contents'):
+            if not item:
+                continue
+
             self.s3_client.delete_object(Bucket=self.bucket, Key=item['Key'])
 
         return True
