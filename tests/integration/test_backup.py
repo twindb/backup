@@ -54,10 +54,15 @@ def test__take_file_backup(s3_client, config_content_files_only, tmpdir):
 
     call(['ls', '-R', str(dstdir)])
     # restored file exists
-    assert os.path.exists('%s/file' % str(dstdir))
+    path_to_file_orig = "%s/file" % backup_dir
+    path_to_file_restored = '%s/%s/file' \
+                            % (str(dstdir), backup_dir.replace('/','_'))
+    assert os.path.exists(path_to_file_restored)
 
     # And content is same
-    proc = Popen(shlex.split('diff -Nur %s %s' % (copy, str(dstdir))),
+    proc = Popen(['diff', '-Nur',
+                  path_to_file_orig,
+                  path_to_file_restored],
                  stdout=PIPE, stderr=PIPE)
     cout, cerr = proc.communicate()
     assert not cout
