@@ -56,7 +56,7 @@ def test__take_file_backup(s3_client, config_content_files_only, tmpdir):
     # restored file exists
     path_to_file_orig = "%s/file" % backup_dir
     path_to_file_restored = '%s/%s/file' \
-                            % (str(dstdir), backup_dir.replace('/','_'))
+                            % (str(dstdir), backup_dir)
     assert os.path.exists(path_to_file_restored)
 
     # And content is same
