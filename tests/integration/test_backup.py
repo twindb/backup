@@ -1,3 +1,4 @@
+import ConfigParser
 import json
 import os
 import shlex
@@ -10,6 +11,15 @@ from twindb_backup.destination.s3 import S3
 def test__take_file_backup(s3_client, config_content_files_only, tmpdir):
     config = tmpdir.join('twindb-backup.cfg')
     config.write(config_content_files_only)
+
+    config_parser = ConfigParser.ConfigParser()
+    config_parser.read(str(config))
+
+    backup_dirs = config_parser.get(section='source', option='backup_dirs')
+    hostname = socket.gethostname()
+    s3_backup_path = 's3://%s/%s/hourly/files/%s' % \
+                     (s3_client.bucket, hostname, backup_dirs.replace('/', '_'))
+
     cmd = ['twindb-backup',
            '--config', str(config),
            'backup', 'hourly']
@@ -20,20 +30,16 @@ def test__take_file_backup(s3_client, config_content_files_only, tmpdir):
            'ls']
     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
     cout, cerr = proc.communicate()
-    hostname = socket.gethostname()
-    assert 's3://%s/%s/hourly/files/_foo_bar' % (s3_client.bucket, hostname) in cout
+
+    assert s3_backup_path in cout
 
     copy = None
-
     for line in cout.split('\n'):
-        pattern = 's3://twindb-backup-test/%s/hourly/files/_foo_bar' \
-                  % hostname
-        if line.startswith(pattern):
+        if line.startswith(s3_backup_path):
             copy = line
             break
 
     dstdir = tmpdir.mkdir("dst")
-
     cmd = ['twindb-backup',
            '--config', str(config),
            'restore', 'file', '--dst', str(dstdir)]
