@@ -20,6 +20,7 @@ def test__take_file_backup(s3_client, config_content_files_only, tmpdir):
     s3_backup_path = 's3://%s/%s/hourly/files/%s' % \
                      (s3_client.bucket, hostname, backup_dirs.replace('/', '_'))
 
+    print('Bucket %s' % s3_client.bucket)
     cmd = ['twindb-backup',
            '--config', str(config),
            'backup', 'hourly']
