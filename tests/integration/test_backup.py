@@ -16,9 +16,14 @@ def test__take_file_backup(s3_client, config_content_files_only, tmpdir):
     config_parser.read(str(config))
 
     backup_dirs = config_parser.get(section='source', option='backup_dirs')
+    backup_dir = backup_dirs.split(' ')[0]
+
+    # write some content to the directory
+    assert call('echo $RANDOM > %s/file' % backup_dir, shell=True) == 0
+
     hostname = socket.gethostname()
     s3_backup_path = 's3://%s/%s/hourly/files/%s' % \
-                     (s3_client.bucket, hostname, backup_dirs.replace('/', '_'))
+                     (s3_client.bucket, hostname, backup_dir.replace('/', '_'))
 
     print('Bucket %s' % s3_client.bucket)
     cmd = ['twindb-backup',
@@ -43,10 +48,13 @@ def test__take_file_backup(s3_client, config_content_files_only, tmpdir):
     dstdir = tmpdir.mkdir("dst")
     cmd = ['twindb-backup',
            '--config', str(config),
-           'restore', 'file', '--dst', str(dstdir)]
+           'restore', 'file', '--dst', str(dstdir), copy]
 
     assert call(cmd) == 0
+    # restored file exists
+    assert os.path.exists('%s/file' % str(dstdir))
 
+    # And content is same
     proc = Popen(shlex.split('diff -Nur %s %s' % (copy, str(dstdir))),
                  stdout=PIPE, stderr=PIPE)
     cout, cerr = proc.communicate()
