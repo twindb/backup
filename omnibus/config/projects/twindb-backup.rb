@@ -69,8 +69,6 @@ runtime_dependency 'percona-xtrabackup'
 
 dependency 'python'
 dependency 'pip'
-dependency 'mysql-client'
-dependency 'MySQL-python'
 
 # Debian
 if debian?
