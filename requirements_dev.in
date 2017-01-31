@@ -4,3 +4,8 @@ tox
 pytest
 mock
 coverage
+codecov
+pytest-cov
+Sphinx
+unittest2
+moto

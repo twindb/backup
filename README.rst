@@ -6,6 +6,9 @@ TwinDB Backup
 .. image:: https://img.shields.io/travis/twindb/backup.svg
     :target: https://travis-ci.org/twindb/backup
 
+.. image:: https://img.shields.io/codecov/c/github/twindb/backup.svg
+    :target: https://codecov.io/gh/twindb/backup
+
 .. image:: https://readthedocs.org/projects/twindb-backup/badge/?version=master
     :target: https://twindb-backup.readthedocs.io/en/master/?badge=master
     :alt: Documentation Status
@@ -44,14 +47,22 @@ Other features:
 How do I get set up?
 ~~~~~~~~~~~~~~~~~~~~
 
-**twindb-backup** is distributed via the YUM repository.
-Once the repo is configured install the ``twindb-backup`` package.
+**twindb-backup** is distributed via package repositories.
+Once the repository for your operating system is configured, install the ``twindb-backup`` package.
+
+**On CentOS and RedHat**
 
 .. code-block:: console
 
-    # yum install https://twindb.com/twindb-release-latest.noarch.rpm
+    # curl -s https://packagecloud.io/install/repositories/twindb/main/script.rpm.sh | sudo bash
     # yum install twindb-backup
 
+**On Debian and Ubuntu**
+
+.. code-block:: console
+
+    # curl -s https://packagecloud.io/install/repositories/twindb/main/script.deb.sh | sudo bash
+    # apt-get install twindb-backup
 
 
 Configuration

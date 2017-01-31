@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -eux
+yum clean all
 yum install -y epel-release
 yum install -y  http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm
 
@@ -15,7 +16,8 @@ for i in $(seq 5); do
       python-pip \
       Percona-Server-server-56 \
       Percona-Server-devel-56 \
-      percona-xtrabackup && break
+      percona-xtrabackup \
+      git && break
     sleep 5
 done
 

@@ -72,8 +72,10 @@ It is assumed you configured `SSH keys authentication`_. It will not work if you
     [ssh]
 
     backup_host=127.0.0.1
-    ssh_user=root
     backup_dir=/tmp/backup
+    ssh_user=root
+    ssh_key=/root/.ssh/id_rsa
+
 
 
 MySQL
