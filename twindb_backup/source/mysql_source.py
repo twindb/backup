@@ -1,12 +1,15 @@
-from ConfigParser import NoOptionError
-from contextlib import contextmanager
 import os
 import shlex
-from subprocess import Popen, PIPE
 import tempfile
-import MySQLdb
+import time
+
+from ConfigParser import NoOptionError
+from contextlib import contextmanager
+from pymysql.err import InternalError
+from subprocess import Popen, PIPE
 from twindb_backup import log, get_files_to_delete
 from twindb_backup.source.base_source import BaseSource
+from twindb_backup.util import get_connection
 
 
 class MySQLSourceError(Exception):
@@ -37,20 +40,26 @@ class MySQLSource(BaseSource):
             "--host=127.0.0.1"
             ]
 
-        if self._is_galera():
+        if self.is_galera():
             cmd.append("--galera-info")
             cmd.append("--no-backup-locks")
 
         if self.full:
             cmd.append(".")
         else:
-            cmd = cmd + [
+            cmd += [
                 "--incremental",
                 ".",
                 "--incremental-lsn=%d" % self.parent_lsn
             ]
 
+        # If this is a Galera node then additional step needs to be taken to
+        # prevent the backups from locking up the cluster.
+        wsrep_desynced = False
         try:
+            if self.is_galera():
+                wsrep_desynced = self.enable_wsrep_desync()
+
             log.debug('Running %s', ' '.join(cmd))
             stderr_file = tempfile.NamedTemporaryFile(delete=False)
             proc_innobackupex = Popen(cmd,
@@ -89,10 +98,12 @@ class MySQLSource(BaseSource):
                 stderr_file.name
             )
             os.unlink(stderr_file.name)
-
         except OSError as err:
             log.error('Failed to run %s: %s', cmd, err)
             exit(1)
+        finally:
+            if wsrep_desynced:
+                self.disable_wsrep_desync()
 
     def get_name(self):
         """
@@ -219,6 +230,53 @@ class MySQLSource(BaseSource):
             pass
         return result_status
 
+    def enable_wsrep_desync(self):
+        """
+        Try to enable wsrep_desync
+
+        :return: True if wsrep_desync was enabled. False if not supported
+        """
+        try:
+            with get_connection(host='127.0.0.1',
+                                defaults_file=self.defaults) as db:
+                with db.cursor() as cursor:
+                    cursor.execute('SET GLOBAL wsrep_desync=ON')
+            return True
+        except Exception as e:
+            log.debug(e)
+            return False
+
+    def disable_wsrep_desync(self):
+        """
+        Wait till wsrep_local_recv_queue is zero
+        and disable wsrep_local_recv_queue then
+        """
+        max_time = time.time() + 900
+        try:
+            with get_connection(host='127.0.0.1',
+                                defaults_file=self.defaults) as db:
+                with db.cursor() as cursor:
+                    while time.time() < max_time:
+                        cursor.execute("SHOW GLOBAL STATUS LIKE "
+                                       "'wsrep_local_recv_queue'")
+
+                        res = {r['Variable_name'].lower(): r['Value'].lower()
+                               for r in cursor.fetchall()}
+
+                        if not res.get('wsrep_local_recv_queue'):
+                            raise Exception('Unknown status variable '
+                                            '"wsrep_local_recv_queue"')
+
+                        if int(res['wsrep_local_recv_queue']) == 0:
+                            break
+
+                        time.sleep(1)
+
+                    log.debug('Disabling wsrep_desync')
+                    cursor.execute("SET GLOBAL wsrep_desync=OFF")
+        except Exception as e:
+            log.error(e)
+
     @staticmethod
     def get_my_cnf():
         mysql_configs = [
@@ -234,35 +292,37 @@ class MySQLSource(BaseSource):
 
     @property
     def wsrep_provider_version(self):
+        with get_connection(host='127.0.0.1',
+                            defaults_file=self.defaults) as db:
+            with db.cursor() as cursor:
+                cursor.execute("SHOW STATUS LIKE 'wsrep_provider_version'")
 
-        db = MySQLdb.connect(host='127.0.0.1',
-                             read_default_file=self.defaults)
-        c = db.cursor()
-        c.execute("SHOW STATUS LIKE 'wsrep_provider_version'")
-        row = c.fetchone()
-        if row:
-            return row[1].split('(')[0]
+                res = {row['Variable_name'].lower(): row['Value'].lower()
+                       for row in cursor.fetchall()}
+
+        if res.get('wsrep_provider_version'):
+            return res['wsrep_provider_version'].split('(')[0]
 
         return None
 
     @property
     def galera(self):
-        return self._is_galera()
+        return self.is_galera()
 
-    def _is_galera(self):
+    def is_galera(self):
         try:
-            db = MySQLdb.connect(host='127.0.0.1',
-                                 read_default_file=self.defaults)
-            c = db.cursor()
-            c.execute("SELECT @@wsrep_on")
-            row = c.fetchone()
-            if row[0] == 1 or row[0] == 'ON':
-                return True
-            else:
-                return False
+            with get_connection(host='127.0.0.1',
+                                defaults_file=self.defaults) as db:
+                with db.cursor() as cursor:
+                    cursor.execute("SELECT @@wsrep_on as wsrep_on")
+                    row = cursor.fetchone()
 
-        except MySQLdb.Error as err:
-            if err.args[0] == 1193:
+                    return (str(row['wsrep_on']).lower() == "1" or
+                            row['wsrep_on'].lower() == 'on')
+        except InternalError as err:
+            error_code, error_message = err.args
+
+            if error_code == 1193:
                 log.debug('Galera is not supported or not enabled')
                 return False
             else:

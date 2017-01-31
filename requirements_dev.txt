@@ -6,8 +6,9 @@
 #
 alabaster==0.7.9          # via sphinx
 appdirs==1.4.0            # via setuptools
-argparse==1.4.0           # via codecov
+argparse==1.4.0           # via codecov, unittest2
 babel==2.3.4              # via sphinx
+boto==2.45.0              # via moto
 bumpversion==0.5.3
 codecov==2.0.5
 configparser==3.5.0       # via flake8
@@ -16,28 +17,36 @@ docutils==0.13.1          # via sphinx
 enum34==1.1.6             # via flake8
 flake8==3.2.1
 funcsigs==1.0.2           # via mock
+httpretty==0.8.10         # via moto
 imagesize==0.7.1          # via sphinx
-Jinja2==2.9.4             # via sphinx
-MarkupSafe==0.23          # via jinja2
+jinja2==2.9.4             # via moto, sphinx
+linecache2==1.0.0         # via traceback2
+markupsafe==0.23          # via jinja2
 mccabe==0.5.3             # via flake8
 mock==2.0.0
+moto==0.4.31
 packaging==16.8           # via setuptools
 pbr==1.10.0               # via mock
 pluggy==0.4.0             # via tox
 py==1.4.32                # via pytest, tox
 pycodestyle==2.2.0        # via flake8
 pyflakes==1.3.0           # via flake8
-Pygments==2.2.0           # via sphinx
+pygments==2.2.0           # via sphinx
 pyparsing==2.1.10         # via packaging
 pytest-cov==2.4.0
 pytest==3.0.6
-pytz==2016.10             # via babel
-requests==2.13.0          # via codecov, sphinx
-six==1.10.0               # via mock, packaging, setuptools, sphinx
+python-dateutil==2.6.0    # via moto
+pytz==2016.10             # via babel, moto
+requests==2.13.0          # via codecov, moto, sphinx
+six==1.10.0               # via mock, moto, packaging, python-dateutil, setuptools, sphinx, unittest2
 snowballstemmer==1.2.1    # via sphinx
-Sphinx==1.5.2
+sphinx==1.5.2
 tox==2.5.0
+traceback2==1.4.0         # via unittest2
+unittest2==1.1.0
 virtualenv==15.1.0        # via tox
+werkzeug==0.11.15         # via moto
+xmltodict==0.10.2         # via moto
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools                # via pytest
