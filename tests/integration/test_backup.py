@@ -51,6 +51,8 @@ def test__take_file_backup(s3_client, config_content_files_only, tmpdir):
            'restore', 'file', '--dst', str(dstdir), copy]
 
     assert call(cmd) == 0
+
+    call(['ls', '-R', str(dstdir)])
     # restored file exists
     assert os.path.exists('%s/file' % str(dstdir))
 
