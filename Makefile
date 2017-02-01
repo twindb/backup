@@ -103,7 +103,7 @@ test: bootstrap ## run tests quickly with the default Python
 
 test-integration: test-deps ## run integration tests
 	pip show twindb-backup || pip install -e .
-	py.test -xv tests/integration
+	py.test -xsv tests/integration
 
 test-all: ## run tests on every Python version with tox
 	tox
