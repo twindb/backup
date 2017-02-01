@@ -46,7 +46,7 @@ def backup_mysql(run_type, config):
                 keep_local = None
 
             with src.get_stream() as stream:
-                if dst.save(stream, dst_name, keep_local=keep_local):
+                if not dst.save(stream, dst_name, keep_local=keep_local):
                     log.error('Failed to save backup copy %s', dst_name)
 
             status = dst.status()
@@ -73,10 +73,10 @@ def backup_mysql(run_type, config):
             src.apply_retention_policy(dst, config, run_type, status)
 
             dst.status(status)
+
             if keep_local:
                 dst = Local(keep_local)
                 dst.status(status)
-
     except ConfigParser.NoOptionError:
         log.debug('Not backing up MySQL')
 
@@ -94,7 +94,7 @@ def set_open_files_limit():
 
 def backup_everything(run_type, config):
     """
-    RUn backup job
+    Run backup job
 
     :param run_type: hourly, daily, etc
     :param config: ConfigParser instance

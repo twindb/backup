@@ -77,7 +77,8 @@ def get_connection(host=None, port=None, user=None, password=None,
         if defaults_file:
             db = pymysql.connect(
                 read_default_file=defaults_file,
-                connect_timeout=connect_timeout
+                connect_timeout=connect_timeout,
+                cursorclass=DictCursor
             )
         elif mysql_sock:
             db = pymysql.connect(

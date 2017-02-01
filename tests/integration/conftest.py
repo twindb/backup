@@ -33,9 +33,8 @@ def foo_bar_dir(tmpdir):
 
 
 @pytest.fixture
-def config_content_files_only(s3_client, foo_bar_dir):
-    try:
-        return """
+def config_content_files_only():
+    return """
 [source]
 backup_dirs={TEST_DIR}
 
@@ -68,28 +67,24 @@ daily_copies=1
 weekly_copies=0
 monthly_copies=0
 yearly_copies=0
-    """.format(
-            TEST_DIR=foo_bar_dir,
-            AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
-            AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
-            BUCKET=s3_client.bucket
-        )
-    except KeyError as err:
-        print('Environment variable %s must be defined' % err)
-        exit(1)
+"""
 
 
 @pytest.fixture
-def config_content_mysql_only():
-    try:
-        f = open('/root/.my.cnf', 'w')
-        f.write("""
+def config_content_mysql_only(tmpdir):
+    contents = """
 [client]
 user=root
 password=
-""")
+"""
+    if os.path.exists(os.path.expanduser("~/.my.cnf")):
+        with open(os.path.expanduser("~/.my.cnf")) as my_cnf:
+            contents = my_cnf.read()
 
-        return """
+    f = tmpdir.join('.my.cnf')
+    f.write(contents)
+
+    return """
 [source]
 backup_mysql=yes
 
@@ -97,7 +92,7 @@ backup_mysql=yes
 backup_destination=s3
 
 [mysql]
-mysql_defaults_file=/root/.my.cnf
+mysql_defaults_file=%s
 full_backup=daily
 
 [s3]
@@ -126,7 +121,4 @@ daily_copies=1
 weekly_copies=0
 monthly_copies=0
 yearly_copies=0
-    """
-    except KeyError as err:
-        print('Environment variable %s must be defined' % err)
-        exit(1)
+""" % str(f)
