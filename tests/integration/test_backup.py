@@ -1,31 +1,33 @@
-import ConfigParser
+import StringIO
 import json
 import os
-import shlex
 import socket
 
 from subprocess import call, Popen, PIPE
 from twindb_backup.destination.s3 import S3
 
 
-def test__take_file_backup(s3_client, config_content_files_only, tmpdir):
+def test__take_file_backup(s3_client, config_content_files_only, tmpdir,
+                           foo_bar_dir):
     config = tmpdir.join('twindb-backup.cfg')
-    config.write(config_content_files_only)
+    content = config_content_files_only.format(
+        TEST_DIR=foo_bar_dir,
+        AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+        AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+        BUCKET=s3_client.bucket
+    )
+    config.write(content)
 
-    config_parser = ConfigParser.ConfigParser()
-    config_parser.read(str(config))
-
-    backup_dirs = config_parser.get(section='source', option='backup_dirs')
-    backup_dir = backup_dirs.split(' ')[0]
+    backup_dir = foo_bar_dir
 
     # write some content to the directory
-    assert call('echo $RANDOM > %s/file' % backup_dir, shell=True) == 0
+    with open(os.path.join(backup_dir, 'file'), 'w') as f:
+        f.write("Hello world.")
 
     hostname = socket.gethostname()
     s3_backup_path = 's3://%s/%s/hourly/files/%s' % \
                      (s3_client.bucket, hostname, backup_dir.replace('/', '_'))
 
-    print('Bucket %s' % s3_client.bucket)
     cmd = ['twindb-backup',
            '--config', str(config),
            'backup', 'hourly']
@@ -35,41 +37,37 @@ def test__take_file_backup(s3_client, config_content_files_only, tmpdir):
            '--config', str(config),
            'ls']
     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-    cout, cerr = proc.communicate()
+    out, err = proc.communicate()
 
-    assert s3_backup_path in cout
+    assert s3_backup_path in out
 
-    copy = None
-    for line in cout.split('\n'):
+    backup_to_restore = None
+    for line in StringIO.StringIO(out):
         if line.startswith(s3_backup_path):
-            copy = line
+            backup_to_restore = line.strip()
             break
 
-    dstdir = tmpdir.mkdir("dst")
+    dest_dir = tmpdir.mkdir("dst")
     cmd = ['twindb-backup',
            '--config', str(config),
-           'restore', 'file', '--dst', str(dstdir), copy]
+           'restore', 'file', '--dst', str(dest_dir), backup_to_restore]
 
     assert call(cmd) == 0
 
-    call(['ls', '-R', str(dstdir)])
-    # restored file exists
-    path_to_file_orig = "%s/file" % backup_dir
-    path_to_file_restored = '%s/%s/file' \
-                            % (str(dstdir), backup_dir)
+    path_to_file_restored = '%s/%s/file' % (str(dest_dir), backup_dir)
     assert os.path.exists(path_to_file_restored)
 
     # And content is same
+    path_to_file_orig = "%s/file" % backup_dir
     proc = Popen(['diff', '-Nur',
                   path_to_file_orig,
                   path_to_file_restored],
                  stdout=PIPE, stderr=PIPE)
-    cout, cerr = proc.communicate()
-    assert not cout
+    out, err = proc.communicate()
+    assert not out
 
 
 def test__take_mysql_backup(s3_client, config_content_mysql_only, tmpdir):
-
     config = tmpdir.join('twindb-backup.cfg')
     content = config_content_mysql_only.format(
         AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
