@@ -4,14 +4,6 @@ import pytest
 from twindb_backup.modifiers.base import Modifier, ModifierException
 
 
-@pytest.fixture
-def input_file(tmpdir):
-    filename = tmpdir.join('in.txt')
-    with open(str(filename), 'w') as f:
-        f.write('foo bar')
-    return filename
-
-
 def test_modifier(tmpdir):
     input_stream = tmpdir.join('in.txt')
     f_in = open(str(input_stream), 'w+')
