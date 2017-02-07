@@ -6,7 +6,8 @@ from twindb_backup.modifiers.base import Modifier
 def test_modifier(tmpdir):
     input_stream = tmpdir.join('in.txt')
     f_in = open(str(input_stream), 'w+')
-    Modifier(f_in)
+    m = Modifier(f_in)
+    assert m.input == f_in
 
 
 def test_modifier_get_stream(input_file):
