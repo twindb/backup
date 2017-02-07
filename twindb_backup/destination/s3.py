@@ -139,17 +139,17 @@ class S3(BaseDestination):
 
         return True
 
-    def save(self, handler, name, keep_local=None):
+    def save(self, handler, name):
         """
         Read from handler and save it to Amazon S3
 
-        :param keep_local: save backup copy in this directory
         :param name: save backup copy in a file with this name
         :param handler: stdout handler from backup source
         :return: exit code
         """
         try:
-            return self._upload_object(handler, name)
+            with handler as file_obj:
+                return self._upload_object(file_obj, name)
         except S3Error as e:
             log.error('S3 upload failed: %s' % e)
             exit(1)

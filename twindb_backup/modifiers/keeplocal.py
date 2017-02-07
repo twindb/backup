@@ -28,9 +28,10 @@ class KeepLocal(Modifier):
         :return: output stream handle
         :raise: OSError if failed to call the tee command
         """
-        proc = Popen(['tee', self.local_path],
-                     stdin=self.input,
-                     stdout=PIPE)
-        yield proc.stdout
-        proc.communicate()
-        super(KeepLocal, self)._call_calback()
+        with self.input as input_stream:
+            proc = Popen(['tee', self.local_path],
+                         stdin=input_stream,
+                         stdout=PIPE)
+            yield proc.stdout
+            proc.communicate()
+            super(KeepLocal, self)._call_calback()

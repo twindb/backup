@@ -32,19 +32,18 @@ class Ssh(BaseDestination):
             hostname=hostname
         )
 
-    def save(self, handler, name, keep_local=None):
+    def save(self, handler, name):
         """
         Read from handler and save it on remote ssh server
 
         :param name: store backup copy as this name
-        :param keep_local: path to directory where to store a local kopy
         :param handler:
         :return: exit code
         """
         remote_name = self.remote_path + '/' + name
         self._mkdir_r(os.path.dirname(remote_name))
         cmd = self._ssh_command + ["cat - > \"%s\"" % remote_name]
-        return self._save(cmd, handler, keep_local, name)
+        return self._save(cmd, handler)
 
     def _mkdir_r(self, path):
         """

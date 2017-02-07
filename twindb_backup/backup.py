@@ -10,6 +10,7 @@ from twindb_backup import (
     log, get_directories_to_backup, get_timeout, LOCK_FILE
 )
 from twindb_backup.destination.local import Local
+from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.file_source import FileSource
 from twindb_backup.source.mysql_source import MySQLSource
 from twindb_backup.util import get_destination
@@ -21,64 +22,86 @@ def backup_files(run_type, config):
         src = FileSource(d, run_type)
         dst = get_destination(config)
 
-        with src.get_stream() as stream:
-            try:
-                keep_local = config.get('destination', 'keep_local_path')
-            except ConfigParser.NoOptionError:
-                keep_local = None
+        stream = src.get_stream()
 
-            dst.save(stream, src.get_name(), keep_local=keep_local)
+        # KeepLocal modifier
+        try:
+            keep_local_path = config.get('destination', 'keep_local_path')
+            dst_name = src.get_name()
+            kl_modifier = KeepLocal(stream,
+                                    '%s/%s' % (keep_local_path, dst_name))
+            stream = kl_modifier.get_stream()
+        except ConfigParser.NoOptionError:
+            pass
+
+        dst.save(stream, src.get_name())
+
         src.apply_retention_policy(dst, config, run_type)
 
 
 def backup_mysql(run_type, config):
+
     try:
-        if config.getboolean('source', 'backup_mysql'):
-            mysql_defaults_file = config.get('mysql', 'mysql_defaults_file')
-            dst = get_destination(config)
+        if not config.getboolean('source', 'backup_mysql'):
+            log.debug('Not backing up MySQL')
+            return
 
-            src = MySQLSource(mysql_defaults_file, run_type, config, dst)
-            dst_name = src.get_name()
-
-            try:
-                keep_local = config.get('destination', 'keep_local_path')
-            except ConfigParser.NoOptionError:
-                keep_local = None
-
-            with src.get_stream() as stream:
-                if not dst.save(stream, dst_name, keep_local=keep_local):
-                    log.error('Failed to save backup copy %s', dst_name)
-
-            status = dst.status()
-            src_name = src.get_name()
-            status[run_type][src_name] = {
-                'binlog': src.binlog_coordinate[0],
-                'position': src.binlog_coordinate[1],
-                'lsn': src.lsn,
-                'type': src.type
-            }
-            status[run_type][src_name]['config'] = []
-            for path, content in src.get_my_cnf():
-                status[run_type][src_name]['config'].append({
-                    path: base64.b64encode(content)
-                })
-
-            if src.incremental:
-                status[run_type][src_name]['parent'] = src.parent
-
-            if src.galera:
-                status[run_type][src_name]['wsrep_provider_version'] = \
-                    src.wsrep_provider_version
-
-            src.apply_retention_policy(dst, config, run_type, status)
-
-            dst.status(status)
-
-            if keep_local:
-                dst = Local(keep_local)
-                dst.status(status)
     except ConfigParser.NoOptionError:
         log.debug('Not backing up MySQL')
+        return
+
+    mysql_defaults_file = config.get('mysql', 'mysql_defaults_file')
+    dst = get_destination(config)
+
+    src = MySQLSource(mysql_defaults_file, run_type, config, dst)
+    dst_name = src.get_name()
+
+    stream = src.get_stream()
+
+    # KeepLocal modifier
+    try:
+        keep_local_path = config.get('destination',
+                                     'keep_local_path')
+
+        def _save_status(remote_dst):
+            local_dst = Local(keep_local_path)
+            local_dst.status(remote_dst.status())
+
+        kl_modifier = KeepLocal(stream,
+                                '%s/%s' % (keep_local_path, dst_name),
+                                _save_status,
+                                remote_dst=dst)
+        stream = kl_modifier.get_stream()
+    except ConfigParser.NoOptionError:
+        pass
+
+    if not dst.save(stream, dst_name):
+        log.error('Failed to save backup copy %s', dst_name)
+
+    status = dst.status()
+    src_name = src.get_name()
+    status[run_type][src_name] = {
+        'binlog': src.binlog_coordinate[0],
+        'position': src.binlog_coordinate[1],
+        'lsn': src.lsn,
+        'type': src.type
+    }
+    status[run_type][src_name]['config'] = []
+    for path, content in src.get_my_cnf():
+        status[run_type][src_name]['config'].append({
+            path: base64.b64encode(content)
+        })
+
+    if src.incremental:
+        status[run_type][src_name]['parent'] = src.parent
+
+    if src.galera:
+        status[run_type][src_name]['wsrep_provider_version'] = \
+            src.wsrep_provider_version
+
+    src.apply_retention_policy(dst, config, run_type, status)
+
+    dst.status(status)
 
 
 def set_open_files_limit():

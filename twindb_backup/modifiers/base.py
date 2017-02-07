@@ -18,11 +18,7 @@ class Modifier(object):
             the input stream ends
         :param **callback_kwargs: dictionary with callback function arguments
         """
-        if isinstance(input_stream, file):
-            self.input = input_stream
-        else:
-            raise ModifierException('Input stream is not a file object')
-
+        self.input = input_stream
         self.callback = callback
         self.callback_kwargs = callback_kwargs
 

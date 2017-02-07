@@ -1,19 +1,12 @@
 import mock
-import pytest
 
-from twindb_backup.modifiers.base import Modifier, ModifierException
+from twindb_backup.modifiers.base import Modifier
 
 
 def test_modifier(tmpdir):
     input_stream = tmpdir.join('in.txt')
     f_in = open(str(input_stream), 'w+')
     Modifier(f_in)
-
-
-def test_modifier_exeption_if_not_file_object():
-    f_in = 'foo'
-    with pytest.raises(ModifierException):
-        Modifier(f_in)
 
 
 def test_modifier_get_stream(input_file):

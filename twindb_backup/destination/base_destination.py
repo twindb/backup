@@ -30,35 +30,10 @@ class BaseDestination(object):
             else:
                 raise
 
-    @contextmanager
-    def _get_input_handler(self, handler, keep_local, name):
+    @staticmethod
+    def _save(cmd, handler):
 
-        if keep_local:
-            local_name = keep_local + '/' + name
-            self._mkdir_p(os.path.dirname(local_name))
-            tee_cmd = [
-                'tee',
-                local_name
-            ]
-            log.debug('Running %s', ' '.join(tee_cmd))
-            proc_tee = Popen(tee_cmd, stdin=handler, stdout=PIPE, stderr=PIPE)
-
-            yield proc_tee.stdout
-
-            if proc_tee:
-                cout, cerr = proc_tee.communicate()
-                if proc_tee.returncode:
-                    log.error('%s existed with error code %d',
-                              ' '.join(tee_cmd), proc_tee.returncode)
-                    if cout:
-                        log.info(cout)
-                    exit(1)
-        else:
-            yield handler
-
-    def _save(self, cmd, handler, keep_local, name):
-        with self._get_input_handler(handler, keep_local, name) \
-                as input_handler:
+        with handler as input_handler:
             log.debug('Running %s', ' '.join(cmd))
             try:
                 proc = Popen(cmd, stdin=input_handler,
