@@ -2,6 +2,7 @@ import ConfigParser
 import base64
 import errno
 import fcntl
+import os
 import signal
 
 from contextlib import contextmanager
@@ -29,7 +30,7 @@ def backup_files(run_type, config):
             keep_local_path = config.get('destination', 'keep_local_path')
             dst_name = src.get_name()
             kl_modifier = KeepLocal(stream,
-                                    '%s/%s' % (keep_local_path, dst_name))
+                                    os.path.join(keep_local_path, dst_name))
             stream = kl_modifier.get_stream()
         except ConfigParser.NoOptionError:
             pass
@@ -63,7 +64,8 @@ def backup_mysql(run_type, config):
     # KeepLocal modifier
     try:
         keep_local_path = config.get('destination', 'keep_local_path')
-        kl_modifier = KeepLocal(stream, keep_local_path + '/' + dst_name)
+        kl_modifier = KeepLocal(stream,
+                                os.path.join(keep_local_path, dst_name))
         stream = kl_modifier.get_stream()
 
         callbacks.append((kl_modifier, {
