@@ -106,7 +106,6 @@ def backup_mysql(run_type, config):
 
     log.debug('Callbacks are %r' % callbacks)
     for callback in callbacks:
-        print(callback[0])
         callback[0].callback(**callback[1])
 
 

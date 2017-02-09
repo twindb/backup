@@ -149,7 +149,9 @@ class S3(BaseDestination):
         """
         try:
             with handler as file_obj:
-                return self._upload_object(file_obj, name)
+                ret = self._upload_object(file_obj, name)
+                log.debug('Returning code %d' % ret)
+                return ret
         except S3Error as e:
             log.error('S3 upload failed: %s' % e)
             exit(1)
@@ -277,7 +279,7 @@ class S3(BaseDestination):
 
         log.debug("Upload successfully validated")
 
-        return True
+        return 0
 
     def _write_status(self, status):
         raw_status = base64.b64encode(json.dumps(status))
