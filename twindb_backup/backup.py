@@ -7,8 +7,8 @@ import signal
 from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
-    log, get_directories_to_backup, get_timeout, LOCK_FILE
-)
+    log, get_directories_to_backup, get_timeout, LOCK_FILE,
+    TwinDBBackupError)
 from twindb_backup.destination.local import Local
 from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.file_source import FileSource
@@ -43,10 +43,10 @@ def backup_mysql(run_type, config):
 
     try:
         if not config.getboolean('source', 'backup_mysql'):
-            log.debug('Not backing up MySQL')
-            return
+            raise TwinDBBackupError('MySQL backups are not enabled in config')
 
-    except ConfigParser.NoOptionError:
+    except (ConfigParser.NoOptionError, TwinDBBackupError) as err:
+        log.debug(err)
         log.debug('Not backing up MySQL')
         return
 
@@ -58,25 +58,26 @@ def backup_mysql(run_type, config):
 
     stream = src.get_stream()
 
+    callbacks = []
+
     # KeepLocal modifier
     try:
-        keep_local_path = config.get('destination',
-                                     'keep_local_path')
-
-        def _save_status(remote_dst):
-            local_dst = Local(keep_local_path)
-            local_dst.status(remote_dst.status())
-
-        kl_modifier = KeepLocal(stream,
-                                '%s/%s' % (keep_local_path, dst_name),
-                                _save_status,
-                                remote_dst=dst)
+        keep_local_path = config.get('destination', 'keep_local_path')
+        kl_modifier = KeepLocal(stream, keep_local_path + '/' + dst_name)
         stream = kl_modifier.get_stream()
+
+        callbacks.append((kl_modifier, {
+            'keep_local_path': keep_local_path,
+            'dst': dst
+        }))
+
     except ConfigParser.NoOptionError:
+        log.debug('keep_local_path is not present in the config file')
         pass
 
-    if not dst.save(stream, dst_name):
+    if dst.save(stream, dst_name) != 0:
         log.error('Failed to save backup copy %s', dst_name)
+        exit(1)
 
     status = dst.status()
     src_name = src.get_name()
@@ -102,6 +103,11 @@ def backup_mysql(run_type, config):
     src.apply_retention_policy(dst, config, run_type, status)
 
     dst.status(status)
+
+    log.debug('Callbacks are %r' % callbacks)
+    for callback in callbacks:
+        print(callback[0])
+        callback[0].callback(**callback[1])
 
 
 def set_open_files_limit():

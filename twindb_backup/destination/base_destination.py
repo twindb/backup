@@ -41,15 +41,17 @@ class BaseDestination(object):
                              stderr=PIPE)
                 cout_ssh, cerr_ssh = proc.communicate()
 
-                if proc.returncode:
+                ret = proc.returncode
+                if ret:
                     log.error('%s exited with error code %d',
-                              ' '.join(cmd), proc.returncode)
+                              ' '.join(cmd), ret)
                     if cout_ssh:
                         log.info(cout_ssh)
                     if cerr_ssh:
                         log.error(cerr_ssh)
                     exit(1)
-                return proc.returncode
+                log.debug('Exited with code %d' % ret)
+                return ret
             except OSError as err:
                 log.error('Failed to run %s: %s', ' '.join(cmd), err)
                 exit(1)

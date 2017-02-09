@@ -13,6 +13,10 @@ INTERVALS = ['hourly', 'daily', 'weekly', 'monthly', 'yearly']
 log = logging.getLogger(__name__)
 
 
+class TwinDBBackupError(Exception):
+    """Class for script errors"""
+
+
 def setup_logging(logger, debug=False):     # pragma: no cover
 
     fmt_str = "%(asctime)s: %(levelname)s:" \
