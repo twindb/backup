@@ -160,7 +160,7 @@ class S3(BaseDestination):
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(self.bucket)
 
-        log.debug('Listing %s', prefix)
+        log.debug('Listing %s in bucket %s', (prefix, self.bucket))
 
         norm_prefix = prefix.replace('s3://%s/' % bucket.name, '')
         log.debug('norm_prefix = %s' % norm_prefix)
