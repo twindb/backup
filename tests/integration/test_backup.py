@@ -4,6 +4,8 @@ import os
 import socket
 
 from subprocess import call, Popen, PIPE
+
+from twindb_backup import log
 from twindb_backup.destination.s3 import S3
 
 
@@ -38,6 +40,11 @@ def test__take_file_backup(s3_client, config_content_files_only, tmpdir,
            'ls']
     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
     out, err = proc.communicate()
+
+    log.debug('STDOUT: %s' % out)
+    log.debug('STDERR: %s' % err)
+
+    assert proc.returncode == 0
 
     assert s3_backup_path in out
 
