@@ -4,6 +4,8 @@ import os
 import socket
 
 from subprocess import call, Popen, PIPE
+
+from twindb_backup import log
 from twindb_backup.destination.s3 import S3
 
 
@@ -88,8 +90,8 @@ def test__take_mysql_backup(s3_client, config_content_mysql_only, tmpdir):
     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
     cout, cerr = proc.communicate()
 
-    print('STDOUT:', cout)
-    print('STDERR:', cerr)
+    log.debug('STDOUT: %s', cout)
+    log.debug('STDERR: %s', cerr)
 
     key = json.loads(cout)['hourly'].keys()[0]
 
@@ -150,7 +152,9 @@ def test__s3_find_files_returns_sorted(s3_client, config_content_mysql_only,
         hourly_copies=2
     )
     config.write(content)
-    cmd = ['twindb-backup', '--config', str(config), 'backup', 'daily']
+
+    cmd = ['twindb-backup', '--debug', '--config', str(config),
+           'backup', 'daily']
     n_runs = 3
     for x in xrange(n_runs):
         assert call(cmd) == 0
