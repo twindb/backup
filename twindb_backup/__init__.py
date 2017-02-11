@@ -36,6 +36,7 @@ def setup_logging(logger, debug=False):     # pragma: no cover
 
     console_handler = logging.StreamHandler(stream=sys.stdout)
     console_handler.addFilter(LessThanFilter(logging.WARNING))
+    console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(logging.Formatter(fmt_str))
 
     # Log errors and warnings to stderr
@@ -43,13 +44,20 @@ def setup_logging(logger, debug=False):     # pragma: no cover
     console_handler_err.setLevel(logging.WARNING)
     console_handler_err.setFormatter(logging.Formatter(fmt_str))
 
+    # Log debug to stderr
+    console_handler_debug = logging.StreamHandler(stream=sys.stderr)
+    console_handler_debug.addFilter(LessThanFilter(logging.INFO))
+    console_handler_debug.setLevel(logging.DEBUG)
+    console_handler_debug.setFormatter(logging.Formatter(fmt_str))
+
     logger.handlers = []
     logger.addHandler(console_handler)
     logger.addHandler(console_handler_err)
+
     if debug:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
+        logger.addHandler(console_handler_debug)
+
+    logger.setLevel(logging.DEBUG)
 
 
 def get_directories_to_backup(config):
