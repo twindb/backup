@@ -7,7 +7,7 @@ from ConfigParser import NoOptionError
 from contextlib import contextmanager
 from pymysql.err import InternalError
 from subprocess import Popen, PIPE
-from twindb_backup import log, get_files_to_delete
+from twindb_backup import LOG, get_files_to_delete
 from twindb_backup.source.base_source import BaseSource
 from twindb_backup.util import get_connection
 
@@ -60,14 +60,14 @@ class MySQLSource(BaseSource):
             if self.is_galera():
                 wsrep_desynced = self.enable_wsrep_desync()
 
-            log.debug('Running %s', ' '.join(cmd))
+            LOG.debug('Running %s', ' '.join(cmd))
             stderr_file = tempfile.NamedTemporaryFile(delete=False)
             proc_innobackupex = Popen(cmd,
                                       stderr=stderr_file,
                                       stdout=PIPE)
             cmd = "gzip -c -"
             try:
-                log.debug('Running %s', cmd)
+                LOG.debug('Running %s', cmd)
                 proc_gzip = Popen(shlex.split(cmd),
                                   stdin=proc_innobackupex.stdout,
                                   stderr=PIPE, stdout=PIPE)
@@ -75,31 +75,31 @@ class MySQLSource(BaseSource):
 
                 cout, cerr = proc_gzip.communicate()
                 if proc_gzip.returncode:
-                    log.error('Failed to compress innobackupex stream: '
+                    LOG.error('Failed to compress innobackupex stream: '
                               '%s' % cerr)
                     exit(1)
                 else:
-                    log.debug('Successfully compressed innobackupex stream')
+                    LOG.debug('Successfully compressed innobackupex stream')
 
             except OSError as err:
-                log.error('Failed to run %s: %s', cmd, err)
+                LOG.error('Failed to run %s: %s', cmd, err)
                 exit(1)
 
             proc_innobackupex.communicate()
             if proc_innobackupex.returncode:
-                log.error('Failed to run innobackupex. '
+                LOG.error('Failed to run innobackupex. '
                           'Check error output in %s', stderr_file.name)
                 exit(1)
             else:
-                log.debug('Successfully streamed innobackupex output')
-            log.debug('innobackupex error log file %s', stderr_file.name)
+                LOG.debug('Successfully streamed innobackupex output')
+            LOG.debug('innobackupex error log file %s', stderr_file.name)
             self.lsn = self.get_lsn(stderr_file.name)
             self.binlog_coordinate = self.get_binlog_coordinates(
                 stderr_file.name
             )
             os.unlink(stderr_file.name)
         except OSError as err:
-            log.error('Failed to run %s: %s', cmd, err)
+            LOG.error('Failed to run %s: %s', cmd, err)
             exit(1)
         finally:
             if wsrep_desynced:
@@ -125,7 +125,7 @@ class MySQLSource(BaseSource):
         objects = dst.list_files(prefix)
 
         for fl in get_files_to_delete(objects, keep_copies):
-            log.debug('Deleting remote file %s' % fl)
+            LOG.debug('Deleting remote file %s' % fl)
             dst.delete(fl)
             status = self._delete_from_status(status, dst.remote_path, fl)
 
@@ -214,9 +214,9 @@ class MySQLSource(BaseSource):
         return False
 
     def _delete_from_status(self, status, prefix, fl):
-        log.debug('status = %r' % status)
-        log.debug('prefix = %s' % prefix)
-        log.debug('file   = %s' % fl)
+        LOG.debug('status = %r' % status)
+        LOG.debug('prefix = %s' % prefix)
+        LOG.debug('file   = %s' % fl)
         try:
             ref_filename = fl.key
         except AttributeError:
@@ -243,7 +243,7 @@ class MySQLSource(BaseSource):
                     cursor.execute('SET GLOBAL wsrep_desync=ON')
             return True
         except Exception as e:
-            log.debug(e)
+            LOG.debug(e)
             return False
 
     def disable_wsrep_desync(self):
@@ -272,10 +272,10 @@ class MySQLSource(BaseSource):
 
                         time.sleep(1)
 
-                    log.debug('Disabling wsrep_desync')
+                    LOG.debug('Disabling wsrep_desync')
                     cursor.execute("SET GLOBAL wsrep_desync=OFF")
         except Exception as e:
-            log.error(e)
+            LOG.error(e)
 
     @staticmethod
     def get_my_cnf():
@@ -323,7 +323,7 @@ class MySQLSource(BaseSource):
             error_code, error_message = err.args
 
             if error_code == 1193:
-                log.debug('Galera is not supported or not enabled')
+                LOG.debug('Galera is not supported or not enabled')
                 return False
             else:
                 raise

@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 from boto3.s3.transfer import TransferConfig
 from multiprocessing import Process
 from operator import attrgetter
-from twindb_backup import log
+from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination, \
     DestinationError
 from urlparse import urlparse
@@ -88,7 +88,7 @@ class S3(BaseDestination):
                 raise e
 
         if not bucket_exists:
-            log.info('Created bucket %s' % self.bucket)
+            LOG.info('Created bucket %s' % self.bucket)
             response = self.s3_client.create_bucket(Bucket=self.bucket)
             self.validate_client_response(response)
 
@@ -114,16 +114,16 @@ class S3(BaseDestination):
                 raise e
 
         if bucket_exists:
-            log.info('Deleting bucket %s' % self.bucket)
+            LOG.info('Deleting bucket %s' % self.bucket)
 
             if force:
-                log.info('Deleting the objects in the bucket %s' % self.bucket)
+                LOG.info('Deleting the objects in the bucket %s' % self.bucket)
                 self.delete_all_objects()
 
             response = self.s3_client.delete_bucket(Bucket=self.bucket)
             self.validate_client_response(response)
 
-            log.info('Bucket %s successfully deleted' % self.bucket)
+            LOG.info('Bucket %s successfully deleted' % self.bucket)
 
         return True
 
@@ -150,20 +150,20 @@ class S3(BaseDestination):
         try:
             with handler as file_obj:
                 ret = self._upload_object(file_obj, name)
-                log.debug('Returning code %d' % ret)
+                LOG.debug('Returning code %d' % ret)
                 return ret
         except S3Error as e:
-            log.error('S3 upload failed: %s' % e)
+            LOG.error('S3 upload failed: %s' % e)
             exit(1)
 
     def list_files(self, prefix, recursive=False):
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(self.bucket)
 
-        log.debug('Listing %s in bucket %s' % (prefix, self.bucket))
+        LOG.debug('Listing %s in bucket %s' % (prefix, self.bucket))
 
         norm_prefix = prefix.replace('s3://%s/' % bucket.name, '')
-        log.debug('norm_prefix = %s' % norm_prefix)
+        LOG.debug('norm_prefix = %s' % norm_prefix)
 
         return sorted(bucket.objects.filter(Prefix=norm_prefix),
                       key=attrgetter('key'))
@@ -171,7 +171,7 @@ class S3(BaseDestination):
     def find_files(self, prefix, run_type):
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(self.bucket)
-        log.debug('Listing %s in bucket %s' % (prefix, bucket))
+        LOG.debug('Listing %s in bucket %s' % (prefix, bucket))
         files = []
 
         try:
@@ -182,7 +182,7 @@ class S3(BaseDestination):
 
             return sorted(files)
         except Exception as e:
-            log.error('Failed to list objects in bucket %s: %s' %
+            LOG.error('Failed to list objects in bucket %s: %s' %
                       (self.bucket, e))
             raise
 
@@ -195,7 +195,7 @@ class S3(BaseDestination):
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(self.bucket)
 
-        log.debug('deleting s3://{0}/{1}'.format(bucket.name, obj.key))
+        LOG.debug('deleting s3://{0}/{1}'.format(bucket.name, obj.key))
 
         return obj.delete()
 
@@ -218,7 +218,7 @@ class S3(BaseDestination):
                 s3_client.download_fileobj(bucket_name, key, write_pipe)
 
         try:
-            log.debug('Fetching object %s from bucket %s' %
+            LOG.debug('Fetching object %s from bucket %s' %
                       (object_key, self.bucket))
 
             read_pipe, write_pipe = os.pipe()
@@ -233,9 +233,9 @@ class S3(BaseDestination):
             os.close(write_pipe)
             yield read_pipe
 
-            log.debug('Successfully streamed %s' % path)
+            LOG.debug('Successfully streamed %s' % path)
         except Exception as e:
-            log.error('Failed to read from %s: %s' % (path, e))
+            LOG.error('Failed to read from %s: %s' % (path, e))
             exit(1)
         finally:
             if download_proc:
@@ -253,13 +253,13 @@ class S3(BaseDestination):
             name=object_key
         )
 
-        log.debug("Generating S3 transfer config")
+        LOG.debug("Generating S3 transfer config")
         s3_transfer_config = self.get_transfer_config()
 
-        log.debug("Starting to stream to %s" % remote_name)
+        LOG.debug("Starting to stream to %s" % remote_name)
         self.s3_client.upload_fileobj(file_obj, self.bucket, object_key,
                                       Config=s3_transfer_config)
-        log.debug("Successfully streamed to %s" % remote_name)
+        LOG.debug("Successfully streamed to %s" % remote_name)
 
         return self._validate_upload(object_key)
 
@@ -271,13 +271,13 @@ class S3(BaseDestination):
             name=object_key
         )
 
-        log.debug("Validating upload to %s" % remote_name)
+        LOG.debug("Validating upload to %s" % remote_name)
 
         response = self.s3_client.get_object(Bucket=self.bucket,
                                              Key=object_key)
         self.validate_client_response(response)
 
-        log.debug("Upload successfully validated")
+        LOG.debug("Upload successfully validated")
 
         return 0
 

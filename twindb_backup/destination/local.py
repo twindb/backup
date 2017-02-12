@@ -4,7 +4,7 @@ import json
 import os
 import socket
 from subprocess import Popen, PIPE
-from twindb_backup import log
+from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 
 
@@ -45,7 +45,7 @@ class Local(BaseDestination):
             ls_cmd = ["ls", "%s*" % prefix]
 
         cmd = ls_cmd
-        log.debug('Running %s', ' '.join(cmd))
+        LOG.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
         cout, cerr = proc.communicate()
 
@@ -54,7 +54,7 @@ class Local(BaseDestination):
     def find_files(self, prefix):
 
         cmd = ["find", "%s*" % prefix, "-type", "f"]
-        log.debug('Running %s', ' '.join(cmd))
+        LOG.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
         cout, cerr = proc.communicate()
 
@@ -62,7 +62,7 @@ class Local(BaseDestination):
 
     def delete(self, obj):
         cmd = ["rm", obj]
-        log.debug('Running %s', ' '.join(cmd))
+        LOG.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd)
         proc.communicate()
 
@@ -75,20 +75,20 @@ class Local(BaseDestination):
         """
         cmd = ["cat", path]
         try:
-            log.debug('Running %s', " ".join(cmd))
+            LOG.debug('Running %s', " ".join(cmd))
             proc = Popen(cmd, stderr=PIPE, stdout=PIPE)
 
             yield proc.stdout
 
             cout, cerr = proc.communicate()
             if proc.returncode:
-                log.error('Failed to read from %s: %s' % (path, cerr))
+                LOG.error('Failed to read from %s: %s' % (path, cerr))
                 exit(1)
             else:
-                log.debug('Successfully streamed %s', path)
+                LOG.debug('Successfully streamed %s', path)
 
         except OSError as err:
-            log.error('Failed to run %s: %s', cmd, err)
+            LOG.error('Failed to run %s: %s', cmd, err)
             exit(1)
 
     def _write_status(self, status):

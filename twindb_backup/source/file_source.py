@@ -1,7 +1,7 @@
 import shlex
 from contextlib import contextmanager
 from subprocess import Popen, PIPE
-from twindb_backup import log, get_files_to_delete
+from twindb_backup import LOG, get_files_to_delete
 from twindb_backup.source.base_source import BaseSource
 
 
@@ -20,7 +20,7 @@ class FileSource(BaseSource):
         """
         cmd = "tar zcf - %s" % self.path
         try:
-            log.debug('Running %s', cmd)
+            LOG.debug('Running %s', cmd)
             proc = Popen(shlex.split(cmd), stderr=PIPE, stdout=PIPE)
             self.procs.append(proc)
 
@@ -28,13 +28,13 @@ class FileSource(BaseSource):
 
             cout, cerr = proc.communicate()
             if proc.returncode:
-                log.error('Failed to read from %s: %s' % (self.path, cerr))
+                LOG.error('Failed to read from %s: %s' % (self.path, cerr))
                 exit(1)
             else:
-                log.debug('Successfully streamed %s', self.path)
+                LOG.debug('Successfully streamed %s', self.path)
 
         except OSError as err:
-            log.error('Failed to run %s: %s', cmd, err)
+            LOG.error('Failed to run %s: %s', cmd, err)
             exit(1)
 
     def get_name(self):
@@ -62,9 +62,9 @@ class FileSource(BaseSource):
                                     '%s_copies' % run_type)
 
         backups_list = dst.list_files(prefix)
-        log.debug('Remote copies: %r', backups_list)
+        LOG.debug('Remote copies: %r', backups_list)
         for fl in get_files_to_delete(backups_list, keep_copies):
-            log.debug('Deleting remote file %s' % fl)
+            LOG.debug('Deleting remote file %s' % fl)
             dst.delete(fl)
 
         self._delete_local_files(self._sanitize_filename(), config)

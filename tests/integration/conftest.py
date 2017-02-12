@@ -4,19 +4,19 @@ import random
 
 from subprocess import call
 
-from twindb_backup import log, setup_logging
+from twindb_backup import LOG, setup_logging
 from twindb_backup.destination.s3 import S3
 
-setup_logging(log, debug=True)
+setup_logging(LOG, debug=True)
 
 
 @pytest.fixture(scope='session')
 def bucket_name():
     travis_job_number = os.environ.get('TRAVIS_JOB_NUMBER')
-    log.debug('TRAVIS_JOB_NUMBER=%s' % travis_job_number)
+    LOG.debug('TRAVIS_JOB_NUMBER=%s' % travis_job_number)
 
     number = random.randint(0, 1000000)
-    log.debug('Default job number %d' % number)
+    LOG.debug('Default job number %d' % number)
 
     if travis_job_number:
         bucket = 'twindb-backup-test-travis-%s' % travis_job_number
@@ -28,7 +28,7 @@ def bucket_name():
 
 @pytest.fixture(scope='session')
 def s3_client(bucket_name):
-    log.debug('Bucket: %s' % bucket_name)
+    LOG.debug('Bucket: %s' % bucket_name)
     client = S3(bucket_name, os.environ['AWS_ACCESS_KEY_ID'],
                 os.environ['AWS_SECRET_ACCESS_KEY'])
     assert client.create_bucket()

@@ -4,7 +4,7 @@ import json
 import os
 import socket
 from subprocess import Popen, PIPE
-from twindb_backup import log
+from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination, \
     DestinationError
 
@@ -44,7 +44,7 @@ class Ssh(BaseDestination):
         self._mkdir_r(os.path.dirname(remote_name))
         cmd = self._ssh_command + ["cat - > \"%s\"" % remote_name]
         ret = self._save(cmd, handler)
-        log.debug('Returning exit code %d' % ret)
+        LOG.debug('Returning exit code %d' % ret)
         return ret
 
     def _mkdir_r(self, path):
@@ -55,12 +55,12 @@ class Ssh(BaseDestination):
         :return: exit code
         """
         cmd = self._ssh_command + ["mkdir -p \"%s\"" % path]
-        log.debug('Running %s', ' '.join(cmd))
+        LOG.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
         cout, cerr = proc.communicate()
 
         if proc.returncode:
-            log.error('Failed to create directory %s: %s' % (path, cerr))
+            LOG.error('Failed to create directory %s: %s' % (path, cerr))
             exit(1)
 
         return proc.returncode
@@ -73,7 +73,7 @@ class Ssh(BaseDestination):
             ls_cmd = ["ls %s*" % prefix]
 
         cmd = self._ssh_command + ls_cmd
-        log.debug('Running %s', ' '.join(cmd))
+        LOG.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
         cout, cerr = proc.communicate()
 
@@ -85,7 +85,7 @@ class Ssh(BaseDestination):
                                    format(prefix=prefix,
                                           run_type=run_type)
                                    ]
-        log.debug('Running %s', ' '.join(cmd))
+        LOG.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
         cout, cerr = proc.communicate()
 
@@ -93,7 +93,7 @@ class Ssh(BaseDestination):
 
     def delete(self, obj):
         cmd = self._ssh_command + ["rm %s" % obj]
-        log.debug('Running %s', ' '.join(cmd))
+        LOG.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd)
         proc.communicate()
 
@@ -106,20 +106,20 @@ class Ssh(BaseDestination):
         """
         cmd = self._ssh_command + ["cat %s" % path]
         try:
-            log.debug('Running %s', " ".join(cmd))
+            LOG.debug('Running %s', " ".join(cmd))
             proc = Popen(cmd, stderr=PIPE, stdout=PIPE)
 
             yield proc.stdout
 
             cout, cerr = proc.communicate()
             if proc.returncode:
-                log.error('Failed to read from %s: %s' % (path, cerr))
+                LOG.error('Failed to read from %s: %s' % (path, cerr))
                 exit(1)
             else:
-                log.debug('Successfully streamed %s', path)
+                LOG.debug('Successfully streamed %s', path)
 
         except OSError as err:
-            log.error('Failed to run %s: %s', cmd, err)
+            LOG.error('Failed to run %s: %s', cmd, err)
             exit(1)
 
     def _write_status(self, status):
@@ -132,8 +132,8 @@ class Ssh(BaseDestination):
         proc = Popen(cmd)
         cout, cerr = proc.communicate()
         if proc.returncode:
-            log.error('Failed to write backup status')
-            log.error(cerr)
+            LOG.error('Failed to write backup status')
+            LOG.error(cerr)
             exit(1)
         return status
 
@@ -145,7 +145,7 @@ class Ssh(BaseDestination):
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
             cout, cerr = proc.communicate()
             if proc.returncode:
-                log.error('Failed to read backup status: %d: %s' % (
+                LOG.error('Failed to read backup status: %d: %s' % (
                     proc.returncode,
                     cerr
                 ))
@@ -160,11 +160,11 @@ class Ssh(BaseDestination):
                "fi'" % self.status_path]
 
         try:
-            log.debug('Running %r' % cmd)
+            LOG.debug('Running %r' % cmd)
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
             cout, cerr = proc.communicate()
             if proc.returncode:
-                log.error('Failed to read backup status: %d: %s' % (
+                LOG.error('Failed to read backup status: %d: %s' % (
                     proc.returncode,
                     cerr
                 ))
@@ -177,5 +177,5 @@ class Ssh(BaseDestination):
                 raise DestinationError('Unrecognized response: %s' % cout)
 
         except OSError as err:
-            log.error('Failed to run %s: %s' % (" ".join(cmd), err))
+            LOG.error('Failed to run %s: %s' % (" ".join(cmd), err))
             exit(1)

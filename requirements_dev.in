@@ -9,3 +9,4 @@ pytest-cov
 Sphinx
 unittest2
 moto
+pylint

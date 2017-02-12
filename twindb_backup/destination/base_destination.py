@@ -5,7 +5,7 @@ from contextlib import contextmanager
 
 from subprocess import Popen, PIPE
 
-from twindb_backup import log, INTERVALS
+from twindb_backup import LOG, INTERVALS
 
 
 class DestinationError(Exception):
@@ -34,7 +34,7 @@ class BaseDestination(object):
     def _save(cmd, handler):
 
         with handler as input_handler:
-            log.debug('Running %s', ' '.join(cmd))
+            LOG.debug('Running %s', ' '.join(cmd))
             try:
                 proc = Popen(cmd, stdin=input_handler,
                              stdout=PIPE,
@@ -43,17 +43,17 @@ class BaseDestination(object):
 
                 ret = proc.returncode
                 if ret:
-                    log.error('%s exited with error code %d',
+                    LOG.error('%s exited with error code %d',
                               ' '.join(cmd), ret)
                     if cout_ssh:
-                        log.info(cout_ssh)
+                        LOG.info(cout_ssh)
                     if cerr_ssh:
-                        log.error(cerr_ssh)
+                        LOG.error(cerr_ssh)
                     exit(1)
-                log.debug('Exited with code %d' % ret)
+                LOG.debug('Exited with code %d' % ret)
                 return ret
             except OSError as err:
-                log.error('Failed to run %s: %s', ' '.join(cmd), err)
+                LOG.error('Failed to run %s: %s', ' '.join(cmd), err)
                 exit(1)
 
     @abstractmethod
@@ -116,7 +116,7 @@ class BaseDestination(object):
 
     def get_full_copy_name(self, file_path):
         remote_path = self.remote_path.rstrip('/')
-        log.debug('remote_path = %s' % remote_path)
+        LOG.debug('remote_path = %s' % remote_path)
         key = file_path.replace(remote_path + '/', '', 1)
         for run_type in INTERVALS:
             if key in self.status()[run_type]:

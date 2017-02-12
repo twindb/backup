@@ -6,7 +6,7 @@ import socket
 
 from contextlib import contextmanager
 from pymysql.cursors import DictCursor
-from twindb_backup import log, INTERVALS
+from twindb_backup import LOG, INTERVALS
 from twindb_backup.destination.s3 import S3
 from twindb_backup.destination.ssh import Ssh
 
@@ -15,10 +15,10 @@ def get_destination(config, hostname=socket.gethostname()):
     destination = None
     try:
         destination = config.get('destination', 'backup_destination')
-        log.debug('Destination in the config %s', destination)
+        LOG.debug('Destination in the config %s', destination)
         destination = destination.strip('"\'')
     except ConfigParser.NoOptionError:
-        log.critical("Backup destination must be specified "
+        LOG.critical("Backup destination must be specified "
                      "in the config file")
         exit(-1)
 
@@ -47,7 +47,7 @@ def get_destination(config, hostname=socket.gethostname()):
                   default_region=default_region, hostname=hostname)
 
     else:
-        log.critical('Destination %s is not supported' % destination)
+        LOG.critical('Destination %s is not supported' % destination)
         exit(-1)
 
 

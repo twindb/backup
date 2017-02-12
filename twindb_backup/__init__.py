@@ -1,4 +1,36 @@
 # -*- coding: utf-8 -*-
+"""TwinDB Backup module.
+
+ The module is a core of twindb-backup tool. It includes backup and restore
+ functionality. The module takes a backup from something defined in a source
+ class and saves the backup copy in something defined in a destination class.
+
+ The source class inherits from BaseSource() from
+ twindb_backup.source.base_source.py. The source class must define get_stream()
+ method that yields a file object that is used for next classes.
+ Typical classes are FileSource() to backup files and directories,
+ MySQLSource() to backup MySQL.
+
+ The destination class inherits from BaseDestination(). This is where you
+ store backups. The destination class must define save() method that
+ takes an input stream and saves it somewhere. Examples of
+ the destination class are S3(), Ssh().
+
+ There are modifier classes. The modifier class sits in the middle between
+ the source and the destination and does something with a stream before
+ the stream is saved. The modifier class may save a local copy (KeepLocal())
+ or encrypt the stream or else. The modifier class inherits Modifier()
+
+ The backup process may be depicted as a chain of modifiers with the source
+ in the head and the destination in the tail.
+
+::
+
+ +--------+    +------------+    +------------+    +-------------+
+ | source | -- | modifier 1 | -- | modifier 2 | -- | destination |
+ +--------+    +------------+    +------------+    +-------------+
+
+ """
 import ConfigParser
 import glob
 import logging
@@ -12,14 +44,16 @@ __version__ = '2.9.3'
 LOCK_FILE = '/var/run/twindb-backup.lock'
 INTERVALS = ['hourly', 'daily', 'weekly', 'monthly', 'yearly']
 
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 class TwinDBBackupError(Exception):
     """Class for script errors"""
 
 
-class LessThanFilter(logging.Filter):
+class LessThanFilter(logging.Filter):  # pylint: disable=too-few-public-methods
+    """Filters out log messages of a lower level."""
+
     def __init__(self, exclusive_maximum, name=""):
         super(LessThanFilter, self).__init__(name)
         self.max_level = exclusive_maximum
@@ -29,7 +63,8 @@ class LessThanFilter(logging.Filter):
         return 1 if record.levelno < self.max_level else 0
 
 
-def setup_logging(logger, debug=False):     # pragma: no cover
+def setup_logging(logger, debug=False):  # pragma: no cover
+    """Configures logging for the module"""
 
     fmt_str = "%(asctime)s: %(levelname)s:" \
               " %(module)s.%(funcName)s():%(lineno)d: %(message)s"
@@ -61,20 +96,33 @@ def setup_logging(logger, debug=False):     # pragma: no cover
 
 
 def get_directories_to_backup(config):
+    """Get directories to backup from a config file
+
+    :param config: instance of ConfigParser()
+    :return: list of strings
+    """
     backup_dirs = []
     try:
         backup_dirs_value = config.get('source', 'backup_dirs')
         backup_dirs = backup_dirs_value.strip('"\'').split()
-        log.debug('Directories to backup %r', backup_dirs)
+        LOG.debug('Directories to backup %r', backup_dirs)
 
     except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-        log.debug('Not backing up files')
+        LOG.debug('Not backing up files')
 
     return backup_dirs
 
 
 def get_files_to_delete(all_files, keep_copies):
-    log.debug('Retain %d files', keep_copies)
+    """If you give it a list of files and number of how many
+    you'd like to keep the function will return files that need
+    to be deleted
+
+    :param all_files: list of strings
+    :param keep_copies: number of copied to keep
+    :return: list of strings (files) to delete
+    """
+    LOG.debug('Retain %d files', keep_copies)
     if keep_copies == 0:
         return all_files
     else:
@@ -82,15 +130,30 @@ def get_files_to_delete(all_files, keep_copies):
 
 
 def delete_local_files(dir_backups, keep_copies):
-    local_files = sorted(glob.glob(dir_backups))
-    log.debug('Local copies: %r', local_files)
+    """Deletes local backup copies based on given retention number.
 
-    for fl in get_files_to_delete(local_files, keep_copies):
-        log.debug('Deleting: %s', fl)
-        os.unlink(fl)
+    :param dir_backups: directory with backup copies
+    :param keep_copies: how many to keep
+    :return: None
+
+    """
+    local_files = sorted(glob.glob(dir_backups))
+    LOG.debug('Local copies: %r', local_files)
+
+    for local_file in get_files_to_delete(local_files, keep_copies):
+        LOG.debug('Deleting: %s', local_file)
+        os.unlink(local_file)
 
 
 def get_timeout(run_type):
+    """Get timeout for a each run type - daily, hourly etc
+
+    :param run_type: Run type
+    :type run_type: str
+    :return: Number of seconds the tool allowed to wait until other instances
+      finish
+    :rtype: int
+    """
     timeouts = {
         'hourly': 3600 / 2,
         'daily': 24 * 3600 / 2,
