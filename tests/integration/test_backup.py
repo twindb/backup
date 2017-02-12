@@ -30,16 +30,21 @@ def test__take_file_backup(s3_client, config_content_files_only, tmpdir,
     s3_backup_path = 's3://%s/%s/hourly/files/%s' % \
                      (s3_client.bucket, hostname, backup_dir.replace('/', '_'))
 
-    cmd = ['twindb-backup',
+    cmd = ['twindb-backup', '--debug',
            '--config', str(config),
            'backup', 'hourly']
     assert call(cmd) == 0
 
-    cmd = ['twindb-backup',
+    cmd = ['twindb-backup', '--debug',
            '--config', str(config),
            'ls']
     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
     out, err = proc.communicate()
+
+    log.debug('STDOUT: %s' % out)
+    log.debug('STDERR: %s' % err)
+
+    assert proc.returncode == 0
 
     assert s3_backup_path in out
 
@@ -50,7 +55,7 @@ def test__take_file_backup(s3_client, config_content_files_only, tmpdir,
             break
 
     dest_dir = tmpdir.mkdir("dst")
-    cmd = ['twindb-backup',
+    cmd = ['twindb-backup', '--debug',
            '--config', str(config),
            'restore', 'file', '--dst', str(dest_dir), backup_to_restore]
 

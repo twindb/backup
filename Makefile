@@ -108,11 +108,7 @@ test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source twindb_backup py.test
-
-		coverage report -m
-		coverage html
-		$(BROWSER) htmlcov/index.html
+	py.test --cov=twindb_backup tests/unit
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/twindb_backup.rst

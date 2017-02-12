@@ -139,17 +139,19 @@ class S3(BaseDestination):
 
         return True
 
-    def save(self, handler, name, keep_local=None):
+    def save(self, handler, name):
         """
         Read from handler and save it to Amazon S3
 
-        :param keep_local: save backup copy in this directory
         :param name: save backup copy in a file with this name
         :param handler: stdout handler from backup source
         :return: exit code
         """
         try:
-            return self._upload_object(handler, name)
+            with handler as file_obj:
+                ret = self._upload_object(file_obj, name)
+                log.debug('Returning code %d' % ret)
+                return ret
         except S3Error as e:
             log.error('S3 upload failed: %s' % e)
             exit(1)
@@ -158,7 +160,7 @@ class S3(BaseDestination):
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(self.bucket)
 
-        log.debug('Listing %s', prefix)
+        log.debug('Listing %s in bucket %s' % (prefix, self.bucket))
 
         norm_prefix = prefix.replace('s3://%s/' % bucket.name, '')
         log.debug('norm_prefix = %s' % norm_prefix)
@@ -169,7 +171,7 @@ class S3(BaseDestination):
     def find_files(self, prefix, run_type):
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(self.bucket)
-        log.debug('Listing %s', prefix)
+        log.debug('Listing %s in bucket %s' % (prefix, bucket))
         files = []
 
         try:
@@ -277,7 +279,7 @@ class S3(BaseDestination):
 
         log.debug("Upload successfully validated")
 
-        return True
+        return 0
 
     def _write_status(self, status):
         raw_status = base64.b64encode(json.dumps(status))
