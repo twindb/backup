@@ -88,7 +88,7 @@ clean-test: ## remove test and coverage artifacts
 clean-docker:
 	@sudo docker rm twindb-backup-build-${PLATFORM}
 
-lint: ## check style with flake8
+lint: test-deps ## check style with flake8
 	pylint twindb_backup
 
 test-deps:
