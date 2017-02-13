@@ -8,7 +8,7 @@ from twindb_backup.source.base_source import BaseSource
 class FileSource(BaseSource):
     def __init__(self, path, run_type):
         self.path = path
-        self._suffix = 'tar.gz'
+        self._suffix = 'tar'
         self._media_type = 'files'
         super(FileSource, self).__init__(run_type)
 
@@ -18,7 +18,7 @@ class FileSource(BaseSource):
         Get a PIPE handler with content of the source
         :return:
         """
-        cmd = "tar zcf - %s" % self.path
+        cmd = "tar cf - %s" % self.path
         try:
             LOG.debug('Running %s', cmd)
             proc = Popen(shlex.split(cmd), stderr=PIPE, stdout=PIPE)
@@ -26,9 +26,9 @@ class FileSource(BaseSource):
 
             yield proc.stdout
 
-            cout, cerr = proc.communicate()
+            _, cerr = proc.communicate()
             if proc.returncode:
-                LOG.error('Failed to read from %s: %s' % (self.path, cerr))
+                LOG.error('Failed to read from %s: %s', self.path, cerr)
                 exit(1)
             else:
                 LOG.debug('Successfully streamed %s', self.path)
@@ -63,8 +63,8 @@ class FileSource(BaseSource):
 
         backups_list = dst.list_files(prefix)
         LOG.debug('Remote copies: %r', backups_list)
-        for fl in get_files_to_delete(backups_list, keep_copies):
-            LOG.debug('Deleting remote file %s' % fl)
-            dst.delete(fl)
+        for local_file in get_files_to_delete(backups_list, keep_copies):
+            LOG.debug('Deleting remote file %s', local_file)
+            dst.delete(local_file)
 
         self._delete_local_files(self._sanitize_filename(), config)

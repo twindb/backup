@@ -44,7 +44,7 @@ class Ssh(BaseDestination):
         self._mkdir_r(os.path.dirname(remote_name))
         cmd = self._ssh_command + ["cat - > \"%s\"" % remote_name]
         ret = self._save(cmd, handler)
-        LOG.debug('Returning exit code %d' % ret)
+        LOG.debug('Returning exit code %d', ret)
         return ret
 
     def _mkdir_r(self, path):
@@ -57,10 +57,10 @@ class Ssh(BaseDestination):
         cmd = self._ssh_command + ["mkdir -p \"%s\"" % path]
         LOG.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        cout, cerr = proc.communicate()
+        _, cerr = proc.communicate()
 
         if proc.returncode:
-            LOG.error('Failed to create directory %s: %s' % (path, cerr))
+            LOG.error('Failed to create directory %s: %s', path, cerr)
             exit(1)
 
         return proc.returncode
@@ -75,19 +75,20 @@ class Ssh(BaseDestination):
         cmd = self._ssh_command + ls_cmd
         LOG.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        cout, cerr = proc.communicate()
+        cout, _ = proc.communicate()
 
         return sorted(cout.split())
 
     def find_files(self, prefix, run_type):
 
-        cmd = self._ssh_command + ["find {prefix}/*/{run_type} -type f".
-                                   format(prefix=prefix,
-                                          run_type=run_type)
-                                   ]
+        cmd = self._ssh_command + [
+            "find {prefix}/*/{run_type} "
+            "-type f".format(prefix=prefix,
+                             run_type=run_type)
+        ]
         LOG.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        cout, cerr = proc.communicate()
+        cout, _ = proc.communicate()
 
         return sorted(cout.split())
 
@@ -111,9 +112,9 @@ class Ssh(BaseDestination):
 
             yield proc.stdout
 
-            cout, cerr = proc.communicate()
+            _, cerr = proc.communicate()
             if proc.returncode:
-                LOG.error('Failed to read from %s: %s' % (path, cerr))
+                LOG.error('Failed to read from %s: %s', path, cerr)
                 exit(1)
             else:
                 LOG.debug('Successfully streamed %s', path)
@@ -130,7 +131,7 @@ class Ssh(BaseDestination):
                                    status_file=self.status_path)
         ]
         proc = Popen(cmd)
-        cout, cerr = proc.communicate()
+        _, cerr = proc.communicate()
         if proc.returncode:
             LOG.error('Failed to write backup status')
             LOG.error(cerr)
@@ -145,10 +146,9 @@ class Ssh(BaseDestination):
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
             cout, cerr = proc.communicate()
             if proc.returncode:
-                LOG.error('Failed to read backup status: %d: %s' % (
-                    proc.returncode,
-                    cerr
-                ))
+                LOG.error('Failed to read backup status: %d: %s',
+                          proc.returncode,
+                          cerr)
                 exit(1)
             return json.loads(base64.b64decode(cout))
 
@@ -160,14 +160,13 @@ class Ssh(BaseDestination):
                "fi'" % self.status_path]
 
         try:
-            LOG.debug('Running %r' % cmd)
+            LOG.debug('Running %r', cmd)
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
             cout, cerr = proc.communicate()
             if proc.returncode:
-                LOG.error('Failed to read backup status: %d: %s' % (
-                    proc.returncode,
-                    cerr
-                ))
+                LOG.error('Failed to read backup status: %d: %s',
+                          proc.returncode,
+                          cerr)
                 exit(1)
             if cout.strip() == 'exists':
                 return True
@@ -177,5 +176,5 @@ class Ssh(BaseDestination):
                 raise DestinationError('Unrecognized response: %s' % cout)
 
         except OSError as err:
-            LOG.error('Failed to run %s: %s' % (" ".join(cmd), err))
+            LOG.error('Failed to run %s: %s', " ".join(cmd), err)
             exit(1)

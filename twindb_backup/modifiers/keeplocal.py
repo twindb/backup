@@ -36,6 +36,6 @@ class KeepLocal(Modifier):
             yield proc.stdout
             proc.communicate()
 
-    def callback(self, keep_local_path, dst):
-        local_dst = Local(keep_local_path)
-        local_dst.status(dst.status())
+    def callback(self, **kwargs):
+        local_dst = Local(kwargs['keep_local_path'])
+        local_dst.status(kwargs['dst'].status())

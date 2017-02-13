@@ -97,7 +97,7 @@ test-deps:
 	pip install -U setuptools
 
 test: clean bootstrap ## run tests quickly with the default Python
-	pytest --cov=./twindb_backup tests/unit
+	pytest -xv --cov=./twindb_backup tests/unit
 	codecov
 
 test-integration: test-deps ## run integration tests

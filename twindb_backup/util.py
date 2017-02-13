@@ -1,17 +1,28 @@
+# -*- coding: utf-8 -*-
+"""
+Module with helper functions
+"""
 import ConfigParser
 import errno
 import os
-import pymysql
 import socket
 
-from contextlib import contextmanager
-from pymysql.cursors import DictCursor
 from twindb_backup import LOG, INTERVALS
 from twindb_backup.destination.s3 import S3
 from twindb_backup.destination.ssh import Ssh
 
 
 def get_destination(config, hostname=socket.gethostname()):
+    """
+    Read config and return instance of Destination class.
+
+    :param config: Tool configuration.
+    :type config: ConfigParser.ConfigParser
+    :param hostname: Local hostname.
+    :type hostname: str
+    :return: Instance of destination class.
+    :rtype: BaseDestination
+    """
     destination = None
     try:
         destination = config.get('destination', 'backup_destination')
@@ -47,11 +58,17 @@ def get_destination(config, hostname=socket.gethostname()):
                   default_region=default_region, hostname=hostname)
 
     else:
-        LOG.critical('Destination %s is not supported' % destination)
+        LOG.critical('Destination %s is not supported', destination)
         exit(-1)
 
 
 def mkdir_p(path):
+    """
+    Emulate mkdir -p
+
+    :param path: Directory path.
+    :type path: str
+    """
     try:
         os.makedirs(path)
     except OSError as exc:  # Python >2.5
@@ -62,48 +79,17 @@ def mkdir_p(path):
 
 
 def get_hostname_from_backup_copy(backup_copy):
+    """
+    Backup copy includes hostname where the backup was taken from.
+    The function extracts the hostname from the backup name.
+
+    :param backup_copy: Backup copy name.
+    :type backup_copy: str
+    :return: Hostname where the backup was taken from.
+    :rtype: str
+    """
     chunks = backup_copy.split('/')
     for run_type in INTERVALS:
         if run_type in chunks:
             return chunks[chunks.index(run_type) - 1]
     return None
-
-
-@contextmanager
-def get_connection(host=None, port=None, user=None, password=None,
-                   defaults_file=None, mysql_sock=None, connect_timeout=10):
-    db = None
-    try:
-        if defaults_file:
-            db = pymysql.connect(
-                read_default_file=defaults_file,
-                connect_timeout=connect_timeout,
-                cursorclass=DictCursor
-            )
-        elif mysql_sock:
-            db = pymysql.connect(
-                unix_socket=mysql_sock,
-                user=user,
-                passwd=password,
-                cursorclass=DictCursor
-            )
-        elif port:
-            db = pymysql.connect(
-                host=host,
-                port=port,
-                user=user,
-                passwd=password,
-                cursorclass=DictCursor
-            )
-        else:
-            db = pymysql.connect(
-                host=host,
-                user=user,
-                passwd=password,
-                cursorclass=DictCursor
-            )
-
-        yield db
-    finally:
-        if db:
-            db.close()

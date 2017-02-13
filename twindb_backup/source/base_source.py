@@ -61,3 +61,11 @@ class BaseSource(object):
 
         except ConfigParser.NoOptionError:
             pass
+
+    @property
+    def suffix(self):
+        return self._suffix
+
+    @suffix.setter
+    def suffix(self, suffix='tar'):
+        self._suffix = suffix

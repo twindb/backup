@@ -1,15 +1,15 @@
 import os
-import shlex
 import tempfile
 import time
 
 from ConfigParser import NoOptionError
 from contextlib import contextmanager
-from pymysql.err import InternalError
 from subprocess import Popen, PIPE
+
+import pymysql
+
 from twindb_backup import LOG, get_files_to_delete
 from twindb_backup.source.base_source import BaseSource
-from twindb_backup.util import get_connection
 
 
 class MySQLSourceError(Exception):
@@ -18,8 +18,12 @@ class MySQLSourceError(Exception):
 
 class MySQLSource(BaseSource):
     def __init__(self, defaults_file, run_type, config, dst):
+        # MySQL
         self.defaults = defaults_file
-        self._suffix = 'xbstream.gz'
+        self.connect_timeout = 10
+        self.cursor = pymysql.cursors.DictCursor
+
+        self._suffix = 'xbstream'
         self._media_type = 'mysql'
         self.lsn = None
         self.binlog_coordinate = None
@@ -65,25 +69,8 @@ class MySQLSource(BaseSource):
             proc_innobackupex = Popen(cmd,
                                       stderr=stderr_file,
                                       stdout=PIPE)
-            cmd = "gzip -c -"
-            try:
-                LOG.debug('Running %s', cmd)
-                proc_gzip = Popen(shlex.split(cmd),
-                                  stdin=proc_innobackupex.stdout,
-                                  stderr=PIPE, stdout=PIPE)
-                yield proc_gzip.stdout
 
-                cout, cerr = proc_gzip.communicate()
-                if proc_gzip.returncode:
-                    LOG.error('Failed to compress innobackupex stream: '
-                              '%s' % cerr)
-                    exit(1)
-                else:
-                    LOG.debug('Successfully compressed innobackupex stream')
-
-            except OSError as err:
-                LOG.error('Failed to run %s: %s', cmd, err)
-                exit(1)
+            yield proc_innobackupex.stdout
 
             proc_innobackupex.communicate()
             if proc_innobackupex.returncode:
@@ -124,19 +111,21 @@ class MySQLSource(BaseSource):
 
         objects = dst.list_files(prefix)
 
-        for fl in get_files_to_delete(objects, keep_copies):
-            LOG.debug('Deleting remote file %s' % fl)
-            dst.delete(fl)
-            status = self._delete_from_status(status, dst.remote_path, fl)
+        for backup_copy in get_files_to_delete(objects, keep_copies):
+            LOG.debug('Deleting remote file %s', backup_copy)
+            dst.delete(backup_copy)
+            status = self._delete_from_status(status,
+                                              dst.remote_path,
+                                              backup_copy)
 
         self._delete_local_files('mysql', config)
 
         return status
 
     @staticmethod
-    def get_binlog_coordinates(err_log):
-        with open(err_log) as f:
-            for line in f:
+    def get_binlog_coordinates(err_log_path):
+        with open(err_log_path) as error_log:
+            for line in error_log:
                 if line.startswith('MySQL binlog position:'):
                     filename = line.split()[4].strip(",'")
                     position = int(line.split()[6].strip(",'"))
@@ -144,21 +133,22 @@ class MySQLSource(BaseSource):
         return None, None
 
     @staticmethod
-    def get_lsn(err_log):
+    def get_lsn(err_log_path):
         """Find LSN up to which the backup is taken
 
-        :param err_log: path to Innobackupex error log
+        :param err_log_path: path to Innobackupex error log
         :return: lsn
         """
-        with open(err_log) as f:
-            for line in f:
+        with open(err_log_path) as error_log:
+            for line in error_log:
                 pattern = 'xtrabackup: ' \
                           'The latest check point (for incremental):'
                 if line.startswith(pattern):
                     lsn = line.split()[7].strip("'")
                     return int(lsn)
         raise MySQLSourceError('Could not find LSN'
-                               ' in XtraBackup error output %s' % err_log)
+                               ' in XtraBackup error output %s'
+                               % err_log_path)
 
     @property
     def full(self):
@@ -213,19 +203,19 @@ class MySQLSource(BaseSource):
 
         return False
 
-    def _delete_from_status(self, status, prefix, fl):
-        LOG.debug('status = %r' % status)
-        LOG.debug('prefix = %s' % prefix)
-        LOG.debug('file   = %s' % fl)
+    def _delete_from_status(self, status, prefix, backup_copy):
+        LOG.debug('status = %r', status)
+        LOG.debug('prefix = %s', prefix)
+        LOG.debug('file   = %s', backup_copy)
         try:
-            ref_filename = fl.key
+            ref_filename = backup_copy.key
         except AttributeError:
             prefix = prefix.rstrip('/')
-            ref_filename = str(fl).replace(prefix + '/', '', 1)
+            ref_filename = str(backup_copy).replace(prefix + '/', '', 1)
 
         result_status = status
         try:
-            del(result_status[self.run_type][ref_filename])
+            del result_status[self.run_type][ref_filename]
         except KeyError:
             pass
         return result_status
@@ -237,13 +227,12 @@ class MySQLSource(BaseSource):
         :return: True if wsrep_desync was enabled. False if not supported
         """
         try:
-            with get_connection(host='127.0.0.1',
-                                defaults_file=self.defaults) as db:
-                with db.cursor() as cursor:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
                     cursor.execute('SET GLOBAL wsrep_desync=ON')
             return True
-        except Exception as e:
-            LOG.debug(e)
+        except pymysql.Error as err:
+            LOG.debug(err)
             return False
 
     def disable_wsrep_desync(self):
@@ -253,9 +242,8 @@ class MySQLSource(BaseSource):
         """
         max_time = time.time() + 900
         try:
-            with get_connection(host='127.0.0.1',
-                                defaults_file=self.defaults) as db:
-                with db.cursor() as cursor:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
                     while time.time() < max_time:
                         cursor.execute("SHOW GLOBAL STATUS LIKE "
                                        "'wsrep_local_recv_queue'")
@@ -274,8 +262,8 @@ class MySQLSource(BaseSource):
 
                     LOG.debug('Disabling wsrep_desync')
                     cursor.execute("SET GLOBAL wsrep_desync=OFF")
-        except Exception as e:
-            LOG.error(e)
+        except pymysql.Error as err:
+            LOG.error(err)
 
     @staticmethod
     def get_my_cnf():
@@ -283,18 +271,17 @@ class MySQLSource(BaseSource):
             '/etc/my.cnf',
             '/etc/mysql/my.cnf'
         ]
-        for cnf in mysql_configs:
+        for cnf_parg in mysql_configs:
             try:
-                with open(cnf) as fp:
-                    yield cnf, fp.read()
+                with open(cnf_parg) as my_cnf:
+                    yield cnf_parg, my_cnf.read()
             except IOError:
                 continue
 
     @property
     def wsrep_provider_version(self):
-        with get_connection(host='127.0.0.1',
-                            defaults_file=self.defaults) as db:
-            with db.cursor() as cursor:
+        with self.get_connection() as connection:
+            with connection.cursor() as cursor:
                 cursor.execute("SHOW STATUS LIKE 'wsrep_provider_version'")
 
                 res = {row['Variable_name'].lower(): row['Value'].lower()
@@ -311,19 +298,41 @@ class MySQLSource(BaseSource):
 
     def is_galera(self):
         try:
-            with get_connection(host='127.0.0.1',
-                                defaults_file=self.defaults) as db:
-                with db.cursor() as cursor:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
                     cursor.execute("SELECT @@wsrep_on as wsrep_on")
                     row = cursor.fetchone()
 
                     return (str(row['wsrep_on']).lower() == "1" or
                             row['wsrep_on'].lower() == 'on')
-        except InternalError as err:
+        except pymysql.InternalError as err:
             error_code, error_message = err.args
 
             if error_code == 1193:
                 LOG.debug('Galera is not supported or not enabled')
                 return False
             else:
+                LOG.error(error_message)
                 raise
+
+    @contextmanager
+    def get_connection(self):
+        """
+        Connect to MySQL host and yield a connection.
+
+        :return: MySQL connection
+        """
+        connection = None
+        try:
+            connection = pymysql.connect(
+                host='127.0.0.1',
+                read_default_file=self.defaults,
+                connect_timeout=self.connect_timeout,
+                cursorclass=self.cursor
+            )
+
+            yield connection
+
+        finally:
+            if connection:
+                connection.close()

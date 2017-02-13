@@ -14,6 +14,7 @@ from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
     TwinDBBackupError)
+from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.file_source import FileSource
 from twindb_backup.source.mysql_source import MySQLSource
@@ -35,6 +36,10 @@ def backup_files(run_type, config):
 
         stream = src.get_stream()
 
+        # Gzip modifier
+        stream = Gzip(stream).get_stream()
+        src.suffix = 'tar.gz'
+
         # KeepLocal modifier
         try:
             keep_local_path = config.get('destination', 'keep_local_path')
@@ -44,6 +49,8 @@ def backup_files(run_type, config):
             stream = kl_modifier.get_stream()
         except ConfigParser.NoOptionError:
             pass
+
+
 
         dst.save(stream, src.get_name())
 
@@ -74,17 +81,20 @@ def backup_mysql(run_type, config):
                       run_type,
                       config,
                       dst)
-    dst_name = src.get_name()
-
-    stream = src.get_stream()
 
     callbacks = []
+    stream = src.get_stream()
+
+    # Gzip modifier
+    stream = Gzip(stream).get_stream()
+    src.suffix = 'xbstream.gz'
 
     # KeepLocal modifier
     try:
         keep_local_path = config.get('destination', 'keep_local_path')
         kl_modifier = KeepLocal(stream,
-                                os.path.join(keep_local_path, dst_name))
+                                os.path.join(keep_local_path,
+                                             src.get_name()))
         stream = kl_modifier.get_stream()
 
         callbacks.append((kl_modifier, {
@@ -95,8 +105,8 @@ def backup_mysql(run_type, config):
     except ConfigParser.NoOptionError:
         LOG.debug('keep_local_path is not present in the config file')
 
-    if dst.save(stream, dst_name) != 0:
-        LOG.error('Failed to save backup copy %s', dst_name)
+    if dst.save(stream, src.get_name()) != 0:
+        LOG.error('Failed to save backup copy %s', src.get_name())
         exit(1)
 
     status = dst.status()

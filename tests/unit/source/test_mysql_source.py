@@ -388,7 +388,7 @@ def test_delete_from_status(status, run_type, remote, fl, expected_status):
     assert src._delete_from_status(status, remote, fl) == expected_status
 
 
-@mock.patch('twindb_backup.source.mysql_source.get_connection')
+@mock.patch.object(MySQLSource, 'get_connection')
 def test__enable_wsrep_desync_sets_wsrep_desync_to_on(mock_connect):
     logging.basicConfig()
 
@@ -403,7 +403,7 @@ def test__enable_wsrep_desync_sets_wsrep_desync_to_on(mock_connect):
     mock_cursor.execute.assert_called_with("SET GLOBAL wsrep_desync=ON")
 
 
-@mock.patch('twindb_backup.source.mysql_source.get_connection')
+@mock.patch.object(MySQLSource, 'get_connection')
 def test__disable_wsrep_desync_sets_wsrep_desync_to_off(mock_connect):
     logging.basicConfig()
 
@@ -423,7 +423,7 @@ def test__disable_wsrep_desync_sets_wsrep_desync_to_off(mock_connect):
     mock_cursor.execute.assert_called_with("SET GLOBAL wsrep_desync=OFF")
 
 
-@mock.patch('twindb_backup.source.mysql_source.get_connection')
+@mock.patch.object(MySQLSource, 'get_connection')
 def test__is_galera_returns_true_on_galera_node(mock_connect):
     logging.basicConfig()
 
@@ -437,7 +437,7 @@ def test__is_galera_returns_true_on_galera_node(mock_connect):
     assert source.is_galera()
 
 
-@mock.patch('twindb_backup.source.mysql_source.get_connection')
+@mock.patch.object(MySQLSource, 'get_connection')
 def test__is_galera_returns_true_on_galera_node(mock_connect):
     logging.basicConfig()
 
@@ -453,7 +453,7 @@ def test__is_galera_returns_true_on_galera_node(mock_connect):
     assert source.is_galera() is False
 
 
-@mock.patch('twindb_backup.source.mysql_source.get_connection')
+@mock.patch.object(MySQLSource, 'get_connection')
 def test__wsrep_provider_version_returns_correct_version(mock_connect):
     logging.basicConfig()
 

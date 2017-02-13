@@ -1,7 +1,8 @@
-import os
-import errno
+# -*- coding: utf-8 -*-
+"""
+Module defines Base destination class and destination exception(s).
+"""
 from abc import abstractmethod
-from contextlib import contextmanager
 
 from subprocess import Popen, PIPE
 
@@ -9,26 +10,29 @@ from twindb_backup import LOG, INTERVALS
 
 
 class DestinationError(Exception):
+    """General destination error"""
     pass
 
 
 class BaseDestination(object):
+    """Base destination class"""
+
     def __init__(self):
         self.remote_path = ''
 
     @abstractmethod
     def save(self, handler, name):
-        pass
+        """
+        Save the given stream.
 
-    @staticmethod
-    def _mkdir_p(path):
-        try:
-            os.makedirs(path)
-        except OSError as exc:
-            if exc.errno == errno.EEXIST and os.path.isdir(path):
-                pass
-            else:
-                raise
+        :param handler: Incoming stream.
+        :type handler: file
+        :param name: Save stream as this name.
+        :type name: str
+        :return: return code
+        :rtype: int
+        """
+        pass
 
     @staticmethod
     def _save(cmd, handler):
@@ -50,7 +54,7 @@ class BaseDestination(object):
                     if cerr_ssh:
                         LOG.error(cerr_ssh)
                     exit(1)
-                LOG.debug('Exited with code %d' % ret)
+                LOG.debug('Exited with code %d', ret)
                 return ret
             except OSError as err:
                 LOG.error('Failed to run %s: %s', ' '.join(cmd), err)
@@ -116,7 +120,7 @@ class BaseDestination(object):
 
     def get_full_copy_name(self, file_path):
         remote_path = self.remote_path.rstrip('/')
-        LOG.debug('remote_path = %s' % remote_path)
+        LOG.debug('remote_path = %s', remote_path)
         key = file_path.replace(remote_path + '/', '', 1)
         for run_type in INTERVALS:
             if key in self.status()[run_type]:
