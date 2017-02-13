@@ -13,9 +13,10 @@ import tempfile
 import errno
 import psutil
 from twindb_backup import LOG, INTERVALS
+from twindb_backup.configuration import get_destination
 from twindb_backup.destination.base_destination import DestinationError
 from twindb_backup.destination.local import Local
-from twindb_backup.util import get_destination, mkdir_p, \
+from twindb_backup.util import mkdir_p, \
     get_hostname_from_backup_copy
 
 

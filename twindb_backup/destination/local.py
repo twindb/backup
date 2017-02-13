@@ -1,14 +1,22 @@
+# -*- coding: utf-8 -*-
+"""
+Module defines Local destination.
+"""
 import base64
-from contextlib import contextmanager
 import json
 import os
 import socket
-from subprocess import Popen, PIPE
+from subprocess import Popen
+
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
+from twindb_backup.util import run_command
 
 
 class Local(BaseDestination):
+    """
+    Local destination class.
+    """
     def __init__(self, path=None):
         super(Local, self).__init__()
         self.path = path
@@ -45,20 +53,16 @@ class Local(BaseDestination):
             ls_cmd = ["ls", "%s*" % prefix]
 
         cmd = ls_cmd
-        LOG.debug('Running %s', ' '.join(cmd))
-        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        cout, _ = proc.communicate()
 
-        return sorted(cout.split())
+        with run_command(cmd) as cout:
+            return sorted(cout.split())
 
     def find_files(self, prefix, run_type):
 
         cmd = ["find", "%s*" % prefix, "-type", "f"]
-        LOG.debug('Running %s', ' '.join(cmd))
-        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        cout, _ = proc.communicate()
 
-        return sorted(cout.split())
+        with run_command(cmd) as cout:
+            return sorted(cout.split())
 
     def delete(self, obj):
         cmd = ["rm", obj]
@@ -67,7 +71,6 @@ class Local(BaseDestination):
         proc.communicate()
 
     @staticmethod
-    @contextmanager
     def get_stream(path):
         """
         Get a PIPE handler with content of the backup copy streamed from
@@ -76,22 +79,7 @@ class Local(BaseDestination):
         :return:
         """
         cmd = ["cat", path]
-        try:
-            LOG.debug('Running %s', " ".join(cmd))
-            proc = Popen(cmd, stderr=PIPE, stdout=PIPE)
-
-            yield proc.stdout
-
-            _, cerr = proc.communicate()
-            if proc.returncode:
-                LOG.error('Failed to read from %s: %s', path, cerr)
-                exit(1)
-            else:
-                LOG.debug('Successfully streamed %s', path)
-
-        except OSError as err:
-            LOG.error('Failed to run %s: %s', cmd, err)
-            exit(1)
+        return run_command(cmd)
 
     def _write_status(self, status):
         raw_status = base64.b64encode(json.dumps(status))

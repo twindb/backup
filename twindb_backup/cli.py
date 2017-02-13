@@ -9,9 +9,9 @@ import os
 import click
 from twindb_backup import setup_logging, LOG, __version__
 from twindb_backup.backup import run_backup_job
+from twindb_backup.configuration import get_destination
 from twindb_backup.ls import list_available_backups
 from twindb_backup.restore import restore_from_mysql, restore_from_file
-from twindb_backup.util import get_destination
 
 PASS_CFG = click.make_pass_decorator(ConfigParser, ensure=True)
 

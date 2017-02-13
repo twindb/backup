@@ -14,11 +14,11 @@ from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
     TwinDBBackupError)
+from twindb_backup.configuration import get_destination
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.file_source import FileSource
 from twindb_backup.source.mysql_source import MySQLSource
-from twindb_backup.util import get_destination
 
 
 def backup_files(run_type, config):
@@ -49,8 +49,6 @@ def backup_files(run_type, config):
             stream = kl_modifier.get_stream()
         except ConfigParser.NoOptionError:
             pass
-
-
 
         dst.save(stream, src.get_name())
 

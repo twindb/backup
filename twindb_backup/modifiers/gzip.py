@@ -9,6 +9,7 @@ from twindb_backup.modifiers.base import Modifier
 
 
 class Gzip(Modifier):
+    """Modifier that compresses the stream"""
     def __init__(self, input_stream):
         """
         Modifier that compresses the input_stream with gzip.

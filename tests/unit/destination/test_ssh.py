@@ -71,22 +71,18 @@ def test_basename():
         == 'some_dir/some_file.txt'
 
 
-@mock.patch('twindb_backup.destination.ssh.Popen')
-def test_find_files(mock_popen):
-    mock_proc = mock.Mock()
-    mock_proc.communicate.return_value = ('foo', '')
-    mock_proc.returncode = 0
-
-    mock_popen.return_value = mock_proc
+@mock.patch('twindb_backup.destination.ssh.run_command')
+def test_find_files(mock_run_command):
 
     dst = Ssh(remote_path='/foo/bar')
     dst.find_files('/foo/bar', 'abc')
-    mock_popen.assert_called_once_with([
+    mock_run_command.assert_called_once_with([
         'ssh',
         '-l', 'root',
         '-o', 'StrictHostKeyChecking=no',
         '-o', 'PasswordAuthentication=no',
         '-p', '22',
-        '-i', '/root/.id_rsa', '127.0.0.1',
-        'find /foo/bar/*/abc -type f'],
-        stderr=PIPE, stdout=PIPE)
+        '-i', '/root/.id_rsa',
+        '127.0.0.1',
+        'find /foo/bar/*/abc -type f']
+    )

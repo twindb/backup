@@ -6,7 +6,7 @@ import socket
 from subprocess import call, Popen, PIPE
 
 from twindb_backup import LOG
-from twindb_backup.destination.s3 import S3
+from twindb_backup.destination.s3 import S3, AWSAuthOptions
 
 
 def test__take_file_backup(s3_client, config_content_files_only, tmpdir,
@@ -164,8 +164,10 @@ def test__s3_find_files_returns_sorted(s3_client, config_content_mysql_only,
     for x in xrange(n_runs):
         assert call(cmd) == 0
 
-    dst = S3(s3_client.bucket, os.environ['AWS_ACCESS_KEY_ID'],
-             os.environ['AWS_SECRET_ACCESS_KEY'])
+    dst = S3(s3_client.bucket,
+             AWSAuthOptions(os.environ['AWS_ACCESS_KEY_ID'],
+                            os.environ['AWS_SECRET_ACCESS_KEY'])
+             )
     for x in xrange(10):
         result = dst.find_files(dst.remote_path, 'daily')
         assert len(result) == n_runs

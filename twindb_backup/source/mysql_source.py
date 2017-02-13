@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+Module defines MySQL source class for backing up local MySQL.
+"""
 import os
 import tempfile
 import time
@@ -16,18 +20,38 @@ class MySQLSourceError(Exception):
     """Errors during backups"""
 
 
+class MySQLConnectInfo(object):
+    """MySQL connection details """
+    def __init__(self, defaults_file,
+                 connect_timeout=10,
+                 cursor=pymysql.cursors.DictCursor):
+
+        self.cursor = cursor
+        self.connect_timeout = connect_timeout
+        self.defaults_file = defaults_file
+
+
 class MySQLSource(BaseSource):
-    def __init__(self, defaults_file, run_type, config, dst):
+    """MySQLSource class"""
+    def __init__(self, mysql_connect_info, run_type, full_backup, dst):
+        """
+        MySQLSource constructor
+
+        :param mysql_connect_info: MySQL connection details
+        :type mysql_connect_info: MySQLConnectInfo
+        :param run_type:
+        :param full_backup: When to do full backup e.g. daily, weekly
+        :type full_backup: str
+        :param dst:
+        """
         # MySQL
-        self.defaults = defaults_file
-        self.connect_timeout = 10
-        self.cursor = pymysql.cursors.DictCursor
+        self.mysql_connect_info = mysql_connect_info
 
         self._suffix = 'xbstream'
         self._media_type = 'mysql'
         self.lsn = None
         self.binlog_coordinate = None
-        self.config = config
+        self.full_backup = full_backup
         self.dst = dst
         super(MySQLSource, self).__init__(run_type)
 
@@ -39,7 +63,7 @@ class MySQLSource(BaseSource):
         """
         cmd = [
             "innobackupex",
-            "--defaults-file=%s" % self.defaults,
+            "--defaults-file=%s" % self.mysql_connect_info.defaults_file,
             "--stream=xbstream",
             "--host=127.0.0.1"
             ]
@@ -165,8 +189,7 @@ class MySQLSource(BaseSource):
         :return: "full" or "incremental"
         """
         try:
-            full_backup = self.config.get('mysql', 'full_backup')
-            if self._intervals.index(full_backup) <= \
+            if self._intervals.index(self.full_backup) <= \
                     self._intervals.index(self.run_type):
                 return "full"
             elif not self._parent_exists():
@@ -186,17 +209,14 @@ class MySQLSource(BaseSource):
 
     @property
     def parent(self):
-        full_backup = self.config.get('mysql', 'full_backup')
-        return sorted(self.status[full_backup].keys(), reverse=True)[0]
+        return sorted(self.status[self.full_backup].keys(), reverse=True)[0]
 
     @property
     def parent_lsn(self):
-        full_backup = self.config.get('mysql', 'full_backup')
-        return self.status[full_backup][self.parent]['lsn']
+        return self.status[self.full_backup][self.parent]['lsn']
 
     def _parent_exists(self):
-        full_backup = self.config.get('mysql', 'full_backup')
-        full_backup_index = self._intervals.index(full_backup)
+        full_backup_index = self._intervals.index(self.full_backup)
         for i in xrange(full_backup_index, len(self._intervals)):
             if len(self.dst.status()[self._intervals[i]]) > 0:
                 return True
@@ -326,9 +346,9 @@ class MySQLSource(BaseSource):
         try:
             connection = pymysql.connect(
                 host='127.0.0.1',
-                read_default_file=self.defaults,
-                connect_timeout=self.connect_timeout,
-                cursorclass=self.cursor
+                read_default_file=self.mysql_connect_info.defaults_file,
+                connect_timeout=self.mysql_connect_info.connect_timeout,
+                cursorclass=self.mysql_connect_info.cursor
             )
 
             yield connection

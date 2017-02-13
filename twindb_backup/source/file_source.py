@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+Module defines File source class for backing up local directories.
+"""
 import shlex
 from contextlib import contextmanager
 from subprocess import Popen, PIPE
@@ -6,6 +10,7 @@ from twindb_backup.source.base_source import BaseSource
 
 
 class FileSource(BaseSource):
+    """FileSource class"""
     def __init__(self, path, run_type):
         self.path = path
         self._suffix = 'tar'
@@ -16,13 +21,13 @@ class FileSource(BaseSource):
     def get_stream(self):
         """
         Get a PIPE handler with content of the source
+
         :return:
         """
         cmd = "tar cf - %s" % self.path
         try:
             LOG.debug('Running %s', cmd)
             proc = Popen(shlex.split(cmd), stderr=PIPE, stdout=PIPE)
-            self.procs.append(proc)
 
             yield proc.stdout
 
@@ -49,6 +54,7 @@ class FileSource(BaseSource):
         return self.path.rstrip('/').replace('/', '_')
 
     def apply_retention_policy(self, dst, config, run_type):
+        """Apply retention policy"""
         if dst.remote_path:
             remote_path = dst.remote_path + '/'
         else:

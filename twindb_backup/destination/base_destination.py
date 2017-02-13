@@ -62,14 +62,36 @@ class BaseDestination(object):
 
     @abstractmethod
     def list_files(self, prefix, recursive=False):
+        # TODO aleks: refactor this ugly design
+        """
+        List files
+
+        :param prefix:
+        :param recursive:
+        :return:
+        """
         pass
 
     @abstractmethod
     def find_files(self, prefix, run_type):
+        # TODO aleks: refactor this ugly design
+        """
+        Find files
+
+        :param prefix:
+        :param run_type:
+        :return:
+        """
         pass
 
     @abstractmethod
     def delete(self, obj):
+        """
+        Delete object from the destination
+
+        :param obj:
+        :return:
+        """
         pass
 
     @property
@@ -119,6 +141,13 @@ class BaseDestination(object):
         pass
 
     def get_full_copy_name(self, file_path):
+        """
+        For a given backup copy find a parent. If it's a full copy
+        then return itself
+
+        :param file_path:
+        :return:
+        """
         remote_path = self.remote_path.rstrip('/')
         LOG.debug('remote_path = %s', remote_path)
         key = file_path.replace(remote_path + '/', '', 1)
@@ -130,4 +159,10 @@ class BaseDestination(object):
         raise DestinationError('Failed to find parent of %s' % file_path)
 
     def basename(self, filename):
+        """
+        Basename of backup copy
+
+        :param filename:
+        :return:
+        """
         return filename.replace(self.remote_path + '/', '', 1)

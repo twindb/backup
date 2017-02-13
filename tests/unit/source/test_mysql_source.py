@@ -4,7 +4,7 @@ import mock
 import pytest
 
 from pymysql.err import InternalError
-from twindb_backup.source.mysql_source import MySQLSource
+from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
 
 
 @mock.patch.object(MySQLSource, 'get_prefix')
@@ -28,12 +28,9 @@ def test_apply_retention_policy(mock_get_files_to_delete,
     mock_dst.list_files.assert_called_once_with('/foo/bar/master.box/hourly/mysql/mysql-')
 
 
-@pytest.mark.parametrize('config_content,run_type,backup_type,status', [
+@pytest.mark.parametrize('full_backup,run_type,backup_type,status', [
     (
-        """
-[mysql]
-full_backup=daily
-        """,
+        "daily",
         'yearly',
         'full',
         {
@@ -45,10 +42,7 @@ full_backup=daily
         }
     ),
     (
-        """
-[mysql]
-full_backup=daily
-        """,
+        "daily",
         'hourly',
         'full',
         {
@@ -60,10 +54,7 @@ full_backup=daily
         }
     ),
     (
-        """
-[mysql]
-full_backup=daily
-        """,
+        "daily",
         'hourly',
         'incremental',
         {
@@ -75,10 +66,7 @@ full_backup=daily
         }
     ),
     (
-        """
-[mysql]
-full_backup=daily
-        """,
+        "daily",
         'daily',
         'full',
         {
@@ -90,9 +78,7 @@ full_backup=daily
         }
     ),
     (
-        """
-[mysql]
-        """,
+        "aaa",
         'daily',
         'full',
         {
@@ -104,25 +90,7 @@ full_backup=daily
         }
     ),
     (
-        """
-[mysql]
-full_backup=aaa
-        """,
-        'daily',
-        'full',
-        {
-            'hourly': {},
-            'daily': {},
-            'weekly': {},
-            'monthly': {},
-            'yearly': {}
-        }
-    ),
-    (
-        """
-[mysql]
-full_backup=weekly
-        """,
+        "weekly",
         'hourly',
         'full',
         {
@@ -155,14 +123,15 @@ full_backup=weekly
         }
     )
 ])
-def test_get_backup_type(config_content, run_type, backup_type, status, tmpdir):
-    config_file = tmpdir.join('foo.cfg')
-    config_file.write(config_content)
-    cparser = ConfigParser()
-    cparser.read(str(config_file))
+def test_get_backup_type(full_backup, run_type, backup_type, status, tmpdir):
+
     mock_dst = mock.Mock()
     mock_dst.status.return_value = status
-    src = MySQLSource('/foo/bar', run_type, cparser, mock_dst)
+
+    src = MySQLSource(MySQLConnectInfo('/foo/bar'), run_type,
+                      full_backup,
+                      mock_dst)
+
     assert src._get_backup_type() == backup_type
 
 

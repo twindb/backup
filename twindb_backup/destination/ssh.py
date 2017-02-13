@@ -1,31 +1,56 @@
+# -*- coding: utf-8 -*-
+"""
+Module for SSH destination.
+"""
 import base64
-from contextlib import contextmanager
 import json
 import os
 import socket
 from subprocess import Popen, PIPE
+
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination, \
     DestinationError
+from twindb_backup.util import run_command
+
+
+class SshConnectInfo(object):  # pylint: disable=too-few-public-methods
+    """Options for SSH connection"""
+    def __init__(self, host='127.0.0.1', port=22, key='/root/.id_rsa',
+                 user='root'):
+        self.host = host
+        self.port = port
+        self.key = key
+        self.user = user
 
 
 class Ssh(BaseDestination):
-    def __init__(self, host='127.0.0.1', port=22, key='/root/.id_rsa',
-                 user='root',
+    """SSH destination class"""
+    def __init__(self, ssh_connect_info=SshConnectInfo(),
                  remote_path=None, hostname=socket.gethostname()):
+        """
+        Initializes Ssh() instance.
+
+        :param ssh_connect_info: SSH connection info
+        :type ssh_connect_info: SshConnectInfo
+        :param remote_path:
+        :param hostname:
+        """
         super(Ssh, self).__init__()
         self.remote_path = remote_path.rstrip('/')
-        self.user = user
-        self.key = key
-        self.port = port
-        self.host = host
+
+        self.user = ssh_connect_info.user
+        self.key = ssh_connect_info.key
+        self.port = ssh_connect_info.port
+        self.host = ssh_connect_info.host
+
         self._ssh_command = ['ssh', '-l', self.user,
                              '-o',
                              'StrictHostKeyChecking=no',
                              '-o',
                              'PasswordAuthentication=no',
                              '-p', str(self.port),
-                             '-i', key,
+                             '-i', self.key,
                              self.host]
         self.status_path = "{remote_path}/{hostname}/status".format(
             remote_path=self.remote_path,
@@ -73,11 +98,9 @@ class Ssh(BaseDestination):
             ls_cmd = ["ls %s*" % prefix]
 
         cmd = self._ssh_command + ls_cmd
-        LOG.debug('Running %s', ' '.join(cmd))
-        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        cout, _ = proc.communicate()
 
-        return sorted(cout.split())
+        with run_command(cmd) as cout:
+            return sorted(cout.split())
 
     def find_files(self, prefix, run_type):
 
@@ -86,11 +109,9 @@ class Ssh(BaseDestination):
             "-type f".format(prefix=prefix,
                              run_type=run_type)
         ]
-        LOG.debug('Running %s', ' '.join(cmd))
-        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        cout, _ = proc.communicate()
 
-        return sorted(cout.split())
+        with run_command(cmd) as cout:
+            return sorted(cout.split())
 
     def delete(self, obj):
         cmd = self._ssh_command + ["rm %s" % obj]
@@ -98,30 +119,15 @@ class Ssh(BaseDestination):
         proc = Popen(cmd)
         proc.communicate()
 
-    @contextmanager
     def get_stream(self, path):
         """
         Get a PIPE handler with content of the backup copy streamed from
         the destination
-        :return:
+
+        :return: Standard output.
         """
         cmd = self._ssh_command + ["cat %s" % path]
-        try:
-            LOG.debug('Running %s', " ".join(cmd))
-            proc = Popen(cmd, stderr=PIPE, stdout=PIPE)
-
-            yield proc.stdout
-
-            _, cerr = proc.communicate()
-            if proc.returncode:
-                LOG.error('Failed to read from %s: %s', path, cerr)
-                exit(1)
-            else:
-                LOG.debug('Successfully streamed %s', path)
-
-        except OSError as err:
-            LOG.error('Failed to run %s: %s', cmd, err)
-            exit(1)
+        return run_command(cmd)
 
     def _write_status(self, status):
         raw_status = base64.b64encode(json.dumps(status))
@@ -139,9 +145,8 @@ class Ssh(BaseDestination):
         return status
 
     def _read_status(self):
-        if not self._status_exists():
-            return self._empty_status
-        else:
+
+        if self._status_exists():
             cmd = self._ssh_command + ["cat %s" % self.status_path]
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
             cout, cerr = proc.communicate()
@@ -151,6 +156,8 @@ class Ssh(BaseDestination):
                           cerr)
                 exit(1)
             return json.loads(base64.b64decode(cout))
+        else:
+            return self._empty_status
 
     def _status_exists(self):
         cmd = self._ssh_command + \

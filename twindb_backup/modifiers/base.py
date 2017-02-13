@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+Module defines Modifier() base class and its errors.
+"""
 from contextlib import contextmanager
 
 
@@ -6,6 +10,7 @@ class ModifierException(Exception):
 
 
 class Modifier(object):
+    """Base Modifier class"""
     def __init__(self, input_stream):
         """
         Base Modifier class that takes input stream, modifies it somehow
@@ -29,4 +34,5 @@ class Modifier(object):
         yield self.input
 
     def callback(self, **kwargs):
+        """Method that will be called after the stream ends"""
         pass
