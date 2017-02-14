@@ -12,7 +12,7 @@ def test_mysql_source_has_methods():
                       run_type='hourly',
                       full_backup='daily',
                       dst=mock.Mock())
-    assert src._connect_info.defaults == '/foo/bar'
+    assert src._connect_info.defaults_file == '/foo/bar'
     assert src.run_type == 'hourly'
     assert src.full_backup == 'daily'
     assert src.suffix == 'xbstream'
