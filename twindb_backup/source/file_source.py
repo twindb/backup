@@ -19,6 +19,11 @@ class FileSource(BaseSource):
 
     @property
     def media_type(self):
+        """Get media type. Media type is a general term that describes
+        what you backup. For directories media_type is 'file'.
+
+        :return: 'file'
+        """
         return self._media_type
 
     @contextmanager
