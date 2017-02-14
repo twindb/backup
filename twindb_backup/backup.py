@@ -18,7 +18,7 @@ from twindb_backup.configuration import get_destination
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.file_source import FileSource
-from twindb_backup.source.mysql_source import MySQLSource
+from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
 
 
 def backup_files(run_type, config):
@@ -75,9 +75,16 @@ def backup_mysql(run_type, config):
 
     dst = get_destination(config)
 
-    src = MySQLSource(config.get('mysql', 'mysql_defaults_file'),
+    full_backup = 'daily'
+    try:
+        full_backup = config.get('mysql', 'full_backup')
+    except ConfigParser.NoOptionError:
+        pass
+
+    src = MySQLSource(MySQLConnectInfo(config.get('mysql',
+                                                  'mysql_defaults_file')),
                       run_type,
-                      config,
+                      full_backup,
                       dst)
 
     callbacks = []
@@ -109,6 +116,7 @@ def backup_mysql(run_type, config):
 
     status = dst.status()
     src_name = src.get_name()
+
     status[run_type][src_name] = {
         'binlog': src.binlog_coordinate[0],
         'position': src.binlog_coordinate[1],

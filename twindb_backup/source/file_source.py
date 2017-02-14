@@ -17,6 +17,10 @@ class FileSource(BaseSource):
         self._media_type = 'files'
         super(FileSource, self).__init__(run_type)
 
+    @property
+    def media_type(self):
+        return self._media_type
+
     @contextmanager
     def get_stream(self):
         """

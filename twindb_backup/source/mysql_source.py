@@ -12,7 +12,7 @@ from subprocess import Popen, PIPE
 
 import pymysql
 
-from twindb_backup import LOG, get_files_to_delete
+from twindb_backup import LOG, get_files_to_delete, INTERVALS
 from twindb_backup.source.base_source import BaseSource
 
 
@@ -30,6 +30,18 @@ class MySQLConnectInfo(object):
         self.connect_timeout = connect_timeout
         self.defaults_file = defaults_file
 
+    @property
+    def defaults(self):
+        return self.defaults_file
+
+    @property
+    def user(self):
+        raise MySQLSourceError('Not implemented')
+
+    @property
+    def password(self):
+        raise MySQLSourceError('Not implemented')
+
 
 class MySQLSource(BaseSource):
     """MySQLSource class"""
@@ -44,16 +56,46 @@ class MySQLSource(BaseSource):
         :type full_backup: str
         :param dst:
         """
-        # MySQL
-        self.mysql_connect_info = mysql_connect_info
 
-        self._suffix = 'xbstream'
+        class _BackupInfo(object):  # pylint: disable=too-few-public-methods
+            """class to store details about backup copy"""
+            def __init__(self, lsn=None,
+                         binlog_coordinate=None):
+                self.lsn = lsn
+                self.binlog_coordinate = binlog_coordinate
+
+        # MySQL
+        if not isinstance(mysql_connect_info, MySQLConnectInfo):
+            raise MySQLSourceError('mysql_connect_info must be '
+                                   'instance of MySQLConnectInfo')
+
+        self._connect_info = mysql_connect_info
+
+        self._backup_info = _BackupInfo()
+        if full_backup not in INTERVALS:
+            raise MySQLSourceError('full_backup must be one of %r. '
+                                   'Got %r instead.'
+                                   % (INTERVALS, full_backup))
+
+        if run_type not in INTERVALS:
+            raise MySQLSourceError('run_type must be one of %r. '
+                                   'Got %r instead.'
+                                   % (INTERVALS, run_type))
+
+        self.suffix = 'xbstream'
         self._media_type = 'mysql'
-        self.lsn = None
-        self.binlog_coordinate = None
         self.full_backup = full_backup
         self.dst = dst
+
         super(MySQLSource, self).__init__(run_type)
+
+    @property
+    def binlog_coordinate(self):
+        return self._backup_info.binlog_coordinate
+
+    @property
+    def lsn(self):
+        return self._backup_info.lsn
 
     @contextmanager
     def get_stream(self):
@@ -63,7 +105,7 @@ class MySQLSource(BaseSource):
         """
         cmd = [
             "innobackupex",
-            "--defaults-file=%s" % self.mysql_connect_info.defaults_file,
+            "--defaults-file=%s" % self._connect_info.defaults_file,
             "--stream=xbstream",
             "--host=127.0.0.1"
             ]
@@ -104,8 +146,8 @@ class MySQLSource(BaseSource):
             else:
                 LOG.debug('Successfully streamed innobackupex output')
             LOG.debug('innobackupex error log file %s', stderr_file.name)
-            self.lsn = self.get_lsn(stderr_file.name)
-            self.binlog_coordinate = self.get_binlog_coordinates(
+            self._backup_info.lsn = self.get_lsn(stderr_file.name)
+            self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
                 stderr_file.name
             )
             os.unlink(stderr_file.name)
@@ -346,9 +388,9 @@ class MySQLSource(BaseSource):
         try:
             connection = pymysql.connect(
                 host='127.0.0.1',
-                read_default_file=self.mysql_connect_info.defaults_file,
-                connect_timeout=self.mysql_connect_info.connect_timeout,
-                cursorclass=self.mysql_connect_info.cursor
+                read_default_file=self._connect_info.defaults_file,
+                connect_timeout=self._connect_info.connect_timeout,
+                cursorclass=self._connect_info.cursor
             )
 
             yield connection

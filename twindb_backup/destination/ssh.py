@@ -99,8 +99,8 @@ class Ssh(BaseDestination):
 
         cmd = self._ssh_command + ls_cmd
 
-        with run_command(cmd) as cout:
-            return sorted(cout.split())
+        with run_command(cmd, ok_non_zero=True) as cout:
+            return sorted(cout.read().split())
 
     def find_files(self, prefix, run_type):
 
@@ -110,8 +110,8 @@ class Ssh(BaseDestination):
                              run_type=run_type)
         ]
 
-        with run_command(cmd) as cout:
-            return sorted(cout.split())
+        with run_command(cmd, ok_non_zero=True) as cout:
+            return sorted(cout.read().split())
 
     def delete(self, obj):
         cmd = self._ssh_command + ["rm %s" % obj]

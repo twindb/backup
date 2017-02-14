@@ -1,10 +1,11 @@
 from twindb_backup.modifiers.keeplocal import KeepLocal
 
 
-def test_keeplocal(input_file):
+def test_keeplocal(input_file, tmpdir):
+    local_dir = str(tmpdir.join('/foo/bar'))
     with open(str(input_file), 'r') as f:
-        m = KeepLocal(f, '/foo/bar')
-        assert m.local_path == '/foo/bar'
+        m = KeepLocal(f, str(local_dir))
+        assert m.local_path == local_dir
 
 
 def test_keeplocal_saves_file(input_file, tmpdir):
