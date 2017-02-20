@@ -84,5 +84,6 @@ def test_find_files(mock_run_command):
         '-p', '22',
         '-i', '/root/.id_rsa',
         '127.0.0.1',
-        'find /foo/bar/*/abc -type f']
+        'find /foo/bar/*/abc -type f'],
+        ok_non_zero=True
     )

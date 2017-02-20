@@ -44,12 +44,14 @@ def get_hostname_from_backup_copy(backup_copy):
 
 
 @contextmanager
-def run_command(command):
+def run_command(command, ok_non_zero=False):
     """
     Run shell command locally
 
     :param command: Command to run
     :type command: list
+    :param ok_non_zero: Don't consider non-zero exit code as an error.
+    :type ok_non_zero: bool
     :return: file object with stdout as generator to use with ``with``
     """
     try:
@@ -60,7 +62,7 @@ def run_command(command):
 
         _, cerr = proc.communicate()
 
-        if proc.returncode:
+        if proc.returncode and not ok_non_zero:
             LOG.error('Command %s exited with error code %d',
                       ' '.join(command),
                       proc.returncode)

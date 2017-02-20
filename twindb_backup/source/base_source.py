@@ -79,5 +79,5 @@ class BaseSource(object):
         return self._suffix
 
     @suffix.setter
-    def suffix(self, suffix='tar'):
+    def suffix(self, suffix):
         self._suffix = suffix

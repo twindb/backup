@@ -12,7 +12,7 @@ from subprocess import Popen, PIPE
 
 import pymysql
 
-from twindb_backup import LOG, get_files_to_delete
+from twindb_backup import LOG, get_files_to_delete, INTERVALS
 from twindb_backup.source.base_source import BaseSource
 
 
@@ -20,7 +20,7 @@ class MySQLSourceError(Exception):
     """Errors during backups"""
 
 
-class MySQLConnectInfo(object):
+class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
     """MySQL connection details """
     def __init__(self, defaults_file,
                  connect_timeout=10,
@@ -44,16 +44,57 @@ class MySQLSource(BaseSource):
         :type full_backup: str
         :param dst:
         """
-        # MySQL
-        self.mysql_connect_info = mysql_connect_info
 
-        self._suffix = 'xbstream'
+        class _BackupInfo(object):  # pylint: disable=too-few-public-methods
+            """class to store details about backup copy"""
+            def __init__(self, lsn=None,
+                         binlog_coordinate=None):
+                self.lsn = lsn
+                self.binlog_coordinate = binlog_coordinate
+
+        # MySQL
+        if not isinstance(mysql_connect_info, MySQLConnectInfo):
+            raise MySQLSourceError('mysql_connect_info must be '
+                                   'instance of MySQLConnectInfo')
+
+        self._connect_info = mysql_connect_info
+
+        self._backup_info = _BackupInfo()
+        if full_backup not in INTERVALS:
+            raise MySQLSourceError('full_backup must be one of %r. '
+                                   'Got %r instead.'
+                                   % (INTERVALS, full_backup))
+
+        if run_type not in INTERVALS:
+            raise MySQLSourceError('run_type must be one of %r. '
+                                   'Got %r instead.'
+                                   % (INTERVALS, run_type))
+
+        self.suffix = 'xbstream'
         self._media_type = 'mysql'
-        self.lsn = None
-        self.binlog_coordinate = None
         self.full_backup = full_backup
         self.dst = dst
+
         super(MySQLSource, self).__init__(run_type)
+
+    @property
+    def binlog_coordinate(self):
+        """
+        Binary log coordinate up to that backup is taken
+
+        :return: file name and position
+        :rtype: tuple
+        """
+        return self._backup_info.binlog_coordinate
+
+    @property
+    def lsn(self):
+        """
+        The latest LSN of the taken backup
+        :return: LSN
+        :rtype: int
+        """
+        return self._backup_info.lsn
 
     @contextmanager
     def get_stream(self):
@@ -63,7 +104,7 @@ class MySQLSource(BaseSource):
         """
         cmd = [
             "innobackupex",
-            "--defaults-file=%s" % self.mysql_connect_info.defaults_file,
+            "--defaults-file=%s" % self._connect_info.defaults_file,
             "--stream=xbstream",
             "--host=127.0.0.1"
             ]
@@ -104,8 +145,8 @@ class MySQLSource(BaseSource):
             else:
                 LOG.debug('Successfully streamed innobackupex output')
             LOG.debug('innobackupex error log file %s', stderr_file.name)
-            self.lsn = self.get_lsn(stderr_file.name)
-            self.binlog_coordinate = self.get_binlog_coordinates(
+            self._backup_info.lsn = self.get_lsn(stderr_file.name)
+            self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
                 stderr_file.name
             )
             os.unlink(stderr_file.name)
@@ -125,6 +166,20 @@ class MySQLSource(BaseSource):
         return self._get_name('mysql')
 
     def apply_retention_policy(self, dst, config, run_type, status):
+        """
+        Delete old backup copies.
+
+        :param dst: Destination where the backups are stored.
+        :type dst: BaseDestination
+        :param config: Tool configuration
+        :type config: ConfigParser.ConfigParser
+        :param run_type: Run type.
+        :type run_type: str
+        :param status: Backups status.
+        :type status: dict
+        :return: Updated status.
+        :rtype: dict
+        """
 
         prefix = "{remote_path}/{prefix}/mysql/mysql-".format(
             remote_path=dst.remote_path,
@@ -148,6 +203,14 @@ class MySQLSource(BaseSource):
 
     @staticmethod
     def get_binlog_coordinates(err_log_path):
+        """
+        Parse innobackupex log and return binary log coordinate
+
+        :param err_log_path: path to the innobackupex log
+        :type err_log_path: str
+        :return: Binlog coordinate.
+        :rtype: tuple
+        """
         with open(err_log_path) as error_log:
             for line in error_log:
                 if line.startswith('MySQL binlog position:'):
@@ -162,6 +225,7 @@ class MySQLSource(BaseSource):
 
         :param err_log_path: path to Innobackupex error log
         :return: lsn
+        :rtype: int
         """
         with open(err_log_path) as error_log:
             for line in error_log:
@@ -176,10 +240,22 @@ class MySQLSource(BaseSource):
 
     @property
     def full(self):
+        """
+        Check if the backup copy is a full copy.
+
+        :return: True if it's a full copy.
+        :rtype: bool
+        """
         return self._get_backup_type() == 'full'
 
     @property
     def incremental(self):
+        """
+        Check if the backup copy is an incremental copy.
+
+        :return: True if it's an incremental copy.
+        :rtype: bool
+        """
         return not self.full
 
     def _get_backup_type(self):
@@ -201,18 +277,40 @@ class MySQLSource(BaseSource):
 
     @property
     def type(self):
+        """Get backup copy type - full or incremental
+
+        :return: 'full' or 'incrmental'
+        :rtype: str
+        """
         return self._get_backup_type()
 
     @property
     def status(self):
+        """Backup status on a destination
+
+        :return: Backups status
+        :rtype: dict
+        """
         return self.dst.status()
 
     @property
     def parent(self):
+        """
+        Get name of the parent copy.
+
+        :return: backup name of the parent copy
+        or its own name if the copy is a full copy.
+        :rtype: str
+        """
         return sorted(self.status[self.full_backup].keys(), reverse=True)[0]
 
     @property
     def parent_lsn(self):
+        """LST of the parent backup copy.
+
+        :return: LSN of the parent or its own LSN
+        if the backup copy is a full copy.
+        """
         return self.status[self.full_backup][self.parent]['lsn']
 
     def _parent_exists(self):
@@ -287,6 +385,11 @@ class MySQLSource(BaseSource):
 
     @staticmethod
     def get_my_cnf():
+        """Get generator that spits out my.cnf files
+
+        :return: File name and content of MySQL config file.
+        :rtype: tuple
+        """
         mysql_configs = [
             '/etc/my.cnf',
             '/etc/mysql/my.cnf'
@@ -300,6 +403,12 @@ class MySQLSource(BaseSource):
 
     @property
     def wsrep_provider_version(self):
+        """
+        Parse Galera version from wsrep_provider_version.
+
+        :return: Galera version
+        :rtype: str
+        """
         with self.get_connection() as connection:
             with connection.cursor() as cursor:
                 cursor.execute("SHOW STATUS LIKE 'wsrep_provider_version'")
@@ -314,9 +423,19 @@ class MySQLSource(BaseSource):
 
     @property
     def galera(self):
+        """Check if local MySQL instance is a Galera cluster
+
+        :return: True if it's a Galera.
+        :rtype: bool
+        """
         return self.is_galera()
 
     def is_galera(self):
+        """Check if local MySQL instance is a Galera cluster
+
+        :return: True if it's a Galera.
+        :rtype: bool
+        """
         try:
             with self.get_connection() as connection:
                 with connection.cursor() as cursor:
@@ -346,9 +465,9 @@ class MySQLSource(BaseSource):
         try:
             connection = pymysql.connect(
                 host='127.0.0.1',
-                read_default_file=self.mysql_connect_info.defaults_file,
-                connect_timeout=self.mysql_connect_info.connect_timeout,
-                cursorclass=self.mysql_connect_info.cursor
+                read_default_file=self._connect_info.defaults_file,
+                connect_timeout=self._connect_info.connect_timeout,
+                cursorclass=self._connect_info.cursor
             )
 
             yield connection

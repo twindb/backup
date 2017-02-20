@@ -62,7 +62,6 @@ class BaseDestination(object):
 
     @abstractmethod
     def list_files(self, prefix, recursive=False):
-        # TODO aleks: refactor this ugly design
         """
         List files
 
@@ -74,7 +73,6 @@ class BaseDestination(object):
 
     @abstractmethod
     def find_files(self, prefix, run_type):
-        # TODO aleks: refactor this ugly design
         """
         Find files
 

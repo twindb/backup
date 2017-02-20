@@ -1,10 +1,69 @@
-from ConfigParser import ConfigParser
 import logging
 import mock
 import pytest
 
 from pymysql.err import InternalError
-from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
+from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo, \
+    MySQLSourceError
+
+
+def test_mysql_source_has_methods():
+    src = MySQLSource(MySQLConnectInfo('/foo/bar'),
+                      run_type='hourly',
+                      full_backup='daily',
+                      dst=mock.Mock())
+    assert src._connect_info.defaults_file == '/foo/bar'
+    assert src.run_type == 'hourly'
+    assert src.full_backup == 'daily'
+    assert src.suffix == 'xbstream'
+    assert src._media_type == 'mysql'
+
+
+def test_mysql_source_raises_on_wrong_connect_info():
+    with pytest.raises(MySQLSourceError):
+        MySQLSource('/foo/bar',
+                    run_type='hourly',
+                    full_backup='daily',
+                    dst=mock.Mock())
+
+
+@pytest.mark.parametrize('run_type', [
+    'foo',
+    None,
+    ''
+])
+def test_mysql_raises_on_wrong_run_type(run_type):
+    with pytest.raises(MySQLSourceError):
+        MySQLSource(MySQLConnectInfo('/foo/bar'),
+                    run_type=run_type,
+                    full_backup='daily',
+                    dst=mock.Mock())
+
+
+@pytest.mark.parametrize('full_backup', [
+    'foo',
+    None,
+    ''
+])
+def test_mysql_raises_on_wrong_full_backup(full_backup):
+    with pytest.raises(MySQLSourceError):
+        MySQLSource(MySQLConnectInfo('/foo/bar'),
+                    run_type='daily',
+                    full_backup=full_backup,
+                    dst=mock.Mock())
+
+
+@mock.patch('twindb_backup.source.base_source.socket')
+@mock.patch('twindb_backup.source.base_source.time')
+def test_get_name(mock_time, mock_socket):
+    src = MySQLSource(MySQLConnectInfo('/foo/bar'),
+                      'daily', 'hourly', mock.Mock())
+    host = 'some-host'
+    mock_socket.gethostname.return_value = host
+    timestamp = '2017-02-13_15_40_29'
+    mock_time.strftime.return_value = timestamp
+
+    assert src.get_name() == "some-host/daily/mysql/mysql-2017-02-13_15_40_29.xbstream"
 
 
 @mock.patch.object(MySQLSource, 'get_prefix')
@@ -18,7 +77,10 @@ def test_apply_retention_policy(mock_get_files_to_delete,
     mock_get_prefix.return_value = 'master.box/hourly'
     my_cnf = tmpdir.join('my.cnf')
     mock_config = mock.Mock()
-    src = MySQLSource(str(my_cnf), 'hourly', mock.Mock(), mock.Mock())
+    src = MySQLSource(MySQLConnectInfo(str(my_cnf)),
+                      'hourly',
+                      'daily',
+                      mock.Mock())
     mock_dst = mock.Mock()
     mock_dst.remote_path = '/foo/bar'
 
@@ -78,7 +140,7 @@ def test_apply_retention_policy(mock_get_files_to_delete,
         }
     ),
     (
-        "aaa",
+        "hourly",
         'daily',
         'full',
         {
@@ -135,12 +197,9 @@ def test_get_backup_type(full_backup, run_type, backup_type, status, tmpdir):
     assert src._get_backup_type() == backup_type
 
 
-@pytest.mark.parametrize('config_content,run_type,status', [
+@pytest.mark.parametrize('full_backup,run_type,status', [
     (
-        """
-[mysql]
-full_backup=daily
-        """,
+        """daily""",
         'hourly',
         {
             "daily": {
@@ -167,15 +226,13 @@ full_backup=daily
         }
     )
 ])
-def test_last_full_lsn(config_content, run_type, status, tmpdir):
+def test_last_full_lsn(full_backup, run_type, status, tmpdir):
 
-    config_file = tmpdir.join('foo.cfg')
-    config_file.write(config_content)
-    cparser = ConfigParser()
-    cparser.read(str(config_file))
     mock_dst = mock.Mock()
     mock_dst.status.return_value = status
-    src = MySQLSource('/foo/bar', run_type, cparser, mock_dst)
+    src = MySQLSource(MySQLConnectInfo('/foo/bar'),
+                      run_type, full_backup,
+                      mock_dst)
     assert src.parent_lsn == 19629412
 
 
@@ -291,9 +348,9 @@ def test_parent_exists(run_type, full_backup, status, expected):
 
     mock_dst = mock.Mock()
     mock_dst.status.return_value = status
-    mock_config = mock.Mock()
-    mock_config.get.return_value = full_backup
-    src = MySQLSource('/foo/bar', run_type, mock_config, mock_dst)
+
+    src = MySQLSource(MySQLConnectInfo('/foo/bar'),
+                      run_type, full_backup, mock_dst)
     assert src._parent_exists() == expected
 
 
@@ -353,7 +410,8 @@ def test_parent_exists(run_type, full_backup, status, expected):
     )
 ])
 def test_delete_from_status(status, run_type, remote, fl, expected_status):
-    src = MySQLSource('/foo/bar', run_type, mock.Mock(), mock.Mock())
+    src = MySQLSource(MySQLConnectInfo('/foo/bar'),
+                      run_type, 'daily', mock.Mock())
     assert src._delete_from_status(status, remote, fl) == expected_status
 
 
@@ -366,7 +424,7 @@ def test__enable_wsrep_desync_sets_wsrep_desync_to_on(mock_connect):
     mock_connect.return_value.__enter__.return_value. \
         cursor.return_value.__enter__.return_value = mock_cursor
 
-    source = MySQLSource(None, None, None, None)
+    source = MySQLSource(MySQLConnectInfo(None), 'daily', 'daily', None)
     source.enable_wsrep_desync()
 
     mock_cursor.execute.assert_called_with("SET GLOBAL wsrep_desync=ON")
@@ -384,7 +442,7 @@ def test__disable_wsrep_desync_sets_wsrep_desync_to_off(mock_connect):
     mock_connect.return_value.__enter__.return_value. \
         cursor.return_value.__enter__.return_value = mock_cursor
 
-    source = MySQLSource(None, None, None, None)
+    source = MySQLSource(MySQLConnectInfo(None), 'daily', 'daily', None)
     source.disable_wsrep_desync()
 
     mock_cursor.execute.assert_any_call("SHOW GLOBAL STATUS LIKE "
@@ -418,7 +476,7 @@ def test__is_galera_returns_true_on_galera_node(mock_connect):
     mock_connect.return_value.__enter__.return_value. \
         cursor.return_value.__enter__.return_value = mock_cursor
 
-    source = MySQLSource(None, None, None, None)
+    source = MySQLSource(MySQLConnectInfo(None), 'daily', 'daily', None)
     assert source.is_galera() is False
 
 
@@ -434,5 +492,5 @@ def test__wsrep_provider_version_returns_correct_version(mock_connect):
     mock_connect.return_value.__enter__.return_value. \
         cursor.return_value.__enter__.return_value = mock_cursor
 
-    source = MySQLSource(None, None, None, None)
+    source = MySQLSource(MySQLConnectInfo(None), 'daily', 'daily', None)
     assert source.wsrep_provider_version == '3.19'

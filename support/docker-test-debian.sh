@@ -12,8 +12,11 @@ apt-get install -qq \
   make \
   libpython2.7-dev \
   python-setuptools \
-  python-pip \
-  git
+  git \
+  gcc
+
+
+easy_install pip
 
 # install percona repository
 wget https://repo.percona.com/apt/percona-release_0.1-4.$(lsb_release -sc)_all.deb
