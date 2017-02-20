@@ -99,6 +99,7 @@ def get_directories_to_backup(config):
     """Get directories to backup from a config file
 
     :param config: instance of ConfigParser()
+    :type config: ConfigParser.ConfigParser
     :return: list of strings
     """
     backup_dirs = []
@@ -119,8 +120,11 @@ def get_files_to_delete(all_files, keep_copies):
     to be deleted
 
     :param all_files: list of strings
+    :type all_files: list
     :param keep_copies: number of copied to keep
+    :type keep_copies: int
     :return: list of strings (files) to delete
+    :rtype: list
     """
     LOG.debug('Retain %d files', keep_copies)
     if keep_copies == 0:
@@ -133,7 +137,9 @@ def delete_local_files(dir_backups, keep_copies):
     """Deletes local backup copies based on given retention number.
 
     :param dir_backups: directory with backup copies
+    :type dir_backups: str
     :param keep_copies: how many to keep
+    :type keep_copies: int
     :return: None
 
     """

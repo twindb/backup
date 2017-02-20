@@ -251,26 +251,29 @@ class S3(BaseDestination):
             with os.fdopen(write_fd, 'wb') as w_pipe:
                 s3_client.download_fileobj(bucket_name, key, w_pipe)
 
-        LOG.debug('Fetching object %s from bucket %s',
-                  object_key,
-                  self.bucket)
+        download_proc = None
+        try:
+            LOG.debug('Fetching object %s from bucket %s',
+                      object_key,
+                      self.bucket)
 
-        read_pipe, write_pipe = os.pipe()
+            read_pipe, write_pipe = os.pipe()
 
-        download_proc = Process(target=_download_object,
-                                args=(self.s3_client, self.bucket,
-                                      object_key, read_pipe, write_pipe))
-        download_proc.start()
+            download_proc = Process(target=_download_object,
+                                    args=(self.s3_client, self.bucket,
+                                          object_key, read_pipe, write_pipe))
+            download_proc.start()
 
-        # The write end of the pipe must be closed in this process before
-        # we start reading from it.
-        os.close(write_pipe)
-        yield read_pipe
+            # The write end of the pipe must be closed in this process before
+            # we start reading from it.
+            os.close(write_pipe)
+            yield read_pipe
 
-        LOG.debug('Successfully streamed %s', path)
+            LOG.debug('Successfully streamed %s', path)
 
-        if download_proc:
-            download_proc.join()
+        finally:
+            if download_proc:
+                download_proc.join()
 
     def _upload_object(self, file_obj, object_key):
         """Upload objects to S3 in streaming fashion.
