@@ -306,7 +306,7 @@ class MySQLSource(BaseSource):
 
     @property
     def parent_lsn(self):
-        """LST of the parent backup copy.
+        """LSN of the parent backup copy.
 
         :return: LSN of the parent or its own LSN
         if the backup copy is a full copy.
