@@ -268,7 +268,7 @@ class MySQLSource(BaseSource):
             if self._intervals.index(self.full_backup) <= \
                     self._intervals.index(self.run_type):
                 return "full"
-            elif not self._parent_exists():
+            elif not self._full_copy_exists():
                 return "full"
             else:
                 return "incremental"
@@ -313,7 +313,7 @@ class MySQLSource(BaseSource):
         """
         return self.status[self.full_backup][self.parent]['lsn']
 
-    def _parent_exists(self):
+    def _full_copy_exists(self):
         full_backup_index = self._intervals.index(self.full_backup)
         for i in xrange(full_backup_index, len(self._intervals)):
             if len(self.dst.status()[self._intervals[i]]) > 0:

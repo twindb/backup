@@ -344,14 +344,14 @@ def test_last_full_lsn(full_backup, run_type, status, tmpdir):
     )
 
 ])
-def test_parent_exists(run_type, full_backup, status, expected):
+def test_full_copy_exists(run_type, full_backup, status, expected):
 
     mock_dst = mock.Mock()
     mock_dst.status.return_value = status
 
     src = MySQLSource(MySQLConnectInfo('/foo/bar'),
                       run_type, full_backup, mock_dst)
-    assert src._parent_exists() == expected
+    assert src._full_copy_exists() == expected
 
 
 @pytest.mark.parametrize('status, run_type, remote, fl, expected_status', [
