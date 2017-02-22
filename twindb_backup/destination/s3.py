@@ -209,7 +209,8 @@ class S3(BaseDestination):
             try:
                 return sorted(bucket.objects.filter(Prefix=norm_prefix),
                               key=attrgetter('key'))
-            except ClientError:
+            except ClientError as err:
+                LOG.debug('Got error %s. Will retry in a second.', err)
                 time.sleep(1)
 
     def find_files(self, prefix, run_type):
@@ -229,7 +230,8 @@ class S3(BaseDestination):
                         files.append("s3://%s/%s" % (self.bucket, file_object.key))
 
                 return sorted(files)
-            except ClientError:
+            except ClientError as err:
+                LOG.debug('Got error %s. Will retry in a second.', err)
                 time.sleep(1)
             except Exception as err:
                 LOG.error('Failed to list objects in bucket %s: %s',
