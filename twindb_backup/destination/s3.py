@@ -15,7 +15,6 @@ from urlparse import urlparse
 
 import time
 
-import botocore
 from botocore.exceptions import ClientError
 from botocore.client import Config
 
@@ -206,7 +205,7 @@ class S3(BaseDestination):
         # Try to list the bucket several times
         # because of intermittent error NoSuchBucket:
         # https://travis-ci.org/twindb/backup/jobs/204053690
-        for x in xrange(3):
+        for _ in xrange(3):
             try:
                 return sorted(bucket.objects.filter(Prefix=norm_prefix),
                               key=attrgetter('key'))
