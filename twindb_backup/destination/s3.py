@@ -216,19 +216,25 @@ class S3(BaseDestination):
         s3client = boto3.resource('s3')
         bucket = s3client.Bucket(self.bucket)
         LOG.debug('Listing %s in bucket %s', prefix, bucket)
-        files = []
 
-        try:
-            all_objects = bucket.objects.filter(Prefix='')
-            for file_object in all_objects:
-                if "/" + run_type + "/" in file_object.key:
-                    files.append("s3://%s/%s" % (self.bucket, file_object.key))
+        # Try to list the bucket several times
+        # because of intermittent error NoSuchBucket:
+        # https://travis-ci.org/twindb/backup/jobs/204066704
+        for _ in xrange(3):
+            try:
+                files = []
+                all_objects = bucket.objects.filter(Prefix='')
+                for file_object in all_objects:
+                    if "/" + run_type + "/" in file_object.key:
+                        files.append("s3://%s/%s" % (self.bucket, file_object.key))
 
-            return sorted(files)
-        except Exception as err:
-            LOG.error('Failed to list objects in bucket %s: %s',
-                      self.bucket, err)
-            raise
+                return sorted(files)
+            except ClientError:
+                time.sleep(1)
+            except Exception as err:
+                LOG.error('Failed to list objects in bucket %s: %s',
+                          self.bucket, err)
+                raise
 
     def delete(self, obj):
         """Deletes a s3 object.
