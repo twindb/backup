@@ -13,6 +13,9 @@ from multiprocessing import Process
 from operator import attrgetter
 from urlparse import urlparse
 
+import time
+
+import botocore
 from botocore.exceptions import ClientError
 from botocore.client import Config
 
@@ -200,8 +203,15 @@ class S3(BaseDestination):
         norm_prefix = prefix.replace('s3://%s/' % bucket.name, '')
         LOG.debug('norm_prefix = %s', norm_prefix)
 
-        return sorted(bucket.objects.filter(Prefix=norm_prefix),
-                      key=attrgetter('key'))
+        # Try to list the bucket several times
+        # because of intermittent error NoSuchBucket:
+        # https://travis-ci.org/twindb/backup/jobs/204053690
+        for x in xrange(3):
+            try:
+                return sorted(bucket.objects.filter(Prefix=norm_prefix),
+                              key=attrgetter('key'))
+            except ClientError:
+                time.sleep(1)
 
     def find_files(self, prefix, run_type):
         s3client = boto3.resource('s3')
