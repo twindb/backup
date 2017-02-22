@@ -205,13 +205,19 @@ class S3(BaseDestination):
         # Try to list the bucket several times
         # because of intermittent error NoSuchBucket:
         # https://travis-ci.org/twindb/backup/jobs/204053690
-        for _ in xrange(3):
+        retry_timeout = time.time() + S3_READ_TIMEOUT
+        retry_interval = 2
+        while time.time() < retry_timeout:
             try:
                 return sorted(bucket.objects.filter(Prefix=norm_prefix),
                               key=attrgetter('key'))
             except ClientError as err:
-                LOG.debug('Got error %s. Will retry in a second.', err)
-                time.sleep(1)
+                LOG.warning('%s. Will retry in %d seconds.',
+                            err, retry_interval)
+                time.sleep(retry_interval)
+                retry_interval *= 2
+
+        raise S3Error('Failed to list files.')
 
     def find_files(self, prefix, run_type):
         s3client = boto3.resource('s3')
@@ -221,22 +227,30 @@ class S3(BaseDestination):
         # Try to list the bucket several times
         # because of intermittent error NoSuchBucket:
         # https://travis-ci.org/twindb/backup/jobs/204066704
-        for _ in xrange(3):
+        retry_timeout = time.time() + S3_READ_TIMEOUT
+        retry_interval = 2
+        while time.time() < retry_timeout:
             try:
                 files = []
                 all_objects = bucket.objects.filter(Prefix='')
                 for file_object in all_objects:
                     if "/" + run_type + "/" in file_object.key:
-                        files.append("s3://%s/%s" % (self.bucket, file_object.key))
+                        files.append("s3://%s/%s" % (self.bucket,
+                                                     file_object.key))
 
                 return sorted(files)
             except ClientError as err:
-                LOG.debug('Got error %s. Will retry in a second.', err)
-                time.sleep(1)
+                LOG.warning('%s. Will retry in %d seconds.',
+                            err, retry_interval)
+                time.sleep(retry_interval)
+                retry_interval *= 2
+
             except Exception as err:
                 LOG.error('Failed to list objects in bucket %s: %s',
                           self.bucket, err)
                 raise
+
+        raise S3Error('Failed to find files.')
 
     def delete(self, obj):
         """Deletes a s3 object.
