@@ -1,31 +1,100 @@
+# -*- coding: utf-8 -*-
+"""
+Module defines MySQL source class for backing up local MySQL.
+"""
 import os
-import shlex
 import tempfile
 import time
 
 from ConfigParser import NoOptionError
 from contextlib import contextmanager
-from pymysql.err import InternalError
 from subprocess import Popen, PIPE
-from twindb_backup import log, get_files_to_delete
+
+import pymysql
+
+from twindb_backup import LOG, get_files_to_delete, INTERVALS
 from twindb_backup.source.base_source import BaseSource
-from twindb_backup.util import get_connection
 
 
 class MySQLSourceError(Exception):
     """Errors during backups"""
 
 
+class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
+    """MySQL connection details """
+    def __init__(self, defaults_file,
+                 connect_timeout=10,
+                 cursor=pymysql.cursors.DictCursor):
+
+        self.cursor = cursor
+        self.connect_timeout = connect_timeout
+        self.defaults_file = defaults_file
+
+
 class MySQLSource(BaseSource):
-    def __init__(self, defaults_file, run_type, config, dst):
-        self.defaults = defaults_file
-        self._suffix = 'xbstream.gz'
+    """MySQLSource class"""
+    def __init__(self, mysql_connect_info, run_type, full_backup, dst):
+        """
+        MySQLSource constructor
+
+        :param mysql_connect_info: MySQL connection details
+        :type mysql_connect_info: MySQLConnectInfo
+        :param run_type:
+        :param full_backup: When to do full backup e.g. daily, weekly
+        :type full_backup: str
+        :param dst:
+        """
+
+        class _BackupInfo(object):  # pylint: disable=too-few-public-methods
+            """class to store details about backup copy"""
+            def __init__(self, lsn=None,
+                         binlog_coordinate=None):
+                self.lsn = lsn
+                self.binlog_coordinate = binlog_coordinate
+
+        # MySQL
+        if not isinstance(mysql_connect_info, MySQLConnectInfo):
+            raise MySQLSourceError('mysql_connect_info must be '
+                                   'instance of MySQLConnectInfo')
+
+        self._connect_info = mysql_connect_info
+
+        self._backup_info = _BackupInfo()
+        if full_backup not in INTERVALS:
+            raise MySQLSourceError('full_backup must be one of %r. '
+                                   'Got %r instead.'
+                                   % (INTERVALS, full_backup))
+
+        if run_type not in INTERVALS:
+            raise MySQLSourceError('run_type must be one of %r. '
+                                   'Got %r instead.'
+                                   % (INTERVALS, run_type))
+
+        self.suffix = 'xbstream'
         self._media_type = 'mysql'
-        self.lsn = None
-        self.binlog_coordinate = None
-        self.config = config
+        self.full_backup = full_backup
         self.dst = dst
+
         super(MySQLSource, self).__init__(run_type)
+
+    @property
+    def binlog_coordinate(self):
+        """
+        Binary log coordinate up to that backup is taken
+
+        :return: file name and position
+        :rtype: tuple
+        """
+        return self._backup_info.binlog_coordinate
+
+    @property
+    def lsn(self):
+        """
+        The latest LSN of the taken backup
+        :return: LSN
+        :rtype: int
+        """
+        return self._backup_info.lsn
 
     @contextmanager
     def get_stream(self):
@@ -35,7 +104,7 @@ class MySQLSource(BaseSource):
         """
         cmd = [
             "innobackupex",
-            "--defaults-file=%s" % self.defaults,
+            "--defaults-file=%s" % self._connect_info.defaults_file,
             "--stream=xbstream",
             "--host=127.0.0.1"
             ]
@@ -60,46 +129,29 @@ class MySQLSource(BaseSource):
             if self.is_galera():
                 wsrep_desynced = self.enable_wsrep_desync()
 
-            log.debug('Running %s', ' '.join(cmd))
+            LOG.debug('Running %s', ' '.join(cmd))
             stderr_file = tempfile.NamedTemporaryFile(delete=False)
             proc_innobackupex = Popen(cmd,
                                       stderr=stderr_file,
                                       stdout=PIPE)
-            cmd = "gzip -c -"
-            try:
-                log.debug('Running %s', cmd)
-                proc_gzip = Popen(shlex.split(cmd),
-                                  stdin=proc_innobackupex.stdout,
-                                  stderr=PIPE, stdout=PIPE)
-                yield proc_gzip.stdout
 
-                cout, cerr = proc_gzip.communicate()
-                if proc_gzip.returncode:
-                    log.error('Failed to compress innobackupex stream: '
-                              '%s' % cerr)
-                    exit(1)
-                else:
-                    log.debug('Successfully compressed innobackupex stream')
-
-            except OSError as err:
-                log.error('Failed to run %s: %s', cmd, err)
-                exit(1)
+            yield proc_innobackupex.stdout
 
             proc_innobackupex.communicate()
             if proc_innobackupex.returncode:
-                log.error('Failed to run innobackupex. '
+                LOG.error('Failed to run innobackupex. '
                           'Check error output in %s', stderr_file.name)
                 exit(1)
             else:
-                log.debug('Successfully streamed innobackupex output')
-            log.debug('innobackupex error log file %s', stderr_file.name)
-            self.lsn = self.get_lsn(stderr_file.name)
-            self.binlog_coordinate = self.get_binlog_coordinates(
+                LOG.debug('Successfully streamed innobackupex output')
+            LOG.debug('innobackupex error log file %s', stderr_file.name)
+            self._backup_info.lsn = self.get_lsn(stderr_file.name)
+            self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
                 stderr_file.name
             )
             os.unlink(stderr_file.name)
         except OSError as err:
-            log.error('Failed to run %s: %s', cmd, err)
+            LOG.error('Failed to run %s: %s', cmd, err)
             exit(1)
         finally:
             if wsrep_desynced:
@@ -114,6 +166,20 @@ class MySQLSource(BaseSource):
         return self._get_name('mysql')
 
     def apply_retention_policy(self, dst, config, run_type, status):
+        """
+        Delete old backup copies.
+
+        :param dst: Destination where the backups are stored.
+        :type dst: BaseDestination
+        :param config: Tool configuration
+        :type config: ConfigParser.ConfigParser
+        :param run_type: Run type.
+        :type run_type: str
+        :param status: Backups status.
+        :type status: dict
+        :return: Updated status.
+        :rtype: dict
+        """
 
         prefix = "{remote_path}/{prefix}/mysql/mysql-".format(
             remote_path=dst.remote_path,
@@ -124,19 +190,29 @@ class MySQLSource(BaseSource):
 
         objects = dst.list_files(prefix)
 
-        for fl in get_files_to_delete(objects, keep_copies):
-            log.debug('Deleting remote file %s' % fl)
-            dst.delete(fl)
-            status = self._delete_from_status(status, dst.remote_path, fl)
+        for backup_copy in get_files_to_delete(objects, keep_copies):
+            LOG.debug('Deleting remote file %s', backup_copy)
+            dst.delete(backup_copy)
+            status = self._delete_from_status(status,
+                                              dst.remote_path,
+                                              backup_copy)
 
         self._delete_local_files('mysql', config)
 
         return status
 
     @staticmethod
-    def get_binlog_coordinates(err_log):
-        with open(err_log) as f:
-            for line in f:
+    def get_binlog_coordinates(err_log_path):
+        """
+        Parse innobackupex log and return binary log coordinate
+
+        :param err_log_path: path to the innobackupex log
+        :type err_log_path: str
+        :return: Binlog coordinate.
+        :rtype: tuple
+        """
+        with open(err_log_path) as error_log:
+            for line in error_log:
                 if line.startswith('MySQL binlog position:'):
                     filename = line.split()[4].strip(",'")
                     position = int(line.split()[6].strip(",'"))
@@ -144,28 +220,42 @@ class MySQLSource(BaseSource):
         return None, None
 
     @staticmethod
-    def get_lsn(err_log):
+    def get_lsn(err_log_path):
         """Find LSN up to which the backup is taken
 
-        :param err_log: path to Innobackupex error log
+        :param err_log_path: path to Innobackupex error log
         :return: lsn
+        :rtype: int
         """
-        with open(err_log) as f:
-            for line in f:
+        with open(err_log_path) as error_log:
+            for line in error_log:
                 pattern = 'xtrabackup: ' \
                           'The latest check point (for incremental):'
                 if line.startswith(pattern):
                     lsn = line.split()[7].strip("'")
                     return int(lsn)
         raise MySQLSourceError('Could not find LSN'
-                               ' in XtraBackup error output %s' % err_log)
+                               ' in XtraBackup error output %s'
+                               % err_log_path)
 
     @property
     def full(self):
+        """
+        Check if the backup copy is a full copy.
+
+        :return: True if it's a full copy.
+        :rtype: bool
+        """
         return self._get_backup_type() == 'full'
 
     @property
     def incremental(self):
+        """
+        Check if the backup copy is an incremental copy.
+
+        :return: True if it's an incremental copy.
+        :rtype: bool
+        """
         return not self.full
 
     def _get_backup_type(self):
@@ -175,11 +265,10 @@ class MySQLSource(BaseSource):
         :return: "full" or "incremental"
         """
         try:
-            full_backup = self.config.get('mysql', 'full_backup')
-            if self._intervals.index(full_backup) <= \
+            if self._intervals.index(self.full_backup) <= \
                     self._intervals.index(self.run_type):
                 return "full"
-            elif not self._parent_exists():
+            elif not self._full_copy_exists():
                 return "full"
             else:
                 return "incremental"
@@ -188,44 +277,63 @@ class MySQLSource(BaseSource):
 
     @property
     def type(self):
+        """Get backup copy type - full or incremental
+
+        :return: 'full' or 'incrmental'
+        :rtype: str
+        """
         return self._get_backup_type()
 
     @property
     def status(self):
+        """Backup status on a destination
+
+        :return: Backups status
+        :rtype: dict
+        """
         return self.dst.status()
 
     @property
     def parent(self):
-        full_backup = self.config.get('mysql', 'full_backup')
-        return sorted(self.status[full_backup].keys(), reverse=True)[0]
+        """
+        Get name of the parent copy.
+
+        :return: backup name of the parent copy
+        or its own name if the copy is a full copy.
+        :rtype: str
+        """
+        return sorted(self.status[self.full_backup].keys(), reverse=True)[0]
 
     @property
     def parent_lsn(self):
-        full_backup = self.config.get('mysql', 'full_backup')
-        return self.status[full_backup][self.parent]['lsn']
+        """LSN of the parent backup copy.
 
-    def _parent_exists(self):
-        full_backup = self.config.get('mysql', 'full_backup')
-        full_backup_index = self._intervals.index(full_backup)
+        :return: LSN of the parent or its own LSN
+        if the backup copy is a full copy.
+        """
+        return self.status[self.full_backup][self.parent]['lsn']
+
+    def _full_copy_exists(self):
+        full_backup_index = self._intervals.index(self.full_backup)
         for i in xrange(full_backup_index, len(self._intervals)):
             if len(self.dst.status()[self._intervals[i]]) > 0:
                 return True
 
         return False
 
-    def _delete_from_status(self, status, prefix, fl):
-        log.debug('status = %r' % status)
-        log.debug('prefix = %s' % prefix)
-        log.debug('file   = %s' % fl)
+    def _delete_from_status(self, status, prefix, backup_copy):
+        LOG.debug('status = %r', status)
+        LOG.debug('prefix = %s', prefix)
+        LOG.debug('file   = %s', backup_copy)
         try:
-            ref_filename = fl.key
+            ref_filename = backup_copy.key
         except AttributeError:
             prefix = prefix.rstrip('/')
-            ref_filename = str(fl).replace(prefix + '/', '', 1)
+            ref_filename = str(backup_copy).replace(prefix + '/', '', 1)
 
         result_status = status
         try:
-            del(result_status[self.run_type][ref_filename])
+            del result_status[self.run_type][ref_filename]
         except KeyError:
             pass
         return result_status
@@ -237,13 +345,12 @@ class MySQLSource(BaseSource):
         :return: True if wsrep_desync was enabled. False if not supported
         """
         try:
-            with get_connection(host='127.0.0.1',
-                                defaults_file=self.defaults) as db:
-                with db.cursor() as cursor:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
                     cursor.execute('SET GLOBAL wsrep_desync=ON')
             return True
-        except Exception as e:
-            log.debug(e)
+        except pymysql.Error as err:
+            LOG.debug(err)
             return False
 
     def disable_wsrep_desync(self):
@@ -253,9 +360,8 @@ class MySQLSource(BaseSource):
         """
         max_time = time.time() + 900
         try:
-            with get_connection(host='127.0.0.1',
-                                defaults_file=self.defaults) as db:
-                with db.cursor() as cursor:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
                     while time.time() < max_time:
                         cursor.execute("SHOW GLOBAL STATUS LIKE "
                                        "'wsrep_local_recv_queue'")
@@ -272,29 +378,39 @@ class MySQLSource(BaseSource):
 
                         time.sleep(1)
 
-                    log.debug('Disabling wsrep_desync')
+                    LOG.debug('Disabling wsrep_desync')
                     cursor.execute("SET GLOBAL wsrep_desync=OFF")
-        except Exception as e:
-            log.error(e)
+        except pymysql.Error as err:
+            LOG.error(err)
 
     @staticmethod
     def get_my_cnf():
+        """Get generator that spits out my.cnf files
+
+        :return: File name and content of MySQL config file.
+        :rtype: tuple
+        """
         mysql_configs = [
             '/etc/my.cnf',
             '/etc/mysql/my.cnf'
         ]
-        for cnf in mysql_configs:
+        for cnf_parg in mysql_configs:
             try:
-                with open(cnf) as fp:
-                    yield cnf, fp.read()
+                with open(cnf_parg) as my_cnf:
+                    yield cnf_parg, my_cnf.read()
             except IOError:
                 continue
 
     @property
     def wsrep_provider_version(self):
-        with get_connection(host='127.0.0.1',
-                            defaults_file=self.defaults) as db:
-            with db.cursor() as cursor:
+        """
+        Parse Galera version from wsrep_provider_version.
+
+        :return: Galera version
+        :rtype: str
+        """
+        with self.get_connection() as connection:
+            with connection.cursor() as cursor:
                 cursor.execute("SHOW STATUS LIKE 'wsrep_provider_version'")
 
                 res = {row['Variable_name'].lower(): row['Value'].lower()
@@ -307,23 +423,55 @@ class MySQLSource(BaseSource):
 
     @property
     def galera(self):
+        """Check if local MySQL instance is a Galera cluster
+
+        :return: True if it's a Galera.
+        :rtype: bool
+        """
         return self.is_galera()
 
     def is_galera(self):
+        """Check if local MySQL instance is a Galera cluster
+
+        :return: True if it's a Galera.
+        :rtype: bool
+        """
         try:
-            with get_connection(host='127.0.0.1',
-                                defaults_file=self.defaults) as db:
-                with db.cursor() as cursor:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
                     cursor.execute("SELECT @@wsrep_on as wsrep_on")
                     row = cursor.fetchone()
 
                     return (str(row['wsrep_on']).lower() == "1" or
                             row['wsrep_on'].lower() == 'on')
-        except InternalError as err:
+        except pymysql.InternalError as err:
             error_code, error_message = err.args
 
             if error_code == 1193:
-                log.debug('Galera is not supported or not enabled')
+                LOG.debug('Galera is not supported or not enabled')
                 return False
             else:
+                LOG.error(error_message)
                 raise
+
+    @contextmanager
+    def get_connection(self):
+        """
+        Connect to MySQL host and yield a connection.
+
+        :return: MySQL connection
+        """
+        connection = None
+        try:
+            connection = pymysql.connect(
+                host='127.0.0.1',
+                read_default_file=self._connect_info.defaults_file,
+                connect_timeout=self._connect_info.connect_timeout,
+                cursorclass=self._connect_info.cursor
+            )
+
+            yield connection
+
+        finally:
+            if connection:
+                connection.close()

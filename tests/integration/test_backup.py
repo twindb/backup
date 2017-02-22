@@ -5,8 +5,8 @@ import socket
 
 from subprocess import call, Popen, PIPE
 
-from twindb_backup import log
-from twindb_backup.destination.s3 import S3
+from twindb_backup import LOG
+from twindb_backup.destination.s3 import S3, AWSAuthOptions
 
 
 def test__take_file_backup(s3_client, config_content_files_only, tmpdir,
@@ -41,8 +41,8 @@ def test__take_file_backup(s3_client, config_content_files_only, tmpdir,
     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
     out, err = proc.communicate()
 
-    log.debug('STDOUT: %s' % out)
-    log.debug('STDERR: %s' % err)
+    LOG.debug('STDOUT: %s' % out)
+    LOG.debug('STDERR: %s' % err)
 
     assert proc.returncode == 0
 
@@ -95,8 +95,8 @@ def test__take_mysql_backup(s3_client, config_content_mysql_only, tmpdir):
     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
     cout, cerr = proc.communicate()
 
-    log.debug('STDOUT: %s', cout)
-    log.debug('STDERR: %s', cerr)
+    LOG.debug('STDOUT: %s', cout)
+    LOG.debug('STDERR: %s', cerr)
 
     key = json.loads(cout)['hourly'].keys()[0]
 
@@ -164,8 +164,10 @@ def test__s3_find_files_returns_sorted(s3_client, config_content_mysql_only,
     for x in xrange(n_runs):
         assert call(cmd) == 0
 
-    dst = S3(s3_client.bucket, os.environ['AWS_ACCESS_KEY_ID'],
-             os.environ['AWS_SECRET_ACCESS_KEY'])
+    dst = S3(s3_client.bucket,
+             AWSAuthOptions(os.environ['AWS_ACCESS_KEY_ID'],
+                            os.environ['AWS_SECRET_ACCESS_KEY'])
+             )
     for x in xrange(10):
         result = dst.find_files(dst.remote_path, 'daily')
         assert len(result) == n_runs

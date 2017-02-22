@@ -4,12 +4,15 @@ import pytest
 
 from botocore.exceptions import ClientError
 from moto import mock_s3
-from twindb_backup.destination.s3 import S3
+from twindb_backup.destination.s3 import S3, AWSAuthOptions
 
 
 @mock_s3
 def test__create_bucket_creates_the_bucket():
-    s3 = S3('test-bucket', 'access_key', 'secret_key')
+    s3 = S3('test-bucket',
+            AWSAuthOptions('access_key',
+                           'secret_key')
+            )
     s3.create_bucket()
 
     assert s3.s3_client.head_bucket(Bucket='test-bucket')
@@ -17,7 +20,10 @@ def test__create_bucket_creates_the_bucket():
 
 @mock_s3
 def test__delete_bucket_deletes_the_bucket():
-    s3 = S3('test-bucket', 'access_key', 'secret_key')
+    s3 = S3('test-bucket',
+            AWSAuthOptions('access_key',
+                           'secret_key')
+            )
     s3.create_bucket()
 
     s3.delete_bucket()
@@ -28,7 +34,10 @@ def test__delete_bucket_deletes_the_bucket():
 
 @mock_s3
 def test__list_files_returns_sorted_list():
-    s3 = S3('test-bucket', 'access_key', 'secret_key')
+    s3 = S3('test-bucket',
+            AWSAuthOptions('access_key',
+                           'secret_key')
+            )
     s3.create_bucket()
 
     s3.s3_client.put_object(Body='hello world', Bucket='test-bucket',
@@ -40,7 +49,10 @@ def test__list_files_returns_sorted_list():
 
 @mock_s3
 def test__find_files_returns_sorted_list_of_files():
-    s3 = S3('test-bucket', 'access_key', 'secret_key')
+    s3 = S3('test-bucket',
+            AWSAuthOptions('access_key',
+                           'secret_key')
+            )
     s3.create_bucket()
 
     s3.s3_client.put_object(Body='hello world', Bucket='test-bucket',
@@ -57,7 +69,10 @@ def test__find_files_returns_sorted_list_of_files():
 
 @mock_s3
 def test__delete_can_delete_an_object():
-    twindb_s3 = S3('test-bucket', 'access_key', 'secret_key')
+    twindb_s3 = S3('test-bucket',
+                   AWSAuthOptions('access_key',
+                                  'secret_key')
+                   )
     twindb_s3.create_bucket()
 
     twindb_s3.s3_client.put_object(Body='hello world', Bucket='test-bucket',
@@ -76,7 +91,9 @@ def test__delete_can_delete_an_object():
 def test_get_status_empty(mock_status_exists):
     mock_status_exists.return_value = False
 
-    dst = S3('a', 'b', 'c')
+    dst = S3('a',
+             AWSAuthOptions('b',
+                            'c'))
     assert dst.status() == {
         'hourly': {},
         'daily': {},
@@ -87,6 +104,8 @@ def test_get_status_empty(mock_status_exists):
 
 
 def test_basename():
-    dst = S3('bucket', 'b', 'c')
+    dst = S3('bucket',
+             AWSAuthOptions('b',
+                            'c'))
     assert dst.basename('s3://bucket/some_dir/some_file.txt') == \
         'some_dir/some_file.txt'

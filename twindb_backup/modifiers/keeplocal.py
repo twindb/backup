@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+Module defines modifier that save a stream on the local file system
+"""
 import os
 from contextlib import contextmanager
 
@@ -9,6 +13,8 @@ from twindb_backup.util import mkdir_p
 
 
 class KeepLocal(Modifier):
+    """KeepLocal() class saves a copy of the stream on the local file system.
+    It doesn't alter the stream."""
     def __init__(self, input_stream, local_path):
         """
         Modifier that saves a local copy of the stream in local_path file.
@@ -36,6 +42,6 @@ class KeepLocal(Modifier):
             yield proc.stdout
             proc.communicate()
 
-    def callback(self, keep_local_path, dst):
-        local_dst = Local(keep_local_path)
-        local_dst.status(dst.status())
+    def callback(self, **kwargs):
+        local_dst = Local(kwargs['keep_local_path'])
+        local_dst.status(kwargs['dst'].status())

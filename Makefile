@@ -88,8 +88,8 @@ clean-test: ## remove test and coverage artifacts
 clean-docker:
 	@sudo docker rm twindb-backup-build-${PLATFORM}
 
-lint: ## check style with flake8
-	flake8 twindb_backup tests
+lint: test-deps ## check style with flake8
+	pylint twindb_backup
 
 test-deps:
 	pip install --upgrade -r requirements.txt
@@ -97,7 +97,7 @@ test-deps:
 	pip install -U setuptools
 
 test: clean bootstrap ## run tests quickly with the default Python
-	pytest --cov=./twindb_backup tests/unit
+	pytest -xv --cov=./twindb_backup tests/unit
 	codecov
 
 test-integration: test-deps ## run integration tests
@@ -108,7 +108,7 @@ test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	py.test --cov=twindb_backup tests/unit
+	py.test --cov-report term-missing  --cov=twindb_backup tests/unit
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/twindb_backup.rst
