@@ -60,7 +60,7 @@ def backup_files(run_type, config):
             gpg = Gpg(stream, recipient, keyring)
             stream = gpg.get_stream()
             src.suffix += '.gpg'
-        except ConfigParser.NoOptionError:
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
             pass
         except ModifierException as err:
             LOG.warning(err)
@@ -105,6 +105,7 @@ def backup_mysql(run_type, config):
 
     callbacks = []
     stream = src.get_stream()
+    src_name = src.get_name()
 
     # Gzip modifier
     stream = Gzip(stream).get_stream()
@@ -115,7 +116,7 @@ def backup_mysql(run_type, config):
         keep_local_path = config.get('destination', 'keep_local_path')
         kl_modifier = KeepLocal(stream,
                                 os.path.join(keep_local_path,
-                                             src.get_name()))
+                                             src_name))
         stream = kl_modifier.get_stream()
 
         callbacks.append((kl_modifier, {
@@ -137,12 +138,11 @@ def backup_mysql(run_type, config):
         LOG.warning(err)
         LOG.warning('Will skip encryption')
 
-    if dst.save(stream, src.get_name()) != 0:
-        LOG.error('Failed to save backup copy %s', src.get_name())
+    if dst.save(stream, src_name) != 0:
+        LOG.error('Failed to save backup copy %s', src_name)
         exit(1)
 
     status = dst.status()
-    src_name = src.get_name()
 
     status[run_type][src_name] = {
         'binlog': src.binlog_coordinate[0],
@@ -212,7 +212,7 @@ def timeout(seconds):
     :param seconds: timeout in seconds
     :type seconds: int
     """
-    def timeout_handler(signum, frame):  # pylint: disable=unused-argument
+    def timeout_handler(signum, frame):
         """Function to call on a timeout event"""
         pass
 

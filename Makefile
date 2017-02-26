@@ -162,6 +162,26 @@ docker-test: ## Test twindb-backup in a docker container
 		-e "TRAVIS_TAG"=${TRAVIS_TAG} \
 		${DOCKER_IMAGE} /bin/bash /twindb-backup/support/docker-test-${PLATFORM}.sh
 
+
+docker-start:
+	@sudo docker run \
+		-v `pwd`:/twindb-backup:rw \
+		-e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
+		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
+		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
+		-e "CI"=${CI} \
+		-e "TRAVIS"=${TRAVIS} \
+		-e "TRAVIS_BRANCH"=${TRAVIS_BRANCH} \
+		-e "TRAVIS_COMMIT"=${TRAVIS_COMMIT} \
+		-e "TRAVIS_JOB_NUMBER"=${TRAVIS_JOB_NUMBER} \
+		-e "TRAVIS_PULL_REQUEST"=${TRAVIS_PULL_REQUEST} \
+		-e "TRAVIS_JOB_ID"=${TRAVIS_JOB_ID} \
+		-e "TRAVIS_REPO_SLUG"=${TRAVIS_REPO_SLUG} \
+		-e "TRAVIS_TAG"=${TRAVIS_TAG} \
+		-it \
+		${DOCKER_IMAGE}
+
+
 package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
 	rm -rf pkg
 
