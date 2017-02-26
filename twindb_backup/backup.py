@@ -131,7 +131,7 @@ def backup_mysql(run_type, config):
         stream = Gpg(stream, config.get('gpg', 'recipient'),
                      config.get('gpg', 'keyring')).get_stream()
         src.suffix += '.gpg'
-    except ConfigParser.NoOptionError:
+    except ConfigParser.NoSectionError, ConfigParser.NoOptionError:
         pass
     except ModifierException as err:
         LOG.warning(err)
