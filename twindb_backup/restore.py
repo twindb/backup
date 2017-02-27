@@ -6,7 +6,6 @@ from __future__ import print_function
 import ConfigParser
 import base64
 import json
-import shlex
 from subprocess import Popen, PIPE
 import os
 import tempfile
@@ -16,6 +15,7 @@ from twindb_backup import LOG, INTERVALS
 from twindb_backup.configuration import get_destination
 from twindb_backup.destination.base_destination import DestinationError
 from twindb_backup.destination.local import Local
+from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.util import mkdir_p, \
     get_hostname_from_backup_copy
 
@@ -383,14 +383,26 @@ def restore_from_file(config, backup_copy, dst_dir):
 
     if os.path.exists(backup_copy):
         dst = Local(backup_copy)
+        stream = dst.get_stream(backup_copy)
     else:
         dst = get_destination(config)
-
-    cmd = "tar zvxf -"
-    with dst.get_stream(backup_copy) as handler:
+        stream = dst.get_stream(backup_copy)
+        # GPG modifier
         try:
-            LOG.debug('Running %s', cmd)
-            proc = Popen(shlex.split(cmd), stdin=handler, cwd=dst_dir)
+            gpg = Gpg(stream,
+                      config.get('gpg', 'recipient'),
+                      config.get('gpg', 'keyring'),
+                      secret_keyring=config.get('gpg', 'secret_keyring'))
+            LOG.debug('Decrypting stream')
+            stream = gpg.revert_stream()
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            LOG.debug('Not decrypting the stream')
+
+    with stream as handler:
+        try:
+            cmd = ["tar", "zvxf", "-"]
+            LOG.debug('Running %s', ' '.join(cmd))
+            proc = Popen(cmd, stdin=handler, cwd=dst_dir)
             cout, cerr = proc.communicate()
             ret = proc.returncode
             if ret:
@@ -399,8 +411,8 @@ def restore_from_file(config, backup_copy, dst_dir):
                     LOG.error('STDOUT: %s', cout)
                 if cerr:
                     LOG.error('STDERR: %s', cerr)
-                exit(1)
+                return
+            LOG.info('Successfully restored %s in %s', backup_copy, dst_dir)
         except OSError as err:
             LOG.error('Failed to decompress %s: %s', backup_copy, err)
             exit(1)
-    LOG.info('Successfully restored %s in %s', backup_copy, dst_dir)

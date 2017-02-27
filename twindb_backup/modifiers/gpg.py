@@ -13,7 +13,8 @@ from twindb_backup.modifiers.base import Modifier, ModifierException
 
 class Gpg(Modifier):
     """Asymmetric encryption"""
-    def __init__(self, input_stream, recipient, keyring):
+    def __init__(self, input_stream, recipient, keyring,
+                 secret_keyring=None):
         """
         Modifier that encrypts the input_stream with gpg.
 
@@ -24,6 +25,8 @@ class Gpg(Modifier):
         :type recipient: str
         :param keyring: Path to public keyring. Must exist.
         :type keyring: str
+        :param secret_keyring: Path to secret keyring.
+        :type keyring: str
         :raise: ModifierException if keyring doesn't exist.
         """
         if os.path.exists(keyring):
@@ -31,6 +34,7 @@ class Gpg(Modifier):
         else:
             raise ModifierException('Keyring file %s does not exit' % keyring)
 
+        self.secret_keyring = secret_keyring
         self.recipient = recipient
         super(Gpg, self).__init__(input_stream)
 
@@ -44,6 +48,7 @@ class Gpg(Modifier):
         """
         with self.input as input_stream:
             proc = Popen(['gpg', '--no-default-keyring',
+                          '--trust-model', 'always',
                           '--keyring', self.keyring,
                           '--recipient', self.recipient,
                           '--encrypt',
@@ -54,6 +59,31 @@ class Gpg(Modifier):
                          stderr=PIPE)
             yield proc.stdout
             cerr = proc.communicate()
+            if proc.returncode:
+                LOG.error('gpg exited with non-zero code.')
+                LOG.error(cerr)
+
+    @contextmanager
+    def revert_stream(self):
+        """
+        Decrypt the input stream and return it as the output stream
+
+        :return: output stream handle
+        :raise: OSError if failed to call the gpg command
+        """
+        with self.input as input_stream:
+            cmd = ['gpg', '--no-default-keyring',
+                   '--secret-keyring', self.secret_keyring,
+                   '--decrypt',
+                   '--yes',
+                   '--batch']
+            LOG.debug('Running %s', ' '.join(cmd))
+            proc = Popen(cmd,
+                         stdin=input_stream,
+                         stdout=PIPE,
+                         stderr=PIPE)
+            yield proc.stdout
+            _, cerr = proc.communicate()
             if proc.returncode:
                 LOG.error('gpg exited with non-zero code.')
                 LOG.error(cerr)

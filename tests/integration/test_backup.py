@@ -180,3 +180,70 @@ def test__s3_find_files_returns_sorted(s3_client, config_content_mysql_only,
         objects = [f.key for f in dst.list_files(prefix)]
         assert len(objects) == n_runs
         assert objects == sorted(objects)
+
+
+def test_test__take_file_backup_with_aenc(config_content_files_aenc,
+                                          tmpdir,
+                                          foo_bar_dir,
+                                          s3_client):
+    config = tmpdir.join('twindb-backup.cfg')
+    content = config_content_files_aenc.format(
+        TEST_DIR=foo_bar_dir,
+        AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+        AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+        BUCKET=s3_client.bucket
+    )
+    config.write(content)
+
+    backup_dir = foo_bar_dir
+
+    # write some content to the directory
+    with open(os.path.join(backup_dir, 'file'), 'w') as f:
+        f.write("Hello world.")
+
+    hostname = socket.gethostname()
+    s3_backup_path = 's3://%s/%s/hourly/files/%s' % \
+                     (s3_client.bucket, hostname, backup_dir.replace('/', '_'))
+
+    cmd = ['twindb-backup', '--debug',
+           '--config', str(config),
+           'backup', 'hourly']
+    assert call(cmd) == 0
+
+    cmd = ['twindb-backup', '--debug',
+           '--config', str(config),
+           'ls']
+    proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+    out, err = proc.communicate()
+
+    LOG.debug('STDOUT: %s' % out)
+    LOG.debug('STDERR: %s' % err)
+
+    assert proc.returncode == 0
+
+    assert s3_backup_path in out
+
+    backup_to_restore = None
+    for line in StringIO.StringIO(out):
+        if line.startswith(s3_backup_path):
+            backup_to_restore = line.strip()
+            break
+
+    dest_dir = tmpdir.mkdir("dst")
+    cmd = ['twindb-backup', '--debug',
+           '--config', str(config),
+           'restore', 'file', '--dst', str(dest_dir), backup_to_restore]
+
+    assert call(cmd) == 0
+
+    path_to_file_restored = '%s/%s/file' % (str(dest_dir), backup_dir)
+    assert os.path.exists(path_to_file_restored)
+
+    # And content is same
+    path_to_file_orig = "%s/file" % backup_dir
+    proc = Popen(['diff', '-Nur',
+                  path_to_file_orig,
+                  path_to_file_restored],
+                 stdout=PIPE, stderr=PIPE)
+    out, err = proc.communicate()
+    assert not out

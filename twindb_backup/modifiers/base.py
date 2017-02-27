@@ -33,6 +33,17 @@ class Modifier(object):
         """
         yield self.input
 
+    @contextmanager
+    def revert_stream(self):
+        """
+        Un-Apply modifier and return output stream.
+        The Base modifier does nothing, so it will return the input stream
+        without modifications
+
+        :return: output stream handle
+        """
+        yield self.input
+
     def callback(self, **kwargs):
         """Method that will be called after the stream ends"""
         pass

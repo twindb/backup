@@ -36,6 +36,7 @@ def test_get_stream(mock_popen, input_file, keyring_file):
         with gpg.get_stream() as s:
             cmd = ['gpg',
                    '--no-default-keyring',
+                   '--trust-model', 'always',
                    '--keyring', gpg.keyring,
                    '--recipient', gpg.recipient,
                    '--encrypt',
