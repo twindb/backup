@@ -63,7 +63,7 @@ class Gpg(Modifier):
                 LOG.error('gpg exited with non-zero code.')
                 LOG.error(cerr)
 
-    @contextmanager
+#    @contextmanager
     def revert_stream(self):
         """
         Decrypt the input stream and return it as the output stream
@@ -71,19 +71,8 @@ class Gpg(Modifier):
         :return: output stream handle
         :raise: OSError if failed to call the gpg command
         """
-        with self.input as input_stream:
-            cmd = ['gpg', '--no-default-keyring',
-                   '--secret-keyring', self.secret_keyring,
-                   '--decrypt',
-                   '--yes',
-                   '--batch']
-            LOG.debug('Running %s', ' '.join(cmd))
-            proc = Popen(cmd,
-                         stdin=input_stream,
-                         stdout=PIPE,
-                         stderr=PIPE)
-            yield proc.stdout
-            _, cerr = proc.communicate()
-            if proc.returncode:
-                LOG.error('gpg exited with non-zero code.')
-                LOG.error(cerr)
+        return self._revert_stream(['gpg', '--no-default-keyring',
+                                    '--secret-keyring', self.secret_keyring,
+                                    '--decrypt',
+                                    '--yes',
+                                    '--batch'])

@@ -85,6 +85,7 @@ def test__take_mysql_backup(s3_client, config_content_mysql_only, tmpdir):
     )
     config.write(content)
     cmd = ['twindb-backup',
+           '--debug',
            '--config', str(config),
            'backup', 'hourly']
     assert call(cmd) == 0
@@ -100,7 +101,7 @@ def test__take_mysql_backup(s3_client, config_content_mysql_only, tmpdir):
 
     key = json.loads(cout)['hourly'].keys()[0]
 
-    assert key
+    assert key.endswith('.xbstream.gz')
 
 
 def test__take_mysql_backup_retention(s3_client, config_content_mysql_only,
@@ -247,3 +248,133 @@ def test_test__take_file_backup_with_aenc(config_content_files_aenc,
                  stdout=PIPE, stderr=PIPE)
     out, err = proc.communicate()
     assert not out
+
+
+def test__take_mysql_backup_aenc_suffix_gpg(s3_client,
+                                            config_content_mysql_aenc,
+                                            tmpdir):
+    config = tmpdir.join('twindb-backup.cfg')
+    content = config_content_mysql_aenc.format(
+        AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+        AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+        BUCKET=s3_client.bucket,
+        daily_copies=1,
+        hourly_copies=2
+    )
+    config.write(content)
+    cmd = ['twindb-backup',
+           '--config', str(config),
+           'backup', 'daily']
+    assert call(cmd) == 0
+
+    cmd = ['twindb-backup',
+           '--config', str(config),
+           'status']
+    proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+    cout, cerr = proc.communicate()
+
+    LOG.debug('STDOUT: %s', cout)
+    LOG.debug('STDERR: %s', cerr)
+
+    key = json.loads(cout)['daily'].keys()[0]
+
+    assert key.endswith('xbstream.gz.gpg')
+
+
+def test_take_mysql_backup_aenc_restores_full(s3_client,
+                                            config_content_mysql_aenc,
+                                            tmpdir):
+    config = tmpdir.join('twindb-backup.cfg')
+    content = config_content_mysql_aenc.format(
+        AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+        AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+        BUCKET=s3_client.bucket,
+        daily_copies=1,
+        hourly_copies=2
+    )
+    config.write(content)
+    cmd = ['twindb-backup',
+           '--config', str(config),
+           'backup', 'daily']
+    assert call(cmd) == 0
+
+    cmd = ['twindb-backup',
+           '--config', str(config),
+           'status']
+    proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+    cout, cerr = proc.communicate()
+
+    LOG.debug('STDOUT: %s', cout)
+    LOG.debug('STDERR: %s', cerr)
+
+    key = json.loads(cout)['daily'].keys()[0]
+
+    backup_copy = 's3://' + s3_client.bucket + '/' + key
+    dst_dir = str(tmpdir.mkdir('dst'))
+    cmd = ['twindb-backup', '--debug',
+           '--config', str(config),
+           'restore', 'mysql',
+           backup_copy,
+           '--dst', dst_dir]
+    assert call(cmd) == 0
+    call(['find', dst_dir])
+    assert os.path.exists(dst_dir + '/ibdata1')
+    assert os.path.exists(dst_dir + '/ib_logfile0')
+    assert os.path.exists(dst_dir + '/ib_logfile1')
+    assert os.path.exists(dst_dir + '/mysql/user.MYD')
+    assert os.path.exists(dst_dir + '/backup-my.cnf')
+    assert os.path.exists(dst_dir + '/xtrabackup_logfile')
+    assert os.path.exists(dst_dir + '/_config/etc/my.cnf') or \
+           os.path.exists(dst_dir + '/_config/etc/mysql/my.cnf')
+
+
+def test_take_mysql_backup_aenc_restores_inc(s3_client,
+                                              config_content_mysql_aenc,
+                                              tmpdir):
+    config = tmpdir.join('twindb-backup.cfg')
+    content = config_content_mysql_aenc.format(
+        AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+        AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+        BUCKET=s3_client.bucket,
+        daily_copies=1,
+        hourly_copies=2
+    )
+    config.write(content)
+
+    assert call(['twindb-backup',
+                 '--config', str(config),
+                 'backup', 'daily']) == 0
+
+    assert call(['twindb-backup',
+                 '--config', str(config),
+                 'backup', 'hourly']) == 0
+
+    cmd = ['twindb-backup',
+           '--config', str(config),
+           'status']
+    proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+    cout, cerr = proc.communicate()
+
+    LOG.debug('STDOUT: %s', cout)
+    LOG.debug('STDERR: %s', cerr)
+
+    key = json.loads(cout)['hourly'].keys()[0]
+
+    backup_copy = 's3://' + s3_client.bucket + '/' + key
+    dst_dir = str(tmpdir.mkdir('dst'))
+    cmd = ['twindb-backup', '--debug',
+           '--config', str(config),
+           'restore', 'mysql',
+           backup_copy,
+           '--dst', dst_dir]
+    assert call(cmd) == 0
+    call(['find', dst_dir])
+    assert os.path.exists(dst_dir + '/ibdata1')
+    assert os.path.exists(dst_dir + '/ib_logfile0')
+    assert os.path.exists(dst_dir + '/ib_logfile1')
+    assert os.path.exists(dst_dir + '/mysql/user.MYD')
+    assert os.path.exists(dst_dir + '/backup-my.cnf')
+    assert os.path.exists(dst_dir + '/xtrabackup_logfile')
+    assert os.path.exists(dst_dir + '/_config/etc/my.cnf') or \
+           os.path.exists(dst_dir + '/_config/etc/mysql/my.cnf')
+

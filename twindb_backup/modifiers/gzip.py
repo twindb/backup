@@ -32,3 +32,13 @@ class Gzip(Modifier):
                          stdout=PIPE)
             yield proc.stdout
             proc.communicate()
+
+#    @contextmanager
+    def revert_stream(self):
+        """
+        Decompress the input stream and return it as the output stream
+
+        :return: output stream handle
+        :raise: OSError if failed to call the gpg command
+        """
+        return self._revert_stream(['gunzip', '-c'])

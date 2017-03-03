@@ -16,6 +16,7 @@ from twindb_backup.configuration import get_destination
 from twindb_backup.destination.base_destination import DestinationError
 from twindb_backup.destination.local import Local
 from twindb_backup.modifiers.gpg import Gpg
+from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, \
     get_hostname_from_backup_copy
 
@@ -82,62 +83,37 @@ def get_my_cnf(status, key):
         yield k, value
 
 
-def restore_from_mysql_full(dst, backup_copy, dst_dir, redo_only=False):
+def restore_from_mysql_full(stream, dst_dir, config,
+                            redo_only=False):
     """
     Restore MySQL datadir from a backup copy
 
-    :param dst: Instance of backup destination.
-    :type dst: Destination
-    :param backup_copy: Backup copy name.
-    :type backup_copy: str
+    :param stream: Generator that provides backup copy
     :param dst_dir: Path to destination directory. Must exist and be empty.
     :type dst_dir: str
+    :param config: Tool configuration.
+    :type config: ConfigParser.ConfigParser
     :param redo_only: True if the function has to do final apply of
     the redo log. For example, if you restore backup from a full copy
     it should be False. If you restore from incremental copy and you restore
     base full copy redo_only should be True.
     :type redo_only: bool
     """
-    with dst.get_stream(backup_copy) as handler:
-        try:
-            LOG.debug('Running gunzip')
-            gunzip_proc = Popen(['gunzip'],
-                                stdin=handler,
-                                stdout=PIPE,
-                                stderr=PIPE,
-                                cwd=dst_dir)
-            try:
-                xbstream_cmd = ['xbstream', '-x']
-                xbstream_proc = Popen(xbstream_cmd,
-                                      stdin=gunzip_proc.stdout,
-                                      stdout=PIPE,
-                                      stderr=PIPE,
-                                      cwd=dst_dir)
-                cout, cerr = xbstream_proc.communicate()
-                ret = xbstream_proc.returncode
-                if ret:
-                    LOG.error('%r exited with code %d', xbstream_cmd, ret)
-                    if cout:
-                        LOG.error('STDOUT: %s', cout)
-                    if cerr:
-                        LOG.error('STDERR: %s', cerr)
-                    exit(1)
+    # GPG modifier
+    try:
+        gpg = Gpg(stream,
+                  config.get('gpg', 'recipient'),
+                  config.get('gpg', 'keyring'),
+                  secret_keyring=config.get('gpg', 'secret_keyring'))
+        LOG.debug('Decrypting stream')
+        stream = gpg.revert_stream()
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        LOG.debug('Not decrypting the stream')
 
-            except OSError as err:
-                LOG.error('Failed to unarchive %s: %s', backup_copy, err)
-                exit(1)
-            cout, cerr = gunzip_proc.communicate()
-            ret = gunzip_proc.returncode
-            if ret:
-                LOG.error('gunzip exited with code %d', ret)
-                if cout:
-                    LOG.error('STDOUT: %s', cout)
-                if cerr:
-                    LOG.error('STDERR: %s', cerr)
-                exit(1)
-        except OSError as err:
-            LOG.error('Failed to decompress %s: %s', backup_copy, err)
-            exit(1)
+    stream = Gzip(stream).revert_stream()
+
+    with stream as handler:
+        _extract_xbstream(handler, dst_dir)
 
     mem_usage = psutil.virtual_memory()
     try:
@@ -163,16 +139,17 @@ def restore_from_mysql_full(dst, backup_copy, dst_dir, redo_only=False):
 
 def _extract_xbstream(input_stream, working_dir):
     try:
-        xbstream_cmd = ['xbstream', '-x']
-        xbstream_proc = Popen(xbstream_cmd,
-                              stdin=input_stream,
-                              stdout=PIPE,
-                              stderr=PIPE,
-                              cwd=working_dir)
-        cout, cerr = xbstream_proc.communicate()
-        ret = xbstream_proc.returncode
+        cmd = ['xbstream', '-x']
+        LOG.debug('Running %s', ' '.join(cmd))
+        proc = Popen(cmd,
+                     stdin=input_stream,
+                     stdout=PIPE,
+                     stderr=PIPE,
+                     cwd=working_dir)
+        cout, cerr = proc.communicate()
+        ret = proc.returncode
         if ret:
-            LOG.error('%r exited with code %d', xbstream_cmd, ret)
+            LOG.error('%s exited with code %d', ' '.join(cmd), ret)
             if cout:
                 LOG.error('STDOUT: %s', cout)
             if cerr:
@@ -184,45 +161,35 @@ def _extract_xbstream(input_stream, working_dir):
         exit(1)
 
 
-def restore_from_mysql_incremental(dst, backup_copy, dst_dir):
+def restore_from_mysql_incremental(stream, dst_dir, config):
     """
     Restore MySQL datadir from an incremental copy.
 
-    :param dst: Instance of backup destination.
-    :type dst: Destination
-    :param backup_copy: Backup copy name
-    :type backup_copy: str
+    :param stream: Generator that provides backup copy
     :param dst_dir: Path to destination directory. Must exist and be empty.
     :type dst_dir: str
+    :param config: Tool configuration.
+    :type config: ConfigParser.ConfigParser
     """
-    full_copy = dst.get_full_copy_name(backup_copy)
-    restore_from_mysql_full(dst, full_copy, dst_dir, redo_only=True)
     inc_dir = tempfile.mkdtemp()
+
+    # GPG modifier
     try:
-        with dst.get_stream(backup_copy) as handler:
-            try:
-                LOG.debug('Running gunzip')
-                gunzip_proc = Popen(['gunzip'],
-                                    stdin=handler,
-                                    stdout=PIPE,
-                                    stderr=PIPE,
-                                    cwd=inc_dir)
+        gpg = Gpg(stream,
+                  config.get('gpg', 'recipient'),
+                  config.get('gpg', 'keyring'),
+                  secret_keyring=config.get('gpg', 'secret_keyring'))
+        LOG.debug('Decrypting stream')
+        stream = gpg.revert_stream()
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        LOG.debug('Not decrypting the stream')
 
-                _extract_xbstream(gunzip_proc.stdout, inc_dir)
+    stream = Gzip(stream).revert_stream()
 
-                cout, cerr = gunzip_proc.communicate()
-                ret = gunzip_proc.returncode
-                if ret:
-                    LOG.error('gunzip exited with code %d', ret)
-                    if cout:
-                        LOG.error('STDOUT: %s', cout)
-                    if cerr:
-                        LOG.error('STDERR: %s', cerr)
-                    exit(1)
-            except OSError as err:
-                LOG.error('Failed to decompress %s: %s', backup_copy, err)
-                exit(1)
+    with stream as handler:
+        _extract_xbstream(handler, inc_dir)
 
+    try:
         mem_usage = psutil.virtual_memory()
         try:
             xtrabackup_cmd = ['innobackupex',
@@ -306,7 +273,7 @@ def update_grastate(dst_dir, status, key):
                      version, uuid, seqno)
 
 
-def restore_from_mysql(config, backup_copy, dst_dir):
+def restore_from_mysql(config, backup_copy, dst_dir):  # pylint: disable=too-many-locals
     """
     Restore MySQL datadir in a given directory
 
@@ -319,27 +286,42 @@ def restore_from_mysql(config, backup_copy, dst_dir):
     LOG.info('Restoring %s in %s', backup_copy, dst_dir)
     mkdir_p(dst_dir)
 
+    dst = None
+
     try:
         keep_local_path = config.get('destination', 'keep_local_path')
         if os.path.exists(backup_copy) \
                 and backup_copy.startswith(keep_local_path):
             dst = Local(keep_local_path)
-        else:
-            hostname = get_hostname_from_backup_copy(backup_copy)
-            if not hostname:
-                raise DestinationError('Failed to get hostname from %s'
-                                       % backup_copy)
-            dst = get_destination(config, hostname=hostname)
     except ConfigParser.NoOptionError:
-        dst = get_destination(config)
+        pass
+
+    if not dst:
+        hostname = get_hostname_from_backup_copy(backup_copy)
+        if not hostname:
+            raise DestinationError('Failed to get hostname from %s'
+                                   % backup_copy)
+        dst = get_destination(config, hostname=hostname)
 
     key = dst.basename(backup_copy)
     status = dst.status()
 
+    stream = dst.get_stream(backup_copy)
+
     if get_backup_type(status, key) == "full":
-        restore_from_mysql_full(dst, backup_copy, dst_dir)
+        restore_from_mysql_full(stream,
+                                dst_dir,
+                                config)
     else:
-        restore_from_mysql_incremental(dst, backup_copy, dst_dir)
+        full_copy = dst.get_full_copy_name(backup_copy)
+        full_stream = dst.get_stream(full_copy)
+        restore_from_mysql_full(full_stream,
+                                dst_dir,
+                                config,
+                                redo_only=True)
+        restore_from_mysql_incremental(stream,
+                                       dst_dir,
+                                       config)
 
     config_dir = os.path.join(dst_dir, "_config")
 

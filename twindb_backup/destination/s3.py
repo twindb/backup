@@ -280,7 +280,11 @@ class S3(BaseDestination):
             os.close(read_fd)
 
             with os.fdopen(write_fd, 'wb') as w_pipe:
-                s3_client.download_fileobj(bucket_name, key, w_pipe)
+                try:
+                    s3_client.download_fileobj(bucket_name, key, w_pipe)
+                except IOError as err:
+                    LOG.error(err)
+                    exit(1)
 
         download_proc = None
         try:
@@ -299,6 +303,13 @@ class S3(BaseDestination):
             # we start reading from it.
             os.close(write_pipe)
             yield read_pipe
+
+            os.close(read_pipe)
+            download_proc.join()
+
+            if download_proc.exitcode:
+                LOG.error('Failed to download %s', path)
+                exit(1)
 
             LOG.debug('Successfully streamed %s', path)
 

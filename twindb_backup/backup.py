@@ -109,7 +109,7 @@ def backup_mysql(run_type, config):
 
     # Gzip modifier
     stream = Gzip(stream).get_stream()
-    src.suffix += '.gz'
+    src_name += '.gz'
 
     # KeepLocal modifier
     try:
@@ -129,9 +129,10 @@ def backup_mysql(run_type, config):
 
     # GPG modifier
     try:
-        stream = Gpg(stream, config.get('gpg', 'recipient'),
+        stream = Gpg(stream,
+                     config.get('gpg', 'recipient'),
                      config.get('gpg', 'keyring')).get_stream()
-        src.suffix += '.gpg'
+        src_name += '.gpg'
     except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
         pass
     except ModifierException as err:
@@ -150,7 +151,9 @@ def backup_mysql(run_type, config):
         'lsn': src.lsn,
         'type': src.type
     }
+
     status[run_type][src_name]['config'] = []
+
     for path, content in src.get_my_cnf():
         status[run_type][src_name]['config'].append({
             path: base64.b64encode(content)
