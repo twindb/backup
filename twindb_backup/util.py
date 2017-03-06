@@ -4,6 +4,7 @@ Module with helper functions
 """
 import errno
 import os
+import shutil
 from contextlib import contextmanager
 from subprocess import Popen, PIPE
 
@@ -24,6 +25,20 @@ def mkdir_p(path):
             pass
         else:
             raise
+
+
+def empty_dir(path):
+    """Remove all files are directories in path
+
+    :param path: Path to directory to be emptied.
+    :type path: str
+    """
+    for the_file in os.listdir(path):
+        file_path = os.path.join(path, the_file)
+        if os.path.isfile(file_path):
+            os.unlink(file_path)
+        elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)
 
 
 def get_hostname_from_backup_copy(backup_copy):

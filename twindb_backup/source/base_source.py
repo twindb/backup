@@ -7,7 +7,7 @@ import socket
 
 import time
 
-from twindb_backup import delete_local_files, INTERVALS
+from twindb_backup import delete_local_files, INTERVALS, LOG
 
 
 class BaseSource(object):
@@ -47,14 +47,14 @@ class BaseSource(object):
 
     def _get_name(self, filename):
 
-        if not self._name:
-            self._name = "{prefix}/{media_type}/{file}-{time}.{suffix}".format(
-                prefix=self.get_prefix(),
-                media_type=self._media_type,
-                file=filename,
-                time=time.strftime('%Y-%m-%d_%H_%M_%S'),
-                suffix=self._suffix
-            )
+        LOG.debug('Suffix = %s', self.suffix)
+        self._name = "{prefix}/{media_type}/{file}-{time}.{suffix}".format(
+            prefix=self.get_prefix(),
+            media_type=self._media_type,
+            file=filename,
+            time=time.strftime('%Y-%m-%d_%H_%M_%S'),
+            suffix=self._suffix
+        )
         return self._name
 
     def _delete_local_files(self, filename, config):

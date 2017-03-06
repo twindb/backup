@@ -4,6 +4,10 @@ Module defines Modifier() base class and its errors.
 """
 from contextlib import contextmanager
 
+from subprocess import Popen, PIPE
+
+from twindb_backup import LOG
+
 
 class ModifierException(Exception):
     """Base Exception for Modifier error"""
@@ -32,6 +36,28 @@ class Modifier(object):
         :return: output stream handle
         """
         yield self.input
+
+    @contextmanager
+    def _revert_stream(self, cmd):
+        """
+        Un-Apply modifier and return output stream.
+        The Base modifier does nothing, so it will return the input stream
+        without modifications
+
+        :return: output stream handle
+        """
+        with self.input as input_stream:
+            LOG.debug('Running %s', ' '.join(cmd))
+            proc = Popen(cmd,
+                         stdin=input_stream,
+                         stdout=PIPE,
+                         stderr=PIPE)
+            yield proc.stdout
+
+            _, cerr = proc.communicate()
+            if proc.returncode:
+                LOG.error('%s exited with non-zero code.', ' '.join(cmd))
+                LOG.error(cerr)
 
     def callback(self, **kwargs):
         """Method that will be called after the stream ends"""

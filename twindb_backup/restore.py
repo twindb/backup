@@ -6,18 +6,22 @@ from __future__ import print_function
 import ConfigParser
 import base64
 import json
-import shlex
 from subprocess import Popen, PIPE
 import os
 import tempfile
 import errno
+import time
+
 import psutil
-from twindb_backup import LOG, INTERVALS
+
+from twindb_backup import LOG, INTERVALS, TwinDBBackupError
 from twindb_backup.configuration import get_destination
 from twindb_backup.destination.base_destination import DestinationError
 from twindb_backup.destination.local import Local
+from twindb_backup.modifiers.gpg import Gpg
+from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, \
-    get_hostname_from_backup_copy
+    get_hostname_from_backup_copy, empty_dir
 
 
 def _get_status_key(status, key, variable):
@@ -82,62 +86,40 @@ def get_my_cnf(status, key):
         yield k, value
 
 
-def restore_from_mysql_full(dst, backup_copy, dst_dir, redo_only=False):
+def restore_from_mysql_full(stream, dst_dir, config,
+                            redo_only=False):
     """
     Restore MySQL datadir from a backup copy
 
-    :param dst: Instance of backup destination.
-    :type dst: Destination
-    :param backup_copy: Backup copy name.
-    :type backup_copy: str
+    :param stream: Generator that provides backup copy
     :param dst_dir: Path to destination directory. Must exist and be empty.
     :type dst_dir: str
+    :param config: Tool configuration.
+    :type config: ConfigParser.ConfigParser
     :param redo_only: True if the function has to do final apply of
     the redo log. For example, if you restore backup from a full copy
     it should be False. If you restore from incremental copy and you restore
     base full copy redo_only should be True.
     :type redo_only: bool
+    :return: If success, return True
+    :rtype: bool
     """
-    with dst.get_stream(backup_copy) as handler:
-        try:
-            LOG.debug('Running gunzip')
-            gunzip_proc = Popen(['gunzip'],
-                                stdin=handler,
-                                stdout=PIPE,
-                                stderr=PIPE,
-                                cwd=dst_dir)
-            try:
-                xbstream_cmd = ['xbstream', '-x']
-                xbstream_proc = Popen(xbstream_cmd,
-                                      stdin=gunzip_proc.stdout,
-                                      stdout=PIPE,
-                                      stderr=PIPE,
-                                      cwd=dst_dir)
-                cout, cerr = xbstream_proc.communicate()
-                ret = xbstream_proc.returncode
-                if ret:
-                    LOG.error('%r exited with code %d', xbstream_cmd, ret)
-                    if cout:
-                        LOG.error('STDOUT: %s', cout)
-                    if cerr:
-                        LOG.error('STDERR: %s', cerr)
-                    exit(1)
+    # GPG modifier
+    try:
+        gpg = Gpg(stream,
+                  config.get('gpg', 'recipient'),
+                  config.get('gpg', 'keyring'),
+                  secret_keyring=config.get('gpg', 'secret_keyring'))
+        LOG.debug('Decrypting stream')
+        stream = gpg.revert_stream()
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        LOG.debug('Not decrypting the stream')
 
-            except OSError as err:
-                LOG.error('Failed to unarchive %s: %s', backup_copy, err)
-                exit(1)
-            cout, cerr = gunzip_proc.communicate()
-            ret = gunzip_proc.returncode
-            if ret:
-                LOG.error('gunzip exited with code %d', ret)
-                if cout:
-                    LOG.error('STDOUT: %s', cout)
-                if cerr:
-                    LOG.error('STDERR: %s', cerr)
-                exit(1)
-        except OSError as err:
-            LOG.error('Failed to decompress %s: %s', backup_copy, err)
-            exit(1)
+    stream = Gzip(stream).revert_stream()
+
+    with stream as handler:
+        if not _extract_xbstream(handler, dst_dir):
+            return False
 
     mem_usage = psutil.virtual_memory()
     try:
@@ -156,73 +138,75 @@ def restore_from_mysql_full(dst, backup_copy, dst_dir, redo_only=False):
         ret = xtrabackup_proc.returncode
         if ret:
             LOG.error('%s exited with code %d', " ".join(xtrabackup_cmd), ret)
+        return ret == 0
     except OSError as err:
         LOG.error('Failed to prepare backup in %s: %s', dst_dir, err)
-        exit(1)
+        return False
 
 
 def _extract_xbstream(input_stream, working_dir):
+    """
+    Extract xbstream stream in directory
+
+    :param input_stream: The stream in xbstream format
+    :param working_dir: directory
+    :return: True if extracted successfully
+    """
     try:
-        xbstream_cmd = ['xbstream', '-x']
-        xbstream_proc = Popen(xbstream_cmd,
-                              stdin=input_stream,
-                              stdout=PIPE,
-                              stderr=PIPE,
-                              cwd=working_dir)
-        cout, cerr = xbstream_proc.communicate()
-        ret = xbstream_proc.returncode
+        cmd = ['xbstream', '-x']
+        LOG.debug('Running %s', ' '.join(cmd))
+        proc = Popen(cmd,
+                     stdin=input_stream,
+                     stdout=PIPE,
+                     stderr=PIPE,
+                     cwd=working_dir)
+        cout, cerr = proc.communicate()
+        ret = proc.returncode
         if ret:
-            LOG.error('%r exited with code %d', xbstream_cmd, ret)
+            LOG.error('%s exited with code %d', ' '.join(cmd), ret)
             if cout:
                 LOG.error('STDOUT: %s', cout)
             if cerr:
                 LOG.error('STDERR: %s', cerr)
-            exit(1)
+        return ret == 0
 
     except OSError as err:
         LOG.error('Failed to extract xbstream: %s', err)
-        exit(1)
+        return False
 
 
-def restore_from_mysql_incremental(dst, backup_copy, dst_dir):
+def restore_from_mysql_incremental(stream, dst_dir, config):
     """
     Restore MySQL datadir from an incremental copy.
 
-    :param dst: Instance of backup destination.
-    :type dst: Destination
-    :param backup_copy: Backup copy name
-    :type backup_copy: str
+    :param stream: Generator that provides backup copy
     :param dst_dir: Path to destination directory. Must exist and be empty.
     :type dst_dir: str
+    :param config: Tool configuration.
+    :type config: ConfigParser.ConfigParser
+    :return: If success, return True
+    :rtype: bool
     """
-    full_copy = dst.get_full_copy_name(backup_copy)
-    restore_from_mysql_full(dst, full_copy, dst_dir, redo_only=True)
     inc_dir = tempfile.mkdtemp()
+
+    # GPG modifier
     try:
-        with dst.get_stream(backup_copy) as handler:
-            try:
-                LOG.debug('Running gunzip')
-                gunzip_proc = Popen(['gunzip'],
-                                    stdin=handler,
-                                    stdout=PIPE,
-                                    stderr=PIPE,
-                                    cwd=inc_dir)
+        gpg = Gpg(stream,
+                  config.get('gpg', 'recipient'),
+                  config.get('gpg', 'keyring'),
+                  secret_keyring=config.get('gpg', 'secret_keyring'))
+        LOG.debug('Decrypting stream')
+        stream = gpg.revert_stream()
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        LOG.debug('Not decrypting the stream')
 
-                _extract_xbstream(gunzip_proc.stdout, inc_dir)
+    stream = Gzip(stream).revert_stream()
 
-                cout, cerr = gunzip_proc.communicate()
-                ret = gunzip_proc.returncode
-                if ret:
-                    LOG.error('gunzip exited with code %d', ret)
-                    if cout:
-                        LOG.error('STDOUT: %s', cout)
-                    if cerr:
-                        LOG.error('STDERR: %s', cerr)
-                    exit(1)
-            except OSError as err:
-                LOG.error('Failed to decompress %s: %s', backup_copy, err)
-                exit(1)
+    with stream as handler:
+        if not _extract_xbstream(handler, inc_dir):
+            return False
 
+    try:
         mem_usage = psutil.virtual_memory()
         try:
             xtrabackup_cmd = ['innobackupex',
@@ -239,6 +223,7 @@ def restore_from_mysql_incremental(dst, backup_copy, dst_dir):
                 LOG.error('%s exited with code %d',
                           " ".join(xtrabackup_cmd),
                           ret)
+                return False
 
             xtrabackup_cmd = ['innobackupex',
                               '--use-memory=%d' % (mem_usage.available / 2),
@@ -253,9 +238,10 @@ def restore_from_mysql_incremental(dst, backup_copy, dst_dir):
                 LOG.error('%s exited with code %d',
                           " ".join(xtrabackup_cmd),
                           ret)
+            return ret == 0
         except OSError as err:
             LOG.error('Failed to prepare backup in %s: %s', dst_dir, err)
-            exit(1)
+            return False
     finally:
         try:
             pass
@@ -306,7 +292,54 @@ def update_grastate(dst_dir, status, key):
                      version, uuid, seqno)
 
 
-def restore_from_mysql(config, backup_copy, dst_dir):
+def restore_from_mysql_full_retry(stream, dst_dir, config, redo_only=False):
+    """
+    Restore full mysql copy and retry if it fails.
+
+    See restore_from_mysql_full() for arguments description.
+    """
+    n_attempts = 3
+    retry_interval = 2
+    for _ in xrange(n_attempts):
+        if restore_from_mysql_full(stream, dst_dir, config,
+                                   redo_only=redo_only):
+            return
+        else:
+            LOG.warning('Will retry in %d seconds.', retry_interval)
+            time.sleep(retry_interval)
+            empty_dir(dst_dir)
+            retry_interval *= 2
+    raise TwinDBBackupError('Failed to restore backup after %d attempts.',
+                            n_attempts)
+
+
+def restore_from_mysql_inc_retry(dst, full_copy, stream, dst_dir, config):
+    """
+    Restore incremental mysql copy and retry if it fails.
+
+    See restore_from_mysql_incremental() for arguments description.
+    """
+    n_attempts = 3
+    retry_interval = 2
+    for _ in xrange(n_attempts):
+        full_stream = dst.get_stream(full_copy)
+        restore_from_mysql_full_retry(full_stream, dst_dir,
+                                      config, redo_only=True)
+
+        inc_status = restore_from_mysql_incremental(stream, dst_dir, config)
+        if not inc_status:
+            LOG.warning('Will retry in %d seconds.', retry_interval)
+            time.sleep(retry_interval)
+            empty_dir(dst_dir)
+            retry_interval *= 2
+            continue
+        return
+
+    raise TwinDBBackupError('Failed to restore backup after %d attempts.',
+                            n_attempts)
+
+
+def restore_from_mysql(config, backup_copy, dst_dir):  # pylint: disable=too-many-locals
     """
     Restore MySQL datadir in a given directory
 
@@ -319,27 +352,34 @@ def restore_from_mysql(config, backup_copy, dst_dir):
     LOG.info('Restoring %s in %s', backup_copy, dst_dir)
     mkdir_p(dst_dir)
 
+    dst = None
+
     try:
         keep_local_path = config.get('destination', 'keep_local_path')
         if os.path.exists(backup_copy) \
                 and backup_copy.startswith(keep_local_path):
             dst = Local(keep_local_path)
-        else:
-            hostname = get_hostname_from_backup_copy(backup_copy)
-            if not hostname:
-                raise DestinationError('Failed to get hostname from %s'
-                                       % backup_copy)
-            dst = get_destination(config, hostname=hostname)
     except ConfigParser.NoOptionError:
-        dst = get_destination(config)
+        pass
+
+    if not dst:
+        hostname = get_hostname_from_backup_copy(backup_copy)
+        if not hostname:
+            raise DestinationError('Failed to get hostname from %s'
+                                   % backup_copy)
+        dst = get_destination(config, hostname=hostname)
 
     key = dst.basename(backup_copy)
     status = dst.status()
 
+    stream = dst.get_stream(backup_copy)
+
     if get_backup_type(status, key) == "full":
-        restore_from_mysql_full(dst, backup_copy, dst_dir)
+        restore_from_mysql_full_retry(stream, dst_dir, config)
     else:
-        restore_from_mysql_incremental(dst, backup_copy, dst_dir)
+        full_copy = dst.get_full_copy_name(backup_copy)
+        restore_from_mysql_inc_retry(dst, full_copy,
+                                     stream, dst_dir, config)
 
     config_dir = os.path.join(dst_dir, "_config")
 
@@ -383,14 +423,26 @@ def restore_from_file(config, backup_copy, dst_dir):
 
     if os.path.exists(backup_copy):
         dst = Local(backup_copy)
+        stream = dst.get_stream(backup_copy)
     else:
         dst = get_destination(config)
-
-    cmd = "tar zvxf -"
-    with dst.get_stream(backup_copy) as handler:
+        stream = dst.get_stream(backup_copy)
+        # GPG modifier
         try:
-            LOG.debug('Running %s', cmd)
-            proc = Popen(shlex.split(cmd), stdin=handler, cwd=dst_dir)
+            gpg = Gpg(stream,
+                      config.get('gpg', 'recipient'),
+                      config.get('gpg', 'keyring'),
+                      secret_keyring=config.get('gpg', 'secret_keyring'))
+            LOG.debug('Decrypting stream')
+            stream = gpg.revert_stream()
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            LOG.debug('Not decrypting the stream')
+
+    with stream as handler:
+        try:
+            cmd = ["tar", "zvxf", "-"]
+            LOG.debug('Running %s', ' '.join(cmd))
+            proc = Popen(cmd, stdin=handler, cwd=dst_dir)
             cout, cerr = proc.communicate()
             ret = proc.returncode
             if ret:
@@ -399,8 +451,8 @@ def restore_from_file(config, backup_copy, dst_dir):
                     LOG.error('STDOUT: %s', cout)
                 if cerr:
                     LOG.error('STDERR: %s', cerr)
-                exit(1)
+                return
+            LOG.info('Successfully restored %s in %s', backup_copy, dst_dir)
         except OSError as err:
             LOG.error('Failed to decompress %s: %s', backup_copy, err)
             exit(1)
-    LOG.info('Successfully restored %s in %s', backup_copy, dst_dir)

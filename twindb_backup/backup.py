@@ -15,6 +15,8 @@ from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
     TwinDBBackupError)
 from twindb_backup.configuration import get_destination
+from twindb_backup.modifiers.base import ModifierException
+from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.file_source import FileSource
@@ -38,17 +40,31 @@ def backup_files(run_type, config):
 
         # Gzip modifier
         stream = Gzip(stream).get_stream()
-        src.suffix = 'tar.gz'
+        src.suffix += '.gz'
 
         # KeepLocal modifier
         try:
             keep_local_path = config.get('destination', 'keep_local_path')
+            # src.suffix = 'tar.gz.aaa'
             dst_name = src.get_name()
             kl_modifier = KeepLocal(stream,
                                     os.path.join(keep_local_path, dst_name))
             stream = kl_modifier.get_stream()
         except ConfigParser.NoOptionError:
             pass
+
+        # GPG modifier
+        try:
+            keyring = config.get('gpg', 'keyring')
+            recipient = config.get('gpg', 'recipient')
+            gpg = Gpg(stream, recipient, keyring)
+            stream = gpg.get_stream()
+            src.suffix += '.gpg'
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            pass
+        except ModifierException as err:
+            LOG.warning(err)
+            LOG.warning('Will skip encryption')
 
         dst.save(stream, src.get_name())
 
@@ -89,17 +105,18 @@ def backup_mysql(run_type, config):
 
     callbacks = []
     stream = src.get_stream()
+    src_name = src.get_name()
 
     # Gzip modifier
     stream = Gzip(stream).get_stream()
-    src.suffix = 'xbstream.gz'
+    src_name += '.gz'
 
     # KeepLocal modifier
     try:
         keep_local_path = config.get('destination', 'keep_local_path')
         kl_modifier = KeepLocal(stream,
                                 os.path.join(keep_local_path,
-                                             src.get_name()))
+                                             src_name))
         stream = kl_modifier.get_stream()
 
         callbacks.append((kl_modifier, {
@@ -110,12 +127,23 @@ def backup_mysql(run_type, config):
     except ConfigParser.NoOptionError:
         LOG.debug('keep_local_path is not present in the config file')
 
-    if dst.save(stream, src.get_name()) != 0:
-        LOG.error('Failed to save backup copy %s', src.get_name())
+    # GPG modifier
+    try:
+        stream = Gpg(stream,
+                     config.get('gpg', 'recipient'),
+                     config.get('gpg', 'keyring')).get_stream()
+        src_name += '.gpg'
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        pass
+    except ModifierException as err:
+        LOG.warning(err)
+        LOG.warning('Will skip encryption')
+
+    if dst.save(stream, src_name) != 0:
+        LOG.error('Failed to save backup copy %s', src_name)
         exit(1)
 
     status = dst.status()
-    src_name = src.get_name()
 
     status[run_type][src_name] = {
         'binlog': src.binlog_coordinate[0],
@@ -123,7 +151,9 @@ def backup_mysql(run_type, config):
         'lsn': src.lsn,
         'type': src.type
     }
+
     status[run_type][src_name]['config'] = []
+
     for path, content in src.get_my_cnf():
         status[run_type][src_name]['config'].append({
             path: base64.b64encode(content)
