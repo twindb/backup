@@ -309,7 +309,7 @@ class S3(BaseDestination):
 
             if download_proc.exitcode:
                 LOG.error('Failed to download %s', path)
-                exit(1)
+                # exit(1)
 
             LOG.debug('Successfully streamed %s', path)
 

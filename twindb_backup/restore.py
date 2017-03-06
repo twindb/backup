@@ -10,15 +10,18 @@ from subprocess import Popen, PIPE
 import os
 import tempfile
 import errno
+import time
+
 import psutil
-from twindb_backup import LOG, INTERVALS
+
+from twindb_backup import LOG, INTERVALS, TwinDBBackupError
 from twindb_backup.configuration import get_destination
 from twindb_backup.destination.base_destination import DestinationError
 from twindb_backup.destination.local import Local
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, \
-    get_hostname_from_backup_copy
+    get_hostname_from_backup_copy, empty_dir
 
 
 def _get_status_key(status, key, variable):
@@ -98,6 +101,8 @@ def restore_from_mysql_full(stream, dst_dir, config,
     it should be False. If you restore from incremental copy and you restore
     base full copy redo_only should be True.
     :type redo_only: bool
+    :return: If success, return True
+    :rtype: bool
     """
     # GPG modifier
     try:
@@ -113,7 +118,8 @@ def restore_from_mysql_full(stream, dst_dir, config,
     stream = Gzip(stream).revert_stream()
 
     with stream as handler:
-        _extract_xbstream(handler, dst_dir)
+        if not _extract_xbstream(handler, dst_dir):
+            return False
 
     mem_usage = psutil.virtual_memory()
     try:
@@ -132,12 +138,20 @@ def restore_from_mysql_full(stream, dst_dir, config,
         ret = xtrabackup_proc.returncode
         if ret:
             LOG.error('%s exited with code %d', " ".join(xtrabackup_cmd), ret)
+        return ret == 0
     except OSError as err:
         LOG.error('Failed to prepare backup in %s: %s', dst_dir, err)
-        exit(1)
+        return False
 
 
 def _extract_xbstream(input_stream, working_dir):
+    """
+    Extract xbstream stream in directory
+
+    :param input_stream: The stream in xbstream format
+    :param working_dir: directory
+    :return: True if extracted successfully
+    """
     try:
         cmd = ['xbstream', '-x']
         LOG.debug('Running %s', ' '.join(cmd))
@@ -154,11 +168,11 @@ def _extract_xbstream(input_stream, working_dir):
                 LOG.error('STDOUT: %s', cout)
             if cerr:
                 LOG.error('STDERR: %s', cerr)
-            exit(1)
+        return ret == 0
 
     except OSError as err:
         LOG.error('Failed to extract xbstream: %s', err)
-        exit(1)
+        return False
 
 
 def restore_from_mysql_incremental(stream, dst_dir, config):
@@ -170,6 +184,8 @@ def restore_from_mysql_incremental(stream, dst_dir, config):
     :type dst_dir: str
     :param config: Tool configuration.
     :type config: ConfigParser.ConfigParser
+    :return: If success, return True
+    :rtype: bool
     """
     inc_dir = tempfile.mkdtemp()
 
@@ -187,7 +203,8 @@ def restore_from_mysql_incremental(stream, dst_dir, config):
     stream = Gzip(stream).revert_stream()
 
     with stream as handler:
-        _extract_xbstream(handler, inc_dir)
+        if not _extract_xbstream(handler, inc_dir):
+            return False
 
     try:
         mem_usage = psutil.virtual_memory()
@@ -206,6 +223,7 @@ def restore_from_mysql_incremental(stream, dst_dir, config):
                 LOG.error('%s exited with code %d',
                           " ".join(xtrabackup_cmd),
                           ret)
+                return False
 
             xtrabackup_cmd = ['innobackupex',
                               '--use-memory=%d' % (mem_usage.available / 2),
@@ -220,9 +238,10 @@ def restore_from_mysql_incremental(stream, dst_dir, config):
                 LOG.error('%s exited with code %d',
                           " ".join(xtrabackup_cmd),
                           ret)
+            return ret == 0
         except OSError as err:
             LOG.error('Failed to prepare backup in %s: %s', dst_dir, err)
-            exit(1)
+            return False
     finally:
         try:
             pass
@@ -273,6 +292,53 @@ def update_grastate(dst_dir, status, key):
                      version, uuid, seqno)
 
 
+def restore_from_mysql_full_retry(stream, dst_dir, config, redo_only=False):
+    """
+    Restore full mysql copy and retry if it fails.
+
+    See restore_from_mysql_full() for arguments description.
+    """
+    n_attempts = 3
+    retry_interval = 2
+    for _ in xrange(n_attempts):
+        if restore_from_mysql_full(stream, dst_dir, config,
+                                   redo_only=redo_only):
+            return
+        else:
+            LOG.warning('Will retry in %d seconds.', retry_interval)
+            time.sleep(retry_interval)
+            empty_dir(dst_dir)
+            retry_interval *= 2
+    raise TwinDBBackupError('Failed to restore backup after %d attempts.',
+                            n_attempts)
+
+
+def restore_from_mysql_inc_retry(dst, full_copy, stream, dst_dir, config):
+    """
+    Restore incremental mysql copy and retry if it fails.
+
+    See restore_from_mysql_incremental() for arguments description.
+    """
+    n_attempts = 3
+    retry_interval = 2
+    for _ in xrange(n_attempts):
+        full_stream = dst.get_stream(full_copy)
+        restore_from_mysql_full_retry(full_stream, dst_dir,
+                                      config, redo_only=True)
+
+        inc_status = restore_from_mysql_incremental(stream, dst_dir, config)
+        if not inc_status:
+            LOG.warning('Will retry in %d seconds.', retry_interval)
+            time.sleep(retry_interval)
+            empty_dir(dst_dir)
+            retry_interval *= 2
+            continue
+        return
+
+    raise TwinDBBackupError('Failed to restore backup after %d attempts.',
+                            n_attempts)
+
+
 def restore_from_mysql(config, backup_copy, dst_dir):  # pylint: disable=too-many-locals
     """
     Restore MySQL datadir in a given directory
@@ -309,19 +375,11 @@ def restore_from_mysql(config, backup_copy, dst_dir):  # pylint: disable=too-man
     stream = dst.get_stream(backup_copy)
 
     if get_backup_type(status, key) == "full":
-        restore_from_mysql_full(stream,
-                                dst_dir,
-                                config)
+        restore_from_mysql_full_retry(stream, dst_dir, config)
     else:
         full_copy = dst.get_full_copy_name(backup_copy)
-        full_stream = dst.get_stream(full_copy)
-        restore_from_mysql_full(full_stream,
-                                dst_dir,
-                                config,
-                                redo_only=True)
-        restore_from_mysql_incremental(stream,
-                                       dst_dir,
-                                       config)
+        restore_from_mysql_inc_retry(dst, full_copy,
+                                     stream, dst_dir, config)
 
     config_dir = os.path.join(dst_dir, "_config")
 
