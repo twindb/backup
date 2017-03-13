@@ -11,7 +11,15 @@ def input_file(tmpdir):
 
 @pytest.fixture
 def keyring_file(tmpdir):
-    keyring_file = tmpdir.join('keyring')
-    with open(str(keyring_file), 'w') as f:
+    public_file = tmpdir.join('keyring')
+    with open(str(public_file), 'w') as f:
         f.write('foo bar')
-    return keyring_file
+    return public_file
+
+
+@pytest.fixture
+def secret_keyring_file(tmpdir):
+    secret_file = tmpdir.join('secret_keyring')
+    with open(str(secret_file), 'w') as f:
+        f.write('foo bar')
+    return secret_file

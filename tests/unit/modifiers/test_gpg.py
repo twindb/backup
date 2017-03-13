@@ -45,3 +45,25 @@ def test_get_stream(mock_popen, input_file, keyring_file):
             mock_popen.assert_called_once_with(cmd, stdin=gpg.input,
                                                stdout=PIPE,
                                                stderr=PIPE)
+
+
+@mock.patch.object(Gpg, '_revert_stream')
+def test_revert_stream(mock__revert_stream, input_file, keyring_file,
+                       secret_keyring_file):
+
+    recipient = 'a@a.com'
+
+    with open(str(input_file)) as stream:
+        gpg = Gpg(stream, recipient, str(keyring_file),
+                  secret_keyring=str(secret_keyring_file))
+        gpg.revert_stream()
+        cmd = ['gpg',
+               '--no-default-keyring',
+               '--trust-model', 'always',
+               '--secret-keyring', gpg.secret_keyring,
+               '--keyring', gpg.keyring,
+               '--recipient', gpg.recipient,
+               '--decrypt',
+               '--yes',
+               '--batch']
+        mock__revert_stream.assert_called_once_with(cmd)
