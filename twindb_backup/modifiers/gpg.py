@@ -72,7 +72,10 @@ class Gpg(Modifier):
         :raise: OSError if failed to call the gpg command
         """
         return self._revert_stream(['gpg', '--no-default-keyring',
+                                    '--trust-model', 'always',
                                     '--secret-keyring', self.secret_keyring,
+                                    '--keyring', self.keyring,
+                                    '--recipient', self.recipient,
                                     '--decrypt',
                                     '--yes',
                                     '--batch'])
