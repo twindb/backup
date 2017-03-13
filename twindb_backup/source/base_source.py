@@ -1,9 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+Module defines base source class.
+"""
 import ConfigParser
 import socket
 
 import time
 
-from twindb_backup import delete_local_files, INTERVALS
+from twindb_backup import delete_local_files, INTERVALS, LOG
 
 
 class BaseSource(object):
@@ -11,13 +15,18 @@ class BaseSource(object):
     Base source for backup
     """
     run_type = None
-    procs = []
     _suffix = None
     _media_type = None
     _intervals = INTERVALS
     _name = None
 
     def __init__(self, run_type):
+        """
+        Construct instance of BaseSource()
+
+        :param run_type: Run type e.g. hourly, daily, etc
+        :type run_type: str
+        """
         self.run_type = run_type
 
     def get_stream(self):
@@ -26,24 +35,26 @@ class BaseSource(object):
         """
 
     def get_prefix(self):
+        """
+        Get prefix of the backup copy. It includes hostname and run type.
+
+        :return: Backup name prefix like 'db-10/daily'
+        """
         return "{hostname}/{run_type}".format(
             run_type=self.run_type,
             hostname=socket.gethostname()
         )
 
-    def get_procs(self):
-        return self.procs
-
     def _get_name(self, filename):
 
-        if not self._name:
-            self._name = "{prefix}/{media_type}/{file}-{time}.{suffix}".format(
-                prefix=self.get_prefix(),
-                media_type=self._media_type,
-                file=filename,
-                time=time.strftime('%Y-%m-%d_%H_%M_%S'),
-                suffix=self._suffix
-            )
+        LOG.debug('Suffix = %s', self.suffix)
+        self._name = "{prefix}/{media_type}/{file}-{time}.{suffix}".format(
+            prefix=self.get_prefix(),
+            media_type=self._media_type,
+            file=filename,
+            time=time.strftime('%Y-%m-%d_%H_%M_%S'),
+            suffix=self._suffix
+        )
         return self._name
 
     def _delete_local_files(self, filename, config):
@@ -61,3 +72,12 @@ class BaseSource(object):
 
         except ConfigParser.NoOptionError:
             pass
+
+    @property
+    def suffix(self):
+        """Backup file name suffix"""
+        return self._suffix
+
+    @suffix.setter
+    def suffix(self, suffix):
+        self._suffix = suffix

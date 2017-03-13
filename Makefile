@@ -88,18 +88,17 @@ clean-test: ## remove test and coverage artifacts
 clean-docker:
 	@sudo docker rm twindb-backup-build-${PLATFORM}
 
-lint: ## check style with flake8
-	flake8 twindb_backup tests
+lint: test-deps ## check style with flake8
+	pylint twindb_backup
 
 test-deps:
 	pip install --upgrade -r requirements.txt
 	pip install --upgrade -r requirements_dev.txt
 	pip install -U setuptools
 
-test: bootstrap ## run tests quickly with the default Python
-	pytest --cov=./twindb_backup tests/unit
+test: clean bootstrap ## run tests quickly with the default Python
+	pytest -xv --cov=./twindb_backup tests/unit
 	codecov
-	# bash <(curl -s https://codecov.io/bash)
 
 test-integration: test-deps ## run integration tests
 	pip show twindb-backup || pip install -e .
@@ -109,11 +108,7 @@ test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source twindb_backup py.test
-
-		coverage report -m
-		coverage html
-		$(BROWSER) htmlcov/index.html
+	py.test --cov-report term-missing  --cov=twindb_backup tests/unit
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/twindb_backup.rst
@@ -166,6 +161,26 @@ docker-test: ## Test twindb-backup in a docker container
 		-e "TRAVIS_REPO_SLUG"=${TRAVIS_REPO_SLUG} \
 		-e "TRAVIS_TAG"=${TRAVIS_TAG} \
 		${DOCKER_IMAGE} /bin/bash /twindb-backup/support/docker-test-${PLATFORM}.sh
+
+
+docker-start:
+	@sudo docker run \
+		-v `pwd`:/twindb-backup:rw \
+		-e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
+		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
+		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
+		-e "CI"=${CI} \
+		-e "TRAVIS"=${TRAVIS} \
+		-e "TRAVIS_BRANCH"=${TRAVIS_BRANCH} \
+		-e "TRAVIS_COMMIT"=${TRAVIS_COMMIT} \
+		-e "TRAVIS_JOB_NUMBER"=${TRAVIS_JOB_NUMBER} \
+		-e "TRAVIS_PULL_REQUEST"=${TRAVIS_PULL_REQUEST} \
+		-e "TRAVIS_JOB_ID"=${TRAVIS_JOB_ID} \
+		-e "TRAVIS_REPO_SLUG"=${TRAVIS_REPO_SLUG} \
+		-e "TRAVIS_TAG"=${TRAVIS_TAG} \
+		-it \
+		${DOCKER_IMAGE}
+
 
 package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
 	rm -rf pkg

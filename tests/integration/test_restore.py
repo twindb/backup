@@ -16,13 +16,13 @@ def test__restore_mysql_inc_creates_log_files(s3_client, tmpdir,
         hourly_copies=2
     )
     config.write(content)
-    cmd = ['twindb-backup', '--config', str(config), 'backup', 'daily']
+    cmd = ['twindb-backup', '--debug', '--config', str(config), 'backup', 'daily']
     assert call(cmd) == 0
 
-    cmd = ['twindb-backup', '--config', str(config), 'backup', 'hourly']
+    cmd = ['twindb-backup', '--debug', '--config', str(config), 'backup', 'hourly']
     assert call(cmd) == 0
 
-    cmd = ['twindb-backup',
+    cmd = ['twindb-backup', '--debug',
            '--config', str(config),
            'status']
 
@@ -34,7 +34,7 @@ def test__restore_mysql_inc_creates_log_files(s3_client, tmpdir,
     key = status['hourly'].keys()[0]
     backup_copy = 's3://' + s3_client.bucket + '/' + key
     dst_dir = str(tmpdir.mkdir('dst'))
-    cmd = ['twindb-backup',
+    cmd = ['twindb-backup', '--debug',
            '--config', str(config),
            'restore', 'mysql',
            backup_copy,

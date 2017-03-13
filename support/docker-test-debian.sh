@@ -12,8 +12,11 @@ apt-get install -qq \
   make \
   libpython2.7-dev \
   python-setuptools \
-  python-pip \
-  git
+  git \
+  gcc
+
+
+easy_install pip
 
 # install percona repository
 wget https://repo.percona.com/apt/percona-release_0.1-4.$(lsb_release -sc)_all.deb
@@ -33,4 +36,4 @@ while [ ${timeout} -gt 0 ] ; do mysqladmin ping && break; sleep 1; timeout=$((${
 cd /twindb-backup
 pip install --editable .
 
-make test test-integration
+make lint test test-integration

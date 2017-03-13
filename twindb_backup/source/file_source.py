@@ -1,40 +1,54 @@
+# -*- coding: utf-8 -*-
+"""
+Module defines File source class for backing up local directories.
+"""
 import shlex
 from contextlib import contextmanager
 from subprocess import Popen, PIPE
-from twindb_backup import log, get_files_to_delete
+from twindb_backup import LOG, get_files_to_delete
 from twindb_backup.source.base_source import BaseSource
 
 
 class FileSource(BaseSource):
+    """FileSource class"""
     def __init__(self, path, run_type):
         self.path = path
-        self._suffix = 'tar.gz'
+        self._suffix = 'tar'
         self._media_type = 'files'
         super(FileSource, self).__init__(run_type)
+
+    @property
+    def media_type(self):
+        """Get media type. Media type is a general term that describes
+        what you backup. For directories media_type is 'file'.
+
+        :return: 'file'
+        """
+        return self._media_type
 
     @contextmanager
     def get_stream(self):
         """
         Get a PIPE handler with content of the source
+
         :return:
         """
-        cmd = "tar zcf - %s" % self.path
+        cmd = "tar cf - %s" % self.path
         try:
-            log.debug('Running %s', cmd)
+            LOG.debug('Running %s', cmd)
             proc = Popen(shlex.split(cmd), stderr=PIPE, stdout=PIPE)
-            self.procs.append(proc)
 
             yield proc.stdout
 
-            cout, cerr = proc.communicate()
+            _, cerr = proc.communicate()
             if proc.returncode:
-                log.error('Failed to read from %s: %s' % (self.path, cerr))
+                LOG.error('Failed to read from %s: %s', self.path, cerr)
                 exit(1)
             else:
-                log.debug('Successfully streamed %s', self.path)
+                LOG.debug('Successfully streamed %s', self.path)
 
         except OSError as err:
-            log.error('Failed to run %s: %s', cmd, err)
+            LOG.error('Failed to run %s: %s', cmd, err)
             exit(1)
 
     def get_name(self):
@@ -49,6 +63,7 @@ class FileSource(BaseSource):
         return self.path.rstrip('/').replace('/', '_')
 
     def apply_retention_policy(self, dst, config, run_type):
+        """Apply retention policy"""
         if dst.remote_path:
             remote_path = dst.remote_path + '/'
         else:
@@ -62,9 +77,9 @@ class FileSource(BaseSource):
                                     '%s_copies' % run_type)
 
         backups_list = dst.list_files(prefix)
-        log.debug('Remote copies: %r', backups_list)
-        for fl in get_files_to_delete(backups_list, keep_copies):
-            log.debug('Deleting remote file %s' % fl)
-            dst.delete(fl)
+        LOG.debug('Remote copies: %r', backups_list)
+        for local_file in get_files_to_delete(backups_list, keep_copies):
+            LOG.debug('Deleting remote file %s', local_file)
+            dst.delete(local_file)
 
         self._delete_local_files(self._sanitize_filename(), config)

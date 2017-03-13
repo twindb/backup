@@ -27,6 +27,5 @@ timeout=300
 while [ ${timeout} -gt 0 ] ; do mysqladmin ping && break; sleep 1; timeout=$((${timeout} - 1)); done
 
 cd /twindb-backup
-pip install --editable .
 
-make test test-integration
+make lint test test-integration

@@ -1,57 +1,23 @@
-import ConfigParser
+# -*- coding: utf-8 -*-
+"""
+Module with helper functions
+"""
 import errno
 import os
-import pymysql
-import socket
-
+import shutil
 from contextlib import contextmanager
-from pymysql.cursors import DictCursor
-from twindb_backup import log, INTERVALS
-from twindb_backup.destination.s3 import S3
-from twindb_backup.destination.ssh import Ssh
+from subprocess import Popen, PIPE
 
-
-def get_destination(config, hostname=socket.gethostname()):
-    destination = None
-    try:
-        destination = config.get('destination', 'backup_destination')
-        log.debug('Destination in the config %s', destination)
-        destination = destination.strip('"\'')
-    except ConfigParser.NoOptionError:
-        log.critical("Backup destination must be specified "
-                     "in the config file")
-        exit(-1)
-
-    if destination == "ssh":
-        host = config.get('ssh', 'backup_host')
-        try:
-            port = config.get('ssh', 'port')
-        except ConfigParser.NoOptionError:
-            port = 22
-        try:
-            ssh_key = config.get('ssh', 'ssh_key')
-        except ConfigParser.NoOptionError:
-            ssh_key = '/root/.ssh/id_rsa'
-        user = config.get('ssh', 'ssh_user')
-        remote_path = config.get('ssh', 'backup_dir')
-        return Ssh(host=host, port=port, user=user, remote_path=remote_path,
-                   key=ssh_key, hostname=hostname)
-
-    elif destination == "s3":
-        bucket = config.get('s3', 'BUCKET').strip('"\'')
-        access_key_id = config.get('s3', 'AWS_ACCESS_KEY_ID').strip('"\'')
-        secret_access_key = config.get('s3',
-                                       'AWS_SECRET_ACCESS_KEY').strip('"\'')
-        default_region = config.get('s3', 'AWS_DEFAULT_REGION').strip('"\'')
-        return S3(bucket, access_key_id, secret_access_key,
-                  default_region=default_region, hostname=hostname)
-
-    else:
-        log.critical('Destination %s is not supported' % destination)
-        exit(-1)
+from twindb_backup import LOG, INTERVALS
 
 
 def mkdir_p(path):
+    """
+    Emulate mkdir -p
+
+    :param path: Directory path.
+    :type path: str
+    """
     try:
         os.makedirs(path)
     except OSError as exc:  # Python >2.5
@@ -61,7 +27,30 @@ def mkdir_p(path):
             raise
 
 
+def empty_dir(path):
+    """Remove all files are directories in path
+
+    :param path: Path to directory to be emptied.
+    :type path: str
+    """
+    for the_file in os.listdir(path):
+        file_path = os.path.join(path, the_file)
+        if os.path.isfile(file_path):
+            os.unlink(file_path)
+        elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)
+
+
 def get_hostname_from_backup_copy(backup_copy):
+    """
+    Backup copy includes hostname where the backup was taken from.
+    The function extracts the hostname from the backup name.
+
+    :param backup_copy: Backup copy name.
+    :type backup_copy: str
+    :return: Hostname where the backup was taken from.
+    :rtype: str
+    """
     chunks = backup_copy.split('/')
     for run_type in INTERVALS:
         if run_type in chunks:
@@ -70,40 +59,35 @@ def get_hostname_from_backup_copy(backup_copy):
 
 
 @contextmanager
-def get_connection(host=None, port=None, user=None, password=None,
-                   defaults_file=None, mysql_sock=None, connect_timeout=10):
-    db = None
-    try:
-        if defaults_file:
-            db = pymysql.connect(
-                read_default_file=defaults_file,
-                connect_timeout=connect_timeout,
-                cursorclass=DictCursor
-            )
-        elif mysql_sock:
-            db = pymysql.connect(
-                unix_socket=mysql_sock,
-                user=user,
-                passwd=password,
-                cursorclass=DictCursor
-            )
-        elif port:
-            db = pymysql.connect(
-                host=host,
-                port=port,
-                user=user,
-                passwd=password,
-                cursorclass=DictCursor
-            )
-        else:
-            db = pymysql.connect(
-                host=host,
-                user=user,
-                passwd=password,
-                cursorclass=DictCursor
-            )
+def run_command(command, ok_non_zero=False):
+    """
+    Run shell command locally
 
-        yield db
-    finally:
-        if db:
-            db.close()
+    :param command: Command to run
+    :type command: list
+    :param ok_non_zero: Don't consider non-zero exit code as an error.
+    :type ok_non_zero: bool
+    :return: file object with stdout as generator to use with ``with``
+    """
+    try:
+        LOG.debug('Running %s', " ".join(command))
+        proc = Popen(command, stderr=PIPE, stdout=PIPE)
+
+        yield proc.stdout
+
+        _, cerr = proc.communicate()
+
+        if proc.returncode and not ok_non_zero:
+            LOG.error('Command %s exited with error code %d',
+                      ' '.join(command),
+                      proc.returncode)
+            LOG.error(cerr)
+            exit(1)
+        else:
+            LOG.debug('Exited with zero code')
+
+    except OSError as err:
+        LOG.error('Failed to run %s',
+                  ' '.join(command))
+        LOG.error(err)
+        exit(1)
