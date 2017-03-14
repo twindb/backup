@@ -20,7 +20,8 @@ if [ -f "/etc/debian_version" ] || [ "$LINUX_DISTRIBUTION" == "Debian" ] || [ "$
   if [ "$1" = purge ]; then
     rm -rf /opt/twindb-backup
     rm -rf /var/log/twindb-backup
-    rm -rf /etc/twindb-backup
+    rm -f /etc/twindb/twindb-backup.cfg
+    rm -f /etc/cron.d/twindb-backup
 
     cleanup_symlinks
   fi

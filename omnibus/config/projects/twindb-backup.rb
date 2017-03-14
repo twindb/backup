@@ -74,6 +74,7 @@ dependency 'pip'
 if debian?
   dependency 'libyaml'
   runtime_dependency 'openssh-client'
+  runtime_dependency 'cron'
 end
 
 # RHEL/CentOS
