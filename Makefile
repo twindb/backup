@@ -174,5 +174,5 @@ docker-start:
 package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
 	@docker run \
 		-v ${pwd}:/twindb-backup \
-		"twindb/omnibus-${PLATFORM}:${LABEL}" \
+		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
 		bash -l /twindb-backup/omnibus/omnibus_build.sh

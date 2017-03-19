@@ -1,5 +1,6 @@
 #!/bin/bash -e
 
 cd /twindb-backup/omnibus
+bundle update
 bundle install --binstubs
-omnibus build twindb-backup
+bin/omnibus build twindb-backup
