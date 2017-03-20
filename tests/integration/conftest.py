@@ -10,7 +10,7 @@ from twindb_backup.destination.s3 import S3, AWSAuthOptions
 setup_logging(LOG, debug=True)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def bucket_name():
     travis_job_number = os.environ.get('TRAVIS_JOB_NUMBER')
     LOG.debug('TRAVIS_JOB_NUMBER=%s' % travis_job_number)
@@ -26,7 +26,7 @@ def bucket_name():
     return bucket
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def s3_client(bucket_name):
     LOG.debug('Bucket: %s' % bucket_name)
     client = S3(bucket_name,
