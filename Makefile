@@ -97,7 +97,7 @@ test-deps:
 	pip install -U setuptools
 
 test: clean bootstrap ## run tests quickly with the default Python
-	pytest -xv --cov=./twindb_backup tests/unit
+	pytest -xv --cov-report term-missing --cov=./twindb_backup tests/unit
 	codecov
 
 test-integration: test-deps ## run integration tests
@@ -166,6 +166,9 @@ docker-test: ## Test twindb-backup in a docker container
 docker-start:
 	@docker run \
 		-v ${pwd}:/twindb-backup \
+		-e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
+		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
+		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
 		-it \
 		"twindb/omnibus-${PLATFORM}" \
 		bash -l

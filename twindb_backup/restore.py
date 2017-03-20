@@ -6,22 +6,22 @@ from __future__ import print_function
 import ConfigParser
 import base64
 import json
+import traceback
 from subprocess import Popen, PIPE
 import os
 import tempfile
 import errno
-import time
 
 import psutil
 
-from twindb_backup import LOG, INTERVALS, TwinDBBackupError
+from twindb_backup import LOG, INTERVALS
 from twindb_backup.configuration import get_destination
 from twindb_backup.destination.base_destination import DestinationError
 from twindb_backup.destination.local import Local
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, \
-    get_hostname_from_backup_copy, empty_dir
+    get_hostname_from_backup_copy
 
 
 def _get_status_key(status, key, variable):
@@ -155,6 +155,7 @@ def _extract_xbstream(input_stream, working_dir):
     try:
         cmd = ['xbstream', '-x']
         LOG.debug('Running %s', ' '.join(cmd))
+        LOG.debug('Working directory: %s', working_dir)
         proc = Popen(cmd,
                      stdin=input_stream,
                      stdout=PIPE,
@@ -168,6 +169,8 @@ def _extract_xbstream(input_stream, working_dir):
                 LOG.error('STDOUT: %s', cout)
             if cerr:
                 LOG.error('STDERR: %s', cerr)
+                traceback.print_exc()
+                # 1/0
         return ret == 0
 
     except OSError as err:
@@ -292,53 +295,6 @@ def update_grastate(dst_dir, status, key):
                      version, uuid, seqno)
 
 
-def restore_from_mysql_full_retry(stream, dst_dir, config, redo_only=False):
-    """
-    Restore full mysql copy and retry if it fails.
-
-    See restore_from_mysql_full() for arguments description.
-    """
-    n_attempts = 3
-    retry_interval = 2
-    for _ in xrange(n_attempts):
-        if restore_from_mysql_full(stream, dst_dir, config,
-                                   redo_only=redo_only):
-            return
-        else:
-            LOG.warning('Will retry in %d seconds.', retry_interval)
-            time.sleep(retry_interval)
-            empty_dir(dst_dir)
-            retry_interval *= 2
-    raise TwinDBBackupError('Failed to restore backup after %d attempts.',
-                            n_attempts)
-
-
-def restore_from_mysql_inc_retry(dst, full_copy, stream, dst_dir, config):
-    """
-    Restore incremental mysql copy and retry if it fails.
-
-    See restore_from_mysql_incremental() for arguments description.
-    """
-    n_attempts = 3
-    retry_interval = 2
-    for _ in xrange(n_attempts):
-        full_stream = dst.get_stream(full_copy)
-        restore_from_mysql_full_retry(full_stream, dst_dir,
-                                      config, redo_only=True)
-
-        inc_status = restore_from_mysql_incremental(stream, dst_dir, config)
-        if not inc_status:
-            LOG.warning('Will retry in %d seconds.', retry_interval)
-            time.sleep(retry_interval)
-            empty_dir(dst_dir)
-            retry_interval *= 2
-            continue
-        return
-
-    raise TwinDBBackupError('Failed to restore backup after %d attempts.',
-                            n_attempts)
-
-
 def restore_from_mysql(config, backup_copy, dst_dir):  # pylint: disable=too-many-locals
     """
     Restore MySQL datadir in a given directory
@@ -375,11 +331,15 @@ def restore_from_mysql(config, backup_copy, dst_dir):  # pylint: disable=too-man
     stream = dst.get_stream(backup_copy)
 
     if get_backup_type(status, key) == "full":
-        restore_from_mysql_full_retry(stream, dst_dir, config)
+        restore_from_mysql_full(stream, dst_dir, config)
     else:
         full_copy = dst.get_full_copy_name(backup_copy)
-        restore_from_mysql_inc_retry(dst, full_copy,
-                                     stream, dst_dir, config)
+
+        full_stream = dst.get_stream(full_copy)
+        restore_from_mysql_full(full_stream, dst_dir,
+                                config, redo_only=True)
+
+        restore_from_mysql_incremental(stream, dst_dir, config)
 
     config_dir = os.path.join(dst_dir, "_config")
 

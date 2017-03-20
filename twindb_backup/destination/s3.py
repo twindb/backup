@@ -191,7 +191,7 @@ class S3(BaseDestination):
                 return ret
         except S3Error as err:
             LOG.error('S3 upload failed: %s', err)
-            exit(1)
+            raise err
 
     def list_files(self, prefix, recursive=False):
         s3client = boto3.resource('s3')
@@ -281,7 +281,20 @@ class S3(BaseDestination):
 
             with os.fdopen(write_fd, 'wb') as w_pipe:
                 try:
-                    s3_client.download_fileobj(bucket_name, key, w_pipe)
+                    retry_interval = 2
+                    for _ in xrange(10):
+                        try:
+                            s3_client.download_fileobj(bucket_name,
+                                                       key,
+                                                       w_pipe)
+                            return
+                        except ClientError as err:
+                            LOG.warning(err)
+                            LOG.warning('Will retry in %d seconds',
+                                        retry_interval)
+                            time.sleep(retry_interval)
+                            retry_interval *= 2
+
                 except IOError as err:
                     LOG.error(err)
                     exit(1)

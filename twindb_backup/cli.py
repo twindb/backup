@@ -7,11 +7,12 @@ from ConfigParser import ConfigParser
 import json
 import os
 import click
-from twindb_backup import setup_logging, LOG, __version__
+from twindb_backup import setup_logging, LOG, __version__, TwinDBBackupError
 from twindb_backup.backup import run_backup_job
 from twindb_backup.configuration import get_destination
 from twindb_backup.ls import list_available_backups
 from twindb_backup.restore import restore_from_mysql, restore_from_file
+from twindb_backup.util import ensure_empty
 
 PASS_CFG = click.make_pass_decorator(ConfigParser, ensure=True)
 
@@ -100,12 +101,17 @@ def restore_mysql(cfg, dst, backup_copy):
     """Restore from mysql backup"""
     LOG.debug('mysql: %r', cfg)
 
-    if backup_copy:
-        ensure_empty(dst)
-        restore_from_mysql(cfg, backup_copy, dst)
-    else:
+    if not backup_copy:
         LOG.info('No backup copy specified. Choose one from below:')
         list_available_backups(cfg)
+        exit(1)
+
+    try:
+        ensure_empty(dst)
+        restore_from_mysql(cfg, backup_copy, dst)
+    except TwinDBBackupError as err:
+        LOG.error(err)
+        exit(1)
 
 
 @restore.command('file')
@@ -117,27 +123,14 @@ def restore_file(cfg, dst, backup_copy):
     """Restore from file backup"""
     LOG.debug('file: %r', cfg)
 
-    if backup_copy:
-        ensure_empty(dst)
-        restore_from_file(cfg, backup_copy, dst)
-    else:
+    if not backup_copy:
         LOG.info('No backup copy specified. Choose one from below:')
         list_available_backups(cfg)
+        exit(1)
 
-
-def ensure_empty(path):
-    """
-    Check if a given directory is empty and exit if not.
-
-    :param path: path to directory
-    :type path: str
-    """
     try:
-        if os.listdir(path):
-            LOG.error('Directory %s is not empty', path)
-            exit(1)
-    except OSError as err:
-        if err.errno == 2:  # OSError: [Errno 2] No such file or directory
-            pass
-        else:
-            raise
+        ensure_empty(dst)
+        restore_from_file(cfg, backup_copy, dst)
+    except TwinDBBackupError as err:
+        LOG.error(err)
+        exit(1)
