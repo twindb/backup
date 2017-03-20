@@ -346,9 +346,20 @@ class S3(BaseDestination):
         s3_transfer_config = self.get_transfer_config()
 
         LOG.debug("Starting to stream to %s", remote_name)
-        self.s3_client.upload_fileobj(file_obj, self.bucket, object_key,
-                                      Config=s3_transfer_config)
-        LOG.debug("Successfully streamed to %s", remote_name)
+        retry_timeout = time.time() + S3_READ_TIMEOUT
+        retry_interval = 2
+        while time.time() < retry_timeout:
+            try:
+                self.s3_client.upload_fileobj(file_obj,
+                                              self.bucket,
+                                              object_key,
+                                              Config=s3_transfer_config)
+                LOG.debug("Successfully streamed to %s", remote_name)
+            except ClientError as err:
+                LOG.warning('%s. Will retry in %d seconds.',
+                            err, retry_interval)
+                time.sleep(retry_interval)
+                retry_interval *= 2
 
         return self._validate_upload(object_key)
 
