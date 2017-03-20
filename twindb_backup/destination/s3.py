@@ -355,6 +355,7 @@ class S3(BaseDestination):
                                               object_key,
                                               Config=s3_transfer_config)
                 LOG.debug("Successfully streamed to %s", remote_name)
+                break
             except ClientError as err:
                 LOG.warning('%s. Will retry in %d seconds.',
                             err, retry_interval)
