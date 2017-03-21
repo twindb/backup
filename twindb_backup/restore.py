@@ -169,8 +169,6 @@ def _extract_xbstream(input_stream, working_dir):
                 LOG.error('STDOUT: %s', cout)
             if cerr:
                 LOG.error('STDERR: %s', cerr)
-                traceback.print_exc()
-                # 1/0
         return ret == 0
 
     except OSError as err:
