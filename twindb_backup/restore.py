@@ -6,7 +6,6 @@ from __future__ import print_function
 import ConfigParser
 import base64
 import json
-import traceback
 from subprocess import Popen, PIPE
 import os
 import tempfile
