@@ -43,7 +43,7 @@ class Local(BaseDestination):
         """
         local_name = self.path + '/' + name
         cmd = ["cat", "-", local_name]
-        return self._save(cmd, handler)
+        self._save(cmd, handler)
 
     def list_files(self, prefix, recursive=False):
 

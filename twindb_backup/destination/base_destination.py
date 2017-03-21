@@ -29,10 +29,8 @@ class BaseDestination(object):
         :type handler: file
         :param name: Save stream as this name.
         :type name: str
-        :return: return code
-        :rtype: int
+        :raise: DestinationError if any error
         """
-        pass
 
     @staticmethod
     def _save(cmd, handler):
@@ -47,18 +45,16 @@ class BaseDestination(object):
 
                 ret = proc.returncode
                 if ret:
-                    LOG.error('%s exited with error code %d',
-                              ' '.join(cmd), ret)
                     if cout_ssh:
                         LOG.info(cout_ssh)
                     if cerr_ssh:
                         LOG.error(cerr_ssh)
-                    exit(1)
+                    raise DestinationError('%s exited with error code %d'
+                                           % (' '.join(cmd), ret))
                 LOG.debug('Exited with code %d', ret)
-                return ret
             except OSError as err:
-                LOG.error('Failed to run %s: %s', ' '.join(cmd), err)
-                exit(1)
+                raise DestinationError('Failed to run %s: %s'
+                                       % (' '.join(cmd), err))
 
     @abstractmethod
     def list_files(self, prefix, recursive=False):
@@ -67,9 +63,7 @@ class BaseDestination(object):
 
         :param prefix:
         :param recursive:
-        :return:
         """
-        pass
 
     @abstractmethod
     def find_files(self, prefix, run_type):
@@ -80,7 +74,6 @@ class BaseDestination(object):
         :param run_type:
         :return:
         """
-        pass
 
     @abstractmethod
     def delete(self, obj):
@@ -90,7 +83,6 @@ class BaseDestination(object):
         :param obj:
         :return:
         """
-        pass
 
     @property
     def _empty_status(self):
@@ -128,15 +120,15 @@ class BaseDestination(object):
 
     @abstractmethod
     def _write_status(self, status):
-        pass
+        """Function that actually writes status"""
 
     @abstractmethod
     def _read_status(self):
-        pass
+        """Function that actually reads status"""
 
     @abstractmethod
     def _status_exists(self):
-        pass
+        """Check if status file exists"""
 
     def get_full_copy_name(self, file_path):
         """
@@ -146,13 +138,20 @@ class BaseDestination(object):
         :param file_path:
         :return:
         """
-        remote_path = self.remote_path.rstrip('/')
-        LOG.debug('remote_path = %s', remote_path)
-        key = file_path.replace(remote_path + '/', '', 1)
-        for run_type in INTERVALS:
-            if key in self.status()[run_type]:
-                parent = self.status()[run_type][key]['parent']
-                return "%s/%s" % (self.remote_path, parent)
+        try:
+            for run_type in INTERVALS:
+                for key in self.status()[run_type].keys():
+                    if file_path.endswith(key):
+                        if self.status()[run_type][key]['type'] == "full":
+                            return file_path
+                        else:
+                            remote_part = file_path.replace(key, '')
+                            parent = self.status()[run_type][key]['parent']
+                            result = "%s%s" % (remote_part, parent)
+                            return result
+        except (TypeError, KeyError) as err:
+            LOG.error('Failed to find parent of %s', file_path)
+            raise DestinationError(err)
 
         raise DestinationError('Failed to find parent of %s' % file_path)
 
