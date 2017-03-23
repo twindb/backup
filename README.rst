@@ -73,7 +73,7 @@ Once the repository for your operating system is configured, install the ``twind
 Configuration
 ~~~~~~~~~~~~~
 Configuration is stored in ``/etc/twindb/twindb-backup.cfg``.
-See http://twindb-backup.readthedocs.io/en/develop/usage.html for more details
+See http://twindb-backup.readthedocs.io/en/master/usage.html for more details.
 
 Credits
 -------
