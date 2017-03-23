@@ -96,9 +96,9 @@ def restore_from_mysql_full(stream, dst_dir, config,
     :param config: Tool configuration.
     :type config: ConfigParser.ConfigParser
     :param redo_only: True if the function has to do final apply of
-    the redo log. For example, if you restore backup from a full copy
-    it should be False. If you restore from incremental copy and you restore
-    base full copy redo_only should be True.
+        the redo log. For example, if you restore backup from a full copy
+        it should be False. If you restore from incremental copy and you restore
+        base full copy redo_only should be True.
     :type redo_only: bool
     :return: If success, return True
     :rtype: bool

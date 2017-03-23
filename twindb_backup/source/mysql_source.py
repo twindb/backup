@@ -299,7 +299,7 @@ class MySQLSource(BaseSource):
         Get name of the parent copy.
 
         :return: backup name of the parent copy
-        or its own name if the copy is a full copy.
+            or its own name if the copy is a full copy.
         :rtype: str
         """
         return sorted(self.status[self.full_backup].keys(), reverse=True)[0]
@@ -309,7 +309,7 @@ class MySQLSource(BaseSource):
         """LSN of the parent backup copy.
 
         :return: LSN of the parent or its own LSN
-        if the backup copy is a full copy.
+            if the backup copy is a full copy.
         """
         return self.status[self.full_backup][self.parent]['lsn']
 

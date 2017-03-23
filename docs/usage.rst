@@ -33,7 +33,7 @@ Destination
 
 ``[destination]`` specifies where to store backup copies.
 
-``backup_destination`` can be either ``ssh`` (if you want to store backups on a remote SSh server)
+``backup_destination`` can be either ``ssh`` (if you want to store backups on a remote SSH server)
 or ``s3`` (if you want to store backups in Amazon S3).
 
 In the optional ``keep_local_path`` you can specify a local path where the tool will store a local copy of the backup.
@@ -48,7 +48,7 @@ It's useful if you want to stream a MySQL backup to S3 and would like to keep a 
 Amazon S3
 ~~~~~~~~~
 
-In ``[s3]`` section you specify Amazon credentials as well as an S3 bucked where to store backups.
+In ``[s3]`` section you specify Amazon credentials as well as an S3 bucket where to store backups.
 
 ::
 
@@ -87,6 +87,19 @@ XtraBackup needs to connect to MySQL. In ``[mysql]`` section you specify a defau
 
     [mysql]
     mysql_defaults_file=/etc/twindb/my.cnf
+
+
+Encryption
+~~~~~~~~~~
+The tool uses GPG_ for encrypting/decrypting backup copies. If you want to enable encryption add ``[gpg]`` section to the configuration file.
+It's your responsibility to generate and manage the encryption key.
+
+::
+
+    [gpg]
+    keyring = /root/.gnupg/pubring.gpg
+    secret_keyring = /root/.gnupg/secring.gpg
+    recipient = backupuser@youdomain.com
 
 
 Retention Policy
@@ -150,3 +163,4 @@ The email address is specified in the cron configuration file ``/etc/cron.d/twin
 
 
 .. _SSH keys authentication: https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/s2-ssh-configuration-keypairs.html
+.. _GPG: https://www.gnupg.org/
