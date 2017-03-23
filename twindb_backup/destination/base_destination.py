@@ -102,6 +102,9 @@ class BaseDestination(object):
         Otherwise it will store the status remotely.
 
         :param status: dictionary like
+
+        ::
+
             {
                 'hourly': [
                     {
@@ -111,6 +114,7 @@ class BaseDestination(object):
                     }
                 ]
             }
+
         :return: dictionary with the status
         """
         if status:
