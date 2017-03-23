@@ -8,7 +8,7 @@ import shutil
 from contextlib import contextmanager
 from subprocess import Popen, PIPE
 
-from twindb_backup import LOG, INTERVALS
+from twindb_backup import LOG, INTERVALS, TwinDBBackupError
 
 
 def mkdir_p(path):
@@ -22,6 +22,24 @@ def mkdir_p(path):
         os.makedirs(path)
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
+
+def ensure_empty(path):
+    """
+    Check if a given directory is empty and exit if not.
+
+    :param path: path to directory
+    :type path: str
+    """
+    try:
+        if os.listdir(path):
+            raise TwinDBBackupError('Directory %s is not empty' % path)
+
+    except OSError as err:
+        if err.errno == 2:  # OSError: [Errno 2] No such file or directory
             pass
         else:
             raise

@@ -97,7 +97,7 @@ test-deps:
 	pip install -U setuptools
 
 test: clean bootstrap ## run tests quickly with the default Python
-	pytest -xv --cov=./twindb_backup tests/unit
+	pytest -xv --cov-report term-missing --cov=./twindb_backup tests/unit
 	codecov
 
 test-integration: test-deps ## run integration tests
@@ -164,35 +164,18 @@ docker-test: ## Test twindb-backup in a docker container
 
 
 docker-start:
-	@sudo docker run \
-		-v `pwd`:/twindb-backup:rw \
+	@docker run \
+		-v ${pwd}:/twindb-backup \
 		-e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
 		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
 		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
-		-e "CI"=${CI} \
-		-e "TRAVIS"=${TRAVIS} \
-		-e "TRAVIS_BRANCH"=${TRAVIS_BRANCH} \
-		-e "TRAVIS_COMMIT"=${TRAVIS_COMMIT} \
-		-e "TRAVIS_JOB_NUMBER"=${TRAVIS_JOB_NUMBER} \
-		-e "TRAVIS_PULL_REQUEST"=${TRAVIS_PULL_REQUEST} \
-		-e "TRAVIS_JOB_ID"=${TRAVIS_JOB_ID} \
-		-e "TRAVIS_REPO_SLUG"=${TRAVIS_REPO_SLUG} \
-		-e "TRAVIS_TAG"=${TRAVIS_TAG} \
 		-it \
-		${DOCKER_IMAGE}
+		"twindb/omnibus-${PLATFORM}" \
+		bash -l
 
 
 package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
-	rm -rf pkg
-
-	mkdir -p pkg
-	mkdir -p "cache/${PLATFORM}"
-
-	@sudo docker run --name "twindb-backup-build-${PLATFORM}" \
-		-e LOG_LEVEL=${LOG_LEVEL} \
-		-e OMNIBUS_BRANCH=${OMNIBUS_BRANCH} \
-		-e OMNIBUS_SOFTWARE_BRANCH=${OMNIBUS_SOFTWARE_BRANCH} \
-		-v ${pwd}/pkg:/twindb-backup/omnibus/pkg \
-		-v ${pwd}/keys:/keys \
-		-v "${pwd}/cache/${PLATFORM}:/var/cache/omnibus" \
-		"twindb/backup-omnibus-${PLATFORM}"
+	@docker run \
+		-v ${pwd}:/twindb-backup \
+		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
+		bash -l /twindb-backup/omnibus/omnibus_build.sh

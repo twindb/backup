@@ -3,6 +3,8 @@ import os
 
 from subprocess import call, PIPE, Popen
 
+from twindb_backup import LOG
+
 
 def test__restore_mysql_inc_creates_log_files(s3_client, tmpdir,
                                               config_content_mysql_only):
@@ -16,9 +18,11 @@ def test__restore_mysql_inc_creates_log_files(s3_client, tmpdir,
         hourly_copies=2
     )
     config.write(content)
+    LOG.info('Taking daily backup(full)')
     cmd = ['twindb-backup', '--debug', '--config', str(config), 'backup', 'daily']
     assert call(cmd) == 0
 
+    LOG.info('Taking hourly backup(incremental)')
     cmd = ['twindb-backup', '--debug', '--config', str(config), 'backup', 'hourly']
     assert call(cmd) == 0
 
@@ -39,7 +43,9 @@ def test__restore_mysql_inc_creates_log_files(s3_client, tmpdir,
            'restore', 'mysql',
            backup_copy,
            '--dst', dst_dir]
+    LOG.info('Restoring backup with command %s', ' '.join(cmd))
     assert call(cmd) == 0
+    LOG.info('Restored datadir:')
     call(['find', dst_dir])
     assert os.path.exists(dst_dir + '/ibdata1')
     assert os.path.exists(dst_dir + '/ib_logfile0')

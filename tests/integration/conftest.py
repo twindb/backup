@@ -4,13 +4,15 @@ import random
 
 from subprocess import call, Popen, PIPE
 
+import time
+
 from twindb_backup import LOG, setup_logging
 from twindb_backup.destination.s3 import S3, AWSAuthOptions
 
 setup_logging(LOG, debug=True)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def bucket_name():
     travis_job_number = os.environ.get('TRAVIS_JOB_NUMBER')
     LOG.debug('TRAVIS_JOB_NUMBER=%s' % travis_job_number)
@@ -23,10 +25,10 @@ def bucket_name():
     else:
         bucket = 'twindb-backup-test-travis-%d' % number
 
-    return bucket
+    return '%s-%s' % (bucket, time.time())
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def s3_client(bucket_name):
     LOG.debug('Bucket: %s' % bucket_name)
     client = S3(bucket_name,
