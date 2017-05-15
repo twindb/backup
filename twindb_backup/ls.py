@@ -3,7 +3,7 @@
 Module that works with list of backup copies
 """
 from __future__ import print_function
-from ConfigParser import NoOptionError
+from ConfigParser import NoOptionError, NoSectionError
 import os
 from subprocess import Popen
 from twindb_backup import LOG
@@ -26,7 +26,7 @@ def list_available_backups(config):
             LOG.debug('Running %s', ' '.join(cmd))
             proc = Popen(cmd)
             proc.communicate()
-    except NoOptionError:
+    except (NoOptionError, NoSectionError):
         pass
 
     for run_type in ['hourly', 'daily', 'weekly', 'monthly', 'yearly']:
