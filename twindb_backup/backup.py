@@ -139,7 +139,7 @@ def backup_mysql(run_type, config):
         LOG.warning(err)
         LOG.warning('Will skip encryption')
 
-    if dst.save(stream, src_name) != 0:
+    if not dst.save(stream, src_name):
         LOG.error('Failed to save backup copy %s', src_name)
         exit(1)
 
