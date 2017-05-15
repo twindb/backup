@@ -26,7 +26,7 @@ def get_destination(config, hostname=socket.gethostname()):
         destination = config.get('destination', 'backup_destination')
         LOG.debug('Destination in the config %s', destination)
         destination = destination.strip('"\'')
-    except ConfigParser.NoOptionError:
+    except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
         LOG.critical("Backup destination must be specified "
                      "in the config file")
         exit(-1)

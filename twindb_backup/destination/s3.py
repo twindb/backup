@@ -188,7 +188,7 @@ class S3(BaseDestination):
             with handler as file_obj:
                 ret = self._upload_object(file_obj, name)
                 LOG.debug('Returning code %d', ret)
-                return ret
+                return ret == 0
         except S3Error as err:
             LOG.error('S3 upload failed: %s', err)
             raise err

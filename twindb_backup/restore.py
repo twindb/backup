@@ -292,7 +292,7 @@ def update_grastate(dst_dir, status, key):
                      version, uuid, seqno)
 
 
-def restore_from_mysql(config, backup_copy, dst_dir):  # pylint: disable=too-many-locals
+def restore_from_mysql(config, backup_copy, dst_dir, cache=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     """
     Restore MySQL datadir in a given directory
 
@@ -301,6 +301,9 @@ def restore_from_mysql(config, backup_copy, dst_dir):  # pylint: disable=too-man
     :param backup_copy: Backup copy name.
     :type backup_copy: str
     :param dst_dir: Destination directory. Must exist and be empty.
+    :type dst_dir: str
+    :param cache: Local cache object.
+    :type cache: Cache
     """
     LOG.info('Restoring %s in %s', backup_copy, dst_dir)
     mkdir_p(dst_dir)
@@ -328,13 +331,36 @@ def restore_from_mysql(config, backup_copy, dst_dir):  # pylint: disable=too-man
     stream = dst.get_stream(backup_copy)
 
     if get_backup_type(status, key) == "full":
-        restore_from_mysql_full(stream, dst_dir, config)
+
+        cache_key = os.path.basename(key)
+        if cache:
+            if cache_key in cache:
+                # restore from cache
+                cache.restore_in(cache_key, dst_dir)
+            else:
+                restore_from_mysql_full(stream, dst_dir, config)
+                cache.add(dst_dir, cache_key)
+        else:
+            restore_from_mysql_full(stream, dst_dir, config)
+
     else:
         full_copy = dst.get_full_copy_name(backup_copy)
 
         full_stream = dst.get_stream(full_copy)
-        restore_from_mysql_full(full_stream, dst_dir,
-                                config, redo_only=True)
+
+        cache_key = os.path.basename(full_copy)
+
+        if cache:
+            if cache_key in cache:
+                # restore from cache
+                cache.restore_in(cache_key, dst_dir)
+            else:
+                restore_from_mysql_full(full_stream, dst_dir,
+                                        config, redo_only=True)
+                cache.add(dst_dir, cache_key)
+        else:
+            restore_from_mysql_full(full_stream, dst_dir,
+                                    config, redo_only=True)
 
         restore_from_mysql_incremental(stream, dst_dir, config)
 

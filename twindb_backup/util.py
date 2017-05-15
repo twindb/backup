@@ -36,7 +36,9 @@ def ensure_empty(path):
     """
     try:
         if os.listdir(path):
-            raise TwinDBBackupError('Directory %s is not empty' % path)
+            msg = 'You asked to restore backup copy in directory "%s". ' \
+                  'But it is not empty.' % path
+            raise TwinDBBackupError(msg)
 
     except OSError as err:
         if err.errno == 2:  # OSError: [Errno 2] No such file or directory

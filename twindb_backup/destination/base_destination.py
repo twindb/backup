@@ -52,6 +52,7 @@ class BaseDestination(object):
                     raise DestinationError('%s exited with error code %d'
                                            % (' '.join(cmd), ret))
                 LOG.debug('Exited with code %d', ret)
+                return ret == 0
             except OSError as err:
                 raise DestinationError('Failed to run %s: %s'
                                        % (' '.join(cmd), err))

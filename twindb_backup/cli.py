@@ -9,6 +9,7 @@ import os
 import click
 from twindb_backup import setup_logging, LOG, __version__, TwinDBBackupError
 from twindb_backup.backup import run_backup_job
+from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.configuration import get_destination
 from twindb_backup.ls import list_available_backups
 from twindb_backup.restore import restore_from_mysql, restore_from_file
@@ -55,8 +56,7 @@ def main(ctx, cfg, debug, config, version):
     if os.path.exists(config):
         cfg.read(config)
     else:
-        LOG.error("Config file %s doesn't exist", config)
-        exit(1)
+        LOG.warning("Config file %s doesn't exist", config)
 
 
 @main.command()
@@ -96,8 +96,10 @@ def restore(cfg):
 @click.argument('backup_copy', required=False)
 @click.option('--dst', help='Directory where to restore the backup copy',
               default='.', show_default=True)
+@click.option('--cache', help='Save full backup copy in this directory',
+              default=None)
 @PASS_CFG
-def restore_mysql(cfg, dst, backup_copy):
+def restore_mysql(cfg, dst, backup_copy, cache):
     """Restore from mysql backup"""
     LOG.debug('mysql: %r', cfg)
 
@@ -108,8 +110,13 @@ def restore_mysql(cfg, dst, backup_copy):
 
     try:
         ensure_empty(dst)
-        restore_from_mysql(cfg, backup_copy, dst)
-    except TwinDBBackupError as err:
+
+        if cache:
+            restore_from_mysql(cfg, backup_copy, dst, Cache(cache))
+        else:
+            restore_from_mysql(cfg, backup_copy, dst)
+
+    except (TwinDBBackupError, CacheException) as err:
         LOG.error(err)
         exit(1)
 
