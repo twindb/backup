@@ -292,7 +292,7 @@ def update_grastate(dst_dir, status, key):
                      version, uuid, seqno)
 
 
-def restore_from_mysql(config, backup_copy, dst_dir, cache=None):  # pylint: disable=too-many-locals,too-many-branches
+def restore_from_mysql(config, backup_copy, dst_dir, cache=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     """
     Restore MySQL datadir in a given directory
 
@@ -333,9 +333,13 @@ def restore_from_mysql(config, backup_copy, dst_dir, cache=None):  # pylint: dis
     if get_backup_type(status, key) == "full":
 
         cache_key = os.path.basename(key)
-        if cache and cache_key in cache:
-            # restore from cache
-            cache.restore_in(cache_key, dst_dir)
+        if cache:
+            if cache_key in cache:
+                # restore from cache
+                cache.restore_in(cache_key, dst_dir)
+            else:
+                restore_from_mysql_full(stream, dst_dir, config)
+                cache.add(dst_dir, cache_key)
         else:
             restore_from_mysql_full(stream, dst_dir, config)
 
@@ -346,17 +350,19 @@ def restore_from_mysql(config, backup_copy, dst_dir, cache=None):  # pylint: dis
 
         cache_key = os.path.basename(full_copy)
 
-        if cache and cache_key in cache:
-            # restore from cache
-            cache.restore_in(cache_key, dst_dir)
+        if cache:
+            if cache_key in cache:
+                # restore from cache
+                cache.restore_in(cache_key, dst_dir)
+            else:
+                restore_from_mysql_full(full_stream, dst_dir,
+                                        config, redo_only=True)
+                cache.add(dst_dir, cache_key)
         else:
             restore_from_mysql_full(full_stream, dst_dir,
                                     config, redo_only=True)
 
         restore_from_mysql_incremental(stream, dst_dir, config)
-
-    if cache:
-        cache.add(dst_dir, cache_key)
 
     config_dir = os.path.join(dst_dir, "_config")
 
