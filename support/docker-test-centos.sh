@@ -16,7 +16,7 @@ for i in $(seq 5); do
       python-pip \
       Percona-Server-server-56 \
       Percona-Server-devel-56 \
-      percona-xtrabackup \
+      percona-xtrabackup-24 \
       git && break
     sleep 5
 done
