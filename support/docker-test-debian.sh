@@ -26,7 +26,7 @@ apt-get update
 apt-get install -qq \
   percona-server-server-5.6 \
   libperconaserverclient18.1-dev \
-  percona-xtrabackup
+  percona-xtrabackup-24
 
 mysql_install_db && mysqld --user=root &
 
