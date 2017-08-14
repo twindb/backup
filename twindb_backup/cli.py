@@ -13,6 +13,7 @@ from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.configuration import get_destination
 from twindb_backup.ls import list_available_backups
 from twindb_backup.restore import restore_from_mysql, restore_from_file
+from twindb_backup.share import share
 from twindb_backup.util import ensure_empty
 
 PASS_CFG = click.make_pass_decorator(ConfigParser, ensure=True)
@@ -75,6 +76,22 @@ def backup(cfg, run_type):
 def list_backups(cfg):
     """List available backup copies"""
     list_available_backups(cfg)
+
+
+@main.command(name='share')
+@click.argument('s3_url', type=str, required=False)
+@PASS_CFG
+def share_backup(cfg, s3_url):
+    """Share backup copy for download"""
+    if not s3_url:
+        LOG.info('No backup copy specified. Choose one from below:')
+        list_available_backups(cfg)
+        exit(1)
+    try:
+        share(cfg, s3_url)
+    except TwinDBBackupError as err:
+        LOG.error(err)
+        exit(1)
 
 
 @main.command()

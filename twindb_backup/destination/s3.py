@@ -60,6 +60,11 @@ class AWSAuthOptions(object):  # pylint: disable=too-few-public-methods
         self.access_key_id = access_key_id
 
 
+class S3FileAccess: # pylint: disable=too-few-public-methods
+    public_read = 'public-read'
+    private = 'private'
+
+
 class S3(BaseDestination):
     """S3 destination class."""
     def __init__(self, bucket, aws_options, hostname=socket.gethostname()):
@@ -94,7 +99,7 @@ class S3(BaseDestination):
     def setup_s3_client(self):
         """Creates an authenticated s3 client."""
         session = boto3.Session(aws_access_key_id=self.access_key_id,
-                                aws_secret_access_key=self.secret_access_key)
+                                   aws_secret_access_key=self.secret_access_key)
         s3_config = Config(connect_timeout=S3_CONNECT_TIMEOUT,
                            read_timeout=S3_READ_TIMEOUT)
         client = session.client('s3', region_name=self.default_region,
@@ -443,3 +448,31 @@ class S3(BaseDestination):
             io_chunksize=S3_UPLOAD_IO_CHUNKS_SIZE_BYTES)
 
         return transfer_config
+
+    def set_file_access(self, access_mode, url):
+        """
+        Set file access via S3 url
+
+        :param access_mode: Access mode
+        :type access_mode: S3FileAccess
+        :param url: S3 url
+        :type url: str
+        """
+        object_key = urlparse(url).path.lstrip('/')
+        self.s3_client.put_object_acl(Bucket=self.bucket, ACL=access_mode,
+                                      Key=object_key)
+
+    def get_file_url(self, s3_url):
+        """
+        Generate public url via S3 url
+        :param s3_url: S3 url
+        :type s3_url: str
+        :return: Public url
+        :rtype: str
+        """
+        object_key = urlparse(s3_url).path.lstrip('/')
+        return self.s3_client.generate_presigned_url('get_object',
+                                                    Params={
+                                                        'Bucket': self.bucket,
+                                                        'Key': object_key
+                                                    })
