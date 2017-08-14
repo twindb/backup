@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+Module that works with sharing backups
+"""
 from __future__ import print_function
 
 from twindb_backup import TwinDBBackupError
