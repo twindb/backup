@@ -61,6 +61,7 @@ class AWSAuthOptions(object):  # pylint: disable=too-few-public-methods
 
 
 class S3FileAccess(object): # pylint: disable=too-few-public-methods
+    """Access modes for S3 files"""
     public_read = 'public-read'
     private = 'private'
 
