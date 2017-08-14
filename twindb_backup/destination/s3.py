@@ -99,7 +99,7 @@ class S3(BaseDestination):
     def setup_s3_client(self):
         """Creates an authenticated s3 client."""
         session = boto3.Session(aws_access_key_id=self.access_key_id,
-                                   aws_secret_access_key=self.secret_access_key)
+                                aws_secret_access_key=self.secret_access_key)
         s3_config = Config(connect_timeout=S3_CONNECT_TIMEOUT,
                            read_timeout=S3_READ_TIMEOUT)
         client = session.client('s3', region_name=self.default_region,
@@ -472,7 +472,7 @@ class S3(BaseDestination):
         """
         object_key = urlparse(s3_url).path.lstrip('/')
         return self.s3_client.generate_presigned_url('get_object',
-                                                    Params={
-                                                        'Bucket': self.bucket,
-                                                        'Key': object_key
-                                                    })
+                                                     Params={
+                                                         'Bucket': self.bucket,
+                                                         'Key': object_key
+                                                     })
