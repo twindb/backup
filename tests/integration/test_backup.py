@@ -12,12 +12,6 @@ from twindb_backup.cli import main
 from twindb_backup.destination.s3 import S3, AWSAuthOptions
 
 
-def test__take_azaza(s3_client, config_content_files_only, tmpdir,
-                           foo_bar_dir):
-    runner = CliRunner()
-    result = runner.invoke(main, ['--config', '/Users/mkryva/backup-cfg.cfg', 'share',
-                                  's3://twindb-www.twindb.com/master1/daily/files/_home-2016-11-23_21_50_29.tar.gz'])
-
 def test__take_file_backup(s3_client, config_content_files_only, tmpdir,
                            foo_bar_dir):
     config = tmpdir.join('twindb-backup.cfg')
