@@ -17,14 +17,3 @@ def test_share_backup_cli(mock_get_destination, mock_print):
     share(mock_config, "/foo/bar")
     mock_print.assert_called_once()
     mock_get_destination.assert_called_once()
-
-@mock.patch('twindb_backup.share.get_destination')
-def test_share_backup_when_file_not_found(mock_get_destination):
-    mock_config = mock.Mock()
-    mock_config.get.return_value = "/foo/bar"
-    mock_dst = mock.Mock()
-    mock_dst.remote_path = '/foo/bar'
-    mock_get_destination.return_value = mock_dst
-    mock_dst.find_files.return_value = []
-    with pytest.raises(TwinDBBackupError):
-        share(mock_config, "/foo/bar")
