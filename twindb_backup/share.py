@@ -4,9 +4,7 @@ Module that works with sharing backups
 """
 from __future__ import print_function
 
-from twindb_backup import TwinDBBackupError
 from twindb_backup.configuration import get_destination
-from twindb_backup.destination.s3 import S3FileAccess
 
 
 def share(config, s3_url):
