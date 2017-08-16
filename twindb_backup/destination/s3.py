@@ -21,7 +21,7 @@ from botocore.client import Config
 import boto3
 from boto3.s3.transfer import TransferConfig
 
-from twindb_backup import LOG
+from twindb_backup import LOG, TwinDBBackupError
 from twindb_backup.destination.base_destination import BaseDestination, \
     DestinationError
 
@@ -450,7 +450,7 @@ class S3(BaseDestination):
 
         return transfer_config
 
-    def set_file_access(self, access_mode, url):
+    def _set_file_access(self, access_mode, url):
         """
         Set file access via S3 url
 
@@ -463,7 +463,7 @@ class S3(BaseDestination):
         self.s3_client.put_object_acl(Bucket=self.bucket, ACL=access_mode,
                                       Key=object_key)
 
-    def get_file_url(self, s3_url):
+    def _get_file_url(self, s3_url):
         """
         Generate public url via S3 url
         :param s3_url: S3 url
@@ -477,3 +477,20 @@ class S3(BaseDestination):
                                                          'Bucket': self.bucket,
                                                          'Key': object_key
                                                      })
+
+    def share(self, s3_url):
+        """
+        Share S3 file and return public link
+
+        :param s3_url: S3 url
+        :type s3_url: str
+        :return: Public url
+        :rtype: str
+        """
+        run_type = s3_url.split('/')[4]
+        backup_urls = self.find_files(self.remote_path, run_type)
+        if s3_url in backup_urls:
+            self._set_file_access(S3FileAccess.public_read, s3_url)
+            return self._get_file_url(s3_url)
+        else:
+            raise TwinDBBackupError("File not found via url: %s", s3_url)

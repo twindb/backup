@@ -19,10 +19,4 @@ def share(config, s3_url):
     :raise: TwinDBBackupError
     """
     dst = get_destination(config)
-    for run_type in ['hourly', 'daily', 'weekly', 'monthly', 'yearly']:
-        backup_urls = dst.find_files(dst.remote_path, run_type)
-        if s3_url in backup_urls:
-            dst.set_file_access(S3FileAccess.public_read, s3_url)
-            print(dst.get_file_url(s3_url))
-            return
-    raise TwinDBBackupError("File not found via url: %s", s3_url)
+    print(dst.share(s3_url))
