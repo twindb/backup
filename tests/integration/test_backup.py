@@ -5,10 +5,7 @@ import socket
 
 from subprocess import call, Popen, PIPE
 
-from click.testing import CliRunner
-
 from twindb_backup import LOG
-from twindb_backup.cli import main
 from twindb_backup.destination.s3 import S3, AWSAuthOptions
 
 

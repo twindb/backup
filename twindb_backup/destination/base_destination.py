@@ -135,6 +135,12 @@ class BaseDestination(object):
     def _status_exists(self):
         """Check if status file exists"""
 
+    @abstractmethod
+    def share(self, url):
+        """Share backup copy for public access"""
+        raise NotImplementedError('Method share() not implemented for '
+                                  'this backup destination')
+
     def get_full_copy_name(self, file_path):
         """
         For a given backup copy find a parent. If it's a full copy

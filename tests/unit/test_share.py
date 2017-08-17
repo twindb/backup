@@ -1,9 +1,6 @@
 import mock
-import pytest
-
-from twindb_backup import TwinDBBackupError
-from twindb_backup.destination.s3 import S3
 from twindb_backup.share import share
+
 
 @mock.patch('twindb_backup.share.print')
 @mock.patch('twindb_backup.share.get_destination')

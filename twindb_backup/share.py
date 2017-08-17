@@ -4,6 +4,7 @@ Module that works with sharing backups
 """
 from __future__ import print_function
 
+from twindb_backup import TwinDBBackupError
 from twindb_backup.configuration import get_destination
 
 
@@ -17,4 +18,7 @@ def share(config, s3_url):
     :raise: TwinDBBackupError
     """
     dst = get_destination(config)
-    print(dst.share(s3_url))
+    try:
+        print(dst.share(s3_url))
+    except NotImplementedError as err:
+        raise TwinDBBackupError(err)
