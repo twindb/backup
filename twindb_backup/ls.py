@@ -28,10 +28,8 @@ def list_available_backups(config):
             proc.communicate()
     except (NoOptionError, NoSectionError):
         pass
-
+    dst = get_destination(config)
     for run_type in ['hourly', 'daily', 'weekly', 'monthly', 'yearly']:
         LOG.info('%s copies:', run_type)
-        dst = get_destination(config)
-
         for copy in dst.find_files(dst.remote_path, run_type):
             print(copy)

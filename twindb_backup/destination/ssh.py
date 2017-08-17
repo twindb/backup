@@ -183,3 +183,5 @@ class Ssh(BaseDestination):
         except OSError as err:
             LOG.error('Failed to run %s: %s', " ".join(cmd), err)
             exit(1)
+    def share(self, url):
+        super(Ssh, self).share(url)
