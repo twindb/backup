@@ -187,8 +187,11 @@ def restore_from_mysql_incremental(stream, dst_dir, config):
     :return: If success, return True
     :rtype: bool
     """
-    inc_dir = tempfile.mkdtemp()
-
+    try:
+        inc_dir = tempfile.mkdtemp()
+    except (IOError, OSError) as err:
+        empty_dir(dst_dir)
+        raise
     # GPG modifier
     try:
         gpg = Gpg(stream,
@@ -361,11 +364,8 @@ def restore_from_mysql(config, backup_copy, dst_dir, cache=None):  # pylint: dis
         else:
             restore_from_mysql_full(full_stream, dst_dir,
                                     config, redo_only=True)
-        try:
-            restore_from_mysql_incremental(stream, dst_dir, config)
-        except (OSError, IOError) as err:
-            empty_dir(dst_dir)
-            raise err
+
+        restore_from_mysql_incremental(stream, dst_dir, config)
 
     config_dir = os.path.join(dst_dir, "_config")
 
