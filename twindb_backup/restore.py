@@ -190,7 +190,10 @@ def restore_from_mysql_incremental(stream, dst_dir, config):
     try:
         inc_dir = tempfile.mkdtemp()
     except (IOError, OSError) as err:
-        empty_dir(dst_dir)
+        try:
+            empty_dir(dst_dir)
+        except (IOError, OSError) as err:
+            raise
         raise
     # GPG modifier
     try:
