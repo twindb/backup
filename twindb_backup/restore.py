@@ -20,7 +20,7 @@ from twindb_backup.destination.local import Local
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, \
-    get_hostname_from_backup_copy
+    get_hostname_from_backup_copy, empty_dir
 
 
 def _get_status_key(status, key, variable):
@@ -361,8 +361,11 @@ def restore_from_mysql(config, backup_copy, dst_dir, cache=None):  # pylint: dis
         else:
             restore_from_mysql_full(full_stream, dst_dir,
                                     config, redo_only=True)
-
-        restore_from_mysql_incremental(stream, dst_dir, config)
+        try:
+            restore_from_mysql_incremental(stream, dst_dir, config)
+        except (OSError, IOError) as err:
+            empty_dir(dst_dir)
+            raise err
 
     config_dir = os.path.join(dst_dir, "_config")
 
