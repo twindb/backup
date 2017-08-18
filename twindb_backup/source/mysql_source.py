@@ -141,6 +141,10 @@ class MySQLSource(BaseSource):
             if proc_innobackupex.returncode:
                 LOG.error('Failed to run innobackupex. '
                           'Check error output in %s', stderr_file.name)
+                filename = self.get_name()
+                for url in self.dst.find_files():
+                    if filename in url:
+                        self.dst.delete_by_key(filename)
                 exit(1)
             else:
                 LOG.debug('Successfully streamed innobackupex output')
