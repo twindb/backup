@@ -136,9 +136,6 @@ def restore_mysql(cfg, dst, backup_copy, cache):
     except (TwinDBBackupError, CacheException) as err:
         LOG.error(err)
         exit(1)
-    except (OSError, IOError) as err:
-        LOG.error(err)
-        exit(1)
 
 
 @restore.command('file')
