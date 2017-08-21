@@ -271,17 +271,6 @@ class S3(BaseDestination):
 
         return obj.delete()
 
-    def delete_by_key(self, key):
-        """
-        Deletes a s3 object by key
-
-        :param key: Key
-        :return: True on success, False on failure
-        """
-        s3client = boto3.resource('s3')
-        bucket = s3client.Bucket(self.bucket)
-        return bucket.delete_key(key)
-
     @contextmanager
     def get_stream(self, path):
         """

@@ -10,6 +10,7 @@ from ConfigParser import NoOptionError
 from contextlib import contextmanager
 from subprocess import Popen, PIPE
 
+import boto3
 import pymysql
 
 from twindb_backup import LOG, get_files_to_delete, INTERVALS
@@ -144,7 +145,9 @@ class MySQLSource(BaseSource):
                 filename = self.get_name()
                 for url in self.dst.find_files():
                     if filename in url:
-                        self.dst.delete_by_key(filename)
+                        s3 = boto3.resource('s3')
+                        obj = s3.Object(self.dst.bucket, filename)
+                        self.dst.delete(obj)
                 exit(1)
             else:
                 LOG.debug('Successfully streamed innobackupex output')
