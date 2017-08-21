@@ -14,7 +14,6 @@ import boto3
 import pymysql
 
 from twindb_backup import LOG, get_files_to_delete, INTERVALS
-from twindb_backup.destination.s3 import S3
 from twindb_backup.source.base_source import BaseSource
 
 
