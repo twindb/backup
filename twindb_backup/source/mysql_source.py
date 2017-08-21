@@ -14,6 +14,7 @@ import boto3
 import pymysql
 
 from twindb_backup import LOG, get_files_to_delete, INTERVALS
+from twindb_backup.destination.s3 import S3
 from twindb_backup.source.base_source import BaseSource
 
 
@@ -143,11 +144,14 @@ class MySQLSource(BaseSource):
                 LOG.error('Failed to run innobackupex. '
                           'Check error output in %s', stderr_file.name)
                 filename = self.get_name()
-                for url in self.dst.find_files():
-                    if filename in url:
+
+                if any(filename in url for url in self.dst.find_files()):
+                    if isinstance(self.dst, S3):
                         s3 = boto3.resource('s3')
                         obj = s3.Object(self.dst.bucket, filename)
                         self.dst.delete(obj)
+                    else:
+                        self.dst.delete(filename)
                 exit(1)
             else:
                 LOG.debug('Successfully streamed innobackupex output')
