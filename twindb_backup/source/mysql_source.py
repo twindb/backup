@@ -147,8 +147,8 @@ class MySQLSource(BaseSource):
 
                 if any(filename in url for url in self.dst.find_files()):
                     if isinstance(self.dst, S3):
-                        s3 = boto3.resource('s3')
-                        obj = s3.Object(self.dst.bucket, filename)
+                        s3_res = boto3.resource('s3')
+                        obj = s3_res.Object(self.dst.bucket, filename)
                         self.dst.delete(obj)
                     else:
                         self.dst.delete(filename)
