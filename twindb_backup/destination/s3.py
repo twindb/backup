@@ -10,7 +10,6 @@ import socket
 
 from contextlib import contextmanager
 from multiprocessing import Process
-from operator import attrgetter
 from urlparse import urlparse
 
 import time

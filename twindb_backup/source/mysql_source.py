@@ -10,7 +10,6 @@ from ConfigParser import NoOptionError
 from contextlib import contextmanager
 from subprocess import Popen, PIPE
 
-import boto3
 import pymysql
 
 from twindb_backup import LOG, get_files_to_delete, INTERVALS
