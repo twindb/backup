@@ -78,10 +78,7 @@ def test__delete_can_delete_an_object():
     twindb_s3.s3_client.put_object(Body='hello world', Bucket='test-bucket',
                                    Key='test_server/hourly/file1.txt')
 
-    s3 = boto3.resource('s3')
-    obj = s3.Object('test-bucket', 'test_server/hourly/file1.txt')
-
-    assert twindb_s3.delete(obj)
+    assert twindb_s3.delete('test_server/hourly/file1.txt')
     with pytest.raises(ClientError):
         twindb_s3.s3_client.head_object(Bucket='test-bucket',
                                         Key='test_server/hourly/file1.txt')
