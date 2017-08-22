@@ -142,12 +142,7 @@ class MySQLSource(BaseSource):
             if proc_innobackupex.returncode:
                 LOG.error('Failed to run innobackupex. '
                           'Check error output in %s', stderr_file.name)
-                filename = self.get_name()
-
-                if any(filename in url for url in self.dst.find_files()):
-                    s3_res = boto3.resource('s3')
-                    obj = s3_res.Object(self.dst.bucket, filename)
-                    self.dst.delete(obj)
+                self.dst.delete(self.get_name())
                 exit(1)
             else:
                 LOG.debug('Successfully streamed innobackupex output')
