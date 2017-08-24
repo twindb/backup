@@ -178,9 +178,9 @@ def test__s3_find_files_returns_sorted(s3_client, config_content_mysql_only,
             hostname=socket.gethostname(),
             run_type='daily'
         )
-        objects = [f.key for f in dst.list_files(prefix)]
-        assert len(objects) == n_runs
-        assert objects == sorted(objects)
+        files = dst.list_files(prefix)
+        assert len(files) == n_runs
+        assert files == sorted(files)
 
 
 def test_test__take_file_backup_with_aenc(config_content_files_aenc,

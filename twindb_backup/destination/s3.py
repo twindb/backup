@@ -10,7 +10,6 @@ import socket
 
 from contextlib import contextmanager
 from multiprocessing import Process
-from operator import attrgetter
 from urlparse import urlparse
 
 import time
@@ -215,8 +214,11 @@ class S3(BaseDestination):
         retry_interval = 2
         while time.time() < retry_timeout:
             try:
-                return sorted(bucket.objects.filter(Prefix=norm_prefix),
-                              key=attrgetter('key'))
+                files = []
+                all_objects = bucket.objects.filter(Prefix=norm_prefix)
+                for file_object in all_objects:
+                    files.append(file_object.key)
+                return sorted(files)
             except ClientError as err:
                 LOG.warning('%s. Will retry in %d seconds.',
                             err, retry_interval)
@@ -261,15 +263,17 @@ class S3(BaseDestination):
     def delete(self, obj):
         """Deletes a s3 object.
 
-        :param S3.Object obj: The s3 object to delete.
+        :param obj: Key of S3 object
+        :type obj: str
         :return bool: True on success, False on failure
         """
         s3client = boto3.resource('s3')
         bucket = s3client.Bucket(self.bucket)
 
-        LOG.debug('deleting s3://%s/%s', bucket.name, obj.key)
+        s3obj = s3client.Object(bucket.name, obj)
+        LOG.debug('deleting s3://%s/%s', bucket.name, obj)
 
-        return obj.delete()
+        return s3obj.delete()
 
     @contextmanager
     def get_stream(self, path):
