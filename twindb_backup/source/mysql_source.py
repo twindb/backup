@@ -141,6 +141,7 @@ class MySQLSource(BaseSource):
             if proc_innobackupex.returncode:
                 LOG.error('Failed to run innobackupex. '
                           'Check error output in %s', stderr_file.name)
+                self.dst.delete(self.get_name())
                 exit(1)
             else:
                 LOG.debug('Successfully streamed innobackupex output')
