@@ -10,7 +10,6 @@ import socket
 
 from contextlib import contextmanager
 from multiprocessing import Process
-from operator import attrgetter
 from urlparse import urlparse
 
 import time
@@ -21,7 +20,7 @@ from botocore.client import Config
 import boto3
 from boto3.s3.transfer import TransferConfig
 
-from twindb_backup import LOG
+from twindb_backup import LOG, TwinDBBackupError
 from twindb_backup.destination.base_destination import BaseDestination, \
     DestinationError
 
@@ -58,6 +57,12 @@ class AWSAuthOptions(object):  # pylint: disable=too-few-public-methods
         self.default_region = default_region
         self.secret_access_key = secret_access_key
         self.access_key_id = access_key_id
+
+
+class S3FileAccess(object): # pylint: disable=too-few-public-methods
+    """Access modes for S3 files"""
+    public_read = 'public-read'
+    private = 'private'
 
 
 class S3(BaseDestination):
@@ -209,8 +214,11 @@ class S3(BaseDestination):
         retry_interval = 2
         while time.time() < retry_timeout:
             try:
-                return sorted(bucket.objects.filter(Prefix=norm_prefix),
-                              key=attrgetter('key'))
+                files = []
+                all_objects = bucket.objects.filter(Prefix=norm_prefix)
+                for file_object in all_objects:
+                    files.append(file_object.key)
+                return sorted(files)
             except ClientError as err:
                 LOG.warning('%s. Will retry in %d seconds.',
                             err, retry_interval)
@@ -255,15 +263,17 @@ class S3(BaseDestination):
     def delete(self, obj):
         """Deletes a s3 object.
 
-        :param S3.Object obj: The s3 object to delete.
+        :param obj: Key of S3 object
+        :type obj: str
         :return bool: True on success, False on failure
         """
         s3client = boto3.resource('s3')
         bucket = s3client.Bucket(self.bucket)
 
-        LOG.debug('deleting s3://%s/%s', bucket.name, obj.key)
+        s3obj = s3client.Object(bucket.name, obj)
+        LOG.debug('deleting s3://%s/%s', bucket.name, obj)
 
-        return obj.delete()
+        return s3obj.delete()
 
     @contextmanager
     def get_stream(self, path):
@@ -443,3 +453,48 @@ class S3(BaseDestination):
             io_chunksize=S3_UPLOAD_IO_CHUNKS_SIZE_BYTES)
 
         return transfer_config
+
+    def _set_file_access(self, access_mode, url):
+        """
+        Set file access via S3 url
+
+        :param access_mode: Access mode
+        :type access_mode: S3FileAccess
+        :param url: S3 url
+        :type url: str
+        """
+        object_key = urlparse(url).path.lstrip('/')
+        self.s3_client.put_object_acl(Bucket=self.bucket, ACL=access_mode,
+                                      Key=object_key)
+
+    def _get_file_url(self, s3_url):
+        """
+        Generate public url via S3 url
+        :param s3_url: S3 url
+        :type s3_url: str
+        :return: Public url
+        :rtype: str
+        """
+        object_key = urlparse(s3_url).path.lstrip('/')
+        return self.s3_client.generate_presigned_url('get_object',
+                                                     Params={
+                                                         'Bucket': self.bucket,
+                                                         'Key': object_key
+                                                     })
+
+    def share(self, s3_url):
+        """
+        Share S3 file and return public link
+
+        :param s3_url: S3 url
+        :type s3_url: str
+        :return: Public url
+        :rtype: str
+        """
+        run_type = s3_url.split('/')[4]
+        backup_urls = self.find_files(self.remote_path, run_type)
+        if s3_url in backup_urls:
+            self._set_file_access(S3FileAccess.public_read, s3_url)
+            return self._get_file_url(s3_url)
+        else:
+            raise TwinDBBackupError("File not found via url: %s", s3_url)

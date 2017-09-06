@@ -28,7 +28,7 @@ function install_package() {
 
 function install_puppet(){
 
-    rpm -Uhv https://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
+    rpm -Uvh https://yum.puppetlabs.com/puppetlabs-release-pc1-el-7.noarch.rpm
     install_package puppet
 
 }

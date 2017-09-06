@@ -97,3 +97,6 @@ class Local(BaseDestination):
 
     def _status_exists(self):
         return os.path.exists(self.status_path)
+
+    def share(self, url):
+        super(Local, self).share(url)

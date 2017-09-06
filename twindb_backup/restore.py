@@ -20,7 +20,7 @@ from twindb_backup.destination.local import Local
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, \
-    get_hostname_from_backup_copy
+    get_hostname_from_backup_copy, empty_dir
 
 
 def _get_status_key(status, key, variable):
@@ -187,8 +187,14 @@ def restore_from_mysql_incremental(stream, dst_dir, config):
     :return: If success, return True
     :rtype: bool
     """
-    inc_dir = tempfile.mkdtemp()
-
+    try:
+        inc_dir = tempfile.mkdtemp()
+    except (IOError, OSError) as err:
+        try:
+            empty_dir(dst_dir)
+        except (IOError, OSError) as err:
+            raise
+        raise
     # GPG modifier
     try:
         gpg = Gpg(stream,
