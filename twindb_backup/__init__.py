@@ -40,7 +40,7 @@ import sys
 
 __author__ = 'TwinDB Development Team'
 __email__ = 'dev@twindb.com'
-__version__ = '2.13.0'
+__version__ = '2.13.1'
 LOCK_FILE = '/var/run/twindb-backup.lock'
 INTERVALS = ['hourly', 'daily', 'weekly', 'monthly', 'yearly']
 
