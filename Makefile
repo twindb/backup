@@ -170,7 +170,7 @@ docker-start:
 		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
 		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
 		-it \
-		"twindb/omnibus-${PLATFORM}" \
+		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
 		bash -l
 
 
