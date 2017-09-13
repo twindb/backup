@@ -164,7 +164,7 @@ def restore_file(cfg, dst, backup_copy):
         exit(1)
 
 
-@main.group('vefiry')
+@main.group('verify')
 @PASS_CFG
 def verify(cfg):
     """Verify backup"""
@@ -175,13 +175,17 @@ def verify(cfg):
 @click.argument('backup_copy', required=False)
 @click.option('--dst', help='Directory where to restore the backup copy',
               default='.', show_default=True)
+@click.option('--hostname', help='Verify where backup was made',
+              show_default=True)
 @PASS_CFG
-def verify_mysql(cfg, dst, backup_copy):
+def verify_mysql(cfg, hostname, dst, backup_copy):
     """Verify backup"""
     LOG.debug('mysql: %r', cfg)
+
     if not backup_copy:
         LOG.info('No backup copy specified. Choose one from below:')
         list_available_backups(cfg)
         exit(1)
-    verify_mysql_backup(cfg, dst, backup_copy)
+
+    print(verify_mysql_backup(cfg, dst, backup_copy, hostname))
 
