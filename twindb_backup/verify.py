@@ -59,8 +59,8 @@ def edit_backup_my_cnf(dst_path):
         backup_cfg.remove_option(section='mysqld', option='innodb_fast_checksum')
     except ConfigParser.NoOptionError:
         pass
-    with open(filename, 'w') as f:
-        backup_cfg.write(f)
+    with open(filename, 'w') as backup_fp:
+        backup_cfg.write(backup_fp)
 
 
 def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
