@@ -47,18 +47,13 @@ def edit_backup_my_cnf(dst_path):
     filename = "{dir}/backup-my.cnf".format(dir=dst_path)
     backup_cfg = ConfigParser.ConfigParser()
     backup_cfg.read(filename)
-    try:
-        backup_cfg.remove_option(section='mysqld', option='innodb_log_checksum_algorithm')
-    except ConfigParser.NoOptionError:
-        pass
-    try:
-        backup_cfg.remove_option(section='mysqld', option='innodb_log_block_size')
-    except ConfigParser.NoOptionError:
-        pass
-    try:
-        backup_cfg.remove_option(section='mysqld', option='innodb_fast_checksum')
-    except ConfigParser.NoOptionError:
-        pass
+    for option in ['innodb_log_checksum_algorithm',
+                   'innodb_log_block_size',
+                   'innodb_fast_checksum']:
+        try:
+            backup_cfg.remove_option(section='mysqld', option=option)
+        except ConfigParser.NoOptionError:
+            pass
     with open(filename, 'w') as backup_fp:
         backup_cfg.write(backup_fp)
 
