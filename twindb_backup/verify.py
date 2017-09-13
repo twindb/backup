@@ -4,6 +4,7 @@ Module that verify backup copies.
 """
 import json
 import time
+import ConfigParser
 
 from twindb_backup import LOG, TwinDBBackupError
 from twindb_backup.configuration import get_destination
@@ -19,11 +20,15 @@ def get_latest_backup(dst):
     hourly_last_filename = None
     daily_last_filename = None
     try:
-        hourly_last_filename = hourly_status.keys()[-1].split("/")[-1]
+        hourly_list = hourly_status.keys()
+        hourly_list.sort()
+        hourly_last_filename = hourly_list[-1].split("/")[-1]
     except IndexError:
         pass
     try:
-        daily_last_filename = daily_status.keys()[-1].split("/")[-1]
+        daily_list = daily_status.keys()
+        daily_list.sort()
+        daily_last_filename = daily_list[-1].split("/")[-1]
     except IndexError:
         pass
     if hourly_last_filename > daily_last_filename:
@@ -35,6 +40,27 @@ def get_latest_backup(dst):
     url = "{remote_path}/{filename}".format(remote_path=dst.remote_path, filename=filename)
     LOG.info("Last daily backup is %s", url)
     return url
+
+
+def edit_backup_my_cnf(dst_path):
+    """Removed options from config(besides MySQL 5.7.8)"""
+    filename = "{dir}/backup-my.cnf".format(dir=dst_path)
+    backup_cfg = ConfigParser.ConfigParser()
+    backup_cfg.read(filename)
+    try:
+        backup_cfg.remove_option(section='mysqld', option='innodb_log_checksum_algorithm')
+    except ConfigParser.NoOptionError:
+        pass
+    try:
+        backup_cfg.remove_option(section='mysqld', option='innodb_log_block_size')
+    except ConfigParser.NoOptionError:
+        pass
+    try:
+        backup_cfg.remove_option(section='mysqld', option='innodb_fast_checksum')
+    except ConfigParser.NoOptionError:
+        pass
+    with open(filename, 'w') as f:
+        backup_cfg.write(f)
 
 
 def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
@@ -57,4 +83,6 @@ def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
     data['backup_copy'] = url
     data['restore_time'] = restore_time
     data['success'] = success
+    if success:
+        edit_backup_my_cnf(dst_path)
     return json.dumps(data)
