@@ -23,12 +23,12 @@ def get_latest_backup(dst):
     except IndexError:
         pass
     if hourly_last_filename > daily_last_filename:
-        file = hourly_status.keys()[-1]
+        filename = hourly_status.keys()[-1]
     elif hourly_last_filename < daily_last_filename:
-        file = daily_status.keys()[-1]
+        filename = daily_status.keys()[-1]
     else:
         raise TwinDBBackupError("Latest backup not found")
-    url = "{remote_path}/{file}".format(remote_path=dst.remote_path, file=file)
+    url = "{remote_path}/{filename}".format(remote_path=dst.remote_path, filename=filename)
     LOG.info("Last daily backup is %s", url)
     return url
 
@@ -44,7 +44,8 @@ def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
     success = True
     try:
         restore_from_mysql(config, url, dst_path)
-    except Exception:
+    except (TwinDBBackupError, OSError, IOError) as err:
+        LOG.error(err)
         success = False
     end_restore_time = time.time()
     restore_time = end_restore_time - start_restore_time
@@ -53,4 +54,3 @@ def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
     data['restore_time'] = restore_time
     data['success'] = success
     return json.dumps(data)
-
