@@ -188,4 +188,3 @@ def verify_mysql(cfg, hostname, dst, backup_copy):
         exit(1)
 
     print(verify_mysql_backup(cfg, dst, backup_copy, hostname))
-

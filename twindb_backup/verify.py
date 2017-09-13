@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+Module that verify backup copies.
+"""
 import json
 import time
 
