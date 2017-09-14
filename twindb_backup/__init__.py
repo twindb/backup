@@ -191,4 +191,3 @@ def save_measures(start_time, end_time):
         content["measures"] = [data]
         with open(LOG_FILE, mode='w') as data_fp:
             json.dump(content, data_fp)
-
