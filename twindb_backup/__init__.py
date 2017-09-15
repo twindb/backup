@@ -171,23 +171,23 @@ def get_timeout(run_type):
     return timeouts[run_type]
 
 
-def save_measures(start_time, end_time):
+def save_measures(start_time, end_time, log=LOG_FILE):
     """Save backup measures to log file"""
     data = {}
     data['start'] = start_time
     data['finish'] = end_time
     data['duration'] = end_time - start_time
-    if os.path.isfile(LOG_FILE):
-        with open(LOG_FILE) as data_fp:
+    if os.path.isfile(log):
+        with open(log) as data_fp:
             log = json.load(data_fp)
         log['measures'].append(data)
 
         if len(log['measures']) > 100:
             del log['measures'][0]
-        with open(LOG_FILE, mode='w') as data_fp:
+        with open(log, mode='w') as data_fp:
             json.dump(log, data_fp)
     else:
         content = {}
         content["measures"] = [data]
-        with open(LOG_FILE, mode='w') as data_fp:
+        with open(log, mode='w') as data_fp:
             json.dump(content, data_fp)
