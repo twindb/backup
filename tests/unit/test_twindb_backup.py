@@ -3,7 +3,7 @@ import pytest
 
 from ConfigParser import ConfigParser
 from twindb_backup import delete_local_files, get_directories_to_backup, \
-    get_timeout
+    get_timeout, save_measures
 from twindb_backup.backup import run_backup_job
 from twindb_backup.source.mysql_source import MySQLSource
 
@@ -264,3 +264,30 @@ def test_get_lsn(error_log, lsn, tmpdir):
     err_log = tmpdir.join('err.log')
     err_log.write(error_log)
     assert MySQLSource.get_lsn(str(err_log)) == lsn
+
+@pytest.mark.parametrize('data', [
+    (
+        """
+{"measures": [{"duration": 100, "start": 0, "finish": 100}]}
+        """
+    ),
+    (
+        """
+{"measures": [{"duration": 150, "start": 0, "finish": 150}]}
+        """
+    ),
+    (
+        """
+{"measures": [{"duration": 444, "start": 444, "finish": 888}]}
+        """
+
+    )
+])
+def test_save_measures_if_log_is_exist(data, tmpdir):
+    log_file = tmpdir.join('log')
+    log_file.write(data)
+    save_measures(50, 100, str(log_file))
+
+def test_save_measures_if_log_is_does_not_exist(tmpdir):
+    log_file = tmpdir.join('log')
+    save_measures(50, 100, str(log_file))
