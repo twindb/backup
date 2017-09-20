@@ -8,7 +8,7 @@ import errno
 import fcntl
 import os
 import signal
-
+import time
 from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
@@ -97,6 +97,7 @@ def backup_mysql(run_type, config):
     except ConfigParser.NoOptionError:
         pass
 
+    backup_start = time.time()
     src = MySQLSource(MySQLConnectInfo(config.get('mysql',
                                                   'mysql_defaults_file')),
                       run_type,
@@ -142,6 +143,7 @@ def backup_mysql(run_type, config):
     if not dst.save(stream, src_name):
         LOG.error('Failed to save backup copy %s', src_name)
         exit(1)
+    backup_finish = time.time()
 
     status = dst.status()
 
@@ -149,7 +151,9 @@ def backup_mysql(run_type, config):
         'binlog': src.binlog_coordinate[0],
         'position': src.binlog_coordinate[1],
         'lsn': src.lsn,
-        'type': src.type
+        'type': src.type,
+        'backup_started': backup_start,
+        'backup_finished': backup_finish
     }
 
     status[run_type][src_name]['config'] = []
