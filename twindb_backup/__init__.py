@@ -177,17 +177,18 @@ def save_measures(start_time, end_time, log_path=LOG_FILE):
     data['start'] = start_time
     data['finish'] = end_time
     data['duration'] = end_time - start_time
-    if os.path.isfile(log_path):
-        with open(log_path) as data_fp:
-            log = json.load(data_fp)
-        log['measures'].append(data)
 
-        if len(log['measures']) > 100:
-            del log['measures'][0]
-        with open(log_path, mode='w') as data_fp:
-            json.dump(log, data_fp)
-    else:
-        content = {}
-        content["measures"] = [data]
-        with open(log_path, mode='w') as data_fp:
+    with open(log_path, 'a+') as data_fp:
+        try:
+            with open(log_path) as data_fp:
+                log = json.load(data_fp)
+        except ValueError:
+            content = {}
+            content["measures"] = [data]
             json.dump(content, data_fp)
+            return
+    log['measures'].append(data)
+    if len(log['measures']) > 100:
+        del log['measures'][0]
+    with open(log_path, mode='w') as data_fp:
+        json.dump(log, data_fp)

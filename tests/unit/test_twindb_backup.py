@@ -1,4 +1,7 @@
+import json
+
 import mock as mock
+import os
 import pytest
 
 from ConfigParser import ConfigParser
@@ -288,6 +291,17 @@ def test_save_measures_if_log_is_exist(data, tmpdir):
     log_file.write(data)
     save_measures(50, 100, str(log_file))
 
+    data = None
+    with open(str(log_file)) as data_file:
+        data = json.load(data_file)
+    assert data
+
+
 def test_save_measures_if_log_is_does_not_exist(tmpdir):
     log_file = tmpdir.join('log')
     save_measures(50, 100, str(log_file))
+    assert os.path.isfile(str(log_file))
+    data = None
+    with open(str(log_file)) as data_file:
+        data = json.load(data_file)
+    assert data
