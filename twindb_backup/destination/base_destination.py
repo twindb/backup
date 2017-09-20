@@ -174,3 +174,21 @@ class BaseDestination(object):
         :return:
         """
         return filename.replace(self.remote_path + '/', '', 1)
+
+    def get_latest_backup(self):
+        """Get latest backup path"""
+        cur_status = self.status()
+        latest = None
+        max_finish = 0
+        for run_type, backups in cur_status.iteritems():
+            for key, backup in backups.iteritems():
+                try:
+                    if backup['backup_finished'] >= max_finish:
+                        max_finish = backup['backup_finished']
+                        latest = key
+                except KeyError:
+                    pass
+        if latest:
+            return None
+        url = "{remote_path}/{filename}".format(remote_path=self.remote_path, filename=latest)
+        return url
