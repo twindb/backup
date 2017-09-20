@@ -189,5 +189,5 @@ def save_measures(start_time, end_time, log_path=LOG_FILE):
             'measures': [data]
         }
 
-    with open(log_path, 'w') as fp:
-        json.dump(log, fp)
+    with open(log_path, 'w') as file_pt:
+        json.dump(log, file_pt)
