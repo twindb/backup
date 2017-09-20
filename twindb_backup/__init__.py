@@ -33,6 +33,7 @@
  """
 import ConfigParser
 import glob
+import json
 import logging
 import os
 
@@ -42,10 +43,10 @@ __author__ = 'TwinDB Development Team'
 __email__ = 'dev@twindb.com'
 __version__ = '2.13.2'
 LOCK_FILE = '/var/run/twindb-backup.lock'
+LOG_FILE = '/var/log/twindb-backup-measures.log'
 INTERVALS = ['hourly', 'daily', 'weekly', 'monthly', 'yearly']
 
 LOG = logging.getLogger(__name__)
-
 
 class TwinDBBackupError(Exception):
     """Class for script errors"""
@@ -168,3 +169,25 @@ def get_timeout(run_type):
         'yearly': 365 * 24 * 3600 / 2
     }
     return timeouts[run_type]
+
+
+def save_measures(start_time, end_time, log_path=LOG_FILE):
+    """Save backup measures to log file"""
+    data = {
+        'start': start_time,
+        'finish': end_time,
+        'duration': end_time - start_time
+    }
+    try:
+        with open(log_path, 'r') as data_fp:
+            log = json.load(data_fp)
+            log['measures'].append(data)
+            if len(log['measures']) > 100:
+                del log['measures'][0]
+    except IOError:
+        log = {
+            'measures': [data]
+        }
+
+    with open(log_path, 'w') as file_pt:
+        json.dump(log, file_pt)
