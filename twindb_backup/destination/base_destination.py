@@ -180,7 +180,7 @@ class BaseDestination(object):
         cur_status = self.status()
         latest = None
         max_finish = 0
-        for run_type, backups in cur_status.iteritems():
+        for _, backups in cur_status.iteritems():
             for key, backup in backups.iteritems():
                 try:
                     if backup['backup_finished'] >= max_finish:
