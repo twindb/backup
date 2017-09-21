@@ -8,7 +8,6 @@ import errno
 import fcntl
 import os
 import signal
-import time
 from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
