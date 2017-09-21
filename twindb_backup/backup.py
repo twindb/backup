@@ -11,9 +11,12 @@ import signal
 import time
 from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
+
+import time
+
 from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
-    TwinDBBackupError)
+    TwinDBBackupError, save_measures)
 from twindb_backup.configuration import get_destination
 from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.modifiers.gpg import Gpg
@@ -203,9 +206,11 @@ def backup_everything(run_type, config):
     set_open_files_limit()
 
     try:
+        backup_start = time.time()
         backup_files(run_type, config)
         backup_mysql(run_type, config)
-
+        end = time.time()
+        save_measures(backup_start, end)
     except ConfigParser.NoSectionError as err:
         LOG.error(err)
         exit(1)
