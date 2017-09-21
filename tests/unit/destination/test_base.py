@@ -217,4 +217,65 @@ def test_get_full_copy_name_error(mock_status, status, path):
     with pytest.raises(DestinationError):
         dst.get_full_copy_name(path)
 
+@pytest.mark.parametrize('status, path', [
+    (
+        {
+            u'daily': {
+                u'46cf72633004/daily/mysql/mysql-2017-03-20_03_11_13.xbstream.gz.gpg': {
+                    u'binlog': None,
+                    u'config': [],
+                    u'lsn': 1632036,
+                    u'backup_started': 400,
+                    u'backup_finished': 500,
+                    u'position': None,
+                    u'type': u'full'}},
+            u'hourly': {
+                u'46cf72633004/hourly/mysql/mysql-2017-03-20_03_11_19.xbstream.gz.gpg': {
+                    u'binlog': None,
+                    u'config': [],
+                    u'lsn': 1632036,
+                    u'backup_started': 200,
+                    u'backup_finished': 700,
+                    u'parent': u'46cf72633004/daily/mysql/mysql-2017-03-20_03_11_13.xbstream.gz.gpg',
+                    u'position': None,
+                    u'type': u'incremental'}},
+            u'monthly': {},
+            u'weekly': {},
+            u'yearly': {}
+        },
+        '/46cf72633004/hourly/mysql/mysql-2017-03-20_03_11_19.xbstream.gz.gpg'
+    ),
+    (
+        {
+            u'daily': {
+                u'46cf72633004/daily/mysql/mysql-2017-03-20_03_11_13.xbstream.gz.gpg': {
+                    u'binlog': None,
+                    u'config': [],
+                    u'lsn': 1632036,
+                    u'backup_started': 0,
+                    u'backup_finished': 1,
+                    u'position': None,
+                    u'type': u'full',}},
+            u'hourly': {
+                u'46cf72633004/hourly/mysql/mysql-2017-03-20_03_11_19.xbstream.gz.gpg': {
+                    u'binlog': None,
+                    u'config': [],
+                    u'lsn': 1632036,
+                    u'backup_started': 1,
+                    u'backup_finished': 2,
+                    u'position': None,
+                    u'type': u'incremental'}},
+            u'monthly': {},
+            u'weekly': {},
+            u'yearly': {}
+        },
+        '/46cf72633004/hourly/mysql/mysql-2017-03-20_03_11_19.xbstream.gz.gpg'
+    ),
+])
+@mock.patch.object(BaseDestination, 'status')
+def test_get_latest_backup(mock_status, status, path):
+    mock_status.return_value = status
+    dst = BaseDestination()
+    url = dst.get_latest_backup()
+    assert url == path
 

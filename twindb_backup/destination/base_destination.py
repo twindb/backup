@@ -188,7 +188,7 @@ class BaseDestination(object):
                         latest = key
                 except KeyError:
                     pass
-        if latest:
+        if latest is None:
             return None
         url = "{remote_path}/{filename}".format(remote_path=self.remote_path, filename=latest)
         return url
