@@ -11,9 +11,6 @@ import signal
 import time
 from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
-
-import time
-
 from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
     TwinDBBackupError, save_measures)
