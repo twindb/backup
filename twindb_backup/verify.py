@@ -54,5 +54,3 @@ def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
         'restore_time': restore_time,
         'success': success
     })
-
-

@@ -225,8 +225,6 @@ def test_get_full_copy_name_error(mock_status, status, path):
                     u'binlog': None,
                     u'config': [],
                     u'lsn': 1632036,
-                    u'backup_started': 400,
-                    u'backup_finished': 500,
                     u'position': None,
                     u'type': u'full'}},
             u'hourly': {
@@ -234,8 +232,6 @@ def test_get_full_copy_name_error(mock_status, status, path):
                     u'binlog': None,
                     u'config': [],
                     u'lsn': 1632036,
-                    u'backup_started': 200,
-                    u'backup_finished': 700,
                     u'parent': u'46cf72633004/daily/mysql/mysql-2017-03-20_03_11_13.xbstream.gz.gpg',
                     u'position': None,
                     u'type': u'incremental'}},
