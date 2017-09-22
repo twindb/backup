@@ -91,11 +91,10 @@ def backup_mysql(run_type, config):
 
     dst = get_destination(config)
 
-    full_backup = 'daily'
     try:
         full_backup = config.get('mysql', 'full_backup')
     except ConfigParser.NoOptionError:
-        pass
+        full_backup = 'daily'
 
     src = MySQLSource(MySQLConnectInfo(config.get('mysql',
                                                   'mysql_defaults_file')),
@@ -105,9 +104,7 @@ def backup_mysql(run_type, config):
 
     src_name = src.get_name()
     status = dst.status()
-    status[run_type][src_name] = {
-        'backup_started': time.time(),
-    }
+    backup_start = time.time()
     callbacks = []
     stream = src.get_stream()
     # Gzip modifier
@@ -150,11 +147,10 @@ def backup_mysql(run_type, config):
         'position': src.binlog_coordinate[1],
         'lsn': src.lsn,
         'type': src.type,
-        'backup_finished': time.time()
+        'backup_finished': time.time(),
+        'backup_started': backup_start,
+        'config': []
     }
-
-    status[run_type][src_name]['config'] = []
-
     for path, content in src.get_my_cnf():
         status[run_type][src_name]['config'].append({
             path: base64.b64encode(content)
