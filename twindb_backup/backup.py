@@ -104,7 +104,9 @@ def backup_mysql(run_type, config):
 
     src_name = src.get_name()
     status = dst.status()
-    backup_start = time.time()
+    status[run_type][src_name] = {
+        'backup_started': time.time()
+    }
     callbacks = []
     stream = src.get_stream()
     # Gzip modifier
@@ -148,7 +150,6 @@ def backup_mysql(run_type, config):
         'lsn': src.lsn,
         'type': src.type,
         'backup_finished': time.time(),
-        'backup_started': backup_start,
         'config': []
     }
     for path, content in src.get_my_cnf():
