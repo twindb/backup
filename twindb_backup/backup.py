@@ -97,17 +97,19 @@ def backup_mysql(run_type, config): # pylint: disable=too-many-locals,too-many-s
     except ConfigParser.NoOptionError:
         pass
 
-    backup_start = time.time()
     src = MySQLSource(MySQLConnectInfo(config.get('mysql',
                                                   'mysql_defaults_file')),
                       run_type,
                       full_backup,
                       dst)
 
+    src_name = src.get_name()
+    status = dst.status()
+    status[run_type][src_name] = {
+        'backup_started': time.time(),
+    }
     callbacks = []
     stream = src.get_stream()
-    src_name = src.get_name()
-
     # Gzip modifier
     stream = Gzip(stream).get_stream()
     src_name += '.gz'
@@ -143,17 +145,12 @@ def backup_mysql(run_type, config): # pylint: disable=too-many-locals,too-many-s
     if not dst.save(stream, src_name):
         LOG.error('Failed to save backup copy %s', src_name)
         exit(1)
-    backup_finish = time.time()
-
-    status = dst.status()
-
     status[run_type][src_name] = {
         'binlog': src.binlog_coordinate[0],
         'position': src.binlog_coordinate[1],
         'lsn': src.lsn,
         'type': src.type,
-        'backup_started': backup_start,
-        'backup_finished': backup_finish
+        'backup_finished': time.time()
     }
 
     status[run_type][src_name]['config'] = []

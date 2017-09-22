@@ -174,8 +174,10 @@ def verify(cfg):
 @verify.command('mysql')
 @click.argument('backup_copy', required=False)
 @click.option('--dst', help='Directory where to restore the backup copy',
-              default='.', show_default=True)
-@click.option('--hostname', help='Verify where backup was made',
+              default='/tmp/', show_default=True)
+@click.option('--hostname', help='If backup_copy is '
+                                 'latest this option specifies hostname '
+                                 'where the backup copy was taken.',
               show_default=True)
 @PASS_CFG
 def verify_mysql(cfg, hostname, dst, backup_copy):

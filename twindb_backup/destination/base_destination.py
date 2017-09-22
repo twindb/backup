@@ -189,6 +189,12 @@ class BaseDestination(object):
                 except KeyError:
                     pass
         if latest is None:
+            for _, backups in cur_status.iteritems():
+                for key, _ in backups.iteritems():
+                    backup_name = key.url.rsplit('/', 1)[-1]
+                    if backup_name > latest:
+                        latest = backup_name
+        if latest is None:
             return None
         url = "{remote_path}/{filename}".format(remote_path=self.remote_path, filename=latest)
         return url

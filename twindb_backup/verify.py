@@ -33,20 +33,26 @@ def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
         url = dst.get_latest_backup()
     else:
         url = backup_copy
+    if url is None:
+        return json.dumps({
+            'backup_copy': url,
+            'restore_time': 0,
+            'success': False
+        })
     start_restore_time = time.time()
     success = True
     try:
         restore_from_mysql(config, url, dst_path)
+        edit_backup_my_cnf(dst_path)
     except (TwinDBBackupError, OSError, IOError) as err:
         LOG.error(err)
         success = False
     end_restore_time = time.time()
     restore_time = end_restore_time - start_restore_time
-    data = {
+    return json.dumps({
         'backup_copy': url,
         'restore_time': restore_time,
         'success': success
-    }
-    if success:
-        edit_backup_my_cnf(dst_path)
-    return json.dumps(data)
+    })
+
+
