@@ -71,7 +71,7 @@ def backup_files(run_type, config):
         src.apply_retention_policy(dst, config, run_type)
 
 
-def backup_mysql(run_type, config): # pylint: disable=too-many-locals,too-many-statements
+def backup_mysql(run_type, config):
     """Take backup of local MySQL instance
 
     :param run_type: Run type
