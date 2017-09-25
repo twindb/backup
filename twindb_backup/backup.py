@@ -95,20 +95,17 @@ def backup_mysql(run_type, config):
         full_backup = config.get('mysql', 'full_backup')
     except ConfigParser.NoOptionError:
         full_backup = 'daily'
-
+    backup_start = time.time()
     src = MySQLSource(MySQLConnectInfo(config.get('mysql',
                                                   'mysql_defaults_file')),
                       run_type,
                       full_backup,
                       dst)
 
-    src_name = src.get_name()
-    status = dst.status()
-    status[run_type][src_name] = {
-        'backup_started': time.time()
-    }
     callbacks = []
     stream = src.get_stream()
+    src_name = src.get_name()
+
     # Gzip modifier
     stream = Gzip(stream).get_stream()
     src_name += '.gz'
@@ -130,26 +127,20 @@ def backup_mysql(run_type, config):
         LOG.debug('keep_local_path is not present in the config file')
 
     # GPG modifier
-    try:
-        stream = Gpg(stream,
-                     config.get('gpg', 'recipient'),
-                     config.get('gpg', 'keyring')).get_stream()
-        src_name += '.gpg'
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-        pass
-    except ModifierException as err:
-        LOG.warning(err)
-        LOG.warning('Will skip encryption')
+    src_name, stream = get_gpg_stream(config, src_name, stream)
 
     if not dst.save(stream, src_name):
         LOG.error('Failed to save backup copy %s', src_name)
         exit(1)
+    backup_finish = time.time()
+    status = dst.status()
     status[run_type][src_name] = {
         'binlog': src.binlog_coordinate[0],
         'position': src.binlog_coordinate[1],
         'lsn': src.lsn,
         'type': src.type,
-        'backup_finished': time.time(),
+        'backup_started': backup_start,
+        'backup_finished': backup_finish,
         'config': []
     }
     for path, content in src.get_my_cnf():
@@ -171,6 +162,21 @@ def backup_mysql(run_type, config):
     LOG.debug('Callbacks are %r', callbacks)
     for callback in callbacks:
         callback[0].callback(**callback[1])
+
+
+def get_gpg_stream(config, src_name, stream):
+    """Try to get Gpg stream"""
+    try:
+        stream = Gpg(stream,
+                     config.get('gpg', 'recipient'),
+                     config.get('gpg', 'keyring')).get_stream()
+        src_name += '.gpg'
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        pass
+    except ModifierException as err:
+        LOG.warning(err)
+        LOG.warning('Will skip encryption')
+    return src_name, stream
 
 
 def set_open_files_limit():
