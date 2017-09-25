@@ -141,7 +141,7 @@ def backup_mysql(run_type, config):
     if not dst.save(stream, src_name):
         LOG.error('Failed to save backup copy %s', src_name)
         exit(1)
-    status = prepare_status(dst, src, run_type,src_name, backup_start)
+    status = prepare_status(dst, src, run_type, src_name, backup_start)
 
     src.apply_retention_policy(dst, config, run_type, status)
 
