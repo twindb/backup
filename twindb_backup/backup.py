@@ -127,12 +127,33 @@ def backup_mysql(run_type, config):
         LOG.debug('keep_local_path is not present in the config file')
 
     # GPG modifier
-    src_name, stream = get_gpg_stream(config, src_name, stream)
+    try:
+        stream = Gpg(stream,
+                     config.get('gpg', 'recipient'),
+                     config.get('gpg', 'keyring')).get_stream()
+        src_name += '.gpg'
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        pass
+    except ModifierException as err:
+        LOG.warning(err)
+        LOG.warning('Will skip encryption')
 
     if not dst.save(stream, src_name):
         LOG.error('Failed to save backup copy %s', src_name)
         exit(1)
-    backup_finish = time.time()
+    status = prepare_status(dst, src, run_type,src_name, backup_start)
+
+    src.apply_retention_policy(dst, config, run_type, status)
+
+    dst.status(status)
+
+    LOG.debug('Callbacks are %r', callbacks)
+    for callback in callbacks:
+        callback[0].callback(**callback[1])
+
+
+def prepare_status(dst, src, run_type, src_name, backup_start):
+    """Prepare status for update"""
     status = dst.status()
     status[run_type][src_name] = {
         'binlog': src.binlog_coordinate[0],
@@ -140,7 +161,7 @@ def backup_mysql(run_type, config):
         'lsn': src.lsn,
         'type': src.type,
         'backup_started': backup_start,
-        'backup_finished': backup_finish,
+        'backup_finished': time.time(),
         'config': []
     }
     for path, content in src.get_my_cnf():
@@ -154,29 +175,7 @@ def backup_mysql(run_type, config):
     if src.galera:
         status[run_type][src_name]['wsrep_provider_version'] = \
             src.wsrep_provider_version
-
-    src.apply_retention_policy(dst, config, run_type, status)
-
-    dst.status(status)
-
-    LOG.debug('Callbacks are %r', callbacks)
-    for callback in callbacks:
-        callback[0].callback(**callback[1])
-
-
-def get_gpg_stream(config, src_name, stream):
-    """Try to get Gpg stream"""
-    try:
-        stream = Gpg(stream,
-                     config.get('gpg', 'recipient'),
-                     config.get('gpg', 'keyring')).get_stream()
-        src_name += '.gpg'
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-        pass
-    except ModifierException as err:
-        LOG.warning(err)
-        LOG.warning('Will skip encryption')
-    return src_name, stream
+    return status
 
 
 def set_open_files_limit():
