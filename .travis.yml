@@ -18,7 +18,7 @@ before_install:
   - sudo docker pull ${DOCKER_IMAGE}
 
 script:
-  - travis_wait 30 make docker-test
+  - make docker-test
 
 before_deploy:
   - travis_wait 30 make package
