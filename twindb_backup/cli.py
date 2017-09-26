@@ -10,6 +10,7 @@ import click
 from twindb_backup import setup_logging, LOG, __version__, TwinDBBackupError
 from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
+from twindb_backup.clone import clone_mysql
 from twindb_backup.configuration import get_destination
 from twindb_backup.ls import list_available_backups
 from twindb_backup.restore import restore_from_mysql, restore_from_file
@@ -185,8 +186,32 @@ def verify_mysql(cfg, hostname, dst, backup_copy):
     LOG.debug('mysql: %r', cfg)
 
     if not backup_copy:
-        LOG.info('No backup copy specified. Choose one from below:')
         list_available_backups(cfg)
         exit(1)
 
     print(verify_mysql_backup(cfg, dst, backup_copy, hostname))
+
+
+@main.group('clone')
+@PASS_CFG
+def clone(cfg):
+    """Clone backup on remote server"""
+    LOG.debug('Clone: %r', cfg)
+
+
+@clone.command('mysql')
+@click.argument('destination_host', required=False)
+@click.argument('slave_host', required=False)
+@click.option('--binary_logging', help='Enable binary logging', is_flag=True,
+              default=True)
+@click.option('--server_id', help='Server id for replication', default="slave")
+@PASS_CFG
+def clone_mysql_backup(cfg, server_id, binary_logging, slave_host, destination_host):
+    """"""
+    if not slave_host:
+        LOG.info('No slave_host specified')
+        exit(1)
+    if not destination_host:
+        LOG.info('No slave_host specified')
+        exit(1)
+    clone_mysql(cfg, slave_host, destination_host, server_id, binary_logging)
