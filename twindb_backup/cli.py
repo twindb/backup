@@ -200,18 +200,18 @@ def clone(cfg):
 
 
 @clone.command('mysql')
+@click.argument('source_host', required=False)
 @click.argument('destination_host', required=False)
-@click.argument('slave_host', required=False)
 @click.option('--binary_logging', help='Enable binary logging', is_flag=True,
               default=True)
 @click.option('--server_id', help='Server id for replication', default="slave")
 @PASS_CFG
-def clone_mysql_backup(cfg, server_id, binary_logging, slave_host, destination_host):
+def clone_mysql_backup(cfg, server_id, binary_logging, destination_host, source_host):
     """"""
-    if not slave_host:
-        LOG.info('No slave_host specified')
+    if not source_host:
+        LOG.info('No source_host specified')
         exit(1)
     if not destination_host:
-        LOG.info('No slave_host specified')
+        LOG.info('No destination_host specified')
         exit(1)
-    clone_mysql(cfg, slave_host, destination_host, server_id, binary_logging)
+    clone_mysql(cfg, destination_host, source_host, server_id, binary_logging)
