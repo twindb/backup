@@ -97,7 +97,7 @@ class MySQLSource(BaseSource):
         return self._backup_info.lsn
 
     @contextmanager
-    def get_stream(self, remote_host=None, remote_path=None):
+    def get_stream(self):
         """
         Get a PIPE handler with content of the source
         :return:
@@ -108,10 +108,6 @@ class MySQLSource(BaseSource):
             "--stream=xbstream",
             "--host=127.0.0.1"
             ]
-
-        if remote_host:
-            cmd.append("--remote-host=%s" % remote_host)
-            cmd.append(remote_path)
 
         if self.is_galera():
             cmd.append("--galera-info")

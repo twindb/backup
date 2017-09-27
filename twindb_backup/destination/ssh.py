@@ -79,14 +79,12 @@ class Ssh(BaseDestination):
         """
         cmd = self._ssh_command + ["mkdir -p \"%s\"" % path]
         LOG.debug('Running %s', ' '.join(cmd))
-        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        _, cerr = proc.communicate()
-
-        if proc.returncode:
+        _, cerr, returncode = self.execute_command(cmd)
+        if returncode:
             LOG.error('Failed to create directory %s: %s', path, cerr)
             exit(1)
 
-        return proc.returncode
+        return returncode
 
     def list_files(self, prefix, recursive=False):
 
@@ -114,8 +112,7 @@ class Ssh(BaseDestination):
     def delete(self, obj):
         cmd = self._ssh_command + ["rm %s" % obj]
         LOG.debug('Running %s', ' '.join(cmd))
-        proc = Popen(cmd)
-        proc.communicate()
+        self.execute_command(cmd)
 
     def get_stream(self, path):
         """
@@ -134,9 +131,8 @@ class Ssh(BaseDestination):
             "{status_file}".format(raw_status=raw_status,
                                    status_file=self.status_path)
         ]
-        proc = Popen(cmd)
-        _, cerr = proc.communicate()
-        if proc.returncode:
+        _, cerr, returncode = self.execute_command(cmd)
+        if returncode:
             LOG.error('Failed to write backup status')
             LOG.error(cerr)
             exit(1)
@@ -146,11 +142,10 @@ class Ssh(BaseDestination):
 
         if self._status_exists():
             cmd = self._ssh_command + ["cat %s" % self.status_path]
-            proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-            cout, cerr = proc.communicate()
-            if proc.returncode:
+            cout, cerr, returncode =  self.execute_command(cmd)
+            if returncode:
                 LOG.error('Failed to read backup status: %d: %s',
-                          proc.returncode,
+                          returncode,
                           cerr)
                 exit(1)
             return json.loads(base64.b64decode(cout))
@@ -166,11 +161,10 @@ class Ssh(BaseDestination):
 
         try:
             LOG.debug('Running %r', cmd)
-            proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-            cout, cerr = proc.communicate()
-            if proc.returncode:
+            cout, cerr, returncode =  self.execute_command(cmd)
+            if returncode:
                 LOG.error('Failed to read backup status: %d: %s',
-                          proc.returncode,
+                          returncode,
                           cerr)
                 exit(1)
             if cout.strip() == 'exists':
@@ -183,5 +177,17 @@ class Ssh(BaseDestination):
         except OSError as err:
             LOG.error('Failed to run %s: %s', " ".join(cmd), err)
             exit(1)
+
     def share(self, url):
         super(Ssh, self).share(url)
+
+    @staticmethod
+    def execute_command(command):
+        """Method for execute command
+
+        :param command: Command for execution
+        """
+        LOG.debug('Running %r', command)
+        proc = Popen(args=command, stdout=PIPE, stderr=PIPE)
+        cout, cerr = proc.communicate()
+        return cout, cerr, proc.returncode
