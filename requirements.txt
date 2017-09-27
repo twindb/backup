@@ -17,3 +17,4 @@ PyMySQL==0.7.9
 python-dateutil==2.6.0    # via botocore
 s3transfer==0.1.10        # via boto3
 six==1.10.0               # via python-dateutil
+paramiko==2.3.1

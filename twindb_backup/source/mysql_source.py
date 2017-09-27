@@ -24,11 +24,13 @@ class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
     """MySQL connection details """
     def __init__(self, defaults_file,
                  connect_timeout=10,
-                 cursor=pymysql.cursors.DictCursor):
+                 cursor=pymysql.cursors.DictCursor,
+                 hostname = "127.0.0.1"):
 
         self.cursor = cursor
         self.connect_timeout = connect_timeout
         self.defaults_file = defaults_file
+        self.hostname = hostname
 
 
 class MySQLSource(BaseSource):
@@ -102,26 +104,7 @@ class MySQLSource(BaseSource):
         Get a PIPE handler with content of the source
         :return:
         """
-        cmd = [
-            "innobackupex",
-            "--defaults-file=%s" % self._connect_info.defaults_file,
-            "--stream=xbstream",
-            "--host=127.0.0.1"
-            ]
-
-        if self.is_galera():
-            cmd.append("--galera-info")
-            cmd.append("--no-backup-locks")
-
-        if self.full:
-            cmd.append(".")
-        else:
-            cmd += [
-                "--incremental",
-                ".",
-                "--incremental-lsn=%d" % self.parent_lsn
-            ]
-
+        cmd = self._prepare_stream_cmd()
         # If this is a Galera node then additional step needs to be taken to
         # prevent the backups from locking up the cluster.
         wsrep_desynced = False
@@ -157,6 +140,29 @@ class MySQLSource(BaseSource):
         finally:
             if wsrep_desynced:
                 self.disable_wsrep_desync()
+
+    def _prepare_stream_cmd(self):
+        """Prepare command for get stream"""
+
+        cmd = [
+            "innobackupex",
+            "--defaults-file=%s" % self._connect_info.defaults_file,
+            "--stream=xbstream",
+            "--host=127.0.0.1"
+        ]
+        if self.is_galera():
+            cmd.append("--galera-info")
+            cmd.append("--no-backup-locks")
+        if self.full:
+            cmd.append(".")
+        else:
+            cmd += [
+                "--incremental",
+                ".",
+                "--incremental-lsn=%d" % self.parent_lsn
+            ]
+
+        return cmd
 
     def get_name(self):
         """
@@ -465,7 +471,7 @@ class MySQLSource(BaseSource):
         connection = None
         try:
             connection = pymysql.connect(
-                host='127.0.0.1',
+                host=self._connect_info.hostname,
                 read_default_file=self._connect_info.defaults_file,
                 connect_timeout=self._connect_info.connect_timeout,
                 cursorclass=self._connect_info.cursor
