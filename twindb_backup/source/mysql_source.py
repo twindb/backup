@@ -111,10 +111,7 @@ class MySQLSource(BaseSource):
 
         if remote_host:
             cmd.append("--remote-host=%s" % remote_host)
-            if not remote_path:
-                cmd.append("/var/lib/mysql/")
-            else:
-                cmd.append(remote_path)
+            cmd.append(remote_path)
 
         if self.is_galera():
             cmd.append("--galera-info")
