@@ -29,7 +29,7 @@ class BaseSource(object):
         """
         self.run_type = run_type
 
-    def get_stream(self):
+    def get_stream(self, remote_host=None, remote_path=None):
         """
         Get backup stream in a handler
         """

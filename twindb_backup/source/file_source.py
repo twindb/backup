@@ -27,7 +27,7 @@ class FileSource(BaseSource):
         return self._media_type
 
     @contextmanager
-    def get_stream(self):
+    def get_stream(self, remote_host=None, remote_path=None):
         """
         Get a PIPE handler with content of the source
 
