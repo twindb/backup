@@ -8,7 +8,6 @@ from contextlib import contextmanager
 
 from spur import SshShell, NoSuchCommandError, CouldNotChangeDirectoryError
 from spur.ssh import MissingHostKey
-from twindb_backup import LOG
 from twindb_backup.source.mysql_source import MySQLSource
 
 
@@ -41,7 +40,7 @@ class RemoteMySQLSource(MySQLSource):
             self._update_backup_info(stderr_file)
             os.unlink(stderr_file.name)
         except (NoSuchCommandError, CouldNotChangeDirectoryError) as err:
-            self._handle_failure_exec(stderr_file)
+            self._handle_failure_exec(err, stderr_file)
 
     def enable_wsrep_desync(self):
         raise NotImplementedError("Method enable_wsrep_desync not implemented")

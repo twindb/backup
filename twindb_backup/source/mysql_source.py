@@ -120,7 +120,7 @@ class MySQLSource(BaseSource):
             LOG.debug('Successfully streamed innobackupex output')
             self._update_backup_info(stderr_file)
         except (NoSuchCommandError, CouldNotChangeDirectoryError) as err:
-            self._handle_failure_exec(stderr_file)
+            self._handle_failure_exec(err, stderr_file)
         except OSError as err:
             LOG.error('Failed to run %s: %s', cmd, err)
             exit(1)
@@ -128,7 +128,7 @@ class MySQLSource(BaseSource):
             if wsrep_desynced:
                 self.disable_wsrep_desync()
 
-    def _handle_failure_exec(self, stderr_file):
+    def _handle_failure_exec(self, err, stderr_file):
         """Cleanup on failure exec"""
         LOG.error(err)
         LOG.error('Failed to run innobackupex. '
