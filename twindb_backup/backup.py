@@ -8,12 +8,12 @@ import errno
 import fcntl
 import os
 import signal
-
+import time
 from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
-    TwinDBBackupError)
+    TwinDBBackupError, save_measures)
 from twindb_backup.configuration import get_destination
 from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.modifiers.gpg import Gpg
@@ -91,12 +91,11 @@ def backup_mysql(run_type, config):
 
     dst = get_destination(config)
 
-    full_backup = 'daily'
     try:
         full_backup = config.get('mysql', 'full_backup')
     except ConfigParser.NoOptionError:
-        pass
-
+        full_backup = 'daily'
+    backup_start = time.time()
     src = MySQLSource(MySQLConnectInfo(config.get('mysql',
                                                   'mysql_defaults_file')),
                       run_type,
@@ -142,18 +141,29 @@ def backup_mysql(run_type, config):
     if not dst.save(stream, src_name):
         LOG.error('Failed to save backup copy %s', src_name)
         exit(1)
+    status = prepare_status(dst, src, run_type, src_name, backup_start)
 
+    src.apply_retention_policy(dst, config, run_type, status)
+
+    dst.status(status)
+
+    LOG.debug('Callbacks are %r', callbacks)
+    for callback in callbacks:
+        callback[0].callback(**callback[1])
+
+
+def prepare_status(dst, src, run_type, src_name, backup_start):
+    """Prepare status for update"""
     status = dst.status()
-
     status[run_type][src_name] = {
         'binlog': src.binlog_coordinate[0],
         'position': src.binlog_coordinate[1],
         'lsn': src.lsn,
-        'type': src.type
+        'type': src.type,
+        'backup_started': backup_start,
+        'backup_finished': time.time(),
+        'config': []
     }
-
-    status[run_type][src_name]['config'] = []
-
     for path, content in src.get_my_cnf():
         status[run_type][src_name]['config'].append({
             path: base64.b64encode(content)
@@ -165,14 +175,7 @@ def backup_mysql(run_type, config):
     if src.galera:
         status[run_type][src_name]['wsrep_provider_version'] = \
             src.wsrep_provider_version
-
-    src.apply_retention_policy(dst, config, run_type, status)
-
-    dst.status(status)
-
-    LOG.debug('Callbacks are %r', callbacks)
-    for callback in callbacks:
-        callback[0].callback(**callback[1])
+    return status
 
 
 def set_open_files_limit():
@@ -199,9 +202,11 @@ def backup_everything(run_type, config):
     set_open_files_limit()
 
     try:
+        backup_start = time.time()
         backup_files(run_type, config)
         backup_mysql(run_type, config)
-
+        end = time.time()
+        save_measures(backup_start, end)
     except ConfigParser.NoSectionError as err:
         LOG.error(err)
         exit(1)

@@ -15,6 +15,7 @@ from twindb_backup.ls import list_available_backups
 from twindb_backup.restore import restore_from_mysql, restore_from_file
 from twindb_backup.share import share
 from twindb_backup.util import ensure_empty
+from twindb_backup.verify import verify_mysql_backup
 
 PASS_CFG = click.make_pass_decorator(ConfigParser, ensure=True)
 
@@ -161,3 +162,31 @@ def restore_file(cfg, dst, backup_copy):
     except TwinDBBackupError as err:
         LOG.error(err)
         exit(1)
+
+
+@main.group('verify')
+@PASS_CFG
+def verify(cfg):
+    """Verify backup"""
+    LOG.debug('Restore: %r', cfg)
+
+
+@verify.command('mysql')
+@click.argument('backup_copy', required=False)
+@click.option('--dst', help='Directory where to restore the backup copy',
+              default='/tmp/', show_default=True)
+@click.option('--hostname', help='If backup_copy is '
+                                 'latest this option specifies hostname '
+                                 'where the backup copy was taken.',
+              show_default=True)
+@PASS_CFG
+def verify_mysql(cfg, hostname, dst, backup_copy):
+    """Verify backup"""
+    LOG.debug('mysql: %r', cfg)
+
+    if not backup_copy:
+        LOG.info('No backup copy specified. Choose one from below:')
+        list_available_backups(cfg)
+        exit(1)
+
+    print(verify_mysql_backup(cfg, dst, backup_copy, hostname))
