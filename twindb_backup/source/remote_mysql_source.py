@@ -30,9 +30,29 @@ class RemoteMySQLSource(MySQLSource):
                                     self.ssh_connection_info.port,
                                     username=self.ssh_connection_info.user,
                                     key_filename=self.ssh_connection_info.key)
-            stdin, stdout, stderr = self.ssh_client.exec_command(" ".join(cmd))
+            #TODO: Implement here
         except (SSHException, AuthenticationException,
                 BadHostKeyException, socket.error) as err:
             LOG.error(err)
         finally:
             self.ssh_client.close()
+
+    def enable_wsrep_desync(self):
+        raise NotImplementedError("Method enable_wsrep_desync not implemented")
+
+    def disable_wsrep_desync(self):
+        raise NotImplementedError("Method disable_wsrep_desync not implemented")
+
+    def wsrep_provider_version(self):
+        raise NotImplementedError("Method wsrep_provider_version not implemented")
+
+    def is_galera(self):
+        raise NotImplementedError("Method is_galera not implemented")
+
+    def get_connection(self):
+        raise NotImplementedError("Method get_connection not implemented")
+
+    @property
+    def galera(self):
+        raise NotImplementedError("Property galera not implemented")
+
