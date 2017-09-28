@@ -15,7 +15,8 @@ class RemoteMySQLSource(MySQLSource):
     """Remote MySQLSource class"""
 
     def __init__(self, ssh_connection_info,
-                 mysql_connect_info, run_type, full_backup, dst): # pylint: disable=too-many-arguments
+                 mysql_connect_info, run_type,
+                 full_backup, dst):     # pylint: disable=too-many-arguments
 
         self.ssh_shell = SshShell(hostname=ssh_connection_info.host,
                                   username=ssh_connection_info.user,
