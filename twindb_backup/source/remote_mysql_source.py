@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+Module defines MySQL source class for backing up remote MySQL.
+"""
 import tempfile
 import os
 from contextlib import contextmanager
@@ -32,7 +36,7 @@ class RemoteMySQLSource(MySQLSource):
         stderr_file = tempfile.NamedTemporaryFile(delete=False)
 
         try:
-            result = self.ssh_shell.run(cmd, stderr_file=stderr_file)
+            result = self.ssh_shell.run(cmd, stderr=stderr_file)
             yield result.output
             self._update_backup_info(stderr_file)
             os.unlink(stderr_file.name)
@@ -61,4 +65,3 @@ class RemoteMySQLSource(MySQLSource):
     @property
     def galera(self):
         raise NotImplementedError("Property galera not implemented")
-
