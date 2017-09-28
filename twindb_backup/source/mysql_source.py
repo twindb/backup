@@ -152,7 +152,7 @@ class MySQLSource(BaseSource):
         self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
             stderr_file.name
         )
-        os.unlink(stderr_file.namef)
+        os.unlink(stderr_file.name)
 
     def _prepare_stream_cmd(self):
         """Prepare command for get stream"""
