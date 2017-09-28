@@ -128,11 +128,7 @@ class MySQLSource(BaseSource):
                 exit(1)
             else:
                 LOG.debug('Successfully streamed innobackupex output')
-            LOG.debug('innobackupex error log file %s', stderr_file.name)
-            self._backup_info.lsn = self.get_lsn(stderr_file.name)
-            self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
-                stderr_file.name
-            )
+            self._update_backup_info(stderr_file)
             os.unlink(stderr_file.name)
         except OSError as err:
             LOG.error('Failed to run %s: %s', cmd, err)
@@ -140,6 +136,15 @@ class MySQLSource(BaseSource):
         finally:
             if wsrep_desynced:
                 self.disable_wsrep_desync()
+
+    def _update_backup_info(self, stderr_file):
+        """Update backup_info from stderr"""
+
+        LOG.debug('innobackupex error log file %s', stderr_file.name)
+        self._backup_info.lsn = self.get_lsn(stderr_file.name)
+        self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
+            stderr_file.name
+        )
 
     def _prepare_stream_cmd(self):
         """Prepare command for get stream"""

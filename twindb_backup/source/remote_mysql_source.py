@@ -1,11 +1,9 @@
-import socket
 import tempfile
-
 import os
+from contextlib import contextmanager
+
 from spur import SshShell, NoSuchCommandError, CouldNotChangeDirectoryError
 from spur.ssh import MissingHostKey
-
-from contextlib import contextmanager
 from twindb_backup import LOG
 from twindb_backup.source.mysql_source import MySQLSource
 
@@ -29,18 +27,14 @@ class RemoteMySQLSource(MySQLSource):
     @contextmanager
     def get_stream(self):
         """Get a PIPE handler with content of the source from remote server"""
+
         cmd = self._prepare_stream_cmd()
         stderr_file = tempfile.NamedTemporaryFile(delete=False)
 
         try:
             result = self.ssh_shell.run(cmd, stderr_file=stderr_file)
             yield result.output
-            LOG.debug('Successfully streamed innobackupex output')
-            LOG.debug('innobackupex error log file %s', stderr_file.name)
-            self._backup_info.lsn = self.get_lsn(stderr_file.name)
-            self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
-                stderr_file.name
-            )
+            self._update_backup_info(stderr_file)
             os.unlink(stderr_file.name)
         except (NoSuchCommandError, CouldNotChangeDirectoryError) as err:
             LOG.error(err)
