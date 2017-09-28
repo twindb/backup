@@ -142,7 +142,7 @@ class Ssh(BaseDestination):
 
         if self._status_exists():
             cmd = self._ssh_command + ["cat %s" % self.status_path]
-            cout, cerr, returncode =  self.execute_command(cmd)
+            cout, cerr, returncode = self.execute_command(cmd)
             if returncode:
                 LOG.error('Failed to read backup status: %d: %s',
                           returncode,
@@ -161,7 +161,7 @@ class Ssh(BaseDestination):
 
         try:
             LOG.debug('Running %r', cmd)
-            cout, cerr, returncode =  self.execute_command(cmd)
+            cout, cerr, returncode = self.execute_command(cmd)
             if returncode:
                 LOG.error('Failed to read backup status: %d: %s',
                           returncode,

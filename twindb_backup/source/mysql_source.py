@@ -25,7 +25,7 @@ class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
     def __init__(self, defaults_file,
                  connect_timeout=10,
                  cursor=pymysql.cursors.DictCursor,
-                 hostname = "127.0.0.1"):
+                 hostname="127.0.0.1"):
 
         self.cursor = cursor
         self.connect_timeout = connect_timeout

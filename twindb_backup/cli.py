@@ -207,7 +207,7 @@ def clone(cfg):
 @click.option('--server_id', help='Server id for replication', default="slave")
 @PASS_CFG
 def clone_mysql_backup(cfg, server_id, binary_logging, destination_host, source_host):
-    """"""
+    """Clone mysql backup on remote server and make it to slave"""
     if not source_host:
         LOG.info('No source_host specified')
         exit(1)
