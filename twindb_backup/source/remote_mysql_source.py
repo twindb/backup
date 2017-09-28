@@ -16,7 +16,7 @@ class RemoteMySQLSource(MySQLSource):
     """Remote MySQLSource class"""
 
     def __init__(self, ssh_connection_info,
-                 mysql_connect_info, run_type, full_backup, dst):
+                 mysql_connect_info, run_type, full_backup, dst): # pylint: disable=too-many-arguments
 
         self.ssh_shell = SshShell(hostname=ssh_connection_info.host,
                                   username=ssh_connection_info.user,
@@ -41,11 +41,7 @@ class RemoteMySQLSource(MySQLSource):
             self._update_backup_info(stderr_file)
             os.unlink(stderr_file.name)
         except (NoSuchCommandError, CouldNotChangeDirectoryError) as err:
-            LOG.error(err)
-            LOG.error('Failed to run innobackupex. '
-                      'Check error output in %s', stderr_file.name)
-            self.dst.delete(self.get_name())
-            exit(1)
+            self._handle_failure_exec(stderr_file)
 
     def enable_wsrep_desync(self):
         raise NotImplementedError("Method enable_wsrep_desync not implemented")

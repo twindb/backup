@@ -8,7 +8,6 @@ import time
 
 from ConfigParser import NoOptionError
 from contextlib import contextmanager
-from subprocess import Popen, PIPE
 
 import pymysql
 from spur import LocalShell, NoSuchCommandError, CouldNotChangeDirectoryError
@@ -120,19 +119,22 @@ class MySQLSource(BaseSource):
 
             LOG.debug('Successfully streamed innobackupex output')
             self._update_backup_info(stderr_file)
-            os.unlink(stderr_file.name)
         except (NoSuchCommandError, CouldNotChangeDirectoryError) as err:
-            LOG.error(err)
-            LOG.error('Failed to run innobackupex. '
-                      'Check error output in %s', stderr_file.name)
-            self.dst.delete(self.get_name())
-            exit(1)
+            self._handle_failure_exec(stderr_file)
         except OSError as err:
             LOG.error('Failed to run %s: %s', cmd, err)
             exit(1)
         finally:
             if wsrep_desynced:
                 self.disable_wsrep_desync()
+
+    def _handle_failure_exec(self, stderr_file):
+        """Cleanup on failure exec"""
+        LOG.error(err)
+        LOG.error('Failed to run innobackupex. '
+                  'Check error output in %s', stderr_file.name)
+        self.dst.delete(self.get_name())
+        exit(1)
 
     def _update_backup_info(self, stderr_file):
         """Update backup_info from stderr"""
@@ -142,6 +144,7 @@ class MySQLSource(BaseSource):
         self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
             stderr_file.name
         )
+        os.unlink(stderr_file.name)
 
     def _prepare_stream_cmd(self):
         """Prepare command for get stream"""
