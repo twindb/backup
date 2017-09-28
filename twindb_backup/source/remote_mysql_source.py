@@ -14,9 +14,9 @@ from twindb_backup.source.mysql_source import MySQLSource
 class RemoteMySQLSource(MySQLSource):
     """Remote MySQLSource class"""
 
-    def __init__(self, ssh_connection_info,
-                 mysql_connect_info, run_type,
-                 full_backup, dst):     # pylint: disable=too-many-arguments
+    def __init__(self, kwargs):
+
+        ssh_connection_info = kwargs['ssh_connection_info']
 
         self.ssh_shell = SshShell(hostname=ssh_connection_info.host,
                                   username=ssh_connection_info.user,
@@ -24,9 +24,7 @@ class RemoteMySQLSource(MySQLSource):
                                   private_key_file=ssh_connection_info.key,
                                   missing_host_key=MissingHostKey.accept)
 
-        super(RemoteMySQLSource, self).__init__(mysql_connect_info,
-                                                run_type, full_backup,
-                                                dst)
+        super(RemoteMySQLSource, self).__init__(**kwargs)
 
     @contextmanager
     def get_stream(self):
