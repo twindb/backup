@@ -1,9 +1,11 @@
 import socket
+import tempfile
+
+import os
+from spur import SshShell, NoSuchCommandError, CouldNotChangeDirectoryError
+from spur.ssh import MissingHostKey
+
 from contextlib import contextmanager
-
-import paramiko
-from paramiko import SSHException, BadHostKeyException, AuthenticationException
-
 from twindb_backup import LOG
 from twindb_backup.source.mysql_source import MySQLSource
 
@@ -13,9 +15,12 @@ class RemoteMySQLSource(MySQLSource):
 
     def __init__(self, ssh_connection_info,
                  mysql_connect_info, run_type, full_backup, dst):
-        self.ssh_connection_info = ssh_connection_info
-        self.ssh_client = paramiko.SSHClient()
-        self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        self.ssh_shell = SshShell(hostname=ssh_connection_info.host,
+                                  username=ssh_connection_info.user,
+                                  port=ssh_connection_info.port,
+                                  private_key_file=ssh_connection_info.key,
+                                  missing_host_key=MissingHostKey.accept)
 
         super(RemoteMySQLSource, self).__init__(mysql_connect_info,
                                                 run_type, full_backup,
@@ -25,17 +30,24 @@ class RemoteMySQLSource(MySQLSource):
     def get_stream(self):
         """Get a PIPE handler with content of the source from remote server"""
         cmd = self._prepare_stream_cmd()
+        stderr_file = tempfile.NamedTemporaryFile(delete=False)
+
         try:
-            self.ssh_client.connect(self.ssh_connection_info.host,
-                                    self.ssh_connection_info.port,
-                                    username=self.ssh_connection_info.user,
-                                    key_filename=self.ssh_connection_info.key)
-            #TODO: Implement here
-        except (SSHException, AuthenticationException,
-                BadHostKeyException, socket.error) as err:
+            result = self.ssh_shell.run(cmd, stderr_file=stderr_file)
+            yield result.output
+            LOG.debug('Successfully streamed innobackupex output')
+            LOG.debug('innobackupex error log file %s', stderr_file.name)
+            self._backup_info.lsn = self.get_lsn(stderr_file.name)
+            self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
+                stderr_file.name
+            )
+            os.unlink(stderr_file.name)
+        except (NoSuchCommandError, CouldNotChangeDirectoryError) as err:
             LOG.error(err)
-        finally:
-            self.ssh_client.close()
+            LOG.error('Failed to run innobackupex. '
+                      'Check error output in %s', stderr_file.name)
+            self.dst.delete(self.get_name())
+            exit(1)
 
     def enable_wsrep_desync(self):
         raise NotImplementedError("Method enable_wsrep_desync not implemented")
