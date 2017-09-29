@@ -98,7 +98,6 @@ class MySQLSource(BaseSource):
         """
         return self._backup_info.lsn
 
-    @contextmanager
     def get_stream(self):
         """
         Get a PIPE handler with content of the source
