@@ -119,7 +119,6 @@ class MySQLSource(BaseSource):
 
             proc_innobackupex = shell.spawn(cmd,
                                             stderr=stderr_file,
-                                            stdout=PIPE,
                                             allow_error=True)
             result = proc_innobackupex.wait_for_result()
 
