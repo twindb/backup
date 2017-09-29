@@ -118,15 +118,14 @@ class MySQLSource(BaseSource):
             LOG.debug('Running %s', ' '.join(cmd))
 
             proc_innobackupex = shell.spawn(cmd,
-                                            stdout=PIPE,
                                             stderr=stderr_file,
                                             allow_error=True,
                                             use_pty=True)
+            result = proc_innobackupex.wait_for_result()
 
-            yield proc_innobackupex._subprocess.stdout # pylint: disable=protected-access
-            proc_innobackupex._subprocess.communicate() # pylint: disable=protected-access
+            yield result.output
 
-            if proc_innobackupex._subprocess.returncode:    # pylint: disable=protected-access
+            if result.returncode:
                 LOG.error('Failed to run innobackupex. '
                           'Check error output in %s', stderr_file.name)
                 self.dst.delete(self.get_name())
