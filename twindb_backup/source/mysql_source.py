@@ -116,8 +116,8 @@ class MySQLSource(BaseSource):
         try:
 
             proc_innobackup = self.shell.spawn(command=cmd, stderr=stderr_file, stdout=PIPE)
-            yield proc_innobackup._subprocess.stdout
-            proc_innobackup._subprocess.communicate()
+            yield proc_innobackup._subprocess.stdout # pylint: disable=protected-access
+            proc_innobackup._subprocess.communicate() # pylint: disable=protected-access
 
             LOG.debug('Successfully streamed innobackupex output')
             self._update_backup_info(stderr_file)
