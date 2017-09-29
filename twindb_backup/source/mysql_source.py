@@ -8,7 +8,6 @@ import time
 
 from ConfigParser import NoOptionError
 from contextlib import contextmanager
-from subprocess import PIPE
 
 import pymysql
 from spur import LocalShell
