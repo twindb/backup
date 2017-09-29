@@ -11,7 +11,8 @@ from contextlib import contextmanager
 from subprocess import PIPE
 
 import pymysql
-from psutil import Popen
+from spur import LocalShell
+
 from twindb_backup import LOG, get_files_to_delete, INTERVALS
 from twindb_backup.source.base_source import BaseSource
 
@@ -113,15 +114,18 @@ class MySQLSource(BaseSource):
             if self.is_galera():
                 wsrep_desynced = self.enable_wsrep_desync()
 
+            shell = LocalShell()
             LOG.debug('Running %s', ' '.join(cmd))
-            proc_innobackupex = Popen(cmd,
-                                      stderr=stderr_file,
-                                      stdout=PIPE)
 
-            yield proc_innobackupex.stdout
+            proc_innobackupex = shell.spawn(cmd,
+                                            stderr=stderr_file,
+                                            stdout=PIPE,
+                                            allow_error=True)
+            result = proc_innobackupex.wait_for_result()
 
-            proc_innobackupex.communicate()
-            if proc_innobackupex.returncode:
+            yield result.output
+
+            if result.returncode:
                 LOG.error('Failed to run innobackupex. '
                           'Check error output in %s', stderr_file.name)
                 self.dst.delete(self.get_name())
