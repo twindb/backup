@@ -8,10 +8,9 @@ import time
 
 from ConfigParser import NoOptionError
 from contextlib import contextmanager
-from subprocess import PIPE
 
 import pymysql
-from psutil import Popen
+from spur import LocalShell, NoSuchCommandError, CouldNotChangeDirectoryError
 from twindb_backup import LOG, get_files_to_delete, INTERVALS
 from twindb_backup.source.base_source import BaseSource
 
@@ -76,6 +75,7 @@ class MySQLSource(BaseSource):
         self._media_type = 'mysql'
         self.full_backup = full_backup
         self.dst = dst
+        self.shell = LocalShell()
         super(MySQLSource, self).__init__(run_type)
 
     @property
@@ -97,7 +97,6 @@ class MySQLSource(BaseSource):
         """
         return self._backup_info.lsn
 
-    @contextmanager
     def get_stream(self):
         """
         Get a PIPE handler with content of the source
@@ -107,28 +106,18 @@ class MySQLSource(BaseSource):
         # If this is a Galera node then additional step needs to be taken to
         # prevent the backups from locking up the cluster.
         wsrep_desynced = False
+        if self.is_galera():
+            wsrep_desynced = self.enable_wsrep_desync()
+
         LOG.debug('Running %s', ' '.join(cmd))
         stderr_file = tempfile.NamedTemporaryFile(delete=False)
         try:
-            if self.is_galera():
-                wsrep_desynced = self.enable_wsrep_desync()
-
-            LOG.debug('Running %s', ' '.join(cmd))
-            proc_innobackupex = Popen(cmd,
-                                      stderr=stderr_file,
-                                      stdout=PIPE)
-
-            yield proc_innobackupex.stdout
-
-            proc_innobackupex.communicate()
-            if proc_innobackupex.returncode:
-                LOG.error('Failed to run innobackupex. '
-                          'Check error output in %s', stderr_file.name)
-                self.dst.delete(self.get_name())
-                exit(1)
-            else:
-                LOG.debug('Successfully streamed innobackupex output')
+            result = self.shell.run(cmd, stderr=stderr_file)
+            yield result.output
+            LOG.debug('Successfully streamed innobackupex output')
             self._update_backup_info(stderr_file)
+        except (NoSuchCommandError, CouldNotChangeDirectoryError) as err:
+            self._handle_failure_exec(err, stderr_file)
         except OSError as err:
             LOG.error('Failed to run %s: %s', cmd, err)
             exit(1)
