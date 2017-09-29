@@ -8,6 +8,7 @@ import time
 
 from ConfigParser import NoOptionError
 from contextlib import contextmanager
+from subprocess import PIPE
 
 import pymysql
 from spur import LocalShell, NoSuchCommandError, CouldNotChangeDirectoryError
@@ -97,6 +98,7 @@ class MySQLSource(BaseSource):
         """
         return self._backup_info.lsn
 
+    @contextmanager
     def get_stream(self):
         """
         Get a PIPE handler with content of the source
@@ -112,8 +114,11 @@ class MySQLSource(BaseSource):
         LOG.debug('Running %s', ' '.join(cmd))
         stderr_file = tempfile.NamedTemporaryFile(delete=False)
         try:
-            result = self.shell.run(cmd, stderr=stderr_file)
-            yield result.output
+
+            proc_innobackup = self.shell.spawn(command=cmd, stderr=stderr_file, stdout=PIPE)
+            yield proc_innobackup._subprocess.stdout
+            proc_innobackup._subprocess.communicate()
+
             LOG.debug('Successfully streamed innobackupex output')
             self._update_backup_info(stderr_file)
         except (NoSuchCommandError, CouldNotChangeDirectoryError) as err:
