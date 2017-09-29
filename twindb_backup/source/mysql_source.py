@@ -8,6 +8,7 @@ import time
 
 from ConfigParser import NoOptionError
 from contextlib import contextmanager
+from subprocess import PIPE
 
 import pymysql
 from spur import LocalShell
@@ -117,13 +118,15 @@ class MySQLSource(BaseSource):
             LOG.debug('Running %s', ' '.join(cmd))
 
             proc_innobackupex = shell.spawn(cmd,
+                                            stdout=PIPE,
                                             stderr=stderr_file,
-                                            allow_error=True)
-            result = proc_innobackupex.wait_for_result()
+                                            allow_error=True,
+                                            use_pty=True)
 
-            yield result.output
+            yield proc_innobackupex._subprocess.stdout # pylint: disable=protected-access
+            proc_innobackupex._subprocess.communicate() # pylint: disable=protected-access
 
-            if result.returncode:
+            if proc_innobackupex._subprocess.returncode:    # pylint: disable=protected-access
                 LOG.error('Failed to run innobackupex. '
                           'Check error output in %s', stderr_file.name)
                 self.dst.delete(self.get_name())
