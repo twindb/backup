@@ -6,7 +6,9 @@ import base64
 import json
 import os
 import socket
-from subprocess import Popen, PIPE
+
+from spur import SshShell
+from spur.ssh import MissingHostKey
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination, \
@@ -38,6 +40,12 @@ class Ssh(BaseDestination):
         """
         super(Ssh, self).__init__()
         self.remote_path = remote_path.rstrip('/')
+
+        self.remote_shell = SshShell(hostname=ssh_connect_info.host,
+                                     username=ssh_connect_info.user,
+                                     private_key_file=ssh_connect_info.key,
+                                     port=ssh_connect_info.port,
+                                     missing_host_key=MissingHostKey.accept)
 
         self.user = ssh_connect_info.user
         self.key = ssh_connect_info.key
@@ -77,16 +85,16 @@ class Ssh(BaseDestination):
         :param path: remote directory
         :return: exit code
         """
-        cmd = self._ssh_command + ["mkdir -p \"%s\"" % path]
+        cmd = ["mkdir -p \"%s\"" % path]
         LOG.debug('Running %s', ' '.join(cmd))
-        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        _, cerr = proc.communicate()
+        with self.remote_shell:
+            result = self.remote_shell.run(cmd, allow_error=True)
 
-        if proc.returncode:
-            LOG.error('Failed to create directory %s: %s', path, cerr)
-            exit(1)
+            if result.returncode:
+                LOG.error('Failed to create directory %s: %s', path, result.stderr_output)
+                exit(1)
 
-        return proc.returncode
+            return result.returncode
 
     def list_files(self, prefix, recursive=False):
 
@@ -112,10 +120,10 @@ class Ssh(BaseDestination):
             return sorted(cout.read().split())
 
     def delete(self, obj):
-        cmd = self._ssh_command + ["rm %s" % obj]
+        cmd = ["rm %s" % obj]
         LOG.debug('Running %s', ' '.join(cmd))
-        proc = Popen(cmd)
-        proc.communicate()
+        with self.remote_shell:
+            self.remote_shell.run(cmd, allow_error=True)
 
     def get_stream(self, path):
         """
@@ -129,59 +137,59 @@ class Ssh(BaseDestination):
 
     def _write_status(self, status):
         raw_status = base64.b64encode(json.dumps(status))
-        cmd = self._ssh_command + [
+        cmd = [
             "echo {raw_status} > "
             "{status_file}".format(raw_status=raw_status,
                                    status_file=self.status_path)
         ]
-        proc = Popen(cmd)
-        _, cerr = proc.communicate()
-        if proc.returncode:
-            LOG.error('Failed to write backup status')
-            LOG.error(cerr)
-            exit(1)
-        return status
+        with self.remote_shell:
+            result = self.remote_shell.run(cmd, allow_error=True)
+            if result.returncode:
+                LOG.error('Failed to write backup status')
+                LOG.error(result.stderr_output)
+                exit(1)
+            return status
 
     def _read_status(self):
 
         if self._status_exists():
-            cmd = self._ssh_command + ["cat %s" % self.status_path]
-            proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-            cout, cerr = proc.communicate()
-            if proc.returncode:
-                LOG.error('Failed to read backup status: %d: %s',
-                          proc.returncode,
-                          cerr)
-                exit(1)
-            return json.loads(base64.b64decode(cout))
+            cmd = ["cat %s" % self.status_path]
+            with self.remote_shell:
+                result = self.remote_shell.run(cmd, allow_error=True)
+                if result.returncode:
+                    LOG.error('Failed to read backup status: %d: %s',
+                              result.returncode,
+                              result.stderr_output)
+                    exit(1)
+                return json.loads(base64.b64decode(result.output))
         else:
             return self._empty_status
 
     def _status_exists(self):
-        cmd = self._ssh_command + \
-              ["bash -c 'if test -s %s; "
+        cmd = ["bash -c 'if test -s %s; "
                "then echo exists; "
                "else echo not_exists; "
                "fi'" % self.status_path]
 
         try:
             LOG.debug('Running %r', cmd)
-            proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-            cout, cerr = proc.communicate()
-            if proc.returncode:
-                LOG.error('Failed to read backup status: %d: %s',
-                          proc.returncode,
-                          cerr)
-                exit(1)
-            if cout.strip() == 'exists':
-                return True
-            elif cout.strip() == 'not_exists':
-                return False
-            else:
-                raise DestinationError('Unrecognized response: %s' % cout)
+            with self.remote_shell:
+                result = self.remote_shell.run(cmd, allow_error=True)
+                if result.returncode:
+                    LOG.error('Failed to read backup status: %d: %s',
+                              result.returncode,
+                              result.stderr_output)
+                    exit(1)
+                if result.output.strip() == 'exists':
+                    return True
+                elif result.output.strip() == 'not_exists':
+                    return False
+                else:
+                    raise DestinationError('Unrecognized response: %s' % result.output)
 
         except OSError as err:
             LOG.error('Failed to run %s: %s', " ".join(cmd), err)
             exit(1)
+
     def share(self, url):
         super(Ssh, self).share(url)
