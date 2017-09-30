@@ -70,8 +70,13 @@ class Ssh(BaseDestination):
         """
         remote_name = self.remote_path + '/' + name
         self._mkdir_r(os.path.dirname(remote_name))
-        cmd = self._ssh_command + ["cat - > \"%s\"" % remote_name]
-        return self._save(cmd, handler)
+        cmd = ["cat - > \"%s\"" % remote_name]
+        with self.remote_shell:
+            result = self.remote_shell.run(cmd, allow_error=True)
+            if result.return_code:
+                raise DestinationError('%s exited with error code %d'
+                                       % (' '.join(cmd), result.return_code))
+            return result.return_code
 
     def _mkdir_r(self, path):
         """
