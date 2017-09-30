@@ -47,19 +47,14 @@ class Ssh(BaseDestination):
                                      port=ssh_connect_info.port,
                                      missing_host_key=MissingHostKey.accept)
 
-        self.user = ssh_connect_info.user
-        self.key = ssh_connect_info.key
-        self.port = ssh_connect_info.port
-        self.host = ssh_connect_info.host
-
-        self._ssh_command = ['ssh', '-l', self.user,
+        self._ssh_command = ['ssh', '-l', ssh_connect_info.user,
                              '-o',
                              'StrictHostKeyChecking=no',
                              '-o',
                              'PasswordAuthentication=no',
-                             '-p', str(self.port),
-                             '-i', self.key,
-                             self.host]
+                             '-p', str(ssh_connect_info.port),
+                             '-i', ssh_connect_info.key,
+                             ssh_connect_info.host]
         self.status_path = "{remote_path}/{hostname}/status".format(
             remote_path=self.remote_path,
             hostname=hostname
