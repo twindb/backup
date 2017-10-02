@@ -10,7 +10,8 @@ from ConfigParser import NoOptionError
 from contextlib import contextmanager
 
 import pymysql
-from paramiko import SSHClient, AutoAddPolicy, SSHException
+from psutil import Popen
+from subprocess import PIPE
 from twindb_backup import LOG, get_files_to_delete, INTERVALS
 from twindb_backup.source.base_source import BaseSource
 
@@ -108,21 +109,19 @@ class MySQLSource(BaseSource):
         wsrep_desynced = False
         LOG.debug('Running %s', ' '.join(cmd))
         stderr_file = tempfile.NamedTemporaryFile(delete=False)
-        shell = SSHClient()
-        shell.set_missing_host_key_policy(AutoAddPolicy())
-        shell.load_system_host_keys()
-        shell.connect("localhost")
         try:
             if self.is_galera():
                 wsrep_desynced = self.enable_wsrep_desync()
 
             LOG.debug('Running %s', ' '.join(cmd))
+            proc_innobackupex = Popen(cmd,
+                                      stderr=stderr_file,
+                                      stdout=PIPE)
 
-            _, stdout, _ = shell.exec_command(' '.join(cmd))
+            yield proc_innobackupex.stdout
 
-            yield stdout
-
-            if stdout.channel.recv_exit_status():
+            proc_innobackupex.communicate()
+            if proc_innobackupex.returncode:
                 LOG.error('Failed to run innobackupex. '
                           'Check error output in %s', stderr_file.name)
                 self.dst.delete(self.get_name())
@@ -130,13 +129,12 @@ class MySQLSource(BaseSource):
             else:
                 LOG.debug('Successfully streamed innobackupex output')
             self._update_backup_info(stderr_file)
-        except (SSHException, OSError) as err:
+        except OSError as err:
             LOG.error('Failed to run %s: %s', cmd, err)
             exit(1)
         finally:
             if wsrep_desynced:
                 self.disable_wsrep_desync()
-            shell.close()
 
     def _handle_failure_exec(self, err, stderr_file):
         """Cleanup on failure exec"""
