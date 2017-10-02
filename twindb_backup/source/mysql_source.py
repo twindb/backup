@@ -10,8 +10,8 @@ from ConfigParser import NoOptionError
 from contextlib import contextmanager
 
 import pymysql
-from psutil import Popen
-from subprocess import PIPE
+from subprocess import Popen, PIPE
+
 from twindb_backup import LOG, get_files_to_delete, INTERVALS
 from twindb_backup.source.base_source import BaseSource
 
