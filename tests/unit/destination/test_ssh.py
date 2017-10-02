@@ -30,24 +30,25 @@ setup_logging(log, debug=True)
 ])
 @mock.patch.object(Ssh, '_execute_commnand')
 def test__status_exists(mock_run, out, result):
-    mock_proc = mock.Mock()
-    mock_proc.returncode = 0
-    mock_proc.output = out
-    mock_run.return_value = mock_proc
+    mock_stdout = mock.Mock()
+    mock_stdout.channel.recv_exit_status.return_value = 0
+    mock_stdout.readlines.return_value = out
+    mock_stderr = mock.Mock()
+    mock_run.return_value = (mock_stdout, mock_stderr)
     dst = Ssh(remote_path='/foo/bar')
     assert dst._status_exists() == result
 
 @mock.patch.object(Ssh, '_execute_commnand')
 def test__status_exists_raises_error(mock_run):
-    mock_proc = mock.Mock()
-    mock_proc.output = 'foo'
-    mock_proc.returncode = 0
+    mock_stdout = mock.Mock()
+    mock_stdout.channel.recv_exit_status.return_value = 0
+    mock_stdout.readlines.return_value = 'foo'
+    mock_stderr = mock.Mock()
 
-    mock_run.return_value = mock_proc
+    mock_run.return_value = (mock_stdout, mock_stderr)
     dst = Ssh(remote_path='/foo/bar')
     with pytest.raises(DestinationError):
         dst._status_exists()
-
 
 @mock.patch.object(Ssh, '_status_exists')
 def test_get_status_empty(mock_status_exists):
