@@ -187,7 +187,7 @@ class Ssh(BaseDestination):
                           key_filename=self.ssh_connect_info.key,
                           port=self.ssh_connect_info.port,
                           username=self.ssh_connect_info.user)
-            stdin, stdout, stderr = shell.exec_command(cmd)
+            _, stdout, stderr = shell.exec_command(cmd)
             return stdout, stderr
         except (AuthenticationException, SSHException, socket.error) as err:
             LOG.error("Failure execution %r : %s", cmd, err)
