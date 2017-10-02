@@ -68,7 +68,9 @@ class Ssh(BaseDestination):
 
         stdout, _ = self._execute_commnand(' '.join(cmd))
         if stdout.channel.recv_exit_status():
-            raise DestinationError('%s exited with error code %d' % (' '.join(cmd),  stdout.channel.recv_exit_status()))
+            raise DestinationError('%s exited with error code %d' %
+                                   (' '.join(cmd),
+                                    stdout.channel.recv_exit_status()))
         return stdout.channel.recv_exit_status()
 
     def _mkdir_r(self, path):
@@ -145,7 +147,7 @@ class Ssh(BaseDestination):
             if stdout.channel.recv_exit_status():
                 LOG.error('Failed to read backup status: %d', stdout.channel.recv_exit_status())
                 exit(1)
-            return json.loads(base64.b64decode(stdout.readlines()))
+            return json.loads(base64.b64decode(stdout.read()))
         else:
             return self._empty_status
 
@@ -158,7 +160,7 @@ class Ssh(BaseDestination):
         try:
             LOG.debug('Running %r', cmd)
             stdout, _ = self._execute_commnand(' '.join(cmd))
-            output = stdout.readlines()
+            output = stdout.read()
             if stdout.channel.recv_exit_status():
                 LOG.error('Failed to read backup status: %d',
                           stdout.channel.recv_exit_status())
@@ -187,7 +189,7 @@ class Ssh(BaseDestination):
                           username=self.ssh_connect_info.user)
             stdin, stdout, stderr = shell.exec_command(cmd)
             return stdout, stderr
-        except (AuthenticationException, SSHException, 	socket.error) as err:
+        except (AuthenticationException, SSHException, socket.error) as err:
             LOG.error("Failure execution %r : %s", cmd, err)
             return -1
         finally:

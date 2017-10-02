@@ -32,7 +32,7 @@ setup_logging(log, debug=True)
 def test__status_exists(mock_run, out, result):
     mock_stdout = mock.Mock()
     mock_stdout.channel.recv_exit_status.return_value = 0
-    mock_stdout.readlines.return_value = out
+    mock_stdout.read.return_value = out
     mock_stderr = mock.Mock()
     mock_run.return_value = (mock_stdout, mock_stderr)
     dst = Ssh(remote_path='/foo/bar')
@@ -42,7 +42,7 @@ def test__status_exists(mock_run, out, result):
 def test__status_exists_raises_error(mock_run):
     mock_stdout = mock.Mock()
     mock_stdout.channel.recv_exit_status.return_value = 0
-    mock_stdout.readlines.return_value = 'foo'
+    mock_stdout.read.return_value = 'foo'
     mock_stderr = mock.Mock()
 
     mock_run.return_value = (mock_stdout, mock_stderr)
