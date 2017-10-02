@@ -8,10 +8,9 @@ import time
 
 from ConfigParser import NoOptionError
 from contextlib import contextmanager
-
-import pymysql
 from subprocess import Popen, PIPE
 
+import pymysql
 from twindb_backup import LOG, get_files_to_delete, INTERVALS
 from twindb_backup.source.base_source import BaseSource
 
