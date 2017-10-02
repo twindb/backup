@@ -32,7 +32,7 @@ class RemoteMySQLSource(MySQLSource):
                                   key_filename=self.ssh_connection_info.key)
         shell.set_missing_host_key_policy(AutoAddPolicy())
         try:
-            _, stdout, stderr = shell.exec_command(cmd)
+            _, stdout, stderr = shell.exec_command(' '.join(cmd))
             yield stdout
             self._update_backup_info(stderr_file)
             os.unlink(stderr_file.name)
