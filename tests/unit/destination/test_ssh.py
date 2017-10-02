@@ -2,8 +2,6 @@ import logging
 from subprocess import PIPE
 import mock
 import pytest
-from spur import SshShell
-
 from twindb_backup import setup_logging
 from twindb_backup.destination.base_destination import DestinationError
 from twindb_backup.destination.ssh import Ssh
@@ -30,7 +28,7 @@ setup_logging(log, debug=True)
         False
     )
 ])
-@mock.patch.object(SshShell, 'run')
+@mock.patch.object(Ssh, '_execute_commnand')
 def test__status_exists(mock_run, out, result):
     mock_proc = mock.Mock()
     mock_proc.returncode = 0
@@ -39,7 +37,7 @@ def test__status_exists(mock_run, out, result):
     dst = Ssh(remote_path='/foo/bar')
     assert dst._status_exists() == result
 
-@mock.patch.object(SshShell, 'run')
+@mock.patch.object(Ssh, '_execute_commnand')
 def test__status_exists_raises_error(mock_run):
     mock_proc = mock.Mock()
     mock_proc.output = 'foo'
