@@ -6,8 +6,8 @@ import tempfile
 import os
 from contextlib import contextmanager
 
-from spur import SshShell, NoSuchCommandError, CouldNotChangeDirectoryError
-from spur.ssh import MissingHostKey
+from paramiko import SSHClient, AutoAddPolicy, SSHException
+
 from twindb_backup.source.mysql_source import MySQLSource
 
 
@@ -16,14 +16,7 @@ class RemoteMySQLSource(MySQLSource):
 
     def __init__(self, kwargs):
 
-        ssh_connection_info = kwargs['ssh_connection_info']
-
-        self.ssh_shell = SshShell(hostname=ssh_connection_info.host,
-                                  username=ssh_connection_info.user,
-                                  port=ssh_connection_info.port,
-                                  private_key_file=ssh_connection_info.key,
-                                  missing_host_key=MissingHostKey.accept)
-
+        self.ssh_connection_info = kwargs['ssh_connection_info']
         super(RemoteMySQLSource, self).__init__(**kwargs)
 
     @contextmanager
@@ -32,13 +25,18 @@ class RemoteMySQLSource(MySQLSource):
 
         cmd = self._prepare_stream_cmd()
         stderr_file = tempfile.NamedTemporaryFile(delete=False)
-
+        shell = SSHClient()
+        shell.connect(hostname=self.ssh_connection_info.host,
+                                  username=self.ssh_connection_info.user,
+                                  port=self.ssh_connection_info.port,
+                                  key_filename=self.ssh_connection_info.key)
+        shell.set_missing_host_key_policy(AutoAddPolicy())
         try:
-            result = self.ssh_shell.run(cmd, stderr=stderr_file)
-            yield result.output
+            _, stdout, stderr = shell.exec_command(cmd)
+            yield stdout
             self._update_backup_info(stderr_file)
             os.unlink(stderr_file.name)
-        except (NoSuchCommandError, CouldNotChangeDirectoryError) as err:
+        except SSHException as err:
             self._handle_failure_exec(err, stderr_file)
 
     def enable_wsrep_desync(self):

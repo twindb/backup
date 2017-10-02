@@ -10,8 +10,7 @@ from ConfigParser import NoOptionError
 from contextlib import contextmanager
 
 import pymysql
-from spur import LocalShell
-
+from paramiko import SSHClient, AutoAddPolicy, SSHException
 from twindb_backup import LOG, get_files_to_delete, INTERVALS
 from twindb_backup.source.base_source import BaseSource
 
@@ -109,22 +108,21 @@ class MySQLSource(BaseSource):
         wsrep_desynced = False
         LOG.debug('Running %s', ' '.join(cmd))
         stderr_file = tempfile.NamedTemporaryFile(delete=False)
+        shell = SSHClient()
+        shell.set_missing_host_key_policy(AutoAddPolicy())
+        shell.load_system_host_keys()
+        shell.connect("localhost")
         try:
             if self.is_galera():
                 wsrep_desynced = self.enable_wsrep_desync()
 
-            shell = LocalShell()
             LOG.debug('Running %s', ' '.join(cmd))
 
-            proc_innobackupex = shell.spawn(cmd,
-                                            stderr=stderr_file,
-                                            allow_error=True,
-                                            use_pty=True)
-            result = proc_innobackupex.wait_for_result()
+            _, stdout, stderr = shell.exec_command(' '.join(cmd))
 
-            yield result.output
+            yield stdout
 
-            if result.returncode:
+            if stdout.channel.recv_exit_status():
                 LOG.error('Failed to run innobackupex. '
                           'Check error output in %s', stderr_file.name)
                 self.dst.delete(self.get_name())
@@ -132,12 +130,13 @@ class MySQLSource(BaseSource):
             else:
                 LOG.debug('Successfully streamed innobackupex output')
             self._update_backup_info(stderr_file)
-        except OSError as err:
+        except (SSHException, OSError) as err:
             LOG.error('Failed to run %s: %s', cmd, err)
             exit(1)
         finally:
             if wsrep_desynced:
                 self.disable_wsrep_desync()
+            shell.close()
 
     def _handle_failure_exec(self, err, stderr_file):
         """Cleanup on failure exec"""
