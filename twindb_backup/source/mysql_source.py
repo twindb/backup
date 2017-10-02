@@ -118,7 +118,7 @@ class MySQLSource(BaseSource):
 
             LOG.debug('Running %s', ' '.join(cmd))
 
-            _, stdout, stderr = shell.exec_command(' '.join(cmd))
+            _, stdout, _ = shell.exec_command(' '.join(cmd))
 
             yield stdout
 
