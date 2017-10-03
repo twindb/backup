@@ -6,12 +6,12 @@ import base64
 import json
 import os
 import socket
+from contextlib import contextmanager
 
 from paramiko import SSHClient, AuthenticationException, SSHException
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination, \
     DestinationError
-from twindb_backup.util import run_command
 
 
 class SshConnectInfo(object):  # pylint: disable=too-few-public-methods
@@ -41,14 +41,6 @@ class Ssh(BaseDestination):
 
         self.ssh_connect_info = ssh_connect_info
 
-        self._ssh_command = ['ssh', '-l', ssh_connect_info.user,
-                             '-o',
-                             'StrictHostKeyChecking=no',
-                             '-o',
-                             'PasswordAuthentication=no',
-                             '-p', str(ssh_connect_info.port),
-                             '-i', ssh_connect_info.key,
-                             ssh_connect_info.host]
         self.status_path = "{remote_path}/{hostname}/status".format(
             remote_path=self.remote_path,
             hostname=hostname
@@ -66,7 +58,7 @@ class Ssh(BaseDestination):
         self._mkdir_r(os.path.dirname(remote_name))
         cmd = ["cat - > \"%s\"" % remote_name]
 
-        stdout, _ = self._execute_commnand(' '.join(cmd))
+        stdout, _ = self._execute_commnand(cmd)
         if stdout.channel.recv_exit_status():
             raise DestinationError('%s exited with error code %d' %
                                    (' '.join(cmd),
@@ -82,7 +74,7 @@ class Ssh(BaseDestination):
         """
         cmd = ["mkdir -p \"%s\"" % path]
         LOG.debug('Running %s', ' '.join(cmd))
-        stdout, _ = self._execute_commnand(' '.join(cmd))
+        stdout, _ = self._execute_commnand(cmd)
         if stdout.channel.recv_exit_status():
             LOG.error('Failed to create directory %s', path)
             exit(1)
@@ -95,26 +87,24 @@ class Ssh(BaseDestination):
         else:
             ls_cmd = ["ls %s*" % prefix]
 
-        cmd = self._ssh_command + ls_cmd
-
-        with run_command(cmd, ok_non_zero=True) as cout:
+        with self._get_remote_stdout(ls_cmd) as cout:
             return sorted(cout.read().split())
 
     def find_files(self, prefix, run_type):
 
-        cmd = self._ssh_command + [
+        cmd = [
             "find {prefix}/*/{run_type} "
             "-type f".format(prefix=prefix,
                              run_type=run_type)
         ]
 
-        with run_command(cmd, ok_non_zero=True) as cout:
+        with  self._get_remote_stdout(cmd) as cout:
             return sorted(cout.read().split())
 
     def delete(self, obj):
         cmd = ["rm %s" % obj]
         LOG.debug('Running %s', ' '.join(cmd))
-        self._execute_commnand(' '.join(cmd))
+        self._execute_commnand(cmd)
 
     def get_stream(self, path):
         """
@@ -123,8 +113,8 @@ class Ssh(BaseDestination):
 
         :return: Standard output.
         """
-        cmd = self._ssh_command + ["cat %s" % path]
-        return run_command(cmd)
+        cmd = ["cat %s" % path]
+        return self._get_remote_stdout(cmd)
 
     def _write_status(self, status):
         raw_status = base64.b64encode(json.dumps(status))
@@ -133,7 +123,7 @@ class Ssh(BaseDestination):
             "{status_file}".format(raw_status=raw_status,
                                    status_file=self.status_path)
         ]
-        stdout, _ = self._execute_commnand(' '.join(cmd))
+        stdout, _ = self._execute_commnand(cmd)
         if stdout.channel.recv_exit_status():
             LOG.error('Failed to write backup status')
             exit(1)
@@ -143,7 +133,7 @@ class Ssh(BaseDestination):
 
         if self._status_exists():
             cmd = ["cat %s" % self.status_path]
-            stdout, _ = self._execute_commnand(' '.join(cmd))
+            stdout, _ = self._execute_commnand(cmd)
             if stdout.channel.recv_exit_status():
                 LOG.error('Failed to read backup status: %d', stdout.channel.recv_exit_status())
                 exit(1)
@@ -159,7 +149,7 @@ class Ssh(BaseDestination):
 
         try:
             LOG.debug('Running %r', cmd)
-            stdout, _ = self._execute_commnand(' '.join(cmd))
+            stdout, _ = self._execute_commnand(cmd)
             output = stdout.read()
             if stdout.channel.recv_exit_status():
                 LOG.error('Failed to read backup status: %d',
@@ -182,15 +172,34 @@ class Ssh(BaseDestination):
     def _execute_commnand(self, cmd):
         """Execute ssh command"""
         shell = SSHClient()
+        cmd_str = ' '.join(cmd)
         try:
             shell.connect(hostname=self.ssh_connect_info.host,
                           key_filename=self.ssh_connect_info.key,
                           port=self.ssh_connect_info.port,
                           username=self.ssh_connect_info.user)
-            _, stdout, stderr = shell.exec_command(cmd)
+            _, stdout, stderr = shell.exec_command(cmd_str)
             return stdout, stderr
         except (AuthenticationException, SSHException, socket.error) as err:
-            LOG.error("Failure execution %r : %s", cmd, err)
+            LOG.error("Failure execution %r : %s", cmd_str, err)
             return -1
+        finally:
+            shell.close()
+
+    @contextmanager
+    def _get_remote_stdout(self, cmd):
+        """Get remote stdout handler"""
+        shell = SSHClient()
+        cmd_str = ' '.join(cmd)
+        try:
+            shell.connect(hostname=self.ssh_connect_info.host,
+                          key_filename=self.ssh_connect_info.key,
+                          port=self.ssh_connect_info.port,
+                          username=self.ssh_connect_info.user)
+            _, stdout, _ = shell.exec_command(cmd_str)
+            yield stdout
+        except (AuthenticationException, SSHException, socket.error) as err:
+            LOG.error("Failure execution %r : %s", cmd_str, err)
+            exit(1)
         finally:
             shell.close()

@@ -70,19 +70,9 @@ def test_basename():
         == 'some_dir/some_file.txt'
 
 
-@mock.patch('twindb_backup.destination.ssh.run_command')
+@mock.patch.object(Ssh, '_get_remote_stdout')
 def test_find_files(mock_run_command):
 
     dst = Ssh(remote_path='/foo/bar')
     dst.find_files('/foo/bar', 'abc')
-    mock_run_command.assert_called_once_with([
-        'ssh',
-        '-l', 'root',
-        '-o', 'StrictHostKeyChecking=no',
-        '-o', 'PasswordAuthentication=no',
-        '-p', '22',
-        '-i', '/root/.id_rsa',
-        '127.0.0.1',
-        'find /foo/bar/*/abc -type f'],
-        ok_non_zero=True
-    )
+    mock_run_command.assert_called_once_with(['find /foo/bar/*/abc -type f'])
