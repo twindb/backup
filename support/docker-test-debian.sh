@@ -12,6 +12,7 @@ apt-get install -qq \
   make \
   libpython2.7-dev \
   python-setuptools \
+  libffi-dev \
   git \
   gcc
 

@@ -17,6 +17,7 @@ for i in $(seq 5); do
       Percona-Server-server-56 \
       Percona-Server-devel-56 \
       percona-xtrabackup-24 \
+      libffi-devel \
       git && break
     sleep 5
 done
