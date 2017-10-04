@@ -175,6 +175,7 @@ class Ssh(BaseDestination):
         :param cmd: Command for execution
         :type cmd: list
         :return: Handlers of stdout and stderr
+        :raise: DestinationError if any error
         """
         shell = SSHClient()
         cmd_str = ' '.join(cmd)
@@ -187,13 +188,20 @@ class Ssh(BaseDestination):
             return stdout, stderr
         except (AuthenticationException, SSHException, socket.error) as err:
             LOG.error("Failure execution %r : %s", cmd_str, err)
-            return -1
+            raise DestinationError(err)
         finally:
             shell.close()
 
     @contextmanager
     def _get_remote_stdout(self, cmd):
-        """Get remote stdout handler"""
+        """Get remote stdout handler
+
+        :param cmd: Command for execution
+        :type cmd: list
+        :return: Remote stdout handler
+        :rtype: generator
+        :raise: DestinationError if any error
+        """
         shell = SSHClient()
         cmd_str = ' '.join(cmd)
         try:
@@ -205,6 +213,6 @@ class Ssh(BaseDestination):
             yield stdout
         except (AuthenticationException, SSHException, socket.error) as err:
             LOG.error("Failure execution %r : %s", cmd_str, err)
-            raise err
+            raise DestinationError(err)
         finally:
             shell.close()
