@@ -18,7 +18,6 @@ boto==2.48.0              # via moto
 botocore==1.7.22          # via boto3, s3transfer
 bumpversion==0.5.3
 certifi==2017.7.27.1      # via requests
-cffi==1.11.1              # via cryptography
 chardet==3.0.4            # via requests
 codecov==2.0.9
 configparser==3.5.0       # via flake8, pylint
