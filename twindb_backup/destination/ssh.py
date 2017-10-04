@@ -170,12 +170,7 @@ class Ssh(BaseDestination):
         super(Ssh, self).share(url)
 
     def _execute_commnand(self, cmd):
-        """Execute ssh command
-
-        :param cmd: Command for execution
-        :type cmd: list
-        :return: Handlers of stdout and stderr
-        """
+        """Execute ssh command"""
         shell = SSHClient()
         cmd_str = ' '.join(cmd)
         try:
@@ -187,7 +182,7 @@ class Ssh(BaseDestination):
             return stdout, stderr
         except (AuthenticationException, SSHException, socket.error) as err:
             LOG.error("Failure execution %r : %s", cmd_str, err)
-            raise err
+            return -1
         finally:
             shell.close()
 
