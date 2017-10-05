@@ -7,6 +7,7 @@ import json
 import socket
 from contextlib import contextmanager
 
+import os
 from paramiko import SSHClient, AuthenticationException, SSHException
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
@@ -24,17 +25,16 @@ class SshConnectInfo(object):  # pylint: disable=too-few-public-methods
 
 
 class Ssh(BaseDestination):
-    """SSH destination class"""
+    """
+    SSH destination class
+
+    :param ssh_connect_info: SSH connection info
+    :type ssh_connect_info: SshConnectInfo
+    :param remote_path: Path to store backup
+    :param hostname: Hostname
+    """
     def __init__(self, ssh_connect_info=SshConnectInfo(),
                  remote_path=None, hostname=socket.gethostname()):
-        """
-        Initializes Ssh() instance.
-
-        :param ssh_connect_info: SSH connection info
-        :type ssh_connect_info: SshConnectInfo
-        :param remote_path:
-        :param hostname:
-        """
         super(Ssh, self).__init__()
         self.remote_path = remote_path.rstrip('/')
 
@@ -69,18 +69,29 @@ class Ssh(BaseDestination):
         Create directory on the remote server
 
         :param path: remote directory
-        :return: exit code
+        :type path: str
+        :return: Exit code if success
+        :raise: SshDestinationError if any error
         """
         cmd = ["mkdir -p \"%s\"" % path]
         LOG.debug('Running %s', ' '.join(cmd))
         stdout, _ = self._execute_command(cmd)
         if stdout.channel.recv_exit_status():
             LOG.error('Failed to create directory %s', path)
-            exit(1)
+            raise SshDestinationError('Failed to create directory %s', path)
         return stdout.channel.recv_exit_status()
 
     def list_files(self, prefix, recursive=False):
+        """
+        Get list of file by prefix
 
+        :param prefix: Path
+        :param recursive: Recursive return list of files
+        :type prefix: str
+        :type recursive: bool
+        :return: List of files
+        :rtype: list
+        """
         if recursive:
             ls_cmd = ["ls -R %s*" % prefix]
         else:
@@ -90,7 +101,16 @@ class Ssh(BaseDestination):
             return sorted(cout.read().split())
 
     def find_files(self, prefix, run_type):
+        """
+        Find files by prefix
 
+        :param prefix: Path
+        :param run_type: Run type for search
+        :type prefix: str
+        :type run_type: str
+        :return: List of files
+        :rtype: list
+        """
         cmd = [
             "find {prefix}/*/{run_type} "
             "-type f".format(prefix=prefix,
@@ -101,6 +121,11 @@ class Ssh(BaseDestination):
             return sorted(cout.read().split())
 
     def delete(self, obj):
+        """
+        Delete file by path
+
+        :param obj: str
+        """
         cmd = ["rm %s" % obj]
         LOG.debug('Running %s', ' '.join(cmd))
         self._execute_command(cmd)
@@ -110,12 +135,22 @@ class Ssh(BaseDestination):
         Get a PIPE handler with content of the backup copy streamed from
         the destination
 
+        :param path: Path to file
+        :type path: str
         :return: Standard output.
         """
         cmd = ["cat %s" % path]
         return self._get_remote_stdout(cmd)
 
     def _write_status(self, status):
+        """
+        Write status
+
+        :param status: Status fo write
+        :type status: str
+        :return: Exit code if success
+        :raise: SshDestinationError if any error
+        """
         raw_status = base64.b64encode(json.dumps(status))
         cmd = [
             "echo {raw_status} > "
@@ -125,23 +160,38 @@ class Ssh(BaseDestination):
         stdout, _ = self._execute_command(cmd)
         if stdout.channel.recv_exit_status():
             LOG.error('Failed to write backup status')
-            exit(1)
+            raise SshDestinationError('Failed to write backup status. '
+                                      'Exit code: %d',
+                                      stdout.channel.recv_exit_status())
         return status
 
     def _read_status(self):
+        """
+        Read status
 
+        :return: Status in JSON format, if it exist
+        :raise: SshDestinationError if any error
+        """
         if self._status_exists():
             cmd = ["cat %s" % self.status_path]
             stdout, _ = self._execute_command(cmd)
             if stdout.channel.recv_exit_status():
                 LOG.error('Failed to read backup status: %d',
                           stdout.channel.recv_exit_status())
-                exit(1)
+                raise SshDestinationError('Failed to read backup status: %d',
+                                          stdout.channel.recv_exit_status())
             return json.loads(base64.b64decode(stdout.read()))
         else:
             return self._empty_status
 
     def _status_exists(self):
+        """
+        Check, if status exist
+
+        :return: Exist status
+        :rtype: bool
+        :raises: SshDestinationError, OSError
+        """
         cmd = ["bash -c 'if test -s %s; "
                "then echo exists; "
                "else echo not_exists; "
@@ -154,17 +204,17 @@ class Ssh(BaseDestination):
             if stdout.channel.recv_exit_status():
                 LOG.error('Failed to read backup status: %d',
                           stdout.channel.recv_exit_status())
-                exit(1)
+                raise SshDestinationError('Failed to read backup status: %d',
+                                          stdout.channel.recv_exit_status())
             if output.strip() == 'exists':
                 return True
             elif output.strip() == 'not_exists':
                 return False
             else:
                 raise SshDestinationError('Unrecognized response: %s' % output)
-
         except OSError as err:
             LOG.error('Failed to run %s: %s', " ".join(cmd), err)
-            exit(1)
+            raise err
 
     def share(self, url):
         super(Ssh, self).share(url)
@@ -227,5 +277,4 @@ class Ssh(BaseDestination):
         :return: exit code. 0 if success.
         :rtype: int
         """
-        pass
-        # self._mkdir_r(os.path.dirname(remote_name))
+        return self._mkdir_r(os.path.dirname(remote_name))
