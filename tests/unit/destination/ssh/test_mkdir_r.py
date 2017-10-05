@@ -2,7 +2,7 @@
 import mock
 import pytest
 
-from twindb_backup.destination.base_destination import DestinationError
+from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.destination.ssh import Ssh
 
 
@@ -31,6 +31,6 @@ def test_mkdir_r_raises(mock_execute):
     mock_execute.return_value = mock_stdout, mock.Mock()
 
     dst = Ssh(remote_path='')
-    with pytest.raises(DestinationError):
+    with pytest.raises(SshDestinationError):
         # noinspection PyProtectedMember
         dst._mkdir_r('/foo/bar')

@@ -3,7 +3,7 @@ import mock
 # noinspection PyPackageRequirements
 import pytest
 
-from twindb_backup.destination.base_destination import DestinationError
+from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.destination.ssh import Ssh
 
 
@@ -48,7 +48,6 @@ def test__status_exists_raises_error(mock_run):
 
     mock_run.return_value = (mock_stdout, mock_stderr)
     dst = Ssh(remote_path='/foo/bar')
-    with pytest.raises(DestinationError):
+    with pytest.raises(SshDestinationError):
         # noinspection PyProtectedMember
         dst._status_exists()
-

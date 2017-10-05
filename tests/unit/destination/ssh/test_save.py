@@ -3,7 +3,7 @@ import mock
 # noinspection PyPackageRequirements
 import pytest
 
-from twindb_backup.destination.base_destination import DestinationError
+from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.destination.ssh import Ssh
 
 
@@ -37,5 +37,5 @@ def test_save_raises(mock_mkdirname_r, mock_execute):
     mock_execute.return_value = mock_stdout, mock.Mock()
 
     dst = Ssh(remote_path='/path/to/backups')
-    with pytest.raises(DestinationError):
+    with pytest.raises(SshDestinationError):
         dst.save('foo', 'aaa/bbb/ccc/bar')
