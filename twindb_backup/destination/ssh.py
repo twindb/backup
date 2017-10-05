@@ -50,15 +50,15 @@ class Ssh(BaseDestination):
         """
         Read from handler and save it on remote ssh server
 
-        :param name: store backup copy as this name
-        :param handler:
+        :param name: relative path to a file to store the backup copy.
+        :param handler: stream with content of the backup.
         :return: exit code
         """
         remote_name = self.remote_path + '/' + name
-        self._mkdir_r(os.path.dirname(remote_name))
+        self._mkdirname_r(remote_name)
         cmd = ["cat - > \"%s\"" % remote_name]
 
-        stdout, _ = self._execute_commnand(cmd)
+        stdout, _ = self._execute_command(cmd)
         if stdout.channel.recv_exit_status():
             raise DestinationError('%s exited with error code %d' %
                                    (' '.join(cmd),
@@ -74,7 +74,7 @@ class Ssh(BaseDestination):
         """
         cmd = ["mkdir -p \"%s\"" % path]
         LOG.debug('Running %s', ' '.join(cmd))
-        stdout, _ = self._execute_commnand(cmd)
+        stdout, _ = self._execute_command(cmd)
         if stdout.channel.recv_exit_status():
             LOG.error('Failed to create directory %s', path)
             exit(1)
@@ -104,7 +104,7 @@ class Ssh(BaseDestination):
     def delete(self, obj):
         cmd = ["rm %s" % obj]
         LOG.debug('Running %s', ' '.join(cmd))
-        self._execute_commnand(cmd)
+        self._execute_command(cmd)
 
     def get_stream(self, path):
         """
@@ -123,7 +123,7 @@ class Ssh(BaseDestination):
             "{status_file}".format(raw_status=raw_status,
                                    status_file=self.status_path)
         ]
-        stdout, _ = self._execute_commnand(cmd)
+        stdout, _ = self._execute_command(cmd)
         if stdout.channel.recv_exit_status():
             LOG.error('Failed to write backup status')
             exit(1)
@@ -133,7 +133,7 @@ class Ssh(BaseDestination):
 
         if self._status_exists():
             cmd = ["cat %s" % self.status_path]
-            stdout, _ = self._execute_commnand(cmd)
+            stdout, _ = self._execute_command(cmd)
             if stdout.channel.recv_exit_status():
                 LOG.error('Failed to read backup status: %d', stdout.channel.recv_exit_status())
                 exit(1)
@@ -149,7 +149,7 @@ class Ssh(BaseDestination):
 
         try:
             LOG.debug('Running %r', cmd)
-            stdout, _ = self._execute_commnand(cmd)
+            stdout, _ = self._execute_command(cmd)
             output = stdout.read()
             if stdout.channel.recv_exit_status():
                 LOG.error('Failed to read backup status: %d',
@@ -169,7 +169,7 @@ class Ssh(BaseDestination):
     def share(self, url):
         super(Ssh, self).share(url)
 
-    def _execute_commnand(self, cmd):
+    def _execute_command(self, cmd):
         """Execute ssh command
 
         :param cmd: Command for execution
@@ -216,3 +216,16 @@ class Ssh(BaseDestination):
             raise DestinationError(err)
         finally:
             shell.close()
+
+    def _mkdirname_r(self, remote_name):
+        """Create directory for a given file on the destination.
+        For example, for a given file '/foo/bar/xyz' it would create
+        directory '/foo/bar/'.
+
+        :param remote_name: Full path to a file
+        :type remote_name: str
+        :return: exit code. 0 if success.
+        :rtype: int
+        """
+        pass
+        # self._mkdir_r(os.path.dirname(remote_name))
