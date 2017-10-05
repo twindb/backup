@@ -8,7 +8,7 @@ import socket
 from contextlib import contextmanager
 
 import os
-from paramiko import SSHClient, AuthenticationException, SSHException
+from paramiko import SSHClient, AuthenticationException, SSHException, AutoAddPolicy
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import SshDestinationError
@@ -228,6 +228,7 @@ class Ssh(BaseDestination):
         :raise: SshDestinationError if any error
         """
         shell = SSHClient()
+        shell.set_missing_host_key_policy(AutoAddPolicy())
         cmd_str = ' '.join(cmd)
         try:
             shell.connect(hostname=self.ssh_connect_info.host,
@@ -253,6 +254,8 @@ class Ssh(BaseDestination):
         :raise: SshDestinationError if any error
         """
         shell = SSHClient()
+        shell.set_missing_host_key_policy(AutoAddPolicy())
+
         cmd_str = ' '.join(cmd)
         try:
             shell.connect(hostname=self.ssh_connect_info.host,
