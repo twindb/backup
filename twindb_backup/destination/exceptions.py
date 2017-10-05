@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+Module for destination exceptions
+"""
 class DestinationError(Exception):
     """General destination error"""
     pass
