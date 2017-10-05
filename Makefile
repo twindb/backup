@@ -63,7 +63,7 @@ bootstrap: ## bootstrap the development environment
 	pip-sync requirements.txt requirements_dev.txt
 	pip install --editable .
 
-clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
+clean: clean-build clean-pyc clean-test clean-docs## remove all build, test, coverage and Python artifacts
 
 clean-build: ## remove build artifacts
 	rm -fr build/
@@ -87,6 +87,10 @@ clean-test: ## remove test and coverage artifacts
 
 clean-docker:
 	@sudo docker rm twindb-backup-build-${PLATFORM}
+
+
+clean-docs:
+	make -C docs clean
 
 lint: test-deps ## check style with flake8
 	pylint twindb_backup

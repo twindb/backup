@@ -4,14 +4,13 @@ Module for SSH destination.
 """
 import base64
 import json
-import os
 import socket
 from contextlib import contextmanager
 
 from paramiko import SSHClient, AuthenticationException, SSHException
 from twindb_backup import LOG
-from twindb_backup.destination.base_destination import BaseDestination, \
-    DestinationError
+from twindb_backup.destination.base_destination import BaseDestination
+from twindb_backup.destination.exceptions import SshDestinationError
 
 
 class SshConnectInfo(object):  # pylint: disable=too-few-public-methods
@@ -60,9 +59,9 @@ class Ssh(BaseDestination):
 
         stdout, _ = self._execute_command(cmd)
         if stdout.channel.recv_exit_status():
-            raise DestinationError('%s exited with error code %d' %
-                                   (' '.join(cmd),
-                                    stdout.channel.recv_exit_status()))
+            raise SshDestinationError('%s exited with error code %d'
+                                      % (' '.join(cmd),
+                                         stdout.channel.recv_exit_status()))
         return stdout.channel.recv_exit_status()
 
     def _mkdir_r(self, path):
@@ -98,7 +97,7 @@ class Ssh(BaseDestination):
                              run_type=run_type)
         ]
 
-        with  self._get_remote_stdout(cmd) as cout:
+        with self._get_remote_stdout(cmd) as cout:
             return sorted(cout.read().split())
 
     def delete(self, obj):
@@ -135,7 +134,8 @@ class Ssh(BaseDestination):
             cmd = ["cat %s" % self.status_path]
             stdout, _ = self._execute_command(cmd)
             if stdout.channel.recv_exit_status():
-                LOG.error('Failed to read backup status: %d', stdout.channel.recv_exit_status())
+                LOG.error('Failed to read backup status: %d',
+                          stdout.channel.recv_exit_status())
                 exit(1)
             return json.loads(base64.b64decode(stdout.read()))
         else:
@@ -160,7 +160,7 @@ class Ssh(BaseDestination):
             elif output.strip() == 'not_exists':
                 return False
             else:
-                raise DestinationError('Unrecognized response: %s' % output)
+                raise SshDestinationError('Unrecognized response: %s' % output)
 
         except OSError as err:
             LOG.error('Failed to run %s: %s', " ".join(cmd), err)
@@ -175,7 +175,7 @@ class Ssh(BaseDestination):
         :param cmd: Command for execution
         :type cmd: list
         :return: Handlers of stdout and stderr
-        :raise: DestinationError if any error
+        :raise: SshDestinationError if any error
         """
         shell = SSHClient()
         cmd_str = ' '.join(cmd)
@@ -188,7 +188,7 @@ class Ssh(BaseDestination):
             return stdout, stderr
         except (AuthenticationException, SSHException, socket.error) as err:
             LOG.error("Failure execution %r : %s", cmd_str, err)
-            raise DestinationError(err)
+            raise SshDestinationError(err)
         finally:
             shell.close()
 
@@ -200,7 +200,7 @@ class Ssh(BaseDestination):
         :type cmd: list
         :return: Remote stdout handler
         :rtype: generator
-        :raise: DestinationError if any error
+        :raise: SshDestinationError if any error
         """
         shell = SSHClient()
         cmd_str = ' '.join(cmd)
@@ -213,7 +213,7 @@ class Ssh(BaseDestination):
             yield stdout
         except (AuthenticationException, SSHException, socket.error) as err:
             LOG.error("Failure execution %r : %s", cmd_str, err)
-            raise DestinationError(err)
+            raise SshDestinationError(err)
         finally:
             shell.close()
 

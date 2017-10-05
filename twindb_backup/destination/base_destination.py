@@ -9,11 +9,6 @@ from subprocess import Popen, PIPE
 from twindb_backup import LOG, INTERVALS
 
 
-class DestinationError(Exception):
-    """General destination error"""
-    pass
-
-
 class BaseDestination(object):
     """Base destination class"""
 
