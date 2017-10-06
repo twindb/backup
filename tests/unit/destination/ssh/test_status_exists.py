@@ -32,7 +32,7 @@ def test__status_exists(mock_run, out, result):
     mock_stdout.channel.recv_exit_status.return_value = 0
     mock_stdout.read.return_value = out
     mock_stderr = mock.Mock()
-    mock_run.return_value = (mock_stdout, mock_stderr)
+    mock_run.return_value = (mock.Mock(), mock_stdout, mock_stderr)
     dst = Ssh(remote_path='/foo/bar')
     # noinspection PyProtectedMember
     assert dst._status_exists() == result
@@ -46,7 +46,7 @@ def test__status_exists_raises_error(mock_run):
     mock_stdout.read.return_value = 'foo'
     mock_stderr = mock.Mock()
 
-    mock_run.return_value = (mock_stdout, mock_stderr)
+    mock_run.return_value = (mock.Mock(), mock_stdout, mock_stderr)
     dst = Ssh(remote_path='/foo/bar')
     with pytest.raises(SshDestinationError):
         # noinspection PyProtectedMember
