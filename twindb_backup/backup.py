@@ -220,9 +220,11 @@ def timeout(seconds):
     :param seconds: timeout in seconds
     :type seconds: int
     """
-    def timeout_handler(signum, frame):  # pylint: disable=unused-argument
+
+    def timeout_handler(signum, frame):
         """Function to call on a timeout event"""
-        pass
+        if signum or frame:
+            pass
 
     original_handler = signal.signal(signal.SIGALRM, timeout_handler)
 

@@ -17,6 +17,7 @@ for i in $(seq 5); do
       Percona-Server-server-56 \
       Percona-Server-devel-56 \
       percona-xtrabackup-24 \
+      libffi-devel \
       git && break
     sleep 5
 done
@@ -28,4 +29,4 @@ while [ ${timeout} -gt 0 ] ; do mysqladmin ping && break; sleep 1; timeout=$((${
 
 cd /twindb-backup
 
-make lint test test-integration
+make bootstrap lint test test-integration
