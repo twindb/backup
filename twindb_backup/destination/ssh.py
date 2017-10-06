@@ -225,23 +225,18 @@ class Ssh(BaseDestination):
         :param cmd: Command for execution
         :type cmd: list
         :return: Handlers of stdout and stderr
+        :rtype: tuple
         :raise: SshDestinationError if any error
         """
-        shell = SSHClient()
-        shell.set_missing_host_key_policy(AutoAddPolicy())
         cmd_str = ' '.join(cmd)
         try:
-            shell.connect(hostname=self.ssh_connect_info.host,
-                          key_filename=self.ssh_connect_info.key,
-                          port=self.ssh_connect_info.port,
-                          username=self.ssh_connect_info.user)
-            _, stdout, stderr = shell.exec_command(cmd_str)
-            return stdout, stderr
-        except (AuthenticationException, SSHException, socket.error) as err:
-            LOG.error("Failure execution %r : %s", cmd_str, err)
+            with self._shell() as shell:
+                _, stdout, stderr = shell.exec_command(cmd_str)
+                return stdout, stderr
+
+        except SSHException as err:
+            LOG.error('Failed to execute %s', cmd_str)
             raise SshDestinationError(err)
-        finally:
-            shell.close()
 
     @contextmanager
     def _get_remote_stdout(self, cmd):
@@ -253,22 +248,15 @@ class Ssh(BaseDestination):
         :rtype: generator
         :raise: SshDestinationError if any error
         """
-        shell = SSHClient()
-        shell.set_missing_host_key_policy(AutoAddPolicy())
-
         cmd_str = ' '.join(cmd)
         try:
-            shell.connect(hostname=self.ssh_connect_info.host,
-                          key_filename=self.ssh_connect_info.key,
-                          port=self.ssh_connect_info.port,
-                          username=self.ssh_connect_info.user)
-            _, stdout, _ = shell.exec_command(cmd_str)
-            yield stdout
-        except (AuthenticationException, SSHException, socket.error) as err:
-            LOG.error("Failure execution %r : %s", cmd_str, err)
+            with self._shell() as shell:
+                _, stdout, _ = shell.exec_command(cmd_str)
+                yield stdout
+
+        except SSHException as err:
+            LOG.error('Failed to execute %s', cmd_str)
             raise SshDestinationError(err)
-        finally:
-            shell.close()
 
     def _mkdirname_r(self, remote_name):
         """Create directory for a given file on the destination.
@@ -281,3 +269,25 @@ class Ssh(BaseDestination):
         :rtype: int
         """
         return self._mkdir_r(os.path.dirname(remote_name))
+
+    @contextmanager
+    def _shell(self):
+        """
+        Create SSHClient instance and connect to the destination host.
+
+        :return: Connected to the remote destination host shell.
+        :rtype: generator(SSHClient)
+        :raise SshDestinationError: if the ssh client fails to connect.
+        """
+        shell = SSHClient()
+        shell.set_missing_host_key_policy(AutoAddPolicy())
+        try:
+            shell.connect(hostname=self.ssh_connect_info.host,
+                          key_filename=self.ssh_connect_info.key,
+                          port=self.ssh_connect_info.port,
+                          username=self.ssh_connect_info.user)
+            yield shell
+        except (AuthenticationException, SSHException, socket.error) as err:
+            raise SshDestinationError(err)
+        finally:
+            shell.close()

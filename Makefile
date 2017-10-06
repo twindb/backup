@@ -56,7 +56,7 @@ upgrade-requirements: ## Upgrade requirements
 	pip-compile --upgrade --verbose --no-index --output-file requirements_dev.txt requirements_dev.in
 
 .PHONY: bootstrap
-bootstrap: ## bootstrap the development environment
+bootstrap: clean ## bootstrap the development environment
 	pip install -U "setuptools==32.3.1"
 	pip install -U "pip==9.0.1"
 	pip install -U "pip-tools>=1.6.0"
@@ -92,20 +92,15 @@ clean-docker:
 clean-docs:
 	make -C docs clean
 
-lint: test-deps ## check style with flake8
+lint: ## check style with pylint
 	pylint twindb_backup
 
-test-deps:
-	pip install --upgrade -r requirements.txt
-	pip install --upgrade -r requirements_dev.txt
-	pip install -U setuptools
 
-test: clean bootstrap ## run tests quickly with the default Python
+test: ## run tests quickly with the default Python
 	pytest -xv --cov-report term-missing --cov=./twindb_backup tests/unit
 	codecov
 
-test-integration: test-deps ## run integration tests
-	pip show twindb-backup || pip install -e .
+test-integration: ## run integration tests
 	py.test -xsv tests/integration
 
 test-all: ## run tests on every Python version with tox
