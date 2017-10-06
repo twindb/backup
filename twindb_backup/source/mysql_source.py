@@ -100,7 +100,7 @@ class MySQLSource(BaseSource):
     def get_stream(self):
         """
         Get a PIPE handler with content of the source
-        :return:4
+        :return:
         """
         cmd = [
             "innobackupex",
