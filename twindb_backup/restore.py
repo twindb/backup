@@ -15,7 +15,7 @@ import psutil
 
 from twindb_backup import LOG, INTERVALS
 from twindb_backup.configuration import get_destination
-from twindb_backup.destination.base_destination import DestinationError
+from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip

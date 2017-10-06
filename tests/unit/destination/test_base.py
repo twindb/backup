@@ -3,10 +3,11 @@ from subprocess import PIPE
 import mock
 import pytest
 
-from twindb_backup.destination.base_destination import BaseDestination, \
-    DestinationError
+from twindb_backup.destination.base_destination import BaseDestination
+from twindb_backup.destination.exceptions import DestinationError
 
 
+# noinspection PyUnresolvedReferences
 @mock.patch.object(BaseDestination, '_write_status')
 @mock.patch.object(BaseDestination, '_read_status')
 def test_status(mock_read_status, mock_write_status):
@@ -29,6 +30,7 @@ def test__save(mock_popen, tmpdir):
     mock_popen.return_value = mock_proc
 
     fo = open(str(f), 'w')
+    # noinspection PyProtectedMember
     dst._save('foo', fo)
 
     mock_popen.assert_called_once_with('foo', stdin=fo,
@@ -49,6 +51,7 @@ def test__save_error(mock_popen, tmpdir):
 
     fo = open(str(f), 'w')
     with pytest.raises(DestinationError):
+        # noinspection PyProtectedMember
         dst._save('foo', fo)
 
 
@@ -61,9 +64,11 @@ def test__save_popen_error(mock_popen, tmpdir):
 
     fo = open(str(f), 'w')
     with pytest.raises(DestinationError):
+        # noinspection PyProtectedMember
         dst._save('foo', fo)
 
 
+# noinspection PyUnresolvedReferences
 @pytest.mark.parametrize('status, path, full_copy', [
     (
         {
@@ -155,6 +160,7 @@ def test_get_full_copy_name(mock_status, status, path, full_copy):
     assert dst.get_full_copy_name(path) == full_copy
 
 
+# noinspection PyUnresolvedReferences
 @pytest.mark.parametrize('status, path', [
     (
         {
@@ -217,6 +223,8 @@ def test_get_full_copy_name_error(mock_status, status, path):
     with pytest.raises(DestinationError):
         dst.get_full_copy_name(path)
 
+
+# noinspection PyUnresolvedReferences
 @pytest.mark.parametrize('status, path', [
     (
         {

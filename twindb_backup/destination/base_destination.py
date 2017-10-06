@@ -7,11 +7,7 @@ from abc import abstractmethod
 from subprocess import Popen, PIPE
 
 from twindb_backup import LOG, INTERVALS
-
-
-class DestinationError(Exception):
-    """General destination error"""
-    pass
+from twindb_backup.destination.exceptions import DestinationError
 
 
 class BaseDestination(object):

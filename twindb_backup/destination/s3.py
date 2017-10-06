@@ -21,9 +21,8 @@ import boto3
 from boto3.s3.transfer import TransferConfig
 
 from twindb_backup import LOG, TwinDBBackupError
-from twindb_backup.destination.base_destination import BaseDestination, \
-    DestinationError
-
+from twindb_backup.destination.base_destination import BaseDestination
+from twindb_backup.destination.exceptions import S3DestinationError
 
 S3_CONNECT_TIMEOUT = 60
 S3_READ_TIMEOUT = 600
@@ -45,11 +44,6 @@ S3_UPLOAD_IO_QUEUE_SIZE = 200
 S3_UPLOAD_IO_CHUNKS_SIZE_BYTES = 256 * 1024
 
 
-class S3Error(DestinationError):
-    """S3 destination errors"""
-    pass
-
-
 class AWSAuthOptions(object):  # pylint: disable=too-few-public-methods
     """Class to store AWS credentials"""
     def __init__(self, access_key_id, secret_access_key,
@@ -59,24 +53,24 @@ class AWSAuthOptions(object):  # pylint: disable=too-few-public-methods
         self.access_key_id = access_key_id
 
 
-class S3FileAccess(object): # pylint: disable=too-few-public-methods
+class S3FileAccess(object):  # pylint: disable=too-few-public-methods
     """Access modes for S3 files"""
     public_read = 'public-read'
     private = 'private'
 
 
 class S3(BaseDestination):
-    """S3 destination class."""
-    def __init__(self, bucket, aws_options, hostname=socket.gethostname()):
-        """
-        Create instance of S3 destination
+    """
+    S3 destination class.
 
-        :param bucket: Bucket name
-        :type bucket: str
-        :param aws_options: AWS credentials
-        :type aws_options: AWSAuthOptions
-        :param hostname:
-        """
+    :param bucket: Bucket name.
+    :type bucket: str
+    :param aws_options: AWS credentials.
+    :type aws_options: AWSAuthOptions
+    :param hostname: Hostname of a host where a backup is taken from.
+    """
+    def __init__(self, bucket, aws_options, hostname=socket.gethostname()):
+
         super(S3, self).__init__()
         self.bucket = bucket
         self.remote_path = 's3://{bucket}'.format(bucket=self.bucket)
@@ -97,7 +91,11 @@ class S3(BaseDestination):
         self.s3_client = self.setup_s3_client()
 
     def setup_s3_client(self):
-        """Creates an authenticated s3 client."""
+        """Creates an authenticated s3 client.
+
+        :return: S3 client instance.
+        :rtype: botocore.client.BaseClient
+        """
         session = boto3.Session(aws_access_key_id=self.access_key_id,
                                 aws_secret_access_key=self.secret_access_key)
         s3_config = Config(connect_timeout=S3_CONNECT_TIMEOUT,
@@ -110,7 +108,7 @@ class S3(BaseDestination):
     def create_bucket(self):
         """Creates the bucket in s3 that will store the backups.
 
-        :return bool: True on success, False on failure
+        :raise S3DestinationError: if failed to create the bucket.
         """
         bucket_exists = True
 
@@ -134,9 +132,10 @@ class S3(BaseDestination):
     def delete_bucket(self, force=False):
         """Delete the bucket in s3 that was storing the backups.
 
-        :param bool force: If the bucket is non-empty then delete the objects
+        :param force: If the bucket is non-empty then delete the objects
             before deleting the bucket.
-        :return bool: True on success, False on failure
+        :type force: bool
+        :raise S3DestinationError: if failed to delete the bucket.
         """
         bucket_exists = True
 
@@ -166,9 +165,9 @@ class S3(BaseDestination):
 
     def delete_all_objects(self):
         """
-        Delete all objects from S3 bucket
+        Delete all objects from S3 bucket.
 
-        :return: True if operation was successful
+        :raise S3DestinationError: if failed to delete objects from the bucket.
         """
         paginator = self.s3_client.get_paginator('list_objects')
         response = paginator.paginate(Bucket=self.bucket)
@@ -187,18 +186,28 @@ class S3(BaseDestination):
 
         :param name: save backup copy in a file with this name
         :param handler: stdout handler from backup source
-        :return: exit code
+        :raise S3DestinationError: if failed to save the backup.
         """
         try:
             with handler as file_obj:
                 ret = self._upload_object(file_obj, name)
                 LOG.debug('Returning code %d', ret)
                 return ret == 0
-        except S3Error as err:
+        except S3DestinationError as err:
             LOG.error('S3 upload failed: %s', err)
             raise err
 
     def list_files(self, prefix, recursive=False):
+        """
+        List files in the destination that have common prefix.
+
+        :param prefix: Common prefix.
+        :type prefix: str
+        :param recursive: Does nothing for this class.
+        :return: sorted list of file names
+        :rtype: list(str)
+        :raise S3DestinationError: if failed to list files.
+        """
         s3client = boto3.resource('s3')
         bucket = s3client.Bucket(self.bucket)
 
@@ -225,9 +234,20 @@ class S3(BaseDestination):
                 time.sleep(retry_interval)
                 retry_interval *= 2
 
-        raise S3Error('Failed to list files.')
+        raise S3DestinationError('Failed to list files.')
 
     def find_files(self, prefix, run_type):
+        """
+        Find files with common prefix and given run type.
+
+        :param prefix: Common prefix.
+        :type prefix: str
+        :param run_type: daily, hourly, etc
+        :type run_type: str
+        :return: list of file names
+        :rtype: list(str)
+        :raise S3DestinationError: if failed to find files.
+        """
         s3client = boto3.resource('s3')
         bucket = s3client.Bucket(self.bucket)
         LOG.debug('Listing %s in bucket %s', prefix, bucket)
@@ -258,14 +278,14 @@ class S3(BaseDestination):
                           self.bucket, err)
                 raise
 
-        raise S3Error('Failed to find files.')
+        raise S3DestinationError('Failed to find files.')
 
     def delete(self, obj):
-        """Deletes a s3 object.
+        """Deletes an S3 object.
 
-        :param obj: Key of S3 object
+        :param obj: Key of S3 object.
         :type obj: str
-        :return bool: True on success, False on failure
+        :raise S3DestinationError: if failed to delete object.
         """
         s3client = boto3.resource('s3')
         bucket = s3client.Bucket(self.bucket)
@@ -280,7 +300,10 @@ class S3(BaseDestination):
         """
         Get a PIPE handler with content of the backup copy streamed from
         the destination.
-        :return:
+
+        :return: Stream with backup copy
+        :rtype: generator
+        :raise S3DestinationError: if failed to stream a backup copy.
         """
         object_key = urlparse(path).path.lstrip('/')
 
@@ -346,6 +369,7 @@ class S3(BaseDestination):
         :param file file_obj: A file like object to upload. At a minimum, it
             must implement the read method, and must return bytes.
         :param str object_key: The destination key where to upload the object.
+        :raise S3DestinationError: if failed to upload object.
         """
         remote_name = "s3://{bucket}/{name}".format(
             bucket=self.bucket,
@@ -363,13 +387,18 @@ class S3(BaseDestination):
                                           Config=s3_transfer_config)
             LOG.debug("Successfully streamed to %s", remote_name)
         except ClientError as err:
-            raise S3Error(err)
+            raise S3DestinationError(err)
 
         return self._validate_upload(object_key)
 
     def _validate_upload(self, object_key):
-        """Validates that upload of an object was successful. Raises an
-            exception if the response code is not 200"""
+        """
+        Validates that upload of an object was successful.
+        Raises an exception if the response code is not 200.
+
+        :raise S3DestinationError: if object is not available on
+            the destination.
+        """
         remote_name = "s3://{bucket}/{name}".format(
             bucket=self.bucket,
             name=object_key
@@ -426,16 +455,19 @@ class S3(BaseDestination):
         """Validates the response returned by the client. Raises an exception
             if the response code is not 200 or 204
 
-        :param dict response: The response that needs to be validated
+        :param response: The response that needs to be validated.
+        :type response: dict
+        :raise S3DestinationError: if response from S3 is invalid.
         """
         try:
             http_status_code = response['ResponseMetadata']['HTTPStatusCode']
         except KeyError as err:
-            raise S3Error('S3 client returned invalid response: %s' % err)
+            raise S3DestinationError('S3 client returned invalid response: %s'
+                                     % err)
 
         if http_status_code not in [200, 204]:
-            raise S3Error('S3 client returned error code: %s' %
-                          http_status_code)
+            raise S3DestinationError('S3 client returned error code: %s'
+                                     % http_status_code)
 
     @staticmethod
     def get_transfer_config():
@@ -443,7 +475,7 @@ class S3(BaseDestination):
         Build Transfer config
 
         :return: Transfer config
-        :rtype: TransferConfig
+        :rtype: boto3.s3.transfer.TransferConfig
         """
         transfer_config = TransferConfig(
             multipart_threshold=S3_UPLOAD_CHUNK_SIZE_BYTES,
@@ -459,7 +491,7 @@ class S3(BaseDestination):
         Set file access via S3 url
 
         :param access_mode: Access mode
-        :type access_mode: S3FileAccess
+        :type access_mode: str
         :param url: S3 url
         :type url: str
         """
@@ -490,6 +522,7 @@ class S3(BaseDestination):
         :type s3_url: str
         :return: Public url
         :rtype: str
+        :raise S3DestinationError: if failed to share object.
         """
         run_type = s3_url.split('/')[4]
         backup_urls = self.find_files(self.remote_path, run_type)
