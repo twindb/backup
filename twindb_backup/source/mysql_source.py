@@ -100,9 +100,25 @@ class MySQLSource(BaseSource):
     def get_stream(self):
         """
         Get a PIPE handler with content of the source
-        :return:
+        :return:4
         """
-        cmd = self._prepare_stream_cmd()
+        cmd = [
+            "innobackupex",
+            "--defaults-file=%s" % self._connect_info.defaults_file,
+            "--stream=xbstream",
+            "--host=127.0.0.1"
+        ]
+        if self.is_galera():
+            cmd.append("--galera-info")
+            cmd.append("--no-backup-locks")
+        if self.full:
+            cmd.append(".")
+        else:
+            cmd += [
+                "--incremental",
+                ".",
+                "--incremental-lsn=%d" % self.parent_lsn
+            ]
         # If this is a Galera node then additional step needs to be taken to
         # prevent the backups from locking up the cluster.
         wsrep_desynced = False
@@ -152,29 +168,6 @@ class MySQLSource(BaseSource):
             stderr_file.name
         )
         os.unlink(stderr_file.name)
-
-    def _prepare_stream_cmd(self):
-        """Prepare command for get stream"""
-
-        cmd = [
-            "innobackupex",
-            "--defaults-file=%s" % self._connect_info.defaults_file,
-            "--stream=xbstream",
-            "--host=127.0.0.1"
-        ]
-        if self.is_galera():
-            cmd.append("--galera-info")
-            cmd.append("--no-backup-locks")
-        if self.full:
-            cmd.append(".")
-        else:
-            cmd += [
-                "--incremental",
-                ".",
-                "--incremental-lsn=%d" % self.parent_lsn
-            ]
-
-        return cmd
 
     def get_name(self):
         """

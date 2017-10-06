@@ -57,7 +57,7 @@ class Ssh(BaseDestination):
         self._mkdirname_r(remote_name)
         cmd = ["cat - > \"%s\"" % remote_name]
 
-        self._execute_command(cmd)
+        self.execute_command(cmd)
 
     def _mkdir_r(self, path):
         """
@@ -68,7 +68,7 @@ class Ssh(BaseDestination):
         """
         cmd = ["mkdir -p \"%s\"" % path]
         LOG.debug('Running %s', ' '.join(cmd))
-        self._execute_command(cmd)
+        self.execute_command(cmd)
 
     def list_files(self, prefix, recursive=False):
         """
@@ -117,7 +117,7 @@ class Ssh(BaseDestination):
         """
         cmd = ["rm %s" % obj]
         LOG.debug('Running %s', ' '.join(cmd))
-        self._execute_command(cmd)
+        self.execute_command(cmd)
 
     def get_stream(self, path):
         """
@@ -144,7 +144,7 @@ class Ssh(BaseDestination):
             "{status_file}".format(raw_status=raw_status,
                                    status_file=self.status_path)
         ]
-        self._execute_command(cmd)
+        self.execute_command(cmd)
 
     def _read_status(self):
         """
@@ -154,7 +154,7 @@ class Ssh(BaseDestination):
         """
         if self._status_exists():
             cmd = ["cat %s" % self.status_path]
-            _, stdout, _ = self._execute_command(cmd)
+            _, stdout, _ = self.execute_command(cmd)
             return json.loads(base64.b64decode(stdout.read()))
         else:
             return self._empty_status
@@ -172,7 +172,7 @@ class Ssh(BaseDestination):
                "else echo not_exists; "
                "fi'" % self.status_path]
         LOG.debug('Running %r', cmd)
-        _, stdout, _ = self._execute_command(cmd)
+        _, stdout, _ = self.execute_command(cmd)
         output = stdout.read()
         if output.strip() == 'exists':
             return True
@@ -184,7 +184,7 @@ class Ssh(BaseDestination):
     def share(self, url):
         super(Ssh, self).share(url)
 
-    def _execute_command(self, cmd):
+    def execute_command(self, cmd):
         """Execute ssh command
 
         :param cmd: Command for execution
@@ -198,11 +198,11 @@ class Ssh(BaseDestination):
             with self._shell() as shell:
                 stdin_, stdout_, stderr_ = shell.exec_command(cmd_str)
                 exit_code = stdout_.channel.recv_exit_status()
-
                 if exit_code != 0:
+                    LOG.error("Failed while execute command %s:  %s",
+                              cmd_str, stderr_.read())
                     raise SSHException('%s exited with code %d'
                                        % (cmd_str, exit_code))
-
                 return stdin_, stdout_, stderr_
 
         except SSHException as err:

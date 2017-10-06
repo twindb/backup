@@ -26,7 +26,7 @@ from twindb_backup.destination.ssh import Ssh
         False
     )
 ])
-@mock.patch.object(Ssh, '_execute_command')
+@mock.patch.object(Ssh, 'execute_command')
 def test__status_exists(mock_run, out, result):
     mock_stdout = mock.Mock()
     mock_stdout.channel.recv_exit_status.return_value = 0
@@ -39,7 +39,7 @@ def test__status_exists(mock_run, out, result):
 
 
 # noinspection PyUnresolvedReferences
-@mock.patch.object(Ssh, '_execute_command')
+@mock.patch.object(Ssh, 'execute_command')
 def test__status_exists_raises_error(mock_run):
     mock_stdout = mock.Mock()
     mock_stdout.channel.recv_exit_status.return_value = 0
