@@ -2,12 +2,12 @@
 """
 Module defines clone feature
 """
+
+from multiprocessing import Process
 import ConfigParser
 
 from twindb_backup import INTERVALS
 from twindb_backup.destination.ssh import Ssh, SshConnectInfo
-from multiprocessing import Process
-
 from twindb_backup.source.mysql_source import MySQLConnectInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
 
@@ -43,7 +43,7 @@ def clone_mysql(cfg, dest_host, source_host, server_id, binary_logging): # pylin
     dest_ssh = Ssh(shell_info, '/var/lib/mysql')
     proc_netcat = Process(target=run_netcat, args=(dest_ssh,))
     proc_netcat.start()
-    shell_info.host=source_host
+    shell_info.host = source_host
     source_mysql = RemoteMySQLSource(
         {
             "ssh_connection_info": shell_info,
@@ -51,10 +51,7 @@ def clone_mysql(cfg, dest_host, source_host, server_id, binary_logging): # pylin
             "run_type": INTERVALS[0],
             "full_backup": INTERVALS[0],
             "dst": None
-         })
+        }
+    )
     source_mysql.send_backup(dest_host)
     proc_netcat.join()
-
-
-
-

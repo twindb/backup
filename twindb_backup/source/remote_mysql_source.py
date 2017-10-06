@@ -66,7 +66,7 @@ class RemoteMySQLSource(MySQLSource):
                           key_filename=self.ssh_connection_info.key,
                           port=self.ssh_connection_info.port,
                           username=self.ssh_connection_info.user)
-            stdin_, stdout_, stderr_ = shell.exec_command(cmd)
+            stdin_, stdout_, stderr_ = shell.exec_command(cmd) # pylint: disable=unused-variable
             if stdout_.channel.recv_exit_status() != 0:
                 LOG.error("Failed while send_backup: %s", stderr_.read())
                 raise RemoteMySQLSourceError('%s exited with code' % cmd)
