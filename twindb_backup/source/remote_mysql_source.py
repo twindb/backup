@@ -47,7 +47,7 @@ class RemoteMySQLSource(MySQLSource):
     def galera(self):
         raise NotImplementedError("Property galera not implemented")
 
-    def send_backup(self, dest_host, port=9999):
+    def send_backup(self, dest_host, port):
         """
         Send backup to destination host
 
@@ -57,7 +57,9 @@ class RemoteMySQLSource(MySQLSource):
         :type port: int
         :raise RemoteMySQLSourceError: if any error
         """
-        cmd = "bash -c \"innobackupex --stream=xbstream ./  | gzip -c - | nc %s %d\"" \
+        cmd = "bash -c \"innobackupex --stream=xbstream ./ " \
+              "| gzip -c - " \
+              "| nc %s %d\"" \
               % (dest_host, port)
         shell = SSHClient()
         shell.set_missing_host_key_policy(AutoAddPolicy())

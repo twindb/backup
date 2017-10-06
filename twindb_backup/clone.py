@@ -6,15 +6,11 @@ Module defines clone feature
 from multiprocessing import Process
 import ConfigParser
 
-from twindb_backup import INTERVALS
+from twindb_backup import INTERVALS, LOG
+from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.destination.ssh import Ssh, SshConnectInfo
 from twindb_backup.source.mysql_source import MySQLConnectInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
-
-
-def run_netcat(dest_ssh):
-    """Process handler"""
-    dest_ssh.execute_command(['nc -l 9999'])
 
 
 def get_ssh_credentials(cfg):

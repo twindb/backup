@@ -200,18 +200,17 @@ def clone(cfg):
 
 
 @clone.command('mysql')
-@click.argument('source_host', required=False)
-@click.argument('destination_host', required=False)
-@click.option('--binary_logging', help='Enable binary logging', is_flag=True,
-              default=True)
-@click.option('--server_id', help='Server id for replication', default="slave")
+@click.argument('source', default='localhost:3306')
+@click.argument('destination')
 @PASS_CFG
 def clone_mysql_backup(cfg, server_id, binary_logging, destination_host, source_host):
-    """Clone mysql backup on remote server and make it to slave"""
-    if not source_host:
-        LOG.info('No source_host specified')
-        exit(1)
-    if not destination_host:
-        LOG.info('No destination_host specified')
-        exit(1)
+    """
+     Clone mysql backup on remote server and make it a slave.
+     By default it will take a slave from a local MySQL on port 3306.
+
+     Source and destinations are strings hostname:port.
+     E.g. 10.10.10.10:3306.
+
+     If port isn't specified 3306 will be assumed.
+    """
     clone_mysql(cfg, destination_host, source_host, server_id, binary_logging)
