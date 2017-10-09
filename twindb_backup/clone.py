@@ -4,7 +4,6 @@ Module defines clone feature
 """
 
 from multiprocessing import Process
-import ConfigParser
 
 from twindb_backup import INTERVALS, LOG
 from twindb_backup.destination.exceptions import SshDestinationError
@@ -12,6 +11,27 @@ from twindb_backup.destination.ssh import Ssh, SshConnectInfo
 from twindb_backup.source.mysql_source import MySQLConnectInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
 from twindb_backup.util import split_host_port
+
+
+def check_root_my_cnf(src):
+    """
+    Return path on source server to root my.cnf
+    :param src: Source server
+    :type src: Ssh
+    :return: Path to my.cnf
+    :raise IOError: if my.cnf is not found
+    """
+    mysql_configs = [
+        '/etc/my.cnf',
+        '/etc/mysql/my.cnf'
+    ]
+    for mysql_config in mysql_configs:
+        try:
+            with src.get_stream(mysql_config):
+                return mysql_config
+        except SshDestinationError:
+            continue
+    raise IOError("Root my.cnf not found")
 
 
 def clone_mysql(cfg, source, destination, netcat_port=9990):
@@ -35,6 +55,9 @@ def clone_mysql(cfg, source, destination, netcat_port=9990):
             key=cfg.get('ssh', 'ssh_key')
         ),
     )
+    if dst.list_files(src.datadir):
+        LOG.error("Data dir is not empty: %s", src.datadir)
+        exit(1)
 
     proc_netcat = Process(
         target=dst.netcat,
@@ -48,24 +71,6 @@ def clone_mysql(cfg, source, destination, netcat_port=9990):
         }
     )
     proc_netcat.start()
-    src.clone()
-
-    # user, ssh_key = get_ssh_credentials(cfg)
-    # shell_info = SshConnectInfo(host=dest_host,
-    #                             user=user,
-    #                             key=ssh_key)
-    # dest_ssh = Ssh(shell_info, '/var/lib/mysql')
-    # proc_netcat = Process(target=run_netcat, args=(dest_ssh,))
-    # proc_netcat.start()
-    # shell_info.host = source_host
-    # source_mysql = RemoteMySQLSource(
-    #     {
-    #         "ssh_connection_info": shell_info,
-    #         "mysql_connect_info": MySQLConnectInfo("empty_file"),
-    #         "run_type": INTERVALS[0],
-    #         "full_backup": INTERVALS[0],
-    #         "dst": None
-    #     }
-    # )
-    # source_mysql.send_backup(dest_host)
-    # proc_netcat.join()
+    src.clone(dest_host=destination, port=netcat_port)
+    proc_netcat.join()
+    check_root_my_cnf(Ssh(src.ssh_connection_info, "/", hostname=source))
