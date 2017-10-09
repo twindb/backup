@@ -191,3 +191,9 @@ def save_measures(start_time, end_time, log_path=LOG_FILE):
 
     with open(log_path, 'w') as file_pt:
         json.dump(log, file_pt)
+
+
+def get_common_mycnf_path():
+    return ['/etc/my.cnf',
+            '/etc/mysql/my.cnf'
+            ]

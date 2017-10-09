@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from subprocess import Popen, PIPE
 
 import pymysql
-from twindb_backup import LOG, get_files_to_delete, INTERVALS
+from twindb_backup import LOG, get_files_to_delete, INTERVALS, get_common_mycnf_path
 from twindb_backup.source.base_source import BaseSource
 
 
@@ -402,11 +402,7 @@ class MySQLSource(BaseSource):
         :return: File name and content of MySQL config file.
         :rtype: tuple
         """
-        mysql_configs = [
-            '/etc/my.cnf',
-            '/etc/mysql/my.cnf'
-        ]
-        for cnf_parg in mysql_configs:
+        for cnf_parg in get_common_mycnf_path():
             try:
                 with open(cnf_parg) as my_cnf:
                     yield cnf_parg, my_cnf.read()

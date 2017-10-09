@@ -287,4 +287,3 @@ class Ssh(BaseDestination):
 
         """
         self.execute_command(['nc -l %d | %s' % (port, command)])
-

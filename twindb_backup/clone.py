@@ -5,7 +5,7 @@ Module defines clone feature
 import ConfigParser
 from multiprocessing import Process
 
-from twindb_backup import INTERVALS, LOG, TwinDBBackupError
+from twindb_backup import INTERVALS, LOG, TwinDBBackupError, get_common_mycnf_path
 from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.destination.ssh import Ssh, SshConnectInfo
 from twindb_backup.source.mysql_source import MySQLConnectInfo
@@ -22,11 +22,7 @@ def get_root_my_cnf(src):
     :return: Path to my.cnf
     :raise IOError: if my.cnf is not found
     """
-    mysql_configs = [
-        '/etc/my.cnf',
-        '/etc/mysql/my.cnf'
-    ]
-    for mysql_config in mysql_configs:
+    for mysql_config in get_common_mycnf_path():
         try:
             with src.get_stream(mysql_config):
                 return mysql_config
@@ -34,6 +30,34 @@ def get_root_my_cnf(src):
             continue
     raise IOError("Root my.cnf not found")
 
+
+def get_remote_cfg(src):
+    """
+    Return parsed config from remote server
+    :param src: Source server
+    :return: Config
+    :rtype: ConfigParser.ConfigParser
+    """
+    cfg_path = get_root_my_cnf(src)
+    cfg = ConfigParser.ConfigParser(allow_no_value=True)
+    try:
+        with src.get_stream(cfg_path) as cfg_fp:
+            cfg.readfp(cfg_fp)
+    except ConfigParser.ParsingError as err:
+        LOG.error(err)
+        exit(1)
+    return cfg
+
+
+def get_datadir(src):
+    """
+    Get datadir from source server
+
+    :param src: Source server
+    :return: Datadir path
+    """
+    cfg = get_remote_cfg(src)
+    return cfg.get("mysqld", "datadir")
 
 def save_cfg(src, dst, path):
     """
@@ -43,9 +67,7 @@ def save_cfg(src, dst, path):
     :param dst: Destination server
     :param path: Path to file
     """
-    cfg = ConfigParser.ConfigParser(allow_no_value=True)
-    with src.get_stream(path) as cfg_fp:
-        cfg.readfp(cfg_fp)
+    cfg = get_remote_cfg(src)
     cfg.set('mysqld', 'server_id', value=src.ssh_connect_info.host)
     for option in cfg.options('mysqld'):
         val = cfg.get('mysqld', option)
@@ -97,15 +119,17 @@ def clone_mysql(cfg, source, destination, netcat_port=9990):
             key=cfg.get('ssh', 'ssh_key')
         ),
     )
-    if dst.list_files(src.datadir):
-        LOG.error("Data dir is not empty: %s", src.datadir)
+    src_ssh = Ssh(src.ssh_connection_info, "/", source)
+    data_dir = get_datadir(src_ssh)
+    if dst.list_files(data_dir):
+        LOG.error("Data dir is not empty: %s", data_dir)
         exit(1)
 
     proc_netcat = Process(
         target=dst.netcat,
         args=(
             " | gunzip -c - | xbstream -x -C {datadir}".format(
-                datadir=src.datadir
+                datadir=data_dir
             ),
         ),
         kwargs={
@@ -115,7 +139,6 @@ def clone_mysql(cfg, source, destination, netcat_port=9990):
     proc_netcat.start()
     src.clone(dest_host=destination, port=netcat_port)
     proc_netcat.join()
-    src_ssh = Ssh(src.ssh_connection_info, "/", source)
     save_cfg(src_ssh, dst, get_root_my_cnf(src_ssh))
     apply_backup(dst, src.datadir)
     # TODO: Implement CHANGE MASTER TO
