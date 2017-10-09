@@ -82,9 +82,9 @@ class Ssh(BaseDestination):
         :rtype: list
         """
         if recursive:
-            ls_cmd = ["ls -R %s*" % prefix]
+            ls_cmd = ["ls -R %s" % prefix]
         else:
-            ls_cmd = ["ls %s*" % prefix]
+            ls_cmd = ["ls %s" % prefix]
 
         with self._get_remote_stdout(ls_cmd) as cout:
             return sorted(cout.read().split())
