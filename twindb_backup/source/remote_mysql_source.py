@@ -47,6 +47,10 @@ class RemoteMySQLSource(MySQLSource):
     def galera(self):
         raise NotImplementedError("Property galera not implemented")
 
+    @property
+    def datadir(self):
+        raise NotImplementedError("Property datadir not implemented")
+
     def clone(self, dest_host, port):
         """
         Send backup to destination host

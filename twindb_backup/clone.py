@@ -5,7 +5,7 @@ Module defines clone feature
 import ConfigParser
 from multiprocessing import Process
 
-from twindb_backup import INTERVALS, LOG
+from twindb_backup import INTERVALS, LOG, TwinDBBackupError
 from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.destination.ssh import Ssh, SshConnectInfo
 from twindb_backup.source.mysql_source import MySQLConnectInfo
@@ -35,12 +35,12 @@ def get_root_my_cnf(src):
     raise IOError("Root my.cnf not found")
 
 
-def save_cfg(src, dest, path):
+def save_cfg(src, dst, path):
     """
     Save configs from source to destination server
 
     :param src: Source server
-    :param dest: Destination server
+    :param dst: Destination server
     :param path: Path to file
     """
     cfg = ConfigParser.ConfigParser(allow_no_value=True)
@@ -51,11 +51,29 @@ def save_cfg(src, dest, path):
         val = cfg.get('mysqld', option)
         if '!includedir' in option:
             for sub_file in src.list_files(prefix=val):
-                save_cfg(src, dest,  path + "/" + sub_file)
+                save_cfg(src, dst, path + "/" + sub_file)
         elif '!include' in option:
-            save_cfg(src, dest, val)
-    with dest.get_remote_stdin(["cat - > \"%s\"" % path]) as cin:
+            save_cfg(src, dst, val)
+    with dst.get_remote_stdin(["cat - > ", path]) as cin:
         cfg.write(cin)
+
+
+def apply_backup(dst, datadir):
+    """
+    Apply backup of destination server
+
+    :param dst: Destination server
+    :param datadir: Path to datadir
+    :raise TwinDBBackupError: if binary positions is different
+    """
+    dst.execute_command(['sudo', 'innobackupex', '--apply-log', datadir])
+    _, stdout_, _ = dst.execute_command(['sudo', 'cat', datadir + "/xtrabackup_binlog_pos_innodb"])
+    binlog_pos = stdout_.read().strip()
+    _, stdout_, _ = dst.execute_command(['sudo', 'cat', datadir + "/xtrabackup_binlog_info"])
+    binlog_info = stdout_.read().strip()
+    if binlog_pos in binlog_info:
+        return
+    raise TwinDBBackupError("Invalid backup")
 
 
 def clone_mysql(cfg, source, destination, netcat_port=9990):
@@ -99,3 +117,5 @@ def clone_mysql(cfg, source, destination, netcat_port=9990):
     proc_netcat.join()
     src_ssh = Ssh(src.ssh_connection_info, "/", source)
     save_cfg(src_ssh, dst, get_root_my_cnf(src_ssh))
+    apply_backup(dst, src.datadir)
+    # TODO: Implement CHANGE MASTER TO
