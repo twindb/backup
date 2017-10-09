@@ -47,7 +47,7 @@ class RemoteMySQLSource(MySQLSource):
     def galera(self):
         raise NotImplementedError("Property galera not implemented")
 
-    def send_backup(self, dest_host, port):
+    def clone(self, dest_host, port):
         """
         Send backup to destination host
 
@@ -68,7 +68,7 @@ class RemoteMySQLSource(MySQLSource):
                           key_filename=self.ssh_connection_info.key,
                           port=self.ssh_connection_info.port,
                           username=self.ssh_connection_info.user)
-            stdin_, stdout_, stderr_ = shell.exec_command(cmd) # pylint: disable=unused-variable
+            _, stdout_, stderr_ = shell.exec_command(cmd)
             if stdout_.channel.recv_exit_status() != 0:
                 LOG.error("Failed while send_backup: %s", stderr_.read())
                 raise RemoteMySQLSourceError('%s exited with code' % cmd)

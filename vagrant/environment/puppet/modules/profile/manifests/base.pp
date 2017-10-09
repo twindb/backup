@@ -1,5 +1,6 @@
 class profile::base {
   $user = 'vagrant'
+
   user { $user:
     ensure => present
   }
@@ -57,18 +58,6 @@ password=qwerty
 "
   }
 
-  yumrepo { 'Percona':
-    baseurl => 'http://repo.percona.com/centos/$releasever/os/$basearch/',
-    enabled => 1,
-    gpgcheck => 0,
-    descr => 'Percona',
-    retries => 3
-  }
-
-    package { 'epel-release':
-        ensure => installed
-    }
-
   $packages = [ 'vim-enhanced', 'nmap-ncat',
     'Percona-Server-client-56', 'Percona-Server-server-56',
     'Percona-Server-devel-56', 'Percona-Server-shared-56', 'percona-toolkit',
@@ -78,42 +67,36 @@ password=qwerty
     'rpm-build','docker']
 
   package { $packages:
-    ensure => installed,
-    require => [Yumrepo['Percona'], Package['epel-release']]
+    ensure  => installed,
+    require => [
+      Yumrepo['Percona'],
+      Package['epel-release']
+    ]
   }
 
-    package { ['tox', 'awscli']:
-        ensure => installed,
-        provider => pip,
-        require => Package['python2-pip']
-    }
+  yumrepo { 'Percona':
+    baseurl  => 'http://repo.percona.com/centos/$releasever/os/$basearch/',
+    enabled  => 1,
+    gpgcheck => 0,
+    descr    => 'Percona',
+    retries  => 3
+  }
 
-  service { 'mysql':
+  package { 'epel-release':
+    ensure => installed
+  }
+
+  package { ['tox', 'awscli']:
+    ensure   => installed,
+    provider => pip,
+    require  => Package['python2-pip']
+  }
+
+  service { 'docker':
     ensure => running,
     enable => true,
-    require => Package['Percona-Server-server-56']
+    require => Package['docker'],
   }
 
-  file { "/home/${profile::base::user}/mysql_grants.sql":
-    ensure => present,
-    owner  => $profile::base::user,
-    mode   => "0400",
-    source => 'puppet:///modules/profile/mysql_grants.sql',
-  }
-
-  exec { 'Create MySQL users':
-    path    => '/usr/bin:/usr/sbin',
-    user    => $profile::base::user,
-    command => "mysql -u root < /home/${$profile::base::user}/mysql_grants.sql",
-    require => [ Service['mysql'], File["/home/${profile::base::user}/mysql_grants.sql"] ],
-    before => File["/home/${profile::base::user}/.my.cnf"],
-    unless => 'mysql -e "SHOW GRANTS FOR dba@localhost"'
-  }
-
-    service { 'docker':
-        ensure => running,
-        enable => true,
-        require => Package['docker']
-    }
 
 }

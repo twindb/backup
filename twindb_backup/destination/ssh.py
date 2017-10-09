@@ -261,25 +261,9 @@ class Ssh(BaseDestination):
         finally:
             shell.close()
 
-    def netcat(self, command):
+    def netcat(self, command, port=9990):
         """
         Run netcat on the destination pipe it to a given command.
 
-        :return: Port number to where netcat listens to.
-        :rtype: int
-        :raise SshDestinationError: if failed to start netcat.
         """
-        max_port_number = 65000
-        port = 9990
-
-        while port < max_port_number:
-            try:
-                self.execute_command(['nc -l %d | %s'
-                                      % (port, command)])
-                return
-            except SshDestinationError as err:
-                LOG.warning(err)
-                port += 1
-
-        raise SshDestinationError('Failed to start netcat '
-                                  'on the remote server')
+        self.execute_command(['nc -l %d | %s' % (port, command)])

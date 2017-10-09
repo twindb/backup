@@ -34,7 +34,7 @@ class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
 
 class MySQLSource(BaseSource):
     """MySQLSource class"""
-    def __init__(self, mysql_connect_info, run_type, full_backup, dst):
+    def __init__(self, mysql_connect_info, run_type, full_backup, dst=None):
         """
         MySQLSource constructor
 
@@ -465,6 +465,15 @@ class MySQLSource(BaseSource):
             else:
                 LOG.error(error_message)
                 raise
+
+    @property
+    def datadir(self):
+        """Return datadir path on MySQL server"""
+        with self.get_connection as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT @@datadir AS datadir")
+                row = cursor.fetchone()
+                return row['datadir']
 
     @contextmanager
     def get_connection(self):
