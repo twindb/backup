@@ -2,7 +2,7 @@
 """
 Module defines clone feature
 """
-
+import ConfigParser
 from multiprocessing import Process
 
 from twindb_backup import INTERVALS, LOG
@@ -13,9 +13,10 @@ from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
 from twindb_backup.util import split_host_port
 
 
-def check_root_my_cnf(src):
+def get_root_my_cnf(src):
     """
     Return path on source server to root my.cnf
+
     :param src: Source server
     :type src: Ssh
     :return: Path to my.cnf
@@ -32,6 +33,29 @@ def check_root_my_cnf(src):
         except SshDestinationError:
             continue
     raise IOError("Root my.cnf not found")
+
+
+def save_cfg(src, dest, path):
+    """
+    Save configs from source to destination server
+
+    :param src: Source server
+    :param dest: Destination server
+    :param path: Path to file
+    """
+    cfg = ConfigParser.ConfigParser(allow_no_value=True)
+    with src.get_stream(path) as cfg_fp:
+        cfg.readfp(cfg_fp)
+    cfg.set('mysqld', 'server_id', value=src.ssh_connect_info.host)
+    for option in cfg.options('mysqld'):
+        val = cfg.get('mysqld', option)
+        if '!includedir' in option:
+            for sub_file in src.list_files(prefix=val):
+                save_cfg(src, dest,  path + "/" + sub_file)
+        elif '!include' in option:
+            save_cfg(src, dest, val)
+    with dest.get_remote_stdin(["cat - > \"%s\"" % path]) as cin:
+        cfg.write(cin)
 
 
 def clone_mysql(cfg, source, destination, netcat_port=9990):
@@ -73,4 +97,5 @@ def clone_mysql(cfg, source, destination, netcat_port=9990):
     proc_netcat.start()
     src.clone(dest_host=destination, port=netcat_port)
     proc_netcat.join()
-    check_root_my_cnf(Ssh(src.ssh_connection_info, "/", hostname=source))
+    src_ssh = Ssh(src.ssh_connection_info, "/", source)
+    save_cfg(src_ssh, dst, get_root_my_cnf(src_ssh))

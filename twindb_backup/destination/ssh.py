@@ -229,6 +229,26 @@ class Ssh(BaseDestination):
             LOG.error('Failed to execute %s', cmd_str)
             raise SshDestinationError(err)
 
+    @contextmanager
+    def get_remote_stdin(self, cmd):
+        """Get remote stdin handler
+
+        :param cmd: Command for execution
+        :type cmd: list
+        :return: Remote stdin handler
+        :rtype: generator
+        :raise SshDestinationError: if any error
+        """
+        cmd_str = ' '.join(cmd)
+        try:
+            with self._shell() as shell:
+                stdin, _, _ = shell.exec_command(cmd_str)
+                yield stdin
+
+        except SSHException as err:
+            LOG.error('Failed to execute %s', cmd_str)
+            raise SshDestinationError(err)
+
     def _mkdirname_r(self, remote_name):
         """Create directory for a given file on the destination.
         For example, for a given file '/foo/bar/xyz' it would create
@@ -267,3 +287,4 @@ class Ssh(BaseDestination):
 
         """
         self.execute_command(['nc -l %d | %s' % (port, command)])
+
