@@ -129,7 +129,7 @@ class Ssh(BaseDestination):
         :return: Standard output.
         """
         cmd = "cat %s" % path
-        return self._ssh_client.get_remote_handlers(path)[1]
+        yield self._ssh_client.get_remote_handlers(cmd)[1]
 
     def _write_status(self, status):
         """
