@@ -9,5 +9,5 @@ pytest-cov
 Sphinx
 unittest2
 moto
-pylint
+pylint==1.6.5
 pep8

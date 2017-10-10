@@ -72,16 +72,16 @@ class RemoteMySQLSource(MySQLSource):
             if '!includedir' in option:
                 val = val.split()[1]
                 ls_cmd = 'ls %s' % val
-                with self._ssh_client.get_remote_handlers(ls_cmd)\
-                    as (_, cout, _):
+                with self._ssh_client.get_remote_handlers(ls_cmd) \
+                        as (_, cout, _):
                     file_list = sorted(cout.read().split())
                 for sub_file in file_list:
                     self._save_cfg(dst, val + "/" + sub_file)
             elif '!include' in option:
                 self._save_cfg(dst, val.split()[1])
 
-        with dst.client.get_remote_handlers("sudo cat - > %s" % path)\
-            as (cin, _, _):
+        with dst.client.get_remote_handlers("sudo cat - > %s" % path) \
+                as (cin, _, _):
             cfg.write(cin)
 
     def _get_root_my_cnf(self):

@@ -129,7 +129,8 @@ class Ssh(BaseDestination):
         :return: Standard output.
         """
         cmd = "cat %s" % path
-        yield self._ssh_client.get_remote_handlers(cmd)[1]
+        with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
+            yield cout
 
     def _write_status(self, status):
         """
