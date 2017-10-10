@@ -7,8 +7,7 @@ from multiprocessing import Process
 
 from pymysql import OperationalError
 
-from twindb_backup import INTERVALS, LOG, TwinDBBackupError, \
-    MY_CNF_COMMON_PATHS
+from twindb_backup import INTERVALS, LOG, TwinDBBackupError
 from twindb_backup.destination.ssh import Ssh, SshConnectInfo
 from twindb_backup.source.mysql_source import MySQLConnectInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
@@ -25,7 +24,7 @@ def apply_backup(dst, datadir):
     """
     dst.execute_command('sudo innobackupex --apply-log %s' % datadir)
     _, stdout_, _ = dst.execute_command(
-            'sudo cat %s/xtrabackup_binlog_pos_innodb' % datadir
+        'cat %s/xtrabackup_binlog_pos_innodb' % datadir
     )
     binlog_pos = stdout_.read().strip()
     _, stdout_, _ = dst.execute_command(
@@ -104,4 +103,3 @@ def clone_mysql(cfg, source, destination, netcat_port=9990):
     except (ConfigParser.NoOptionError, OperationalError) as err:
         LOG.error(err)
         exit(1)
-

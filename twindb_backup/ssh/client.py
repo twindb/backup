@@ -86,4 +86,3 @@ class SshClient(object):
         except SSHException as err:
             LOG.error('Failed to execute %s', cmd)
             raise SshClientException(err)
-
