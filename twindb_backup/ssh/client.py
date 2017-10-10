@@ -19,7 +19,7 @@ class SshClient(object):
     """
     def __init__(self, ssh_connect_info):
 
-        self._ssh_connect_info = ssh_connect_info
+        self.ssh_connect_info = ssh_connect_info
 
     @contextmanager
     def _shell(self):
@@ -33,35 +33,15 @@ class SshClient(object):
         shell = SSHClient()
         shell.set_missing_host_key_policy(AutoAddPolicy())
         try:
-            shell.connect(hostname=self._ssh_connect_info.host,
-                          key_filename=self._ssh_connect_info.key,
-                          port=self._ssh_connect_info.port,
-                          username=self._ssh_connect_info.user)
+            shell.connect(hostname=self.ssh_connect_info.host,
+                          key_filename=self.ssh_connect_info.key,
+                          port=self.ssh_connect_info.port,
+                          username=self.ssh_connect_info.user)
             yield shell
         except (AuthenticationException, SSHException, socket.error) as err:
             raise SshClientException(err)
         finally:
             shell.close()
-
-    @contextmanager
-    def _get_remote_handlers(self, cmd):
-        """Get remote stdin, stdout and stderr handler
-
-        :param cmd: Command for execution
-        :type cmd: list
-        :return: Remote stdin, stdout and stderr handler
-        :rtype: tuple(generator, generator, generator)
-        :raise SshClientException: if any error
-        """
-        cmd_str = ' '.join(cmd)
-        try:
-            with self._shell() as shell:
-                stdin_, stdout_, stderr_ = shell.exec_command(cmd_str)
-                yield stdin_, stdout_, stderr_
-
-        except SSHException as err:
-            LOG.error('Failed to execute %s', cmd_str)
-            raise SshClientException(err)
 
     def execute(self, cmd):
         """Execute a command on a remote SSH server.

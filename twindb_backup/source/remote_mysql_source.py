@@ -2,16 +2,16 @@
 """
 Module defines MySQL source class for backing up remote MySQL.
 """
+import ConfigParser
 import socket
 
 from contextlib import contextmanager
 
 import time
-from paramiko import SSHClient, AutoAddPolicy, SSHException, \
-    AuthenticationException
 
-from twindb_backup import LOG
-from twindb_backup.source.exceptions import RemoteMySQLSourceError
+import pymysql
+from twindb_backup import LOG, MY_CNF_COMMON_PATHS
+from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.source.mysql_source import MySQLSource
 from twindb_backup.ssh.client import SshClient
 from twindb_backup.ssh.exceptions import SshClientException
@@ -52,3 +52,79 @@ class RemoteMySQLSource(MySQLSource):
                 LOG.info('Will try again in after %d seconds', retry_time)
                 time.sleep(retry_time)
                 retry_time *= 2
+
+    def clone_config(self, dst):
+        """
+        Clone config to destination server
+
+        :param dst: Destination server
+        :type dst: Ssh
+        """
+        cfg_path = self._get_root_my_cnf()
+        self._save_cfg(dst, cfg_path)
+
+    def _save_cfg(self, dst, path):
+        """Save configs on destination recursively"""
+        cfg = self._get_config(path)
+        cfg.set('mysqld', 'server_id',
+                value=self._ssh_client.ssh_connect_info.host)
+        for option in cfg.options('mysqld'):
+            val = cfg.get('mysqld', option)
+            if '!includedir' in option:
+                val = val.split()[1]
+                ls_cmd = 'ls %s' % val
+                with self._ssh_client.get_remote_handlers(ls_cmd) as (_, cout, _):
+                    file_list = sorted(cout.read().split())
+                for sub_file in file_list:
+                    self._save_cfg(dst, val + "/" + sub_file)
+            elif '!include' in option:
+                self._save_cfg(dst, val.split()[1])
+
+        stdin_, _, _  = dst.execute_command("cat - > %s" % path)
+        cfg.write(stdin_)
+        stdin_.flush()
+
+    def _get_root_my_cnf(self):
+        """Return root my.cnf path"""
+        for cfg_path in MY_CNF_COMMON_PATHS:
+            try:
+                cmd = "cat %s" % cfg_path
+                with self._ssh_client.get_remote_handlers(cmd):
+                    return cfg_path
+            except SshDestinationError:
+                continue
+        raise OSError("Root my.cnf not found")
+
+    def _get_config(self, cfg_path):
+        """
+        Return parsed config
+
+        :param cfg_path: Path to config
+        :type cfg_path: str
+        :return: Path and config
+        :rtype: ConfigParser.ConfigParser
+        """
+        cfg = ConfigParser.ConfigParser(allow_no_value=True)
+        try:
+            cmd = "cat %s" % cfg_path
+            with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
+                cfg.readfp(cout)
+        except ConfigParser.ParsingError as err:
+            LOG.error(err)
+            exit(1)
+        return cfg
+
+    def change_master_host(self, host):
+        """
+        Change master
+        :param host: Master hostame
+        :type host: str
+        """
+        try:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute("CHANGE MASTER TO MASTER_HOST='%s'" % host)
+            return True
+        except pymysql.Error as err:
+            LOG.debug(err)
+            return False
