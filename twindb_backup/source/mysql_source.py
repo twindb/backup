@@ -11,12 +11,10 @@ from contextlib import contextmanager
 from subprocess import Popen, PIPE
 
 import pymysql
-from twindb_backup import LOG, get_files_to_delete, INTERVALS, get_common_mycnf_path
+from twindb_backup import LOG, get_files_to_delete, INTERVALS, \
+    MY_CNF_COMMON_PATHS
 from twindb_backup.source.base_source import BaseSource
-
-
-class MySQLSourceError(Exception):
-    """Errors during backups"""
+from twindb_backup.source.exceptions import MySQLSourceError
 
 
 class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
@@ -163,7 +161,7 @@ class MySQLSource(BaseSource):
         """Update backup_info from stderr"""
 
         LOG.debug('innobackupex error log file %s', stderr_file.name)
-        self._backup_info.lsn = self.get_lsn(stderr_file.name)
+        self._backup_info.lsn = self._get_lsn(stderr_file.name)
         self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
             stderr_file.name
         )
@@ -232,7 +230,7 @@ class MySQLSource(BaseSource):
         return None, None
 
     @staticmethod
-    def get_lsn(err_log_path):
+    def _get_lsn(err_log_path):
         """Find LSN up to which the backup is taken
 
         :param err_log_path: path to Innobackupex error log
@@ -328,7 +326,7 @@ class MySQLSource(BaseSource):
     def _full_copy_exists(self):
         full_backup_index = self._intervals.index(self.full_backup)
         for i in xrange(full_backup_index, len(self._intervals)):
-            if len(self.dst.status()[self._intervals[i]]) > 0:
+            if self.dst.status()[self._intervals[i]]:
                 return True
 
         return False
@@ -402,7 +400,7 @@ class MySQLSource(BaseSource):
         :return: File name and content of MySQL config file.
         :rtype: tuple
         """
-        for cnf_parg in get_common_mycnf_path():
+        for cnf_parg in MY_CNF_COMMON_PATHS:
             try:
                 with open(cnf_parg) as my_cnf:
                     yield cnf_parg, my_cnf.read()
@@ -417,12 +415,11 @@ class MySQLSource(BaseSource):
         :return: Galera version
         :rtype: str
         """
-        with self.get_connection() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute("SHOW STATUS LIKE 'wsrep_provider_version'")
+        with self._cursor() as cursor:
+            cursor.execute("SHOW STATUS LIKE 'wsrep_provider_version'")
 
-                res = {row['Variable_name'].lower(): row['Value'].lower()
-                       for row in cursor.fetchall()}
+            res = {row['Variable_name'].lower(): row['Value'].lower()
+                   for row in cursor.fetchall()}
 
         if res.get('wsrep_provider_version'):
             return res['wsrep_provider_version'].split('(')[0]
@@ -445,15 +442,15 @@ class MySQLSource(BaseSource):
         :rtype: bool
         """
         try:
-            with self.get_connection() as connection:
-                with connection.cursor() as cursor:
-                    cursor.execute("SELECT @@wsrep_on as wsrep_on")
-                    row = cursor.fetchone()
+            with self._cursor() as cursor:
+                cursor.execute("SELECT @@wsrep_on as wsrep_on")
+                row = cursor.fetchone()
 
-                    return (str(row['wsrep_on']).lower() == "1" or
-                            row['wsrep_on'].lower() == 'on')
+                return (str(row['wsrep_on']).lower() == "1" or
+                        row['wsrep_on'].lower() == 'on')
         except pymysql.InternalError as err:
-            error_code, error_message = err.args
+            error_code = err.args[0]
+            error_message = err.args[1]
 
             if error_code == 1193:
                 LOG.debug('Galera is not supported or not enabled')
@@ -465,11 +462,10 @@ class MySQLSource(BaseSource):
     @property
     def datadir(self):
         """Return datadir path on MySQL server"""
-        with self.get_connection as connection:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT @@datadir AS datadir")
-                row = cursor.fetchone()
-                return row['datadir']
+        with self._cursor() as cursor:
+            cursor.execute("SELECT @@datadir AS datadir")
+            row = cursor.fetchone()
+            return row['datadir']
 
     @contextmanager
     def get_connection(self):
@@ -492,3 +488,9 @@ class MySQLSource(BaseSource):
         finally:
             if connection:
                 connection.close()
+
+    @contextmanager
+    def _cursor(self):
+        with self.get_connection() as connection:
+            with connection.cursor() as cursor:
+                yield cursor

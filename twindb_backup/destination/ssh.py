@@ -5,14 +5,12 @@ Module for SSH destination.
 import base64
 import json
 import socket
-from contextlib import contextmanager
 
 import os
-from paramiko import SSHClient, AuthenticationException, SSHException, \
-    AutoAddPolicy
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import SshDestinationError
+from twindb_backup.ssh.client import SshClient
 
 
 class SshConnectInfo(object):  # pylint: disable=too-few-public-methods
@@ -37,9 +35,10 @@ class Ssh(BaseDestination):
     def __init__(self, ssh_connect_info=SshConnectInfo(),
                  remote_path=None, hostname=socket.gethostname()):
         super(Ssh, self).__init__()
-        self.remote_path = remote_path.rstrip('/')
+        if remote_path:
+            self.remote_path = remote_path.rstrip('/')
 
-        self.ssh_connect_info = ssh_connect_info
+        self._ssh_client = SshClient(ssh_connect_info)
 
         self.status_path = "{remote_path}/{hostname}/status".format(
             remote_path=self.remote_path,
@@ -55,8 +54,7 @@ class Ssh(BaseDestination):
         """
         remote_name = self.remote_path + '/' + name
         self._mkdirname_r(remote_name)
-        cmd = ["cat - > \"%s\"" % remote_name]
-
+        cmd = 'cat - > ' + remote_name
         self.execute_command(cmd)
 
     def _mkdir_r(self, path):
@@ -66,8 +64,7 @@ class Ssh(BaseDestination):
         :param path: remote directory
         :type path: str
         """
-        cmd = ["mkdir -p \"%s\"" % path]
-        LOG.debug('Running %s', ' '.join(cmd))
+        cmd = 'mkdir -p "%s"' % path
         self.execute_command(cmd)
 
     def list_files(self, prefix, recursive=False):
@@ -81,12 +78,17 @@ class Ssh(BaseDestination):
         :return: List of files
         :rtype: list
         """
-        if recursive:
-            ls_cmd = ["ls -R %s" % prefix]
-        else:
-            ls_cmd = ["ls %s" % prefix]
+        ls_options = ""
 
-        with self._get_remote_stdout(ls_cmd) as cout:
+        if recursive:
+            ls_options = "-R"
+
+        ls_cmd = "ls {ls_options} {prefix}".format(
+            ls_options=ls_options,
+            prefix=prefix
+        )
+
+        with self._ssh_client.get_remote_handlers(ls_cmd) as (_, cout, _):
             return sorted(cout.read().split())
 
     def find_files(self, prefix, run_type):
@@ -100,13 +102,12 @@ class Ssh(BaseDestination):
         :return: List of files
         :rtype: list
         """
-        cmd = [
-            "find {prefix}/*/{run_type} "
-            "-type f".format(prefix=prefix,
-                             run_type=run_type)
-        ]
+        cmd = "find {prefix}/*/{run_type} -type f".format(
+            prefix=prefix,
+            run_type=run_type
+        )
 
-        with self._get_remote_stdout(cmd) as cout:
+        with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
             return sorted(cout.read().split())
 
     def delete(self, obj):
@@ -115,8 +116,7 @@ class Ssh(BaseDestination):
 
         :param obj: path to a remote file.
         """
-        cmd = ["rm %s" % obj]
-        LOG.debug('Running %s', ' '.join(cmd))
+        cmd = "rm %s" % obj
         self.execute_command(cmd)
 
     def get_stream(self, path):
@@ -128,8 +128,8 @@ class Ssh(BaseDestination):
         :type path: str
         :return: Standard output.
         """
-        cmd = ["cat %s" % path]
-        return self._get_remote_stdout(cmd)
+        cmd = "cat %s" % path
+        return self._ssh_client.get_remote_handlers(cmd)[1]
 
     def _write_status(self, status):
         """
@@ -139,11 +139,10 @@ class Ssh(BaseDestination):
         :type status: str
         """
         raw_status = base64.b64encode(json.dumps(status))
-        cmd = [
-            "echo {raw_status} > "
-            "{status_file}".format(raw_status=raw_status,
-                                   status_file=self.status_path)
-        ]
+        cmd = "echo {raw_status} > {status_file}".format(
+            raw_status=raw_status,
+            status_file=self.status_path
+        )
         self.execute_command(cmd)
 
     def _read_status(self):
@@ -153,9 +152,9 @@ class Ssh(BaseDestination):
         :return: Status in JSON format, if it exist
         """
         if self._status_exists():
-            cmd = ["cat %s" % self.status_path]
-            _, stdout, _ = self.execute_command(cmd)
-            return json.loads(base64.b64decode(stdout.read()))
+            cmd = "cat %s" % self.status_path
+            with self._ssh_client.get_remote_handlers(cmd) as (_, stdout, _):
+                return json.loads(base64.b64decode(stdout.read()))
         else:
             return self._empty_status
 
@@ -167,87 +166,29 @@ class Ssh(BaseDestination):
         :rtype: bool
         :raise SshDestinationError: if any error.
         """
-        cmd = ["bash -c 'if test -s %s; "
-               "then echo exists; "
-               "else echo not_exists; "
-               "fi'" % self.status_path]
-        LOG.debug('Running %r', cmd)
-        _, stdout, _ = self.execute_command(cmd)
-        output = stdout.read()
-        if output.strip() == 'exists':
-            return True
-        elif output.strip() == 'not_exists':
-            return False
-        else:
-            raise SshDestinationError('Unrecognized response: %s' % output)
-
-    def share(self, url):
-        super(Ssh, self).share(url)
+        cmd = "bash -c 'if test -s %s; " \
+              "then echo exists; " \
+              "else echo not_exists; " \
+              "fi'" % self.status_path
+        with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
+            if cout.read().strip() == 'exists':
+                return True
+            elif cout.read().strip() == 'not_exists':
+                return False
+            else:
+                raise SshDestinationError('Unrecognized response: %s'
+                                          % cout.read())
 
     def execute_command(self, cmd):
         """Execute ssh command
 
         :param cmd: Command for execution
-        :type cmd: list
+        :type cmd: str
         :return: Handlers of stdin, stdout and stderr
         :rtype: tuple
-        :raise SshDestinationError: if any error
         """
-        cmd_str = ' '.join(cmd)
-        try:
-            with self._shell() as shell:
-                stdin_, stdout_, stderr_ = shell.exec_command(cmd_str)
-                exit_code = stdout_.channel.recv_exit_status()
-                if exit_code != 0:
-                    LOG.error("Failed while execute command %s:  %s",
-                              cmd_str, stderr_.read())
-                    raise SSHException('%s exited with code %d'
-                                       % (cmd_str, exit_code))
-                return stdin_, stdout_, stderr_
-
-        except SSHException as err:
-            LOG.error('Failed to execute %s', cmd_str)
-            raise SshDestinationError(err)
-
-    @contextmanager
-    def _get_remote_stdout(self, cmd):
-        """Get remote stdout handler
-
-        :param cmd: Command for execution
-        :type cmd: list
-        :return: Remote stdout handler
-        :rtype: generator
-        :raise SshDestinationError: if any error
-        """
-        cmd_str = ' '.join(cmd)
-        try:
-            with self._shell() as shell:
-                _, stdout, _ = shell.exec_command(cmd_str)
-                yield stdout
-
-        except SSHException as err:
-            LOG.error('Failed to execute %s', cmd_str)
-            raise SshDestinationError(err)
-
-    @contextmanager
-    def get_remote_stdin(self, cmd):
-        """Get remote stdin handler
-
-        :param cmd: Command for execution
-        :type cmd: list
-        :return: Remote stdin handler
-        :rtype: generator
-        :raise SshDestinationError: if any error
-        """
-        cmd_str = ' '.join(cmd)
-        try:
-            with self._shell() as shell:
-                stdin, _, _ = shell.exec_command(cmd_str)
-                yield stdin
-
-        except SSHException as err:
-            LOG.error('Failed to execute %s', cmd_str)
-            raise SshDestinationError(err)
+        LOG.debug('Executing: %s', cmd)
+        return self._ssh_client.execute(cmd)
 
     def _mkdirname_r(self, remote_name):
         """Create directory for a given file on the destination.
@@ -259,31 +200,12 @@ class Ssh(BaseDestination):
         """
         return self._mkdir_r(os.path.dirname(remote_name))
 
-    @contextmanager
-    def _shell(self):
-        """
-        Create SSHClient instance and connect to the destination host.
-
-        :return: Connected to the remote destination host shell.
-        :rtype: generator(SSHClient)
-        :raise SshDestinationError: if the ssh client fails to connect.
-        """
-        shell = SSHClient()
-        shell.set_missing_host_key_policy(AutoAddPolicy())
-        try:
-            shell.connect(hostname=self.ssh_connect_info.host,
-                          key_filename=self.ssh_connect_info.key,
-                          port=self.ssh_connect_info.port,
-                          username=self.ssh_connect_info.user)
-            yield shell
-        except (AuthenticationException, SSHException, socket.error) as err:
-            raise SshDestinationError(err)
-        finally:
-            shell.close()
-
     def netcat(self, command, port=9990):
         """
         Run netcat on the destination pipe it to a given command.
 
         """
-        self.execute_command(['nc -l %d | %s' % (port, command)])
+        try:
+            return self.execute_command('nc -l %d | %s' % (port, command))
+        except SshDestinationError as err:
+            LOG.error(err)

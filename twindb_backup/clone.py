@@ -5,7 +5,10 @@ Module defines clone feature
 import ConfigParser
 from multiprocessing import Process
 
-from twindb_backup import INTERVALS, LOG, TwinDBBackupError, get_common_mycnf_path
+from pymysql import OperationalError
+
+from twindb_backup import INTERVALS, LOG, TwinDBBackupError, \
+    MY_CNF_COMMON_PATHS
 from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.destination.ssh import Ssh, SshConnectInfo
 from twindb_backup.source.mysql_source import MySQLConnectInfo
@@ -22,7 +25,7 @@ def get_root_my_cnf(src):
     :return: Path to my.cnf
     :raise IOError: if my.cnf is not found
     """
-    for mysql_config in get_common_mycnf_path():
+    for mysql_config in MY_CNF_COMMON_PATHS:
         try:
             with src.get_stream(mysql_config):
                 return mysql_config
@@ -48,16 +51,6 @@ def get_remote_cfg(src):
         exit(1)
     return cfg
 
-
-def get_datadir(src):
-    """
-    Get datadir from source server
-
-    :param src: Source server
-    :return: Datadir path
-    """
-    cfg = get_remote_cfg(src)
-    return cfg.get("mysqld", "datadir")
 
 def save_cfg(src, dst, path):
     """
@@ -89,9 +82,21 @@ def apply_backup(dst, datadir):
     :raise TwinDBBackupError: if binary positions is different
     """
     dst.execute_command(['sudo', 'innobackupex', '--apply-log', datadir])
-    _, stdout_, _ = dst.execute_command(['sudo', 'cat', datadir + "/xtrabackup_binlog_pos_innodb"])
+    _, stdout_, _ = dst.execute_command(
+        [
+            'sudo',
+            'cat',
+            datadir + "/xtrabackup_binlog_pos_innodb"
+        ]
+    )
     binlog_pos = stdout_.read().strip()
-    _, stdout_, _ = dst.execute_command(['sudo', 'cat', datadir + "/xtrabackup_binlog_info"])
+    _, stdout_, _ = dst.execute_command(
+        [
+            'sudo',
+            'cat',
+            datadir + "/xtrabackup_binlog_info"
+        ]
+    )
     binlog_info = stdout_.read().strip()
     if binlog_pos in binlog_info:
         return
@@ -100,45 +105,56 @@ def apply_backup(dst, datadir):
 
 def clone_mysql(cfg, source, destination, netcat_port=9990):
     """Clone mysql backup of remote machine and stream it to slave"""
-    src = RemoteMySQLSource({
-        "ssh_connection_info": SshConnectInfo(
-            host=split_host_port(source)[0],
-            user=cfg.get('ssh', 'ssh_user'),
-            key=cfg.get('ssh', 'ssh_key')
-        ),
-        "mysql_connect_info": MySQLConnectInfo(
-            cfg.get('mysql', 'mysql_defaults_file')
-        ),
-        "run_type": INTERVALS[0],
-        "full_backup": INTERVALS[0],
-    })
-    dst = Ssh(
-        ssh_connect_info=SshConnectInfo(
-            host=split_host_port(destination)[0],
-            user=cfg.get('ssh', 'ssh_user'),
-            key=cfg.get('ssh', 'ssh_key')
-        ),
-    )
-    src_ssh = Ssh(src.ssh_connection_info, "/", source)
-    data_dir = get_datadir(src_ssh)
-    if dst.list_files(data_dir):
-        LOG.error("Data dir is not empty: %s", data_dir)
+    try:
+        src = RemoteMySQLSource({
+            "ssh_connection_info": SshConnectInfo(
+                host=split_host_port(source)[0],
+                user=cfg.get('ssh', 'ssh_user'),
+                key=cfg.get('ssh', 'ssh_key')
+            ),
+            "mysql_connect_info": MySQLConnectInfo(
+                cfg.get('mysql', 'mysql_defaults_file'),
+                hostname=split_host_port(source)[0]
+            ),
+            "run_type": INTERVALS[0],
+            "full_backup": INTERVALS[0],
+        })
+        dst = Ssh(
+            ssh_connect_info=SshConnectInfo(
+                host=split_host_port(destination)[0],
+                user=cfg.get('ssh', 'ssh_user'),
+                key=cfg.get('ssh', 'ssh_key')
+            ),
+        )
+
+        datadir = src.datadir
+
+        if dst.list_files(datadir):
+            LOG.error("Destination datadir is not empty: %s", datadir)
+            exit(1)
+
+        proc_netcat = Process(
+            target=dst.netcat,
+            args=(
+                "gunzip -c - | xbstream -x -C {datadir}".format(
+                    datadir=datadir
+                ),
+            ),
+            kwargs={
+                'port': netcat_port
+            }
+        )
+        proc_netcat.start()
+        src.clone(
+            dest_host=split_host_port(destination)[0],
+            port=netcat_port
+        )
+        proc_netcat.join()
+
+        # save_cfg(src_ssh, dst, get_root_my_cnf(src_ssh))
+        # apply_backup(dst, src.datadir)
+        # # Implement CHANGE MASTER TO
+    except (ConfigParser.NoOptionError, OperationalError) as err:
+        LOG.error(err)
         exit(1)
 
-    proc_netcat = Process(
-        target=dst.netcat,
-        args=(
-            " | gunzip -c - | xbstream -x -C {datadir}".format(
-                datadir=data_dir
-            ),
-        ),
-        kwargs={
-            'port': netcat_port
-        }
-    )
-    proc_netcat.start()
-    src.clone(dest_host=destination, port=netcat_port)
-    proc_netcat.join()
-    save_cfg(src_ssh, dst, get_root_my_cnf(src_ssh))
-    apply_backup(dst, src.datadir)
-    # TODO: Implement CHANGE MASTER TO

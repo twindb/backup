@@ -2,6 +2,8 @@
 """
 Module for destination exceptions
 """
+
+
 class DestinationError(Exception):
     """General destination error"""
     pass

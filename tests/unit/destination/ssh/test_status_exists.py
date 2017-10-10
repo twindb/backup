@@ -26,14 +26,21 @@ from twindb_backup.destination.ssh import Ssh
         False
     )
 ])
-@mock.patch.object(Ssh, 'execute_command')
-def test__status_exists(mock_run, out, result):
+def test__status_exists(out, result):
+    mock_ssh_client = mock.Mock()
+
     mock_stdout = mock.Mock()
-    mock_stdout.channel.recv_exit_status.return_value = 0
     mock_stdout.read.return_value = out
-    mock_stderr = mock.Mock()
-    mock_run.return_value = (mock.Mock(), mock_stdout, mock_stderr)
+
+    mock_ssh_client.get_remote_handlers.return_value = iter(
+        (
+            None,
+            mock_stdout,
+            None
+        )
+    )
     dst = Ssh(remote_path='/foo/bar')
+    dst._ssh_client = mock_ssh_client
     # noinspection PyProtectedMember
     assert dst._status_exists() == result
 

@@ -7,18 +7,18 @@
 alabaster==0.7.10         # via sphinx
 argparse==1.4.0           # via unittest2
 asn1crypto==0.23.0        # via cryptography
-astroid==1.4.9            # via pylint
+astroid==1.5.3            # via pylint
 babel==2.5.1              # via sphinx
-backports.functools-lru-cache==1.4  # via pylint
+backports.functools-lru-cache==1.4  # via astroid, pylint
 backports.ssl-match-hostname==3.5.0.1  # via docker
 backports.tempfile==1.0rc1  # via moto
 backports.weakref==1.0.post1  # via backports.tempfile
 boto3==1.4.7              # via moto
 boto==2.48.0              # via moto
-botocore==1.7.22          # via boto3, s3transfer
+botocore==1.7.25          # via boto3, s3transfer
 bumpversion==0.5.3
 certifi==2017.7.27.1      # via requests
-cffi==1.11.1              # via cryptography
+cffi==1.11.2              # via cryptography
 chardet==3.0.4            # via requests
 codecov==2.0.9
 configparser==3.5.0       # via flake8, pylint
@@ -28,7 +28,7 @@ cryptography==2.0.3       # via moto
 docker-pycreds==0.2.1     # via docker
 docker==2.5.1             # via moto
 docutils==0.14            # via botocore, sphinx
-enum34==1.1.6             # via cryptography, flake8
+enum34==1.1.6             # via astroid, cryptography, flake8
 flake8==3.4.1
 funcsigs==1.0.2           # via mock
 futures==3.1.1            # via s3transfer
@@ -45,22 +45,24 @@ mccabe==0.6.1             # via flake8, pylint
 mock==2.0.0
 moto==1.1.21
 pbr==3.1.1                # via mock
+pep8==1.7.0
 pluggy==0.5.2             # via tox
 py==1.4.34                # via pytest, tox
-pyaml==17.8.0             # via moto
+pyaml==17.10.0            # via moto
 pycodestyle==2.3.1        # via flake8
 pycparser==2.18           # via cffi
 pyflakes==1.5.0           # via flake8
 pygments==2.2.0           # via sphinx
-pylint==1.6.5
+pylint==1.7.4
 pytest-cov==2.5.1
-pytest==3.2.2
+pytest==3.2.3
 python-dateutil==2.6.1    # via botocore, moto
 pytz==2017.2              # via babel, moto
 pyyaml==3.12              # via pyaml
 requests==2.18.4          # via codecov, docker, moto, sphinx
 s3transfer==0.1.11        # via boto3
-six==1.11.0               # via astroid, cryptography, docker, docker-pycreds, mock, moto, pylint, python-dateutil, sphinx, tox, unittest2, websocket-client
+singledispatch==3.4.0.3   # via astroid, pylint
+six==1.11.0               # via astroid, cryptography, docker, docker-pycreds, mock, moto, pylint, python-dateutil, singledispatch, sphinx, tox, unittest2, websocket-client
 snowballstemmer==1.2.1    # via sphinx
 sphinx==1.6.4
 sphinxcontrib-websupport==1.0.1  # via sphinx

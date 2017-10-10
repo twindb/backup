@@ -15,4 +15,4 @@ def test_mkdir_r(mock_execute):
     dst = Ssh(remote_path='')
     # noinspection PyProtectedMember
     dst._mkdir_r('/foo/bar')
-    mock_execute.assert_called_once_with(['mkdir -p "/foo/bar"'])
+    mock_execute.assert_called_once_with('mkdir -p "/foo/bar"')

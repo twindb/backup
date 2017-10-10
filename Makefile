@@ -57,8 +57,8 @@ upgrade-requirements: ## Upgrade requirements
 
 .PHONY: bootstrap
 bootstrap: clean ## bootstrap the development environment
-	pip install -U "setuptools==32.3.1"
-	pip install -U "pip==9.0.1"
+	pip install -U "setuptools>=32.3.1"
+	pip install -U "pip>=9.0.1"
 	pip install -U "pip-tools>=1.6.0"
 	pip-sync requirements.txt requirements_dev.txt
 	pip install --editable .
@@ -94,6 +94,7 @@ clean-docs:
 
 lint: ## check style with pylint
 	pylint twindb_backup
+	pep8 twindb_backup
 
 
 test: ## run tests quickly with the default Python
