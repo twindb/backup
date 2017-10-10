@@ -32,7 +32,7 @@ def test__status_exists(out, result):
     mock_stdout = mock.Mock()
     mock_stdout.read.return_value = out
 
-    mock_ssh_client.get_remote_handlers.return_value = iter(
+    mock_ssh_client.get_remote_handlers.return_value.__enter__ = iter(
         (
             None,
             mock_stdout,
