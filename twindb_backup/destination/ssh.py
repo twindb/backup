@@ -190,6 +190,7 @@ class Ssh(BaseDestination):
         LOG.debug('Executing: %s', cmd)
         return self._ssh_client.execute(cmd)
 
+    @property
     def client(self):
         """Return client"""
         return self._ssh_client
