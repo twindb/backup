@@ -190,6 +190,10 @@ class Ssh(BaseDestination):
         LOG.debug('Executing: %s', cmd)
         return self._ssh_client.execute(cmd)
 
+    def client(self):
+        """Return client"""
+        return self._ssh_client
+
     def _mkdirname_r(self, remote_name):
         """Create directory for a given file on the destination.
         For example, for a given file '/foo/bar/xyz' it would create

@@ -80,9 +80,9 @@ class RemoteMySQLSource(MySQLSource):
             elif '!include' in option:
                 self._save_cfg(dst, val.split()[1])
 
-        stdin_, _, _  = dst.execute_command("cat - > %s" % path)
-        cfg.write(stdin_)
-        stdin_.flush()
+        client = dst.client()
+        with client.get_remote_handlers("sudo cat - > %s" % path) as (cin, _, _ ):
+            cfg.write(cin)
 
     def _get_root_my_cnf(self):
         """Return root my.cnf path"""
