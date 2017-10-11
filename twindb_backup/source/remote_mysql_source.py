@@ -140,7 +140,7 @@ class RemoteMySQLSource(MySQLSource):
         """
         self._ssh_client.execute("chown -R mysql %s" % datadir)
         _, stdout_, _ = self._ssh_client.execute(
-            "grep MemFree /proc/meminfo | awk '{print $2}' "
+            "grep MemAvailable /proc/meminfo | awk '{print $2}' "
         )
         free_mem = int(stdout_.read()) * 1024
         self._ssh_client.execute(
