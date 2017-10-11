@@ -45,7 +45,7 @@ def container_network(docker_client):
 
 # noinspection PyShadowingNames
 @pytest.yield_fixture
-def master(docker_image, docker_client, container_network):
+def master(docker_client, container_network):
 
     api = docker_client.api
 
