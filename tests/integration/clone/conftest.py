@@ -45,7 +45,7 @@ def container_network(docker_client):
 
 # noinspection PyShadowingNames
 @pytest.yield_fixture
-def master(docker_client, container_network):
+def master1(docker_client, container_network):
 
     api = docker_client.api
 
@@ -59,7 +59,7 @@ def master(docker_client, container_network):
 
     container = api.create_container(
         image=NODE_IMAGE,
-        name='master',
+        name='master1',
         ports=[22, 3306],
         host_config=host_config,
         networking_config=networking_config)
@@ -70,3 +70,30 @@ def master(docker_client, container_network):
     time.sleep(3600)
     docker_client.api.remove_container(container=container['id'], force=True)
 
+
+# noinspection PyShadowingNames
+@pytest.yield_fixture
+def master2(docker_client, container_network):
+
+    api = docker_client.api
+
+    host_config = api.create_host_config()
+
+    networking_config = api.create_networking_config({
+        container_network: api.create_endpoint_config(
+            ipv4_address='172.25.0.2'
+        )
+    })
+
+    container = api.create_container(
+        image=NODE_IMAGE,
+        name='master2',
+        ports=[22, 3306],
+        host_config=host_config,
+        networking_config=networking_config)
+    api.start(container['Id'])
+
+    yield container
+
+    time.sleep(3600)
+    docker_client.api.remove_container(container=container['id'], force=True)

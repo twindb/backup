@@ -1,2 +1,2 @@
-def test_clone(master):
+def test_clone(master1, master2):
     pass
