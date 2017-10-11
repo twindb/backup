@@ -115,7 +115,7 @@ class RemoteMySQLSource(MySQLSource):
             exit(1)
         return cfg
 
-    def change_master_host(self, host):
+    def setup_slave(self, host):
         """
         Change master
         :param host: Master hostame
@@ -125,6 +125,7 @@ class RemoteMySQLSource(MySQLSource):
             with self.get_connection() as connection:
                 with connection.cursor() as cursor:
                     cursor.execute("CHANGE MASTER TO MASTER_HOST='%s'" % host)
+                    cursor.execute("START SLAVE")
             return True
         except pymysql.Error as err:
             LOG.debug(err)
@@ -137,8 +138,10 @@ class RemoteMySQLSource(MySQLSource):
         :param datadir: Path to datadir
         :raise TwinDBBackupError: if binary positions is different
         """
-
-        self._ssh_client.execute('sudo innobackupex --apply-log %s' % datadir)
+        self._ssh_client.execute("chown -R mysql %s" % datadir)
+        _, stdout_, _ = self._ssh_client.execute("grep MemFree /proc/meminfo | awk '{print $2}' ")
+        free_mem = int(stdout_.read()) * 1024
+        self._ssh_client.execute('sudo innobackupex --apply-log %s --use-memory %d' % (datadir, free_mem))
         _, stdout_, _ = self._ssh_client.execute(
             'cat %s/xtrabackup_binlog_pos_innodb' % datadir
         )

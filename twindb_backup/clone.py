@@ -7,10 +7,11 @@ from multiprocessing import Process
 
 from pymysql import OperationalError
 
-from twindb_backup import INTERVALS, LOG, TwinDBBackupError
+from twindb_backup import INTERVALS, LOG
 from twindb_backup.destination.ssh import Ssh, SshConnectInfo
 from twindb_backup.source.mysql_source import MySQLConnectInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
+from twindb_backup.ssh.exceptions import SshClientException
 from twindb_backup.util import split_host_port
 
 
@@ -43,7 +44,11 @@ def clone_mysql(cfg, source, destination, netcat_port=9990):
         if dst.list_files(datadir):
             LOG.error("Destination datadir is not empty: %s", datadir)
             exit(1)
-        dst.execute_command("service mysqld stop")
+        try:
+            dst.execute_command("service mysqld stop")
+        except SshClientException:
+            dst.execute_command("service mysql stop")
+
         proc_netcat = Process(
             target=dst.netcat,
             args=(
@@ -78,8 +83,11 @@ def clone_mysql(cfg, source, destination, netcat_port=9990):
         })
 
         dst_mysql.apply_backup(datadir)
-        dst.execute_command("service mysqld start")
-        dst_mysql.change_master_host(source)
+        try:
+            dst.execute_command("service mysqld start")
+        except SshClientException:
+            dst.execute_command("service mysql start")
+        dst_mysql.setup_slave(source)
 
     except (ConfigParser.NoOptionError, OperationalError) as err:
         LOG.error(err)
