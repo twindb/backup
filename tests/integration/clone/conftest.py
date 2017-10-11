@@ -49,11 +49,12 @@ def master1(docker_client, container_network):
 
     api = docker_client.api
 
+    api.pull(NODE_IMAGE)
     host_config = api.create_host_config()
 
     networking_config = api.create_networking_config({
         container_network: api.create_endpoint_config(
-            ipv4_address='172.25.0.1'
+            ipv4_address='172.25.3.1'
         )
     })
 
@@ -76,12 +77,13 @@ def master1(docker_client, container_network):
 def master2(docker_client, container_network):
 
     api = docker_client.api
+    api.pull(NODE_IMAGE)
 
     host_config = api.create_host_config()
 
     networking_config = api.create_networking_config({
         container_network: api.create_endpoint_config(
-            ipv4_address='172.25.0.2'
+            ipv4_address='172.25.3.2'
         )
     })
 
