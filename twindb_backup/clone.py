@@ -14,28 +14,6 @@ from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
 from twindb_backup.util import split_host_port
 
 
-def apply_backup(dst, datadir):
-    """
-    Apply backup of destination server
-
-    :param dst: Destination server
-    :param datadir: Path to datadir
-    :raise TwinDBBackupError: if binary positions is different
-    """
-    dst.execute_command('sudo innobackupex --apply-log %s' % datadir)
-    _, stdout_, _ = dst.execute_command(
-        'cat %s/xtrabackup_binlog_pos_innodb' % datadir
-    )
-    binlog_pos = stdout_.read().strip()
-    _, stdout_, _ = dst.execute_command(
-        'sudo cat %s/xtrabackup_binlog_info' % datadir
-    )
-    binlog_info = stdout_.read().strip()
-    if binlog_pos in binlog_info:
-        return
-    raise TwinDBBackupError("Invalid backup")
-
-
 def clone_mysql(cfg, source, destination, netcat_port=9990):
     """Clone mysql backup of remote machine and stream it to slave"""
     try:
@@ -84,9 +62,8 @@ def clone_mysql(cfg, source, destination, netcat_port=9990):
         )
         proc_netcat.join()
         src.clone_config(dst)
-        apply_backup(dst, datadir)
-        dst.execute_command("service mysqld start")
-        RemoteMySQLSource({
+
+        dst_mysql = RemoteMySQLSource({
             "ssh_connection_info": SshConnectInfo(
                 host=split_host_port(destination)[0],
                 user=cfg.get('ssh', 'ssh_user'),
@@ -98,7 +75,11 @@ def clone_mysql(cfg, source, destination, netcat_port=9990):
             ),
             "run_type": INTERVALS[0],
             "full_backup": INTERVALS[0],
-        }).change_master_host(source)
+        })
+
+        dst_mysql.apply_backup(datadir)
+        dst.execute_command("service mysqld start")
+        dst_mysql.change_master_host(source)
 
     except (ConfigParser.NoOptionError, OperationalError) as err:
         LOG.error(err)

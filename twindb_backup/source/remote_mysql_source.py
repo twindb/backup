@@ -11,6 +11,7 @@ import time
 import pymysql
 from twindb_backup import LOG, MY_CNF_COMMON_PATHS
 from twindb_backup.destination.exceptions import SshDestinationError
+from twindb_backup.source.exceptions import RemoteMySQLSourceError
 from twindb_backup.source.mysql_source import MySQLSource
 from twindb_backup.ssh.client import SshClient
 from twindb_backup.ssh.exceptions import SshClientException
@@ -128,3 +129,24 @@ class RemoteMySQLSource(MySQLSource):
         except pymysql.Error as err:
             LOG.debug(err)
             return False
+
+    def apply_backup(self, datadir):
+        """
+        Apply backup of destination server
+
+        :param datadir: Path to datadir
+        :raise TwinDBBackupError: if binary positions is different
+        """
+
+        self._ssh_client.execute('sudo innobackupex --apply-log %s' % datadir)
+        _, stdout_, _ = self._ssh_client.execute(
+            'cat %s/xtrabackup_binlog_pos_innodb' % datadir
+        )
+        binlog_pos = stdout_.read().strip()
+        _, stdout_, _ = self._ssh_client.execute(
+            'sudo cat %s/xtrabackup_binlog_info' % datadir
+        )
+        binlog_info = stdout_.read().strip()
+        if binlog_pos in binlog_info:
+            return
+        raise RemoteMySQLSourceError("Invalid backup")
