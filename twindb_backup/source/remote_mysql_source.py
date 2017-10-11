@@ -139,9 +139,13 @@ class RemoteMySQLSource(MySQLSource):
         :raise TwinDBBackupError: if binary positions is different
         """
         self._ssh_client.execute("chown -R mysql %s" % datadir)
-        _, stdout_, _ = self._ssh_client.execute("grep MemFree /proc/meminfo | awk '{print $2}' ")
+        _, stdout_, _ = self._ssh_client.execute(
+            "grep MemFree /proc/meminfo | awk '{print $2}' "
+        )
         free_mem = int(stdout_.read()) * 1024
-        self._ssh_client.execute('sudo innobackupex --apply-log %s --use-memory %d' % (datadir, free_mem))
+        self._ssh_client.execute(
+            'sudo innobackupex --apply-log %s --use-memory %d'
+            % (datadir, free_mem))
         _, stdout_, _ = self._ssh_client.execute(
             'cat %s/xtrabackup_binlog_pos_innodb' % datadir
         )
