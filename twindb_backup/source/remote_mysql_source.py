@@ -81,7 +81,7 @@ class RemoteMySQLSource(MySQLSource):
             elif '!include' in option:
                 self._save_cfg(dst, val.split()[1])
 
-        with dst.client.get_remote_handlers("sudo cat - > %s" % path) \
+        with dst.client.get_remote_handlers("cat - > %s" % path) \
                 as (cin, _, _):
             cfg.write(cin)
 
@@ -144,14 +144,14 @@ class RemoteMySQLSource(MySQLSource):
         )
         free_mem = int(stdout_.read()) * 1024
         self._ssh_client.execute(
-            'sudo innobackupex --apply-log %s --use-memory %d'
+            'innobackupex --apply-log %s --use-memory %d'
             % (datadir, free_mem))
         _, stdout_, _ = self._ssh_client.execute(
             'cat %s/xtrabackup_binlog_pos_innodb' % datadir
         )
         binlog_pos = stdout_.read().strip()
         _, stdout_, _ = self._ssh_client.execute(
-            'sudo cat %s/xtrabackup_binlog_info' % datadir
+            'cat %s/xtrabackup_binlog_info' % datadir
         )
         binlog_info = stdout_.read().strip()
         if binlog_pos in binlog_info:
