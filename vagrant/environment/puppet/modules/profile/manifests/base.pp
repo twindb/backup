@@ -98,5 +98,9 @@ password=qwerty
     require => Package['docker'],
   }
 
-
+  exec { 'net.ipv4.ip_forward':
+    path    => '/bin:/sbin',
+    command => '/sbin/sysctl net.ipv4.ip_forward=1',
+    unless  => 'sysctl net.ipv4.ip_forward | grep "net.ipv4.ip_forward = 1"'
+  }
 }

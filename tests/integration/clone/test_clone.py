@@ -1,2 +1,5 @@
+import time
+
+
 def test_clone(master1, master2):
-    pass
+    time.sleep(3600)

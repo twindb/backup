@@ -41,6 +41,15 @@ function install_puppet(){
 
 which puppet || install_puppet
 
+puppet_modules="
+tpdownes-sysctl
+"
+
+for p in ${puppet_modules}
+do
+    puppet module list | grep -w ${p} || puppet module install ${p}
+done
+
 SCRIPT
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
