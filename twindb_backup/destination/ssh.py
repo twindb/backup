@@ -199,7 +199,7 @@ class Ssh(BaseDestination):
         return self._ssh_client
 
     @property
-    def ip(self):
+    def host(self):
         """IP address of the destination."""
         return self._ssh_client.ssh_connect_info.host
 

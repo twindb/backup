@@ -36,7 +36,7 @@ def _mysql_service(dst, action):
                             % (action, dst))
 
 
-def clone_mysql(cfg, source, destination,
+def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
                 replication_user, replication_password,
                 netcat_port=9990):
     """Clone mysql backup of remote machine and stream it to slave"""

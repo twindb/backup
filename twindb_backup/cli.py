@@ -213,7 +213,7 @@ def clone(cfg):
               help='Replication MySQL password.',
               show_default=True)
 @PASS_CFG
-def clone_mysql_backup(cfg, netcat_port,
+def clone_mysql_backup(cfg, netcat_port,  # pylint: disable=too-many-arguments
                        replication_user,
                        replication_password,
                        destination, source):

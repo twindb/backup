@@ -68,8 +68,8 @@ class RemoteMySQLSource(MySQLSource):
     def _save_cfg(self, dst, path):
         """Save configs on destination recursively"""
         cfg = self._get_config(path)
-        server_id = struct.unpack("!I", socket.inet_aton(dst.ip))[0]
-        cfg.set('mysqld', 'server_id',  value=str(server_id))
+        server_id = struct.unpack("!I", socket.inet_aton(dst.host))[0]
+        cfg.set('mysqld', 'server_id', value=str(server_id))
         for option in cfg.options('mysqld'):
             val = cfg.get('mysqld', option)
             if '!includedir' in option:
@@ -117,7 +117,7 @@ class RemoteMySQLSource(MySQLSource):
             exit(1)
         return cfg
 
-    def setup_slave(self, host, user, password, binlog, binlog_position):
+    def setup_slave(self, host, user, password, binlog, binlog_position):  # noqa # pylint: disable=too-many-arguments
         """
         Change master
 
