@@ -5,7 +5,7 @@ import docker
 import pytest
 import time
 
-from docker.errors import APIError
+from docker.errors import APIError, DockerException
 from docker.types import IPAMConfig, IPAMPool
 
 from twindb_backup import LOG, setup_logging
@@ -18,7 +18,12 @@ setup_logging(LOG, debug=True)
 
 @pytest.fixture(scope='session')
 def docker_client():
-    return docker.DockerClient(version="auto")
+    for _ in xrange(5):
+        try:
+            return docker.DockerClient(version="auto")
+        except DockerException:
+            time.sleep(5)
+    raise DockerException('Failed to get a docker client')
 
 
 # noinspection PyShadowingNames
