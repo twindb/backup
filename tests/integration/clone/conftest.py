@@ -2,7 +2,6 @@ import os
 
 import docker
 import pytest
-import time
 
 from docker.errors import APIError
 from docker.types import IPAMConfig, IPAMPool
@@ -113,6 +112,7 @@ def _get_master(n, client, network):
         # command='bash /twindb-backup/support/clone/master%d.sh' % n
         command='/bin/sleep 36000'
     )
+    container['ip'] = ip
     LOG.info('Created container %r', container)
     try:
         api.start(container['Id'])

@@ -19,25 +19,18 @@ function start_sshd() {
     if ! test -f /etc/ssh/ssh_host_dsa_key; then
         /usr/bin/ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -P ""
     fi
-    # Run sshd in background
-    /usr/sbin/sshd
 
     mkdir -p /root/.ssh/
     /bin/chown 700 /root/.ssh/
     /bin/cp -f /twindb-backup/vagrant/environment/puppet/modules/profile/files/id_rsa.pub /root/.ssh/authorized_keys
     /bin/chown 600 /root/.ssh/authorized_keys
 
+    # Run sshd in foreground
+    /usr/sbin/sshd -D
+
+
 }
 
-
-function start_mysqld() {
-    /bin/cp -f /twindb-backup/vagrant/environment/puppet/modules/profile/files/my-master-legacy.cnf /etc/my.cnf
-
-    /usr/bin/mysql_install_db
-    /bin/chown -R mysql:mysql /var/lib/mysql
-
-    /usr/sbin/mysqld
-}
 
 rpm -q epel-release || install_package epel-release
 rpm -q percona-release || install_package http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm
@@ -50,5 +43,3 @@ install_package \
 
 
 start_sshd
-
-start_mysqld
