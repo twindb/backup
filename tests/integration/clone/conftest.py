@@ -1,7 +1,9 @@
 import os
+import socket
 
 import docker
 import pytest
+import time
 
 from docker.errors import APIError
 from docker.types import IPAMConfig, IPAMPool
@@ -25,6 +27,25 @@ def node_image(docker_client):
     docker_client.api.pull(NODE_IMAGE)
 
 
+def _ipam_config():
+    for octet in xrange(16, 31):
+        subnet = "172.%d.0.0/16" % octet
+        try:
+            ipam_pool = IPAMPool(
+                subnet=subnet
+            )
+            ipam_config = IPAMConfig(
+                pool_configs=[ipam_pool]
+            )
+            return ipam_config
+        except APIError as err:
+            if err.status_code == 409:
+                LOG.info('Subnet %s already exists', subnet)
+                continue
+            else:
+                raise
+
+
 # noinspection PyShadowingNames
 @pytest.yield_fixture(scope='session')
 def container_network(docker_client):
@@ -35,26 +56,12 @@ def container_network(docker_client):
         'subnet': None,
         'second_octet': None
     }
-    ipam_config = None
+    ipam_config = _ipam_config()
 
-    for octet in xrange(16, 31):
-        subnet = "172.%d.0.0/16" % octet
-        network_params['subnet'] = subnet
-        network_params['second_octet'] = octet
-        try:
-            ipam_pool = IPAMPool(
-                subnet=subnet
-            )
-            ipam_config = IPAMConfig(
-                pool_configs=[ipam_pool]
-            )
+    subnet = ipam_config['Config'][0]['Subnet']
+    network_params['subnet'] = subnet
+    network_params['second_octet'] = int(subnet.split('.')[1])
 
-        except APIError as err:
-            if err.status_code == 409:
-                LOG.warning('Subnet %s already exists', subnet)
-                continue
-            else:
-                raise
     try:
         network = api.create_network(
             name=NETWORK_NAME,
@@ -110,6 +117,7 @@ def _get_master(n, client, network):
         networking_config=networking_config,
         volumes=['/twindb-backup'],
         command='bash /twindb-backup/support/clone/master%d.sh' % n
+        # command='/bin/sleep 36000'
     )
     container['ip'] = ip
     LOG.info('Created container %r', container)
@@ -128,6 +136,21 @@ def _get_master(n, client, network):
 def master1(docker_client, container_network):
 
     container = _get_master(1, docker_client, container_network)
+
+    timeout = time.time() + 30 * 60
+
+    while time.time() < timeout:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if sock.connect_ex((container['ip'], 3306)) == 0:
+            break
+        time.sleep(1)
+
+    raw_container = docker_client.containers.get('master1')
+    privileges_file = "/twindb-backup/vagrant/environment/puppet/" \
+                      "modules/profile/files/mysql_grants.sql"
+    raw_container.exec_run('bash -c "mysql mysql < %s"'
+                           % privileges_file)
+
     yield container
     if container:
         LOG.info('Removing container %s', container['Id'])
@@ -140,6 +163,14 @@ def master1(docker_client, container_network):
 def master2(docker_client, container_network):
 
     container = _get_master(2, docker_client, container_network)
+
+    timeout = time.time() + 30 * 60
+    while time.time() < timeout:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if sock.connect_ex((container['ip'], 22)) == 0:
+            break
+        time.sleep(1)
+
     yield container
     if container:
         LOG.info('Removing container %s', container['Id'])

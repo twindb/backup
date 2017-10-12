@@ -23,9 +23,12 @@ function start_sshd() {
     /usr/sbin/sshd
 
     mkdir -p /root/.ssh/
-    /bin/chown 700 /root/.ssh/
+    /bin/chown root:root /root/.ssh
+    /bin/chmod 700 /root/.ssh/
+
     /bin/cp -f /twindb-backup/vagrant/environment/puppet/modules/profile/files/id_rsa.pub /root/.ssh/authorized_keys
-    /bin/chown 600 /root/.ssh/authorized_keys
+    /bin/chown root:root /root/.ssh/authorized_keys
+    /bin/chmod 600 /root/.ssh/authorized_keys
 
 }
 
@@ -46,7 +49,8 @@ install_package \
     Percona-Server-server-56 \
     Percona-Server-devel-56 \
     percona-xtrabackup-24 \
-    openssh-server
+    openssh-server \
+    nc
 
 
 start_sshd

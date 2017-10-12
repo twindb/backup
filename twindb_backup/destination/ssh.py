@@ -180,21 +180,28 @@ class Ssh(BaseDestination):
                 raise SshDestinationError('Unrecognized response: %s'
                                           % cout.read())
 
-    def execute_command(self, cmd):
+    def execute_command(self, cmd, quiet=False):
         """Execute ssh command
+
 
         :param cmd: Command for execution
         :type cmd: str
+        :param quiet: If True don't print errors
         :return: Handlers of stdin, stdout and stderr
         :rtype: tuple
         """
         LOG.debug('Executing: %s', cmd)
-        return self._ssh_client.execute(cmd)
+        return self._ssh_client.execute(cmd, quiet=quiet)
 
     @property
     def client(self):
         """Return client"""
         return self._ssh_client
+
+    @property
+    def ip(self):
+        """IP address of the destination."""
+        return self._ssh_client.ssh_connect_info.host
 
     def _mkdirname_r(self, remote_name):
         """Create directory for a given file on the destination.

@@ -11,3 +11,4 @@ unittest2
 moto
 pylint==1.6.5
 pep8
+docker

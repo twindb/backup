@@ -20,10 +20,13 @@ function start_sshd() {
         /usr/bin/ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -P ""
     fi
 
-    mkdir -p /root/.ssh/
-    /bin/chown 700 /root/.ssh/
+    /bin/mkdir /root/.ssh/
+    /bin/chown root:root /root/.ssh
+    /bin/chmod 700 /root/.ssh/
+
     /bin/cp -f /twindb-backup/vagrant/environment/puppet/modules/profile/files/id_rsa.pub /root/.ssh/authorized_keys
-    /bin/chown 600 /root/.ssh/authorized_keys
+    /bin/chown root:root /root/.ssh/authorized_keys
+    /bin/chmod 600 /root/.ssh/authorized_keys
 
     # Run sshd in foreground
     /usr/sbin/sshd -D
@@ -31,6 +34,9 @@ function start_sshd() {
 
 }
 
+function clean_datadir() {
+    /bin/rm -rf /var/lib/mysql/*
+}
 
 rpm -q epel-release || install_package epel-release
 rpm -q percona-release || install_package http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm
@@ -39,7 +45,8 @@ install_package \
     Percona-Server-server-56 \
     Percona-Server-devel-56 \
     percona-xtrabackup-24 \
-    openssh-server
+    openssh-server \
+    nc
 
-
+clean_datadir
 start_sshd

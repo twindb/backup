@@ -204,9 +204,19 @@ def clone(cfg):
 @click.argument('destination')
 @click.option('--netcat-port', default=9990,
               help='Use this TCP port for netcat file transfers between '
-                   'clone source and destination.')
+                   'clone source and destination.',
+              show_default=True)
+@click.option('--replication-user', default='repl',
+              help='Replication MySQL user.',
+              show_default=True)
+@click.option('--replication-password', default='slavepass',
+              help='Replication MySQL password.',
+              show_default=True)
 @PASS_CFG
-def clone_mysql_backup(cfg, netcat_port, destination, source):
+def clone_mysql_backup(cfg, netcat_port,
+                       replication_user,
+                       replication_password,
+                       destination, source):
     """
      Clone mysql backup on remote server and make it a slave.
      By default it will take a slave from a local MySQL on port 3306.
@@ -216,4 +226,6 @@ def clone_mysql_backup(cfg, netcat_port, destination, source):
 
      If port isn't specified 3306 will be assumed.
     """
-    clone_mysql(cfg, source, destination, netcat_port=netcat_port)
+    clone_mysql(cfg, source, destination,
+                replication_user, replication_password,
+                netcat_port=netcat_port)

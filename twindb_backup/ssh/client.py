@@ -43,11 +43,12 @@ class SshClient(object):
         finally:
             shell.close()
 
-    def execute(self, cmd):
+    def execute(self, cmd, quiet=False):
         """Execute a command on a remote SSH server.
 
         :param cmd: Command for execution.
         :type cmd: str
+        :param quiet: if quiet is True don't print error messages
         :return: Handlers of stdin, stdout and stderr
         :rtype: tuple
         :raise SshDestinationError: if any error
@@ -58,14 +59,16 @@ class SshClient(object):
                 stdin_, stdout_, stderr_ = shell.exec_command(cmd)
                 exit_code = stdout_.channel.recv_exit_status()
                 if exit_code != 0:
-                    LOG.error("Failed while execute command %s", cmd)
-                    LOG.error(stderr_.read())
+                    if not quiet:
+                        LOG.error("Failed while execute command %s", cmd)
+                        LOG.error(stderr_.read())
                     raise SshClientException('%s exited with code %d'
                                              % (cmd, exit_code))
                 return stdin_, stdout_, stderr_
 
         except SSHException as err:
-            LOG.error('Failed to execute %s', cmd)
+            if not quiet:
+                LOG.error('Failed to execute %s', cmd)
             raise SshClientException(err)
 
     @contextmanager

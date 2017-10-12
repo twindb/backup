@@ -15,7 +15,7 @@ backports.tempfile==1.0rc1  # via moto
 backports.weakref==1.0.post1  # via backports.tempfile
 boto3==1.4.7              # via moto
 boto==2.48.0              # via moto
-botocore==1.7.26          # via boto3, s3transfer
+botocore==1.7.27          # via boto3, s3transfer
 bumpversion==0.5.3
 certifi==2017.7.27.1      # via requests
 cffi==1.11.2              # via cryptography
@@ -24,9 +24,9 @@ codecov==2.0.9
 configparser==3.5.0       # via flake8, pylint
 cookies==2.2.1            # via moto
 coverage==4.4.1
-cryptography==2.0.3       # via moto
+cryptography==2.1.1       # via moto
 docker-pycreds==0.2.1     # via docker
-docker==2.5.1             # via moto
+docker==2.5.1
 docutils==0.14            # via botocore, sphinx
 enum34==1.1.6             # via cryptography, flake8
 flake8==3.4.1

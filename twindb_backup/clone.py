@@ -7,7 +7,7 @@ from multiprocessing import Process
 
 from pymysql import OperationalError
 
-from twindb_backup import INTERVALS, LOG
+from twindb_backup import INTERVALS, LOG, TwinDBBackupError
 from twindb_backup.destination.ssh import Ssh, SshConnectInfo
 from twindb_backup.source.mysql_source import MySQLConnectInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
@@ -15,7 +15,30 @@ from twindb_backup.ssh.exceptions import SshClientException
 from twindb_backup.util import split_host_port
 
 
-def clone_mysql(cfg, source, destination, netcat_port=9990):
+def _mysql_service(dst, action):
+    """Start or stop MySQL service
+
+    :param dst: Destination server
+    :type dst: Ssh
+    :param action: string start or stop
+    :type action: str
+    """
+    for service in ['mysqld', 'mysql']:
+        try:
+            return dst.execute_command(
+                "service %s %s" % (service, action),
+                quiet=True
+            )
+        except SshClientException:
+            pass
+
+    raise TwinDBBackupError('Failed to %s MySQL on %r'
+                            % (action, dst))
+
+
+def clone_mysql(cfg, source, destination,
+                replication_user, replication_password,
+                netcat_port=9990):
     """Clone mysql backup of remote machine and stream it to slave"""
     try:
         src = RemoteMySQLSource({
@@ -44,10 +67,12 @@ def clone_mysql(cfg, source, destination, netcat_port=9990):
         if dst.list_files(datadir):
             LOG.error("Destination datadir is not empty: %s", datadir)
             exit(1)
+
         try:
-            dst.execute_command("service mysqld stop")
-        except SshClientException:
-            dst.execute_command("service mysql stop")
+            _mysql_service(dst, action='stop')
+        except TwinDBBackupError as err:
+            LOG.error(err)
+            exit(1)
 
         proc_netcat = Process(
             target=dst.netcat,
@@ -82,12 +107,17 @@ def clone_mysql(cfg, source, destination, netcat_port=9990):
             "full_backup": INTERVALS[0],
         })
 
-        dst_mysql.apply_backup(datadir)
+        binlog, position = dst_mysql.apply_backup(datadir)
+
         try:
-            dst.execute_command("service mysqld start")
-        except SshClientException:
-            dst.execute_command("service mysql start")
-        dst_mysql.setup_slave(source)
+            _mysql_service(dst, action='start')
+        except TwinDBBackupError as err:
+            LOG.error(err)
+            exit(1)
+
+        dst_mysql.setup_slave(source,
+                              replication_user, replication_password,
+                              binlog, position)
 
     except (ConfigParser.NoOptionError, OperationalError) as err:
         LOG.error(err)

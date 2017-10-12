@@ -3,6 +3,8 @@
 Module defines MySQL source class for backing up remote MySQL.
 """
 import ConfigParser
+import socket
+import struct
 
 from contextlib import contextmanager
 
@@ -66,8 +68,8 @@ class RemoteMySQLSource(MySQLSource):
     def _save_cfg(self, dst, path):
         """Save configs on destination recursively"""
         cfg = self._get_config(path)
-        cfg.set('mysqld', 'server_id',
-                value=self._ssh_client.ssh_connect_info.host)
+        server_id = struct.unpack("!I", socket.inet_aton(dst.ip))[0]
+        cfg.set('mysqld', 'server_id',  value=str(server_id))
         for option in cfg.options('mysqld'):
             val = cfg.get('mysqld', option)
             if '!includedir' in option:
@@ -115,17 +117,34 @@ class RemoteMySQLSource(MySQLSource):
             exit(1)
         return cfg
 
-    def setup_slave(self, host):
+    def setup_slave(self, host, user, password, binlog, binlog_position):
         """
         Change master
-        :param host: Master hostame
+
+        :param host: Master host name.
         :type host: str
+        :param user: Replication user.
+        :param password: Replication password
+        :param binlog: Binlog file on the master
+        :param binlog_position: Binlog position
+
         """
         try:
-            with self.get_connection() as connection:
-                with connection.cursor() as cursor:
-                    cursor.execute("CHANGE MASTER TO MASTER_HOST='%s'" % host)
-                    cursor.execute("START SLAVE")
+            with self._cursor() as cursor:
+                query = "CHANGE MASTER TO " \
+                        "MASTER_HOST = '{master}', " \
+                        "MASTER_USER = '{user}', " \
+                        "MASTER_PASSWORD = '{password}', " \
+                        "MASTER_LOG_FILE = '{binlog}', " \
+                        "MASTER_LOG_POS = {binlog_pos}"\
+                    .format(
+                        master=host,
+                        user=user,
+                        password=password,
+                        binlog=binlog,
+                        binlog_pos=binlog_position)
+                cursor.execute(query)
+                cursor.execute("START SLAVE")
             return True
         except pymysql.Error as err:
             LOG.debug(err)
@@ -136,9 +155,11 @@ class RemoteMySQLSource(MySQLSource):
         Apply backup of destination server
 
         :param datadir: Path to datadir
+        :return: Binlog file name and position
+        :rtype: tuple
         :raise TwinDBBackupError: if binary positions is different
         """
-        self._ssh_client.execute("chown -R mysql %s" % datadir)
+
         _, stdout_, _ = self._ssh_client.execute(
             "grep MemAvailable /proc/meminfo | awk '{print $2}' "
         )
@@ -146,6 +167,9 @@ class RemoteMySQLSource(MySQLSource):
         self._ssh_client.execute(
             'innobackupex --apply-log %s --use-memory %d'
             % (datadir, free_mem))
+
+        self._ssh_client.execute("chown -R mysql %s" % datadir)
+
         _, stdout_, _ = self._ssh_client.execute(
             'cat %s/xtrabackup_binlog_pos_innodb' % datadir
         )
@@ -155,5 +179,5 @@ class RemoteMySQLSource(MySQLSource):
         )
         binlog_info = stdout_.read().strip()
         if binlog_pos in binlog_info:
-            return
+            return tuple(binlog_info.split())
         raise RemoteMySQLSourceError("Invalid backup")
