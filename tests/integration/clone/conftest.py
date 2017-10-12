@@ -109,8 +109,7 @@ def _get_master(n, client, network):
         host_config=host_config,
         networking_config=networking_config,
         volumes=['/twindb-backup'],
-        # command='bash /twindb-backup/support/clone/master%d.sh' % n
-        command='/bin/sleep 36000'
+        command='bash /twindb-backup/support/clone/master%d.sh' % n
     )
     container['ip'] = ip
     LOG.info('Created container %r', container)
@@ -146,3 +145,16 @@ def master2(docker_client, container_network):
         LOG.info('Removing container %s', container['Id'])
         docker_client.api.remove_container(container=container['Id'],
                                            force=True)
+
+
+@pytest.fixture
+def config_content_clone():
+    return """
+
+[ssh]
+ssh_user=root
+ssh_key={PRIVATE_KEY}
+
+[mysql]
+mysql_defaults_file={MY_CNF}
+"""
