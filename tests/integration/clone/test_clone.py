@@ -22,6 +22,8 @@ def test_clone(master1, master2, config_content_clone, tmpdir):
     result = runner.invoke(main,
                            ['--config', str(config), 'clone', 'mysql', master1['ip'], master2['ip']]
                            )
+    if result.exit_code != 0:
+        print(result.output)
     assert result.exit_code == 0
 
     sql_master_2 = RemoteMySQLSource({
