@@ -33,6 +33,8 @@ password=qwerty
     if result.exit_code != 0:
         print('Command output:')
         print(result.output)
+        print(result.exception)
+        print(result.exc_info)
     assert result.exit_code == 0
 
     sql_master_2 = RemoteMySQLSource({

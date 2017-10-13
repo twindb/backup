@@ -44,7 +44,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
         LOG.debug('Remote MySQL Source: %s', split_host_port(source)[0])
         LOG.debug('MySQL defaults: %s', cfg.get('mysql', 'mysql_defaults_file'))
         LOG.debug('SSH username: %s', cfg.get('ssh', 'ssh_user'))
-        LOG.debug('SSH key: %s', ('ssh', 'ssh_key'))
+        LOG.debug('SSH key: %s', cfg.get('ssh', 'ssh_key'))
         src = RemoteMySQLSource({
             "ssh_connection_info": SshConnectInfo(
                 host=split_host_port(source)[0],
@@ -60,7 +60,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
         })
         LOG.debug('SSH destination: %s', split_host_port(destination)[0])
         LOG.debug('SSH username: %s', cfg.get('ssh', 'ssh_user'))
-        LOG.debug('SSH key: %s', ('ssh', 'ssh_key'))
+        LOG.debug('SSH key: %s', cfg.get('ssh', 'ssh_key'))
         dst = Ssh(
             ssh_connect_info=SshConnectInfo(
                 host=split_host_port(destination)[0],
@@ -110,7 +110,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
         LOG.debug('MySQL defaults: %s',
                   cfg.get('mysql', 'mysql_defaults_file'))
         LOG.debug('SSH username: %s', cfg.get('ssh', 'ssh_user'))
-        LOG.debug('SSH key: %s', ('ssh', 'ssh_key'))
+        LOG.debug('SSH key: %s', cfg.get('ssh', 'ssh_key'))
 
         dst_mysql = RemoteMySQLSource({
             "ssh_connection_info": SshConnectInfo(
