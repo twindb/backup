@@ -41,8 +41,10 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
                 netcat_port=9990):
     """Clone mysql backup of remote machine and stream it to slave"""
     try:
-        LOG.debug('Remote MySQL Source')
+        LOG.debug('Remote MySQL Source: %s', split_host_port(source)[0])
         LOG.debug('MySQL defaults: %s', cfg.get('mysql', 'mysql_defaults_file'))
+        LOG.debug('SSH username: %s', cfg.get('ssh', 'ssh_user'))
+        LOG.debug('SSH key: %s', ('ssh', 'ssh_key'))
         src = RemoteMySQLSource({
             "ssh_connection_info": SshConnectInfo(
                 host=split_host_port(source)[0],
@@ -56,6 +58,9 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
             "run_type": INTERVALS[0],
             "full_backup": INTERVALS[0],
         })
+        LOG.debug('SSH destination: %s', split_host_port(destination)[0])
+        LOG.debug('SSH username: %s', cfg.get('ssh', 'ssh_user'))
+        LOG.debug('SSH key: %s', ('ssh', 'ssh_key'))
         dst = Ssh(
             ssh_connect_info=SshConnectInfo(
                 host=split_host_port(destination)[0],
@@ -66,11 +71,14 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
 
         datadir = src.datadir
 
+        LOG.debug('datadir: %s', datadir)
+
         if dst.list_files(datadir):
             LOG.error("Destination datadir is not empty: %s", datadir)
             exit(1)
 
         try:
+            LOG.debug('Stopping MySQL on the destination')
             _mysql_service(dst, action='stop')
         except TwinDBBackupError as err:
             LOG.error(err)
@@ -88,12 +96,21 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
             }
         )
         proc_netcat.start()
+        LOG.debug('Starting netcat on the destination')
         src.clone(
             dest_host=split_host_port(destination)[0],
             port=netcat_port
         )
         proc_netcat.join()
+        LOG.debug('Copying MySQL config to the destination')
         src.clone_config(dst)
+
+        LOG.debug('Remote MySQL destination: %s',
+                  split_host_port(destination)[0])
+        LOG.debug('MySQL defaults: %s',
+                  cfg.get('mysql', 'mysql_defaults_file'))
+        LOG.debug('SSH username: %s', cfg.get('ssh', 'ssh_user'))
+        LOG.debug('SSH key: %s', ('ssh', 'ssh_key'))
 
         dst_mysql = RemoteMySQLSource({
             "ssh_connection_info": SshConnectInfo(
@@ -111,12 +128,19 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
 
         binlog, position = dst_mysql.apply_backup(datadir)
 
+        LOG.debug('Binlog coordinates: (%s, %d)', binlog, position)
+
         try:
+            LOG.debug('Starting MySQL on the destination')
             _mysql_service(dst, action='start')
         except TwinDBBackupError as err:
             LOG.error(err)
             exit(1)
 
+        LOG.debug('Setting up replication.')
+        LOG.debug('Master host: %s', source)
+        LOG.debug('Replication user: %s', replication_user)
+        LOG.debug('Replication password: %s', replication_password)
         dst_mysql.setup_slave(source,
                               replication_user, replication_password,
                               binlog, position)
