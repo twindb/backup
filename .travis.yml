@@ -18,7 +18,9 @@ before_install:
   - sudo docker pull ${DOCKER_IMAGE}
 
 script:
-  - make bootstrap test-integration-clone docker-test
+  - sudo make bootstrap
+  - make test-integration-clone
+  - make docker-test
 
 before_deploy:
   - travis_wait 30 make package
