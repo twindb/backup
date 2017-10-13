@@ -1,5 +1,6 @@
 import os
 import socket
+import subprocess
 
 import docker
 import pytest
@@ -23,6 +24,8 @@ def docker_client():
             return docker.DockerClient(version="auto")
         except DockerException as err:
             LOG.error(err)
+            subprocess.call(['docker', 'info'])
+            subprocess.call(['docker', 'version'])
             time.sleep(5)
     raise DockerException('Failed to get a docker client')
 
