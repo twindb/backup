@@ -11,10 +11,16 @@ from twindb_backup.util import split_host_port
 
 def test_clone(master1, master2, config_content_clone, tmpdir):
 
+    my_cnf = tmpdir.join('.my.cnf')
+    my_cnf.write("""
+[client]
+user=dba
+password=qwerty
+""")
     config = tmpdir.join('twindb-backup.cfg')
     content = config_content_clone.format(
         PRIVATE_KEY="/twindb_backup/vagrant/environment/puppet/modules/profile/files/id_rsa",
-        MY_CNF="/root/.my.cnf"
+        MY_CNF=str(my_cnf)
     )
 
     config.write(content)
@@ -25,6 +31,7 @@ def test_clone(master1, master2, config_content_clone, tmpdir):
                             'clone', 'mysql', master1['ip'], master2['ip']]
                            )
     if result.exit_code != 0:
+        print('Command output:')
         print(result.output)
     assert result.exit_code == 0
 
