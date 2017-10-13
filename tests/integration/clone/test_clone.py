@@ -74,18 +74,16 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
             key=str(id_rsa)
         ),
         "mysql_connect_info": MySQLConnectInfo(
-            "/root/.my.cnf",
+            str(my_cnf),
             hostname=master2['ip']
         ),
         "run_type": INTERVALS[0],
         "full_backup": INTERVALS[0],
     })
 
-    ssh_master_2 = Ssh(
-        ssh_connect_info=SshConnectInfo(
-            host=split_host_port(master2['ip'])[0],
-            user='root',
-            key=str(id_rsa)
-        ),
-    )
-    assert ssh_master_2.list_files(sql_master_2.datadir)
+    with sql_master_2.get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute('SHOW SLAVE STATUS')
+            row = cursor.fetchone()
+            assert row['Slave_IO_Running'] == 'Yes'
+            assert row['Slave_SQL_Running'] == 'Yes'
