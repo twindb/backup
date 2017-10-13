@@ -13,7 +13,8 @@ class Cache(object):
     """Class implements local cache to save full backup copies"""
     def __init__(self, path):
         """Init Cache object with cache storage in local path.
-        The cache is a directory on a local file system e.g. ``/var/tmp/cache``.
+        The cache is a directory on a local file system e.g.
+        ``/var/tmp/cache``.
         Each item is a sub directory in the cache::
 
             /var/tmp/cache/mysql-2017-05-12_03_47_21.xbstream.gz/
@@ -31,6 +32,7 @@ class Cache(object):
         return item in os.listdir(self.path)
 
     def add(self, path, key=None):
+        # pylint: disable=line-too-long
         """Add directory to cache.
         The directory may be a full or relative path with backup copy.
         The directory name must match with a file name of the backup copy.
@@ -40,7 +42,8 @@ class Cache(object):
         ``/var/tmp/mysql-2017-05-13_22_04_06.xbstream.gz/``.
 
         Let's say we want to add
-        ``/var/tmp/mysql-2017-05-13_22_04_06.xbstream.gz/`` to the cache in ``/var/tmp/cache``.
+        ``/var/tmp/mysql-2017-05-13_22_04_06.xbstream.gz/`` to the cache in
+        ``/var/tmp/cache``.
         Then this method will create directory
         ``/var/tmp/cache/mysql-2017-05-13_22_04_06.xbstream.gz/``.
 

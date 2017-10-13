@@ -11,29 +11,28 @@ from contextlib import contextmanager
 from subprocess import Popen, PIPE
 
 import pymysql
-
-from twindb_backup import LOG, get_files_to_delete, INTERVALS
+from twindb_backup import LOG, get_files_to_delete, INTERVALS, \
+    MY_CNF_COMMON_PATHS
 from twindb_backup.source.base_source import BaseSource
-
-
-class MySQLSourceError(Exception):
-    """Errors during backups"""
+from twindb_backup.source.exceptions import MySQLSourceError
 
 
 class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
     """MySQL connection details """
     def __init__(self, defaults_file,
                  connect_timeout=10,
-                 cursor=pymysql.cursors.DictCursor):
+                 cursor=pymysql.cursors.DictCursor,
+                 hostname="127.0.0.1"):
 
         self.cursor = cursor
         self.connect_timeout = connect_timeout
         self.defaults_file = defaults_file
+        self.hostname = hostname
 
 
 class MySQLSource(BaseSource):
     """MySQLSource class"""
-    def __init__(self, mysql_connect_info, run_type, full_backup, dst):
+    def __init__(self, mysql_connect_info, run_type, full_backup, dst=None):
         """
         MySQLSource constructor
 
@@ -74,7 +73,6 @@ class MySQLSource(BaseSource):
         self._media_type = 'mysql'
         self.full_backup = full_backup
         self.dst = dst
-
         super(MySQLSource, self).__init__(run_type)
 
     @property
@@ -107,12 +105,10 @@ class MySQLSource(BaseSource):
             "--defaults-file=%s" % self._connect_info.defaults_file,
             "--stream=xbstream",
             "--host=127.0.0.1"
-            ]
-
+        ]
         if self.is_galera():
             cmd.append("--galera-info")
             cmd.append("--no-backup-locks")
-
         if self.full:
             cmd.append(".")
         else:
@@ -121,16 +117,16 @@ class MySQLSource(BaseSource):
                 ".",
                 "--incremental-lsn=%d" % self.parent_lsn
             ]
-
         # If this is a Galera node then additional step needs to be taken to
         # prevent the backups from locking up the cluster.
         wsrep_desynced = False
+        LOG.debug('Running %s', ' '.join(cmd))
+        stderr_file = tempfile.NamedTemporaryFile(delete=False)
         try:
             if self.is_galera():
                 wsrep_desynced = self.enable_wsrep_desync()
 
             LOG.debug('Running %s', ' '.join(cmd))
-            stderr_file = tempfile.NamedTemporaryFile(delete=False)
             proc_innobackupex = Popen(cmd,
                                       stderr=stderr_file,
                                       stdout=PIPE)
@@ -145,18 +141,31 @@ class MySQLSource(BaseSource):
                 exit(1)
             else:
                 LOG.debug('Successfully streamed innobackupex output')
-            LOG.debug('innobackupex error log file %s', stderr_file.name)
-            self._backup_info.lsn = self.get_lsn(stderr_file.name)
-            self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
-                stderr_file.name
-            )
-            os.unlink(stderr_file.name)
+            self._update_backup_info(stderr_file)
         except OSError as err:
             LOG.error('Failed to run %s: %s', cmd, err)
             exit(1)
         finally:
             if wsrep_desynced:
                 self.disable_wsrep_desync()
+
+    def _handle_failure_exec(self, err, stderr_file):
+        """Cleanup on failure exec"""
+        LOG.error(err)
+        LOG.error('Failed to run innobackupex. '
+                  'Check error output in %s', stderr_file.name)
+        self.dst.delete(self.get_name())
+        exit(1)
+
+    def _update_backup_info(self, stderr_file):
+        """Update backup_info from stderr"""
+
+        LOG.debug('innobackupex error log file %s', stderr_file.name)
+        self._backup_info.lsn = self._get_lsn(stderr_file.name)
+        self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
+            stderr_file.name
+        )
+        os.unlink(stderr_file.name)
 
     def get_name(self):
         """
@@ -221,7 +230,7 @@ class MySQLSource(BaseSource):
         return None, None
 
     @staticmethod
-    def get_lsn(err_log_path):
+    def _get_lsn(err_log_path):
         """Find LSN up to which the backup is taken
 
         :param err_log_path: path to Innobackupex error log
@@ -317,7 +326,7 @@ class MySQLSource(BaseSource):
     def _full_copy_exists(self):
         full_backup_index = self._intervals.index(self.full_backup)
         for i in xrange(full_backup_index, len(self._intervals)):
-            if len(self.dst.status()[self._intervals[i]]) > 0:
+            if self.dst.status()[self._intervals[i]]:
                 return True
 
         return False
@@ -391,11 +400,7 @@ class MySQLSource(BaseSource):
         :return: File name and content of MySQL config file.
         :rtype: tuple
         """
-        mysql_configs = [
-            '/etc/my.cnf',
-            '/etc/mysql/my.cnf'
-        ]
-        for cnf_parg in mysql_configs:
+        for cnf_parg in MY_CNF_COMMON_PATHS:
             try:
                 with open(cnf_parg) as my_cnf:
                     yield cnf_parg, my_cnf.read()
@@ -410,12 +415,11 @@ class MySQLSource(BaseSource):
         :return: Galera version
         :rtype: str
         """
-        with self.get_connection() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute("SHOW STATUS LIKE 'wsrep_provider_version'")
+        with self._cursor() as cursor:
+            cursor.execute("SHOW STATUS LIKE 'wsrep_provider_version'")
 
-                res = {row['Variable_name'].lower(): row['Value'].lower()
-                       for row in cursor.fetchall()}
+            res = {row['Variable_name'].lower(): row['Value'].lower()
+                   for row in cursor.fetchall()}
 
         if res.get('wsrep_provider_version'):
             return res['wsrep_provider_version'].split('(')[0]
@@ -438,15 +442,15 @@ class MySQLSource(BaseSource):
         :rtype: bool
         """
         try:
-            with self.get_connection() as connection:
-                with connection.cursor() as cursor:
-                    cursor.execute("SELECT @@wsrep_on as wsrep_on")
-                    row = cursor.fetchone()
+            with self._cursor() as cursor:
+                cursor.execute("SELECT @@wsrep_on as wsrep_on")
+                row = cursor.fetchone()
 
-                    return (str(row['wsrep_on']).lower() == "1" or
-                            row['wsrep_on'].lower() == 'on')
+                return (str(row['wsrep_on']).lower() == "1" or
+                        row['wsrep_on'].lower() == 'on')
         except pymysql.InternalError as err:
-            error_code, error_message = err.args
+            error_code = err.args[0]
+            error_message = err.args[1]
 
             if error_code == 1193:
                 LOG.debug('Galera is not supported or not enabled')
@@ -454,6 +458,14 @@ class MySQLSource(BaseSource):
             else:
                 LOG.error(error_message)
                 raise
+
+    @property
+    def datadir(self):
+        """Return datadir path on MySQL server"""
+        with self._cursor() as cursor:
+            cursor.execute("SELECT @@datadir AS datadir")
+            row = cursor.fetchone()
+            return row['datadir']
 
     @contextmanager
     def get_connection(self):
@@ -465,7 +477,7 @@ class MySQLSource(BaseSource):
         connection = None
         try:
             connection = pymysql.connect(
-                host='127.0.0.1',
+                host=self._connect_info.hostname,
                 read_default_file=self._connect_info.defaults_file,
                 connect_timeout=self._connect_info.connect_timeout,
                 cursorclass=self._connect_info.cursor
@@ -476,3 +488,9 @@ class MySQLSource(BaseSource):
         finally:
             if connection:
                 connection.close()
+
+    @contextmanager
+    def _cursor(self):
+        with self.get_connection() as connection:
+            with connection.cursor() as cursor:
+                yield cursor

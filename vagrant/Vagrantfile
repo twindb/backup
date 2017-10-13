@@ -24,6 +24,8 @@ fi
 
 function install_package() {
 
+    yum clean all
+
     for i in 1 2 3
     do
         yum -y install $1 && break

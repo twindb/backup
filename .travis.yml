@@ -18,6 +18,8 @@ before_install:
   - sudo docker pull ${DOCKER_IMAGE}
 
 script:
+  - sudo make bootstrap
+  - make test-integration-clone
   - make docker-test
 
 before_deploy:

@@ -9,14 +9,9 @@ from twindb_backup.modifiers.base import Modifier
 
 
 class Gzip(Modifier):
-    """Modifier that compresses the stream"""
-    def __init__(self, input_stream):
-        """
-        Modifier that compresses the input_stream with gzip.
-
-        :param input_stream: Input stream. Must be file object
-        """
-        super(Gzip, self).__init__(input_stream)
+    """
+    Modifier that compresses the input_stream with gzip.
+    """
 
     @contextmanager
     def get_stream(self):
@@ -33,7 +28,6 @@ class Gzip(Modifier):
             yield proc.stdout
             proc.communicate()
 
-#    @contextmanager
     def revert_stream(self):
         """
         Decompress the input stream and return it as the output stream

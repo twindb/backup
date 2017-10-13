@@ -5,7 +5,7 @@ from twindb_backup.destination.ssh import Ssh
 
 
 # noinspection PyUnresolvedReferences
-@mock.patch.object(Ssh, '_execute_command')
+@mock.patch.object(Ssh, 'execute_command')
 @mock.patch.object(Ssh, '_mkdirname_r')
 def test_save(mock_mkdirname_r, mock_execute):
 
