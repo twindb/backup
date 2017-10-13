@@ -21,7 +21,8 @@ def docker_client():
     for _ in xrange(5):
         try:
             return docker.DockerClient(version="auto")
-        except DockerException:
+        except DockerException as err:
+            LOG.error(err)
             time.sleep(5)
     raise DockerException('Failed to get a docker client')
 
