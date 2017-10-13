@@ -24,8 +24,8 @@ def docker_client():
             return docker.DockerClient(version="auto")
         except DockerException as err:
             LOG.error(err)
-            subprocess.call(['docker', 'info'])
-            subprocess.call(['docker', 'version'])
+            subprocess.call(['/usr/bin/docker', 'info'], shell=True)
+            subprocess.call(['/usr/bin/docker', 'version'], shell=True)
             time.sleep(5)
     raise DockerException('Failed to get a docker client')
 
