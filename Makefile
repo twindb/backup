@@ -104,6 +104,15 @@ test: ## run tests quickly with the default Python
 test-integration: ## run integration tests
 	py.test -xsv tests/integration
 
+
+test-integration-backup: ## run backup integration tests
+	py.test -xsv tests/integration/backup
+
+
+test-integration-clone: ## run clone integration tests
+	py.test -xsv tests/integration/clone
+
+
 test-all: ## run tests on every Python version with tox
 	tox
 
