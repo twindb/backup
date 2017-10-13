@@ -42,7 +42,8 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
     """Clone mysql backup of remote machine and stream it to slave"""
     try:
         LOG.debug('Remote MySQL Source: %s', split_host_port(source)[0])
-        LOG.debug('MySQL defaults: %s', cfg.get('mysql', 'mysql_defaults_file'))
+        LOG.debug('MySQL defaults: %s',
+                  cfg.get('mysql', 'mysql_defaults_file'))
         LOG.debug('SSH username: %s', cfg.get('ssh', 'ssh_user'))
         LOG.debug('SSH key: %s', cfg.get('ssh', 'ssh_key'))
         src = RemoteMySQLSource({
