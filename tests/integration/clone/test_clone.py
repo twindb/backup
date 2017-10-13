@@ -20,7 +20,9 @@ def test_clone(master1, master2, config_content_clone, tmpdir):
     config.write(content)
     runner = CliRunner()
     result = runner.invoke(main,
-                           ['--config', str(config), 'clone', 'mysql', master1['ip'], master2['ip']]
+                           ['--config', str(config),
+                            '--debug',
+                            'clone', 'mysql', master1['ip'], master2['ip']]
                            )
     if result.exit_code != 0:
         print(result.output)
