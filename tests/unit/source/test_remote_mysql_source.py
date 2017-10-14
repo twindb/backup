@@ -45,3 +45,37 @@ def test__clone_config(mock_get_root, mock_save):
     rmt_sql.clone_config(dst)
     mock_get_root.assert_called_with()
     mock_save.assert_called_with(dst, "/etc/my.cnf")
+
+
+def test__apply_backup_mem_available_raise_error():
+    mock_stdout = mock.Mock()
+    mock_stdout.read.return_value = ""
+
+    mock_client = mock.Mock()
+    rmt_sql = RemoteMySQLSource({
+        "run_type": INTERVALS[0],
+        "full_backup": INTERVALS[0],
+        "mysql_connect_info": MySQLConnectInfo("/"),
+        "ssh_connection_info": None
+    })
+    rmt_sql._ssh_client = mock_client
+    mock_client.execute.return_value = (None, mock_stdout, None)
+    with pytest.raises(OSError):
+        rmt_sql.apply_backup("/foo")
+
+
+def test__apply_backup_mem_available():
+    mock_stdout = mock.Mock()
+    mock_stdout.read.return_value = "100500"
+
+    mock_client = mock.Mock()
+    rmt_sql = RemoteMySQLSource({
+        "run_type": INTERVALS[0],
+        "full_backup": INTERVALS[0],
+        "mysql_connect_info": MySQLConnectInfo("/"),
+        "ssh_connection_info": None
+    })
+    rmt_sql._ssh_client = mock_client
+    mock_client.execute.return_value = (None, mock_stdout, None)
+    rmt_sql.apply_backup("/foo")
+

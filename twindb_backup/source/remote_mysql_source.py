@@ -163,7 +163,10 @@ class RemoteMySQLSource(MySQLSource):
         _, stdout_, _ = self._ssh_client.execute(
             "grep MemAvailable /proc/meminfo | awk '{print $2}' "
         )
-        free_mem = int(stdout_.read()) * 1024
+        mem = stdout_.read().strip()
+        if not mem:
+            raise OSError("Cant get available mem")
+        free_mem = int(mem) * 1024
         self._ssh_client.execute(
             'innobackupex --apply-log %s --use-memory %d'
             % (datadir, free_mem))
