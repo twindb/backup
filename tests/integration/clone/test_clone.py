@@ -1,7 +1,7 @@
 import time
 from click.testing import CliRunner
 
-from twindb_backup import INTERVALS
+from twindb_backup import INTERVALS, LOG
 from twindb_backup.cli import main
 from twindb_backup.destination.ssh import SshConnectInfo, Ssh
 from twindb_backup.source.mysql_source import MySQLConnectInfo
@@ -81,9 +81,14 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
         "full_backup": INTERVALS[0],
     })
 
-    with sql_master_2.get_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute('SHOW SLAVE STATUS')
-            row = cursor.fetchone()
-            assert row['Slave_IO_Running'] == 'Yes'
-            assert row['Slave_SQL_Running'] == 'Yes'
+    timeout = time.time() + 30
+    while time.time() < timeout:
+        with sql_master_2.get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute('SHOW SLAVE STATUS')
+                row = cursor.fetchone()
+                if row['Slave_IO_Running'] == 'Yes' and row['Slave_SQL_Running'] == 'Yes':
+                    LOG.info('Relication is up and running')
+                    return
+    LOG.error('Replication is not running after 30 seconds timeout')
+    assert 0
