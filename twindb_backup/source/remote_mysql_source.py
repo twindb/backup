@@ -199,7 +199,7 @@ class RemoteMySQLSource(MySQLSource):
             raise OSError("Cant get available mem")
         free_mem = int(mem) * 1024
         return free_mem
-      
+
     @staticmethod
     def _get_server_id(host):
         """Determinate server id"""
