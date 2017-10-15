@@ -182,11 +182,12 @@ class RemoteMySQLSource(MySQLSource):
             return tuple(binlog_info.split())
         raise RemoteMySQLSourceError("Invalid backup")
 
-    def _get_server_id(self, host):
+    @staticmethod
+    def _get_server_id(host):
         """Determinate server id"""
         try:
             server_id = struct.unpack("!I", socket.inet_aton(host))[0]
         except socket.error:
-            ip = socket.gethostbyname(host)
-            server_id = struct.unpack("!I", socket.inet_aton(ip))[0]
+            server_ip = socket.gethostbyname(host)
+            server_id = struct.unpack("!I", socket.inet_aton(server_ip))[0]
         return server_id
