@@ -68,7 +68,7 @@ class RemoteMySQLSource(MySQLSource):
     def _save_cfg(self, dst, path):
         """Save configs on destination recursively"""
         cfg = self._get_config(path)
-        server_id = struct.unpack("!I", socket.inet_aton(dst.host))[0]
+        server_id = self._get_server_id(dst.host)
         cfg.set('mysqld', 'server_id', value=str(server_id))
         for option in cfg.options('mysqld'):
             val = cfg.get('mysqld', option)
@@ -181,3 +181,13 @@ class RemoteMySQLSource(MySQLSource):
         if binlog_pos in binlog_info:
             return tuple(binlog_info.split())
         raise RemoteMySQLSourceError("Invalid backup")
+
+    @staticmethod
+    def _get_server_id(host):
+        """Determinate server id"""
+        try:
+            server_id = struct.unpack("!I", socket.inet_aton(host))[0]
+        except socket.error:
+            server_ip = socket.gethostbyname(host)
+            server_id = struct.unpack("!I", socket.inet_aton(server_ip))[0]
+        return server_id
