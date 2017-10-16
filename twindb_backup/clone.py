@@ -26,7 +26,7 @@ def _mysql_service(dst, action):
     for service in ['mysqld', 'mysql']:
         try:
             return dst.execute_command(
-                "service %s %s" % (service, action),
+                "sudo service %s %s" % (service, action),
                 quiet=True
             )
         except SshClientException:
