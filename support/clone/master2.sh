@@ -46,7 +46,8 @@ install_package \
     Percona-Server-devel-56 \
     percona-xtrabackup-24 \
     openssh-server \
-    nc
+    nc \
+    sudo
 
 clean_datadir
 start_sshd
