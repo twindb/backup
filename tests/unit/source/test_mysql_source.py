@@ -451,7 +451,34 @@ def test__disable_wsrep_desync_sets_wsrep_desync_to_off(mock_connect):
 
 
 @mock.patch.object(MySQLSource, 'get_connection')
-def test__is_galera_returns_true_on_galera_node(mock_connect):
+def test__is_galera_returns_false_on_int_wsrep_on(mock_connect):
+    logging.basicConfig()
+
+    mock_cursor = mock.MagicMock()
+    mock_cursor.fetchone.return_value = {'wsrep_on': 0}
+
+    mock_connect.return_value.__enter__.return_value. \
+        cursor.return_value.__enter__.return_value = mock_cursor
+
+    source = MySQLSource(MySQLConnectInfo(None), 'daily', 'daily', None)
+    assert source.is_galera() is False
+
+
+@mock.patch.object(MySQLSource, 'get_connection')
+def test__is_galera_returns_true_on_int_wsrep_on(mock_connect):
+    logging.basicConfig()
+
+    mock_cursor = mock.MagicMock()
+    mock_cursor.fetchone.return_value = {'wsrep_on': 1}
+
+    mock_connect.return_value.__enter__.return_value. \
+        cursor.return_value.__enter__.return_value = mock_cursor
+
+    source = MySQLSource(MySQLConnectInfo(None), 'daily', 'daily', None)
+    assert source.is_galera() is True
+
+@mock.patch.object(MySQLSource, 'get_connection')
+def test__is_galera_returns_true_on_str_higher_wsrep_on(mock_connect):
     logging.basicConfig()
 
     mock_cursor = mock.MagicMock()
@@ -460,9 +487,21 @@ def test__is_galera_returns_true_on_galera_node(mock_connect):
     mock_connect.return_value.__enter__.return_value. \
         cursor.return_value.__enter__.return_value = mock_cursor
 
-    source = MySQLSource(None, None, None, None)
-    assert source.is_galera()
+    source = MySQLSource(MySQLConnectInfo(None), 'daily', 'daily', None)
+    assert source.is_galera() is True
 
+@mock.patch.object(MySQLSource, 'get_connection')
+def test__is_galera_returns_false_on_str_higher_wsrep_on(mock_connect):
+    logging.basicConfig()
+
+    mock_cursor = mock.MagicMock()
+    mock_cursor.fetchone.return_value = {'wsrep_on': 'OFF'}
+
+    mock_connect.return_value.__enter__.return_value. \
+        cursor.return_value.__enter__.return_value = mock_cursor
+
+    source = MySQLSource(MySQLConnectInfo(None), 'daily', 'daily', None)
+    assert source.is_galera() is False
 
 @mock.patch.object(MySQLSource, 'get_connection')
 def test__is_galera_returns_true_on_galera_node(mock_connect):
