@@ -160,13 +160,15 @@ class RemoteMySQLSource(MySQLSource):
         :raise TwinDBBackupError: if binary positions is different
         """
 
-        _, stdout_, _ = self._ssh_client.execute(
-            "grep MemAvailable /proc/meminfo | awk '{print $2}' "
-        )
-        free_mem = int(stdout_.read()) * 1024
-        self._ssh_client.execute(
-            'innobackupex --apply-log %s --use-memory %d'
-            % (datadir, free_mem))
+        try:
+            self._ssh_client.execute(
+                'innobackupex --apply-log %s --use-memory %d'
+                % (datadir, self._mem_available() / 2)
+            )
+        except OSError:
+            self._ssh_client.execute(
+                'innobackupex --apply-log %s' % datadir
+            )
 
         self._ssh_client.execute("sudo chown -R mysql %s" % datadir)
 
@@ -181,6 +183,31 @@ class RemoteMySQLSource(MySQLSource):
         if binlog_pos in binlog_info:
             return tuple(binlog_info.split())
         raise RemoteMySQLSourceError("Invalid backup")
+
+    def _mem_available(self):
+        """
+        Get available memory size
+
+        :return: Size of available memory in bytes
+        :raise OSError: if can' detect memory
+        """
+        # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=34e431b0a
+        _, stdout_, _ = self._ssh_client.execute(
+            "awk -v low=$(grep low /proc/zoneinfo | "
+            "awk '{k+=$2}END{print k}') "
+            "'{a[$1]=$2}END{m="
+            "a[\"MemFree:\"]"
+            "+a[\"Active(file):\"]"
+            "+a[\"Inactiv‌​e(file):\"]"
+            "+a[\"SRecla‌​imable:\"]; "
+            "print a[\"MemAvailable:\"]}' "
+            "/proc/meminfo"
+        )
+        mem = stdout_.read().strip()
+        if not mem:
+            raise OSError("Cant get available mem")
+        free_mem = int(mem) * 1024
+        return free_mem
 
     @staticmethod
     def _get_server_id(host):
