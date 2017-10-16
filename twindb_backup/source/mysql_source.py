@@ -447,7 +447,7 @@ class MySQLSource(BaseSource):
                 row = cursor.fetchone()
 
                 return (str(row['wsrep_on']).lower() == "1" or
-                        row['wsrep_on'].lower() == 'on')
+                        str(row['wsrep_on']).lower() == 'on')
         except pymysql.InternalError as err:
             error_code = err.args[0]
             error_message = err.args[1]
