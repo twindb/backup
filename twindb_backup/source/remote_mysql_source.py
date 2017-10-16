@@ -163,7 +163,7 @@ class RemoteMySQLSource(MySQLSource):
         try:
             self._ssh_client.execute(
                 'innobackupex --apply-log %s --use-memory %d'
-                % (datadir, self._mem_available() / 2 )
+                % (datadir, self._mem_available() / 2)
             )
         except OSError:
             self._ssh_client.execute(
