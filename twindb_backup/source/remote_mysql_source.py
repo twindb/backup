@@ -168,7 +168,7 @@ class RemoteMySQLSource(MySQLSource):
             'innobackupex --apply-log %s --use-memory %d'
             % (datadir, free_mem))
 
-        self._ssh_client.execute("chown -R mysql %s" % datadir)
+        self._ssh_client.execute("sudo chown -R mysql %s" % datadir)
 
         _, stdout_, _ = self._ssh_client.execute(
             'cat %s/xtrabackup_binlog_pos_innodb' % datadir
