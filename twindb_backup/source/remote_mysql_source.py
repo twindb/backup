@@ -163,7 +163,7 @@ class RemoteMySQLSource(MySQLSource):
         try:
             self._ssh_client.execute(
                 'innobackupex --apply-log %s --use-memory %d'
-                % (datadir, self._mem_available())
+                % (datadir, self._mem_available() / 2 )
             )
         except OSError:
             self._ssh_client.execute(
@@ -188,7 +188,7 @@ class RemoteMySQLSource(MySQLSource):
         """
         Get available memory size
 
-        :return: Size of available memory
+        :return: Size of available memory in bytes
         :raise OSError: if can' detect memory
         """
         # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=34e431b0a
@@ -206,7 +206,7 @@ class RemoteMySQLSource(MySQLSource):
         mem = stdout_.read().strip()
         if not mem:
             raise OSError("Cant get available mem")
-        free_mem = (int(mem) * 1024) / 2
+        free_mem = int(mem) * 1024
         return free_mem
 
     @staticmethod
