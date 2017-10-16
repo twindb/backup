@@ -191,13 +191,22 @@ class RemoteMySQLSource(MySQLSource):
         :return: Size of available memory
         :raise OSError: if can' detect memory
         """
+        # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=34e431b0a
         _, stdout_, _ = self._ssh_client.execute(
-            "grep MemAvailable /proc/meminfo | awk '{print $2}' "
+            "awk -v low=$(grep low /proc/zoneinfo | "
+            "awk '{k+=$2}END{print k}') "
+            "'{a[$1]=$2}END{m="
+            "a[\"MemFree:\"]"
+            "+a[\"Active(file):\"]"
+            "+a[\"Inactiv‌​e(file):\"]"
+            "+a[\"SRecla‌​imable:\"]; "
+            "print a[\"MemAvailable:\"]}' "
+            "/proc/meminfo"
         )
         mem = stdout_.read().strip()
         if not mem:
             raise OSError("Cant get available mem")
-        free_mem = int(mem) * 1024
+        free_mem = (int(mem) * 1024) / 2
         return free_mem
 
     @staticmethod
