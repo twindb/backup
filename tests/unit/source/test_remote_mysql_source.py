@@ -19,7 +19,7 @@ from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
      4)
 ])
 def test__clone(dest, port):
-    arg = 'bash -c "innobackupex --stream=xbstream ./ | gzip -c - | nc %s %d"' % (dest, port)
+    arg = 'bash -c "sudo innobackupex --stream=xbstream ./ | gzip -c - | nc %s %d"' % (dest, port)
     mock_client = mock.Mock()
     rmt_sql = RemoteMySQLSource({
         "run_type": INTERVALS[0],
