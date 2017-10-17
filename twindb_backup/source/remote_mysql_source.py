@@ -42,7 +42,7 @@ class RemoteMySQLSource(MySQLSource):
         """
         retry = 1
         retry_time = 2
-        cmd = "bash -c \"innobackupex --stream=xbstream ./ " \
+        cmd = "bash -c \" sudo innobackupex --stream=xbstream ./ " \
               "| gzip -c - " \
               "| nc %s %d\"" \
               % (dest_host, port)
@@ -162,22 +162,22 @@ class RemoteMySQLSource(MySQLSource):
 
         try:
             self._ssh_client.execute(
-                'innobackupex --apply-log %s --use-memory %d'
+                'sudo innobackupex --apply-log %s --use-memory %d'
                 % (datadir, self._mem_available() / 2)
             )
         except OSError:
             self._ssh_client.execute(
-                'innobackupex --apply-log %s' % datadir
+                'sudo innobackupex --apply-log %s' % datadir
             )
 
         self._ssh_client.execute("sudo chown -R mysql %s" % datadir)
 
         _, stdout_, _ = self._ssh_client.execute(
-            'cat %s/xtrabackup_binlog_pos_innodb' % datadir
+            'sudo cat %s/xtrabackup_binlog_pos_innodb' % datadir
         )
         binlog_pos = stdout_.read().strip()
         _, stdout_, _ = self._ssh_client.execute(
-            'cat %s/xtrabackup_binlog_info' % datadir
+            'sudo cat %s/xtrabackup_binlog_info' % datadir
         )
         binlog_info = stdout_.read().strip()
         if binlog_pos in binlog_info:
