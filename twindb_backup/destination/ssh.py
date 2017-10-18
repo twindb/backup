@@ -11,6 +11,7 @@ from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.ssh.client import SshClient
+from twindb_backup.ssh.exceptions import SshClientException
 
 
 class SshConnectInfo(object):  # pylint: disable=too-few-public-methods
@@ -54,8 +55,15 @@ class Ssh(BaseDestination):
         """
         remote_name = self.remote_path + '/' + name
         self._mkdirname_r(remote_name)
-        cmd = 'cat - > ' + remote_name
-        self.execute_command(cmd)
+
+        try:
+            with self._ssh_client.get_remote_handlers(
+                    "cat - > %s" % remote_name) as (cin, _, _):
+                with handler as file:
+                    cin.write(file.read())
+            return True
+        except SshClientException:
+            return False
 
     def _mkdir_r(self, path):
         """
@@ -171,14 +179,15 @@ class Ssh(BaseDestination):
               "then echo exists; " \
               "else echo not_exists; " \
               "fi'" % self.status_path
-        with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
-            if cout.read().strip() == 'exists':
-                return True
-            elif cout.read().strip() == 'not_exists':
-                return False
-            else:
-                raise SshDestinationError('Unrecognized response: %s'
-                                          % cout.read())
+        _, cout, _ = self._ssh_client.execute(cmd)
+        status = cout.read()
+        if status.strip() == 'exists':
+            return True
+        elif status.strip() == 'not_exists':
+            return False
+        else:
+            raise SshDestinationError('Unrecognized response: %s'
+                                      % cout.read())
 
     def execute_command(self, cmd, quiet=False):
         """Execute ssh command
