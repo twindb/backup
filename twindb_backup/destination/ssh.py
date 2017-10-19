@@ -59,7 +59,7 @@ class Ssh(BaseDestination):
         try:
             cmd = "cat - > %s" % remote_name
             with self._ssh_client.get_remote_handlers(cmd) \
-                as (cin, _, _):
+                    as (cin, _, _):
                 with handler as file_obj:
                     cin.write(file_obj.read())
             return True
