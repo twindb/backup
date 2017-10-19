@@ -57,9 +57,9 @@ class Ssh(BaseDestination):
         self._mkdirname_r(remote_name)
 
         try:
-            with self._ssh_client.get_remote_handlers(
-                    "cat - > %s" % remote_name
-            ) as (cin, _, _):
+            cmd = "cat - > %s" % remote_name
+            with self._ssh_client.get_remote_handlers(cmd) \
+                as (cin, _, _):
                 with handler as file_obj:
                     cin.write(file_obj.read())
             return True
