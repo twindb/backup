@@ -27,15 +27,15 @@ from twindb_backup.ssh.client import SshClient
         False
     )
 ])
-@mock.patch.object(SshClient, "get_remote_handlers")
+@mock.patch.object(SshClient, "execute")
 def test__status_exists(mock_client, out, result):
     mock_stdout = mock.Mock()
     mock_stdout.read.return_value = out
-    mock_client.return_value.__enter__.return_value = iter(
+    mock_client.return_value = iter(
         (
-            None,
+            mock.Mock(),
             mock_stdout,
-            None
+            mock.Mock()
         )
     )
     dst = Ssh(remote_path='/foo/bar')
@@ -44,18 +44,17 @@ def test__status_exists(mock_client, out, result):
 
 
 # noinspection PyUnresolvedReferences
-@mock.patch.object(SshClient, "get_remote_handlers")
+@mock.patch.object(SshClient, "execute")
 def test__status_exists_raises_error(mock_run):
     mock_stdout = mock.Mock()
     mock_stdout.channel.recv_exit_status.return_value = 0
     mock_stdout.read.return_value = 'foo'
-    mock_stderr = mock.Mock()
 
-    mock_run.return_value.__enter__.return_value = iter(
+    mock_run.return_value = iter(
         (
             mock.Mock(),
             mock_stdout,
-            mock_stderr
+            mock.Mock()
         )
     )
 
