@@ -117,7 +117,7 @@ class Ssh(BaseDestination):
         )
 
         with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
-                return sorted(cout.read().split())
+            return sorted(cout.read().split())
 
     def delete(self, obj):
         """
