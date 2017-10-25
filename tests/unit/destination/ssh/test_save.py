@@ -28,7 +28,7 @@ def test_save(mock_mkdirname_r, mock_execute):
     mock_execute.assert_called_once_with('cat - > /path/to/backups/aaa/bbb/ccc/bar')
     mock_cin.write.assert_called_once()
     mock_handler.read_assert_called_once()
-    mock_mkdirname_r.asset_called_once_with('/path/to/backups/aaa/bbb/ccc/bar')
+    mock_mkdirname_r.assert_called_once_with('/path/to/backups/aaa/bbb/ccc/bar')
 
 
 # noinspection PyUnresolvedReferences
@@ -41,4 +41,4 @@ def test_save_exception_return_false(mock_mkdirname_r, mock_execute):
     dst = Ssh(remote_path='/path/to/backups')
     mock_execute.side_effect = SshClientException
     assert not dst.save(mock.MagicMock(), 'aaa/bbb/ccc/bar')
-    mock_mkdirname_r.asset_callend_once_with('/path/to/backups/aaa/bbb/ccc/bar')
+    mock_mkdirname_r.assert_called_once_with('/path/to/backups/aaa/bbb/ccc/bar')
