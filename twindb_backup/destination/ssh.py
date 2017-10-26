@@ -149,11 +149,9 @@ class Ssh(BaseDestination):
         :type status: str
         """
         raw_status = base64.b64encode(json.dumps(status))
-        cmd = "echo {raw_status} > {status_file}".format(
-            raw_status=raw_status,
-            status_file=self.status_path
-        )
-        self.execute_command(cmd)
+        cmd = "cat - > %s" % self.status_path
+        with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
+            cin.write(raw_status)
 
     def _read_status(self):
         """
