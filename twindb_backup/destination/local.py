@@ -55,14 +55,14 @@ class Local(BaseDestination):
         cmd = ls_cmd
 
         with run_command(cmd) as cout:
-            return sorted(cout.split())
+            return sorted(str(cout).split())
 
     def find_files(self, prefix, run_type):
 
         cmd = ["find", "%s*" % prefix, "-type", "f"]
 
         with run_command(cmd) as cout:
-            return sorted(cout.split())
+            return sorted(str(cout).split())
 
     def delete(self, obj):
         cmd = ["rm", obj]
@@ -97,6 +97,3 @@ class Local(BaseDestination):
 
     def _status_exists(self):
         return os.path.exists(self.status_path)
-
-    def share(self, url):
-        super(Local, self).share(url)

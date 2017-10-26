@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Module to process confiuration file.
+Module to process configuration file.
 """
 import ConfigParser
 import socket

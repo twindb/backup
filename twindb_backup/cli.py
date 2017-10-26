@@ -10,6 +10,7 @@ import click
 from twindb_backup import setup_logging, LOG, __version__, TwinDBBackupError
 from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
+from twindb_backup.clone import clone_mysql
 from twindb_backup.configuration import get_destination
 from twindb_backup.ls import list_available_backups
 from twindb_backup.restore import restore_from_mysql, restore_from_file
@@ -185,8 +186,46 @@ def verify_mysql(cfg, hostname, dst, backup_copy):
     LOG.debug('mysql: %r', cfg)
 
     if not backup_copy:
-        LOG.info('No backup copy specified. Choose one from below:')
         list_available_backups(cfg)
         exit(1)
 
     print(verify_mysql_backup(cfg, dst, backup_copy, hostname))
+
+
+@main.group('clone')
+@PASS_CFG
+def clone(cfg):
+    """Clone backup on remote server"""
+    LOG.debug('Clone: %r', cfg)
+
+
+@clone.command('mysql')
+@click.argument('source', default='localhost:3306')
+@click.argument('destination')
+@click.option('--netcat-port', default=9990,
+              help='Use this TCP port for netcat file transfers between '
+                   'clone source and destination.',
+              show_default=True)
+@click.option('--replication-user', default='repl',
+              help='Replication MySQL user.',
+              show_default=True)
+@click.option('--replication-password', default='slavepass',
+              help='Replication MySQL password.',
+              show_default=True)
+@PASS_CFG
+def clone_mysql_backup(cfg, netcat_port,  # pylint: disable=too-many-arguments
+                       replication_user,
+                       replication_password,
+                       destination, source):
+    """
+     Clone mysql backup on remote server and make it a slave.
+     By default it will take a slave from a local MySQL on port 3306.
+
+     Source and destinations are strings hostname:port.
+     E.g. 10.10.10.10:3306.
+
+     If port isn't specified 3306 will be assumed.
+    """
+    clone_mysql(cfg, source, destination,
+                replication_user, replication_password,
+                netcat_port=netcat_port)

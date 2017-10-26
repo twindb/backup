@@ -56,14 +56,14 @@ upgrade-requirements: ## Upgrade requirements
 	pip-compile --upgrade --verbose --no-index --output-file requirements_dev.txt requirements_dev.in
 
 .PHONY: bootstrap
-bootstrap: ## bootstrap the development environment
-	pip install -U "setuptools==32.3.1"
-	pip install -U "pip==9.0.1"
+bootstrap: clean ## bootstrap the development environment
+	pip install -U "setuptools>=32.3.1"
+	pip install -U "pip>=9.0.1"
 	pip install -U "pip-tools>=1.6.0"
 	pip-sync requirements.txt requirements_dev.txt
 	pip install --editable .
 
-clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
+clean: clean-build clean-pyc clean-test clean-docs ## remove all build, test, coverage and Python artifacts
 
 clean-build: ## remove build artifacts
 	rm -fr build/
@@ -88,21 +88,30 @@ clean-test: ## remove test and coverage artifacts
 clean-docker:
 	@sudo docker rm twindb-backup-build-${PLATFORM}
 
-lint: test-deps ## check style with flake8
+
+clean-docs:
+	rm -rf docs/_build
+
+lint: ## check style with pylint
 	pylint twindb_backup
+	pep8 twindb_backup
 
-test-deps:
-	pip install --upgrade -r requirements.txt
-	pip install --upgrade -r requirements_dev.txt
-	pip install -U setuptools
 
-test: clean bootstrap ## run tests quickly with the default Python
+test: ## run tests quickly with the default Python
 	pytest -xv --cov-report term-missing --cov=./twindb_backup tests/unit
 	codecov
 
-test-integration: test-deps ## run integration tests
-	pip show twindb-backup || pip install -e .
+test-integration: ## run integration tests
 	py.test -xsv tests/integration
+
+
+test-integration-backup: ## run backup integration tests
+	py.test -xsv tests/integration/backup
+
+
+test-integration-clone: ## run clone integration tests
+	py.test -xsv tests/integration/clone
+
 
 test-all: ## run tests on every Python version with tox
 	tox

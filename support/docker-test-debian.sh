@@ -12,6 +12,7 @@ apt-get install -qq \
   make \
   libpython2.7-dev \
   python-setuptools \
+  libffi-dev \
   git \
   gcc
 
@@ -36,4 +37,4 @@ while [ ${timeout} -gt 0 ] ; do mysqladmin ping && break; sleep 1; timeout=$((${
 cd /twindb-backup
 pip install --editable .
 
-make lint test test-integration
+make bootstrap lint test test-integration-backup

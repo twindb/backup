@@ -111,3 +111,27 @@ def run_command(command, ok_non_zero=False):
                   ' '.join(command))
         LOG.error(err)
         exit(1)
+
+
+def split_host_port(host_port):
+    """
+    Splits a string of host and port separated by a semicolon.
+
+    :param host_port: host or host:port. Allowed values are like
+        10.20.31.1:3306 or just 10.20.31.1
+    :return: a tuple with host and port. If only address is specified it'll
+        return (address, None). If host_port is None it will
+        return (None, None)
+    :rtype: tuple
+    """
+    try:
+        host = host_port.split(':')[0]
+        if not host:
+            host = None
+    except AttributeError:
+        host = None
+    try:
+        port = int(host_port.split(':')[1])
+    except (IndexError, AttributeError, ValueError):
+        port = None
+    return host, port

@@ -41,12 +41,17 @@ import sys
 
 __author__ = 'TwinDB Development Team'
 __email__ = 'dev@twindb.com'
-__version__ = '2.14.1'
+__version__ = '2.14.2'
 LOCK_FILE = '/var/run/twindb-backup.lock'
 LOG_FILE = '/var/log/twindb-backup-measures.log'
 INTERVALS = ['hourly', 'daily', 'weekly', 'monthly', 'yearly']
+MY_CNF_COMMON_PATHS = [
+    '/etc/my.cnf',
+    '/etc/mysql/my.cnf'
+]
 
 LOG = logging.getLogger(__name__)
+
 
 class TwinDBBackupError(Exception):
     """Class for script errors"""

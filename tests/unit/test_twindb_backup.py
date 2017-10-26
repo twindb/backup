@@ -266,7 +266,8 @@ xtrabackup: Transaction log of lsn (19747438) to (19747446) was copied.
 def test_get_lsn(error_log, lsn, tmpdir):
     err_log = tmpdir.join('err.log')
     err_log.write(error_log)
-    assert MySQLSource.get_lsn(str(err_log)) == lsn
+    # noinspection PyProtectedMember
+    assert MySQLSource._get_lsn(str(err_log)) == lsn
 
 @pytest.mark.parametrize('data', [
     (

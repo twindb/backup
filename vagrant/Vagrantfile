@@ -2,12 +2,12 @@
 # vi: set ft=ruby :
 nodes = [
     { :hostname   => 'master1',
-      :ip         => '192.168.35.250',
+      :ip         => '192.168.36.250',
       :box        => 'bento/centos-7.3',
       :ram        => 3072
     },
     { :hostname   => 'master2',
-      :ip         => '192.168.35.250',
+      :ip         => '192.168.36.251',
       :box        => 'bento/centos-7.3',
       :ram        => 3072
     }
@@ -18,7 +18,13 @@ VAGRANTFILE_API_VERSION = '2'
 
 $script = <<SCRIPT
 
+if [[ $(cat /sys/class/net/enp0s8/operstate) != 'up' ]]; then
+    service network restart
+fi
+
 function install_package() {
+
+    yum clean all
 
     for i in 1 2 3
     do

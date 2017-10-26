@@ -15,7 +15,7 @@ import psutil
 
 from twindb_backup import LOG, INTERVALS
 from twindb_backup.configuration import get_destination
-from twindb_backup.destination.base_destination import DestinationError
+from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
@@ -97,8 +97,8 @@ def restore_from_mysql_full(stream, dst_dir, config,
     :type config: ConfigParser.ConfigParser
     :param redo_only: True if the function has to do final apply of
         the redo log. For example, if you restore backup from a full copy
-        it should be False. If you restore from incremental copy and you restore
-        base full copy redo_only should be True.
+        it should be False. If you restore from incremental copy and
+        you restore base full copy redo_only should be True.
     :type redo_only: bool
     :return: If success, return True
     :rtype: bool
@@ -298,7 +298,8 @@ def update_grastate(dst_dir, status, key):
                      version, uuid, seqno)
 
 
-def restore_from_mysql(config, backup_copy, dst_dir, cache=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+# pylint: disable=too-many-locals,too-many-branches,too-many-statements
+def restore_from_mysql(config, backup_copy, dst_dir, cache=None):
     """
     Restore MySQL datadir in a given directory
 
