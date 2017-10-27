@@ -73,12 +73,14 @@ dependency 'pip'
 # Debian
 if debian?
   dependency 'libyaml'
+  dependency 'libffi-dev'
   runtime_dependency 'openssh-client'
   runtime_dependency 'cron'
 end
 
 # RHEL/CentOS
 if redhat?
+  dependency 'libffi'
   runtime_dependency 'openssh-clients'
   runtime_dependency 'initscripts'
   runtime_dependency 'cronie'
