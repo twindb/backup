@@ -16,14 +16,14 @@
 #
 
 name "pip"
-default_version "8.1.2"
+default_version "9.0.1"
 
 skip_transitive_dependency_licensing true
 
 dependency "setuptools"
 
 source :url => "https://github.com/pypa/pip/archive/#{version}.tar.gz",
-       :sha256 => "8dae1fb72e29c2b6ff6ed267861179216bf98d3bda6d30e527dbed0db5ac7e1d",
+       :sha256 => "d03fabbc4fbf2fbfc2f97307960aef2b3ca4c880ecda993dcc35957e33d7cd76",
        :extract => :seven_zip
 
 relative_path "pip-#{version}"
