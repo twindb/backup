@@ -32,8 +32,9 @@ def export_backup_info(cfg, run_type, src_name, status):
     :param src_name: Source name
     :param status: Status
     """
-    backup_duration = status[run_type][src_name]['backup_started'] - \
-                      status[run_type][src_name]['backup_finished']
+    backup_duration = \
+        status[run_type][src_name]['backup_finished'] - \
+        status[run_type][src_name]['backup_started']
     try:
         transport = get_export_transport(cfg)
         if transport:

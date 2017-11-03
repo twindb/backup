@@ -73,13 +73,14 @@ def get_export_transport(config):
     Read config and return export transport instance
 
     :param config: Config file
-    :return: Instance of export transport if set
+    :return: Instance of export transport, if it set
+    :raise: NotImplementedError, if transport isn't implemented
     """
     try:
         transport = config.get("export", "transport")
         if transport == "datadog":
             app_key = config.get("export", "app_key")
-            api_key = config.get("export", "app_key")
+            api_key = config.get("export", "api_key")
             return DataDogExporter(app_key, api_key)
         raise NotImplementedError
     except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
