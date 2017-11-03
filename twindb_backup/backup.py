@@ -14,13 +14,32 @@ from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
     TwinDBBackupError, save_measures)
-from twindb_backup.configuration import get_destination
+from twindb_backup.configuration import get_destination, get_export_transport
 from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.file_source import FileSource
 from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
+
+
+def export_backup_info(cfg, run_type, src_name, status):
+    """
+    Export data to service
+
+    :param cfg: Config file
+    :param run_type: Run type
+    :param src_name: Source name
+    :param status: Status
+    """
+    backup_duration = status[run_type][src_name]['backup_started'] - \
+                      status[run_type][src_name]['backup_finished']
+    try:
+        transport = get_export_transport(cfg)
+        if transport:
+            transport.export(data=backup_duration)
+    except NotImplementedError:
+        pass
 
 
 def backup_files(run_type, config):
@@ -142,9 +161,8 @@ def backup_mysql(run_type, config):
         LOG.error('Failed to save backup copy %s', src_name)
         exit(1)
     status = prepare_status(dst, src, run_type, src_name, backup_start)
-
     src.apply_retention_policy(dst, config, run_type, status)
-
+    export_backup_info(config, run_type, src_name, status)
     dst.status(status)
 
     LOG.debug('Callbacks are %r', callbacks)
