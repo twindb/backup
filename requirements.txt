@@ -7,15 +7,19 @@
 asn1crypto==0.23.0        # via cryptography
 bcrypt==3.1.4             # via paramiko
 boto3==1.4.7
-botocore==1.7.27          # via boto3, s3transfer
+botocore==1.7.38          # via boto3, s3transfer
+certifi==2017.7.27.1      # via requests
 cffi==1.11.2              # via bcrypt, cryptography, pynacl
+chardet==3.0.4            # via requests
 click==6.7
 contextlib2==0.5.5
-cryptography==2.1.1       # via paramiko
+cryptography==2.1.3       # via paramiko
+datadog==0.16.0
+decorator==4.1.2          # via datadog
 docutils==0.14            # via botocore
 enum34==1.1.6             # via cryptography
 futures==3.1.1            # via s3transfer
-idna==2.6                 # via cryptography
+idna==2.6                 # via cryptography, requests
 ipaddress==1.0.18         # via cryptography
 jmespath==0.9.3           # via boto3, botocore
 paramiko==2.3.1
@@ -23,7 +27,10 @@ psutil==5.4.0
 pyasn1==0.3.7
 pycparser==2.18           # via cffi
 pymysql==0.7.11
-pynacl==1.1.2             # via paramiko
+pynacl==1.2.0             # via paramiko
 python-dateutil==2.6.1    # via botocore
+requests==2.18.4          # via datadog
 s3transfer==0.1.11        # via boto3
+simplejson==3.11.1        # via datadog
 six==1.11.0               # via bcrypt, cryptography, pynacl, python-dateutil
+urllib3==1.22             # via requests

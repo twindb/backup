@@ -5,3 +5,4 @@ psutil
 contextlib2
 pyasn1
 paramiko
+datadog
