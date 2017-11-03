@@ -2,7 +2,7 @@
 Module defines DataDog exporter class.
 """
 from twindb_backup.exporter.base_exporter import BaseExporter
-from datadog import api, initialize
+from datadog import initialize
 
 
 class DataDogExporter(BaseExporter):
