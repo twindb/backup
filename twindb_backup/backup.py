@@ -14,33 +14,15 @@ from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
     TwinDBBackupError, save_measures)
-from twindb_backup.configuration import get_destination, get_export_transport
+from twindb_backup.configuration import get_destination
+from twindb_backup.export import export_info
+from twindb_backup.exporter.base_exporter import ExportCategory, MeasureType
 from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.file_source import FileSource
 from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
-
-
-def export_backup_info(cfg, run_type, src_name, status):
-    """
-    Export data to service
-
-    :param cfg: Config file
-    :param run_type: Run type
-    :param src_name: Source name
-    :param status: Status
-    """
-    backup_duration = \
-        status[run_type][src_name]['backup_finished'] - \
-        status[run_type][src_name]['backup_started']
-    try:
-        transport = get_export_transport(cfg)
-        if transport:
-            transport.export(data=backup_duration)
-    except NotImplementedError:
-        pass
 
 
 def backup_files(run_type, config):
@@ -53,9 +35,9 @@ def backup_files(run_type, config):
     """
     for directory in get_directories_to_backup(config):
         LOG.debug('copying %s', directory)
+        backup_start = time.time()
         src = FileSource(directory, run_type)
         dst = get_destination(config)
-
         stream = src.get_stream()
 
         # Gzip modifier
@@ -87,7 +69,9 @@ def backup_files(run_type, config):
             LOG.warning('Will skip encryption')
 
         dst.save(stream, src.get_name())
-
+        export_info(config, data=time.time() - backup_start,
+                    category=ExportCategory.files,
+                    measure_type=MeasureType.backup)
         src.apply_retention_policy(dst, config, run_type)
 
 
@@ -163,7 +147,12 @@ def backup_mysql(run_type, config):
         exit(1)
     status = prepare_status(dst, src, run_type, src_name, backup_start)
     src.apply_retention_policy(dst, config, run_type, status)
-    export_backup_info(config, run_type, src_name, status)
+    backup_duration = \
+        status[run_type][src_name]['backup_finished'] - \
+        status[run_type][src_name]['backup_started']
+    export_info(config, data=backup_duration,
+                category=ExportCategory.mysql,
+                measure_type=MeasureType.backup)
     dst.status(status)
 
     LOG.debug('Callbacks are %r', callbacks)
