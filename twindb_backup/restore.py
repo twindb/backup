@@ -10,9 +10,9 @@ from subprocess import Popen, PIPE
 import os
 import tempfile
 import errno
+import time
 
 import psutil
-import time
 
 from twindb_backup import LOG, INTERVALS
 from twindb_backup.configuration import get_destination

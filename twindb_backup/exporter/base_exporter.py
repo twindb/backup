@@ -5,12 +5,14 @@ Module defines base exporter class.
 from abc import abstractmethod
 
 
-class ExportCategory(object):
+class ExportCategory(object):  # pylint: disable=too-few-public-methods
+    """Category of export data: files or mysql"""
     files = 0
     mysql = 1
 
 
-class MeasureType(object):
+class MeasureType(object):  # pylint: disable=too-few-public-methods
+    """Type of measure time: backup or restore"""
     backup = 0
     restore = 1
 
