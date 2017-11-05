@@ -19,7 +19,7 @@ from twindb_backup.configuration import get_destination
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
 from twindb_backup.export import export_info
-from twindb_backup.exporter.base_exporter import ExportCategory, MeasureType
+from twindb_backup.exporter.base_exporter import ExportCategory, ExportMeasureType
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, \
@@ -388,7 +388,7 @@ def restore_from_mysql(config, backup_copy, dst_dir, cache=None):
     update_grastate(dst_dir, status, key)
     export_info(config, data=time.time() - restore_start,
                 category=ExportCategory.mysql,
-                measure_type=MeasureType.restore)
+                measure_type=ExportMeasureType.restore)
     LOG.info('Successfully restored %s in %s.', backup_copy, dst_dir)
     LOG.info('Now copy content of %s to MySQL datadir: '
              'cp -R %s/* /var/lib/mysql/', dst_dir, dst_dir)
@@ -453,4 +453,4 @@ def restore_from_file(config, backup_copy, dst_dir):
             exit(1)
     export_info(config, data=time.time() - restore_start,
                 category=ExportCategory.files,
-                measure_type=MeasureType.restore)
+                measure_type=ExportMeasureType.restore)

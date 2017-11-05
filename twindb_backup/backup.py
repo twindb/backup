@@ -16,7 +16,7 @@ from twindb_backup import (
     TwinDBBackupError, save_measures)
 from twindb_backup.configuration import get_destination
 from twindb_backup.export import export_info
-from twindb_backup.exporter.base_exporter import ExportCategory, MeasureType
+from twindb_backup.exporter.base_exporter import ExportCategory, ExportMeasureType
 from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
@@ -71,7 +71,7 @@ def backup_files(run_type, config):
         dst.save(stream, src.get_name())
         export_info(config, data=time.time() - backup_start,
                     category=ExportCategory.files,
-                    measure_type=MeasureType.backup)
+                    measure_type=ExportMeasureType.backup)
         src.apply_retention_policy(dst, config, run_type)
 
 
@@ -152,7 +152,7 @@ def backup_mysql(run_type, config):
         status[run_type][src_name]['backup_started']
     export_info(config, data=backup_duration,
                 category=ExportCategory.mysql,
-                measure_type=MeasureType.backup)
+                measure_type=ExportMeasureType.backup)
     dst.status(status)
 
     LOG.debug('Callbacks are %r', callbacks)

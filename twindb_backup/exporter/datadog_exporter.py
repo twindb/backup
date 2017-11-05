@@ -6,7 +6,7 @@ Module defines DataDog exporter class.
 from datadog import initialize, statsd
 
 from twindb_backup.exporter.base_exporter import BaseExporter, \
-    ExportCategory, MeasureType
+    ExportCategory, ExportMeasureType
 from twindb_backup.exporter.exceptions import DataDogExporterError
 
 
@@ -37,7 +37,7 @@ class DataDogExporter(BaseExporter):  # pylint: disable=too-few-public-methods
                 metric_name += "files."
             else:
                 metric_name += "mysql."
-            if measure_type == MeasureType.backup:
+            if measure_type == ExportMeasureType.backup:
                 metric_name += "backup_time"
             else:
                 metric_name += "restore_time"

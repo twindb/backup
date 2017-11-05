@@ -1,7 +1,7 @@
 import mock
 import pytest
 
-from twindb_backup.exporter.base_exporter import ExportCategory, MeasureType
+from twindb_backup.exporter.base_exporter import ExportCategory, ExportMeasureType
 from twindb_backup.exporter.datadog_exporter import DataDogExporter
 from twindb_backup.exporter.exceptions import DataDogExporterError
 
@@ -14,10 +14,10 @@ def test__datadog_exporter_constructor(mock_initialize):
 
 
 @pytest.mark.parametrize('category, measure_type, metric_name', [
-    (ExportCategory.mysql, MeasureType.restore, "twindb.mysql.restore_time"),
-    (ExportCategory.files, MeasureType.restore, "twindb.files.restore_time"),
-    (ExportCategory.mysql, MeasureType.backup, "twindb.mysql.backup_time"),
-    (ExportCategory.files, MeasureType.backup, "twindb.files.backup_time"),
+    (ExportCategory.mysql, ExportMeasureType.restore, "twindb.mysql.restore_time"),
+    (ExportCategory.files, ExportMeasureType.restore, "twindb.files.restore_time"),
+    (ExportCategory.mysql, ExportMeasureType.backup, "twindb.mysql.backup_time"),
+    (ExportCategory.files, ExportMeasureType.backup, "twindb.files.backup_time"),
 ])
 @mock.patch('twindb_backup.exporter.datadog_exporter.statsd')
 def test__datadog_exporter_export_int_agument(mock_statsd,
@@ -30,10 +30,10 @@ def test__datadog_exporter_export_int_agument(mock_statsd,
 
 
 @pytest.mark.parametrize('category, measure_type, metric_name', [
-    (ExportCategory.mysql, MeasureType.restore, "twindb.mysql.restore_time"),
-    (ExportCategory.files, MeasureType.restore, "twindb.files.restore_time"),
-    (ExportCategory.mysql, MeasureType.backup, "twindb.mysql.backup_time"),
-    (ExportCategory.files, MeasureType.backup, "twindb.files.backup_time"),
+    (ExportCategory.mysql, ExportMeasureType.restore, "twindb.mysql.restore_time"),
+    (ExportCategory.files, ExportMeasureType.restore, "twindb.files.restore_time"),
+    (ExportCategory.mysql, ExportMeasureType.backup, "twindb.mysql.backup_time"),
+    (ExportCategory.files, ExportMeasureType.backup, "twindb.files.backup_time"),
 ])
 @mock.patch('twindb_backup.exporter.datadog_exporter.statsd')
 def test__datadog_exporter_export_float_agument(mock_statsd,
@@ -46,10 +46,10 @@ def test__datadog_exporter_export_float_agument(mock_statsd,
 
 
 @pytest.mark.parametrize('category, measure_type, metric_name', [
-    (ExportCategory.mysql, MeasureType.restore, "twindb.mysql.restore_time"),
-    (ExportCategory.files, MeasureType.restore, "twindb.files.restore_time"),
-    (ExportCategory.mysql, MeasureType.backup, "twindb.mysql.backup_time"),
-    (ExportCategory.files, MeasureType.backup, "twindb.files.backup_time"),
+    (ExportCategory.mysql, ExportMeasureType.restore, "twindb.mysql.restore_time"),
+    (ExportCategory.files, ExportMeasureType.restore, "twindb.files.restore_time"),
+    (ExportCategory.mysql, ExportMeasureType.backup, "twindb.mysql.backup_time"),
+    (ExportCategory.files, ExportMeasureType.backup, "twindb.files.backup_time"),
 ])
 @mock.patch('twindb_backup.exporter.datadog_exporter.statsd')
 def test__datadog_exporter_export_string_agument(mock_statsd,

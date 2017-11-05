@@ -11,7 +11,7 @@ class ExportCategory(object):  # pylint: disable=too-few-public-methods
     mysql = 1
 
 
-class MeasureType(object):  # pylint: disable=too-few-public-methods
+class ExportMeasureType(object):  # pylint: disable=too-few-public-methods
     """Type of measure time: backup or restore"""
     backup = 0
     restore = 1
