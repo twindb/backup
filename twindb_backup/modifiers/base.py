@@ -49,9 +49,11 @@ class Modifier(object):
         with self.input as input_stream:
             LOG.debug('Running %s', ' '.join(cmd))
             proc = Popen(cmd,
-                         stdin=input_stream,
+                         stdin=PIPE,
                          stdout=PIPE,
                          stderr=PIPE)
+            proc.stdin.write(input_stream.read())
+            proc.stdin.close()
             yield proc.stdout
 
             _, cerr = proc.communicate()
