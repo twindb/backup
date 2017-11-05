@@ -7,6 +7,8 @@ import json
 import socket
 
 import os
+from contextlib import contextmanager
+
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import SshDestinationError
@@ -128,6 +130,7 @@ class Ssh(BaseDestination):
         cmd = "rm %s" % obj
         self.execute_command(cmd)
 
+    @contextmanager
     def get_stream(self, path):
         """
         Get a PIPE handler with content of the backup copy streamed from

@@ -160,10 +160,12 @@ def _extract_xbstream(input_stream, working_dir):
         LOG.debug('Running %s', ' '.join(cmd))
         LOG.debug('Working directory: %s', working_dir)
         proc = Popen(cmd,
-                     stdin=input_stream,
+                     stdin=PIPE,
                      stdout=PIPE,
                      stderr=PIPE,
                      cwd=working_dir)
+        proc.stdin.write(input_stream.read())
+        proc.stdin.close()
         cout, cerr = proc.communicate()
         ret = proc.returncode
         if ret:
@@ -438,7 +440,9 @@ def restore_from_file(config, backup_copy, dst_dir):
         try:
             cmd = ["tar", "zvxf", "-"]
             LOG.debug('Running %s', ' '.join(cmd))
-            proc = Popen(cmd, stdin=handler, cwd=dst_dir)
+            proc = Popen(cmd, stdin=PIPE, cwd=dst_dir)
+            proc.stdin.write(handler.read())
+            proc.stdin.close()
             cout, cerr = proc.communicate()
             ret = proc.returncode
             if ret:
