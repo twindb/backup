@@ -16,7 +16,8 @@ from twindb_backup import (
     TwinDBBackupError, save_measures)
 from twindb_backup.configuration import get_destination
 from twindb_backup.export import export_info
-from twindb_backup.exporter.base_exporter import ExportCategory, ExportMeasureType
+from twindb_backup.exporter.base_exporter import ExportCategory, \
+    ExportMeasureType
 from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
