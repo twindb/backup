@@ -19,7 +19,8 @@ from twindb_backup.configuration import get_destination
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
 from twindb_backup.export import export_info
-from twindb_backup.exporter.base_exporter import ExportCategory, ExportMeasureType
+from twindb_backup.exporter.base_exporter import ExportCategory,\
+    ExportMeasureType
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, \
