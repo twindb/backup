@@ -8,6 +8,7 @@ import socket
 from twindb_backup import LOG
 from twindb_backup.destination.s3 import S3, AWSAuthOptions
 from twindb_backup.destination.ssh import Ssh, SshConnectInfo
+from twindb_backup.exporter.datadog_exporter import DataDogExporter
 
 
 def get_destination(config, hostname=socket.gethostname()):
@@ -65,3 +66,22 @@ def get_destination(config, hostname=socket.gethostname()):
     else:
         LOG.critical('Destination %s is not supported', destination)
         exit(-1)
+
+
+def get_export_transport(config):
+    """
+    Read config and return export transport instance
+
+    :param config: Config file
+    :return: Instance of export transport, if it set
+    :raise: NotImplementedError, if transport isn't implemented
+    """
+    try:
+        transport = config.get("export", "transport")
+        if transport == "datadog":
+            app_key = config.get("export", "app_key")
+            api_key = config.get("export", "api_key")
+            return DataDogExporter(app_key, api_key)
+        raise NotImplementedError
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        return None

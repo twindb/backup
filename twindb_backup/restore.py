@@ -10,6 +10,7 @@ from subprocess import Popen, PIPE
 import os
 import tempfile
 import errno
+import time
 
 import psutil
 
@@ -17,6 +18,9 @@ from twindb_backup import LOG, INTERVALS
 from twindb_backup.configuration import get_destination
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
+from twindb_backup.export import export_info
+from twindb_backup.exporter.base_exporter import ExportCategory,\
+    ExportMeasureType
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, \
@@ -316,7 +320,7 @@ def restore_from_mysql(config, backup_copy, dst_dir, cache=None):
     mkdir_p(dst_dir)
 
     dst = None
-
+    restore_start = time.time()
     try:
         keep_local_path = config.get('destination', 'keep_local_path')
         if os.path.exists(backup_copy) \
@@ -383,7 +387,9 @@ def restore_from_mysql(config, backup_copy, dst_dir, cache=None):
             mysql_config.write(content)
 
     update_grastate(dst_dir, status, key)
-
+    export_info(config, data=time.time() - restore_start,
+                category=ExportCategory.mysql,
+                measure_type=ExportMeasureType.restore)
     LOG.info('Successfully restored %s in %s.', backup_copy, dst_dir)
     LOG.info('Now copy content of %s to MySQL datadir: '
              'cp -R %s/* /var/lib/mysql/', dst_dir, dst_dir)
@@ -410,7 +416,7 @@ def restore_from_file(config, backup_copy, dst_dir):
     """
     LOG.info('Restoring %s in %s', backup_copy, dst_dir)
     mkdir_p(dst_dir)
-
+    restore_start = time.time()
     if os.path.exists(backup_copy):
         dst = Local(backup_copy)
         stream = dst.get_stream(backup_copy)
@@ -446,3 +452,6 @@ def restore_from_file(config, backup_copy, dst_dir):
         except OSError as err:
             LOG.error('Failed to decompress %s: %s', backup_copy, err)
             exit(1)
+    export_info(config, data=time.time() - restore_start,
+                category=ExportCategory.files,
+                measure_type=ExportMeasureType.restore)

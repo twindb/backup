@@ -15,6 +15,9 @@ from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
     TwinDBBackupError, save_measures)
 from twindb_backup.configuration import get_destination
+from twindb_backup.export import export_info
+from twindb_backup.exporter.base_exporter import ExportCategory, \
+    ExportMeasureType
 from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
@@ -33,9 +36,9 @@ def backup_files(run_type, config):
     """
     for directory in get_directories_to_backup(config):
         LOG.debug('copying %s', directory)
+        backup_start = time.time()
         src = FileSource(directory, run_type)
         dst = get_destination(config)
-
         stream = src.get_stream()
 
         # Gzip modifier
@@ -67,7 +70,9 @@ def backup_files(run_type, config):
             LOG.warning('Will skip encryption')
 
         dst.save(stream, src.get_name())
-
+        export_info(config, data=time.time() - backup_start,
+                    category=ExportCategory.files,
+                    measure_type=ExportMeasureType.backup)
         src.apply_retention_policy(dst, config, run_type)
 
 
@@ -142,9 +147,13 @@ def backup_mysql(run_type, config):
         LOG.error('Failed to save backup copy %s', src_name)
         exit(1)
     status = prepare_status(dst, src, run_type, src_name, backup_start)
-
     src.apply_retention_policy(dst, config, run_type, status)
-
+    backup_duration = \
+        status[run_type][src_name]['backup_finished'] - \
+        status[run_type][src_name]['backup_started']
+    export_info(config, data=backup_duration,
+                category=ExportCategory.mysql,
+                measure_type=ExportMeasureType.backup)
     dst.status(status)
 
     LOG.debug('Callbacks are %r', callbacks)
