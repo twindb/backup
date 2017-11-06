@@ -34,9 +34,9 @@ def backup_files(run_type, config):
     :param config: Configuration
     :type config: ConfigParser.ConfigParser
     """
+    backup_start = time.time()
     for directory in get_directories_to_backup(config):
         LOG.debug('copying %s', directory)
-        backup_start = time.time()
         src = FileSource(directory, run_type)
         dst = get_destination(config)
         stream = src.get_stream()
@@ -70,10 +70,10 @@ def backup_files(run_type, config):
             LOG.warning('Will skip encryption')
 
         dst.save(stream, src.get_name())
-        export_info(config, data=time.time() - backup_start,
-                    category=ExportCategory.files,
-                    measure_type=ExportMeasureType.backup)
         src.apply_retention_policy(dst, config, run_type)
+    export_info(config, data=time.time() - backup_start,
+                category=ExportCategory.files,
+                measure_type=ExportMeasureType.backup)
 
 
 def backup_mysql(run_type, config):
