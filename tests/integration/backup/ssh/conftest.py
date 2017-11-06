@@ -1,6 +1,5 @@
 import os
 import socket
-import subprocess
 
 import docker
 import pytest
@@ -89,7 +88,7 @@ def container_network(docker_client):
         api.remove_network(net_id=network['Id'])
 
 
-def _get_master(n, client, network):
+def _get_container(n, client, network):
     """
 
     :param n: 1 or 2
@@ -140,9 +139,9 @@ def _get_master(n, client, network):
 
 # noinspection PyShadowingNames
 @pytest.yield_fixture(scope='session')
-def master1(docker_client, container_network):
+def instance1(docker_client, container_network):
 
-    container = _get_master(1, docker_client, container_network)
+    container = _get_container(1, docker_client, container_network)
 
     timeout = time.time() + 30 * 60
 
@@ -167,9 +166,9 @@ def master1(docker_client, container_network):
 
 # noinspection PyShadowingNames
 @pytest.yield_fixture
-def master2(docker_client, container_network):
+def instance2(docker_client, container_network):
 
-    container = _get_master(2, docker_client, container_network)
+    container = _get_container(2, docker_client, container_network)
 
     timeout = time.time() + 30 * 60
     while time.time() < timeout:
@@ -186,12 +185,22 @@ def master2(docker_client, container_network):
 
 
 @pytest.fixture
-def config_content_clone():
+def config_content_ssh():
     return """
+[source]
+backup_mysql=yes
+backup_dirs={BACKUP_DIR}
+
+[destination]
+# backup destination can be ssh or s3
+backup_destination=ssh
+keep_local_path=/var/backup/local
 
 [ssh]
 ssh_user=root
-ssh_key={PRIVATE_KEY}z
+ssh_key={PRIVATE_KEY}
+backup_host={HOST_IP}
+backup_dir=/tmp/backup
 
 [mysql]
 mysql_defaults_file={MY_CNF}
