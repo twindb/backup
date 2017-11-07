@@ -3,14 +3,13 @@ import socket
 import pytest
 import time
 
-
 from tests.integration.conftest import get_container
-from twindb_backup import LOG, setup_logging
+from twindb_backup import LOG
 
 
 # noinspection PyShadowingNames
 @pytest.yield_fixture
-def master1(docker_client, container_network):
+def instance1(docker_client, container_network):
 
     container = get_container(1, docker_client, container_network)
 
@@ -37,7 +36,7 @@ def master1(docker_client, container_network):
 
 # noinspection PyShadowingNames
 @pytest.yield_fixture
-def master2(docker_client, container_network):
+def instance2(docker_client, container_network):
 
     container = get_container(2, docker_client, container_network)
 
@@ -56,12 +55,22 @@ def master2(docker_client, container_network):
 
 
 @pytest.fixture
-def config_content_clone():
+def config_content_ssh():
     return """
+[source]
+backup_mysql=yes
+backup_dirs={BACKUP_DIR}
+
+[destination]
+# backup destination can be ssh or s3
+backup_destination=ssh
+keep_local_path=/var/backup/local
 
 [ssh]
 ssh_user=root
 ssh_key={PRIVATE_KEY}
+backup_host={HOST_IP}
+backup_dir=/tmp/backup
 
 [mysql]
 mysql_defaults_file={MY_CNF}
