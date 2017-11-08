@@ -74,4 +74,35 @@ backup_dir=/tmp/backup
 
 [mysql]
 mysql_defaults_file={MY_CNF}
+full_backup=daily
+
+[retention]
+
+# Remote retention policy
+
+hourly_copies=24
+daily_copies=7
+weekly_copies=4
+monthly_copies=12
+yearly_copies=3
+
+[retention_local]
+
+# Local retention policy
+
+hourly_copies=1
+daily_copies=1
+weekly_copies=0
+monthly_copies=0
+yearly_copies=0
+
+[intervals]
+
+# Run intervals
+
+run_hourly=yes
+run_daily=yes
+run_weekly=yes
+run_monthly=yes
+run_yearly=yes
 """
