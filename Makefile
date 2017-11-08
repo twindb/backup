@@ -106,8 +106,10 @@ test-integration: ## run integration tests
 
 
 test-integration-backup: ## run backup integration tests
-	py.test -xsv tests/integration/backup
+	py.test -xsv tests/integration/backup/s3
 
+test-integration-backup-ssh: ## run backup(ssh) integration tests
+	py.test -xsv tests/integration/backup/ssh
 
 test-integration-clone: ## run clone integration tests
 	py.test -xsv tests/integration/clone
