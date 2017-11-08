@@ -8,6 +8,7 @@ import socket
 
 import os
 from contextlib import contextmanager
+from multiprocessing import Process
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
@@ -142,6 +143,34 @@ class Ssh(BaseDestination):
         """
         cmd = "cat %s" % path
         with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
+            read_process = None
+
+            def _read_to_pipe(handler, read_fd, write_fd):
+                os.close(read_fd)
+                with os.fdopen(write_fd, 'wb') as w_pipe:
+                    try:
+                        w_pipe.write(handler.read())
+                    except IOError as err:
+                        LOG.error(err)
+                        exit(1)
+            try:
+                read_pipe, write_pipe = os.pipe()
+                read_process = Process(target=_read_to_pipe,
+                                       args=(cout, read_pipe, write_pipe))
+                read_process.start()
+                os.close(write_pipe)
+                yield read_pipe
+
+                os.close(read_pipe)
+                read_process.join()
+
+                if read_process.exitcode:
+                    LOG.error('Failed to download %s', path)
+                LOG.debug('Successfully streamed %s', path)
+            finally:
+                if read_process:
+                    read_process.join()
+
             yield cout
 
     def _write_status(self, status):
