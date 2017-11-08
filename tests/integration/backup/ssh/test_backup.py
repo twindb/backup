@@ -1,4 +1,5 @@
 from click.testing import CliRunner
+from subprocess import call
 
 from twindb_backup.cli import main
 
@@ -48,15 +49,7 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
         HOST_IP=instance2['ip']
     )
     config.write(content)
-    runner = CliRunner()
-    result = runner.invoke(main,
-                           ['--config', str(config),
-                            '--debug',
-                            'backup', 'hourly']
-                           )
-    if result.exit_code != 0:
-        print('Command output:')
-        print(result.output)
-        print(result.exception)
-        print(result.exc_info)
-    assert result.exit_code == 0
+    cmd = ['sudo', 'twindb-backup', '--debug',
+           '--config', str(config),
+           'backup', 'hourly']
+    assert call(cmd) == 0
