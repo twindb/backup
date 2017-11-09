@@ -1,6 +1,6 @@
 import os
 from click.testing import CliRunner
-from subprocess import call, check_output
+from subprocess import call, Popen
 
 from twindb_backup.cli import main
 
@@ -55,9 +55,12 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
            'backup', 'hourly']
     assert call(cmd) == 0
 
-    cmd = ["recent_basename=$(sudo twindb-backup ls | grep files | grep tmp | awk -F/ '{ print $NF}' | sort | tail -1)",
-           "backup_copy=$(sudo twindb-backup ls | grep ${recent_basename} | head -1)",
-           "sudo twindb-backup restore file ${backup_copy} --dst /tmp/test"]
-    call(cmd)
-
+    script_path = tmpdir.join('script.sh')
+    script_path.write("""
+    recent_basename=$(sudo twindb-backup ls | grep files | grep tmp | awk -F/ '{ print $NF}' | sort | tail -1)
+    backup_copy=$(sudo twindb-backup ls | grep ${recent_basename} | head -1)
+    sudo twindb-backup restore file ${backup_copy} --dst /tmp/test
+    """)
+    cmd = ["sudo", "bash", str(script_path)]
+    assert call(cmd) == 0
     assert os.listdir("/tmp/test") is not None
