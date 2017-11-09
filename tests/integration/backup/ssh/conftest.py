@@ -58,7 +58,6 @@ def instance2(docker_client, container_network):
 def config_content_ssh():
     return """
 [source]
-backup_mysql=yes
 backup_dirs={BACKUP_DIR}
 
 [destination]
