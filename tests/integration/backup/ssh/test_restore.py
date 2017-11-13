@@ -54,8 +54,12 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
            'backup', 'hourly']
     assert call(cmd) == 0
 
-    basename = check_output("sudo twindb-backup ls | grep -e _etc | grep -e tmp | awk -F/ '{ print $NF}' | sort | tail -1")
-    url = check_output("sudo twindb-backup ls | grep %s | head -1" % basename)
+    basename = check_output("sudo twindb-backup --config %s ls | "
+                            "grep -e _etc | "
+                            "grep -e tmp | "
+                            "awk -F/ '{ print $NF}' | "
+                            "sort | tail -1" % str(config))
+    url = check_output("sudo twindb-backup --config %s ls | grep %s | head -1" % (str(config), basename))
     runner = CliRunner()
     print('Url:')
     print(url)
