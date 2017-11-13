@@ -63,9 +63,9 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
     cmd = ["sudo", "bash", str(script_path)]
     url_file = check_output(cmd)
     runner = CliRunner()
+    print(url_file)
     result = runner.invoke(main,
                            ['--config', str(config),
-                            '--debug',
                             'restore', 'file', url_file, "--dst", "/tmp/test_dir"]
                            )
     if result.exit_code != 0:
