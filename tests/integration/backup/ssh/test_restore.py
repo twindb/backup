@@ -59,7 +59,7 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
     basename = check_output(args=cmd, shell=True).rstrip()
     cmd = 'sudo twindb-backup --debug --config %s ls | grep %s | head -1' % (str(config), basename)
     print('CMD : %s' %cmd)
-    url = check_output(cmd)
+    url = check_output(cmd, shell=True).rstrip()
     print('Url:')
     print(url)
     runner = CliRunner()
