@@ -54,15 +54,15 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
            'backup', 'hourly']
     assert call(cmd) == 0
 
-    cmd = ["sudo", "twindb-backup", '--debug', '--config', str(config), "ls", "| grep etc", "| grep tmp",
-           "| awk -F/ '{ print $NF}'", "| sort", "| tail -1"]
-    basename = check_output(args=cmd)
-    cmd = ["sudo", "twindb-backup", '--debug', '--config', str(config), "ls", "| grep %s" % basename, "| head -1"]
-
+    cmd = 'sudo twindb-backup --debug --config %s ls | grep etc | grep tmp | awk -F/ \'{ print $NF}\' | sort | tail -1' % str(config)
+    print('CMD %s:' %cmd)
+    basename = check_output(args=cmd, shell=True)
+    cmd = 'sudo twindb-backup --debug --config %s ls | grep %s | head -1' % (str(config), basename)
+    print('CMD %s:' %cmd)
     url = check_output(cmd)
-    runner = CliRunner()
     print('Url:')
     print(url)
+    runner = CliRunner()
     result = runner.invoke(main,
                            ['--config', str(config),
                             'restore', 'file', url, "--dst", "/tmp/test_dir"]
