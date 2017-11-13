@@ -61,7 +61,6 @@ def config_content_ssh():
 backup_dirs={BACKUP_DIR}
 
 [destination]
-# backup destination can be ssh or s3
 backup_destination=ssh
 keep_local_path=/var/backup/local
 
@@ -70,10 +69,6 @@ ssh_user=root
 ssh_key={PRIVATE_KEY}
 backup_host={HOST_IP}
 backup_dir=/tmp/backup
-
-[mysql]
-mysql_defaults_file={MY_CNF}
-full_backup=daily
 
 [retention]
 

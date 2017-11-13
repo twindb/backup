@@ -44,7 +44,6 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
 """)
     content = config_content_ssh.format(
         PRIVATE_KEY=str(id_rsa),
-        MY_CNF=str(my_cnf),
         BACKUP_DIR="/etc",
         HOST_IP=instance1['ip']
     )

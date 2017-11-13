@@ -45,7 +45,6 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
 """)
     content = config_content_ssh.format(
         PRIVATE_KEY=str(id_rsa),
-        MY_CNF=str(my_cnf),
         BACKUP_DIR="/etc",
         HOST_IP=instance1['ip']
     )
@@ -55,18 +54,14 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
            'backup', 'hourly']
     assert call(cmd) == 0
 
-    script_path = tmpdir.join('script.sh')
-    script_path.write("""
-    recent_basename=$(sudo twindb-backup ls | grep files | grep tmp | awk -F/ '{ print $NF}' | sort | tail -1)
-    sudo twindb-backup ls | grep ${recent_basename} | head -1
-    """)
-    cmd = ["sudo", "bash", str(script_path)]
-    url_file = check_output(cmd)
+    basename = check_output("sudo twindb-backup ls | grep -e _etc | grep -e tmp | awk -F/ '{ print $NF}' | sort | tail -1")
+    url = check_output("sudo twindb-backup ls | grep %s | head -1" % basename)
     runner = CliRunner()
-    print(url_file)
+    print('Url:')
+    print(url)
     result = runner.invoke(main,
                            ['--config', str(config),
-                            'restore', 'file', url_file, "--dst", "/tmp/test_dir"]
+                            'restore', 'file', url, "--dst", "/tmp/test_dir"]
                            )
     if result.exit_code != 0:
         print('Command output:')
