@@ -57,7 +57,7 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
     cmd = 'sudo twindb-backup --debug --config %s ls | grep etc | grep tmp | awk -F/ \'{ print $NF}\' | sort | tail -1' % str(config)
     print('CMD : %s' %cmd)
     basename = check_output(args=cmd, shell=True).rstrip()
-    cmd = 'sudo twindb-backup --debug --config %s ls | grep %s | head -1' % (str(config), basename)
+    cmd = 'sudo twindb-backup --debug --config %s ls | grep /tmp/backup | grep %s | head -1' % (str(config), basename)
     print('CMD : %s' %cmd)
     url = check_output(cmd, shell=True).rstrip()
     print('Url:')
