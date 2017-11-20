@@ -42,6 +42,8 @@ def get_destination(config, hostname=socket.gethostname()):
             ssh_key = config.get('ssh', 'ssh_key')
         except ConfigParser.NoOptionError:
             ssh_key = '/root/.ssh/id_rsa'
+            LOG.debug('ssh_key is not defined in config. '
+                      'Will use default %s', ssh_key)
         user = config.get('ssh', 'ssh_user')
         remote_path = config.get('ssh', 'backup_dir')
         return Ssh(SshConnectInfo(host=host,

@@ -24,7 +24,7 @@ from twindb_backup.exporter.base_exporter import ExportCategory,\
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, \
-    get_hostname_from_backup_copy, empty_dir
+    get_hostname_from_backup_copy, empty_dir, kill_children
 
 
 def _get_status_key(status, key, variable):
@@ -436,6 +436,18 @@ def restore_from_file(config, backup_copy, dst_dir):
 
     with stream as handler:
         try:
+            LOG.debug('handler type: %s', type(handler))
+            LOG.debug('stream type: %s', type(stream))
+            with open('/tmp/file_content.tar.gz', 'w') as fp:
+                while True:
+                    chunk = os.read(handler, 16 * 1024)
+                    if chunk:
+                        fp.write(chunk)
+                    else:
+                        break
+
+
+            1/0
             cmd = ["tar", "zvxf", "-"]
             LOG.debug('Running %s', ' '.join(cmd))
             proc = Popen(cmd, stdin=handler, cwd=dst_dir)
@@ -449,9 +461,10 @@ def restore_from_file(config, backup_copy, dst_dir):
                     LOG.error('STDERR: %s', cerr)
                 return
             LOG.info('Successfully restored %s in %s', backup_copy, dst_dir)
-        except OSError as err:
+        except (OSError, DestinationError) as err:
             LOG.error('Failed to decompress %s: %s', backup_copy, err)
             exit(1)
+
     export_info(config, data=time.time() - restore_start,
                 category=ExportCategory.files,
                 measure_type=ExportMeasureType.restore)

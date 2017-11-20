@@ -6,6 +6,7 @@ mock
 coverage
 codecov
 pytest-cov
+pytest-timeout
 Sphinx
 unittest2
 moto

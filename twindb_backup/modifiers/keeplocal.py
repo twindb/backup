@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from subprocess import Popen, PIPE
 
 from twindb_backup.destination.local import Local
-from twindb_backup.modifiers.base import Modifier
+from twindb_backup.modifiers.base import Modifier, ModifierException
 from twindb_backup.util import mkdir_p
 
 
@@ -25,7 +25,11 @@ class KeepLocal(Modifier):
         super(KeepLocal, self).__init__(input_stream)
         self.local_path = local_path
         local_dir = os.path.dirname(self.local_path)
-        mkdir_p(local_dir)
+        try:
+            mkdir_p(local_dir)
+        except OSError as err:
+            raise ModifierException('Failed to create directory %s: %s'
+                                    % (local_dir, err))
 
     @contextmanager
     def get_stream(self):

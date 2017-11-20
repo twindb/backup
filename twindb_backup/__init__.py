@@ -189,7 +189,7 @@ def save_measures(start_time, end_time, log_path=LOG_FILE):
             log['measures'].append(data)
             if len(log['measures']) > 100:
                 del log['measures'][0]
-    except IOError:
+    except (IOError, ValueError):
         log = {
             'measures': [data]
         }

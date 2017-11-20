@@ -3,19 +3,26 @@
 Entry points for twindb-backup tool
 """
 from __future__ import print_function
+
+import multiprocessing
+import traceback
 from ConfigParser import ConfigParser
 import json
 import os
 import click
-from twindb_backup import setup_logging, LOG, __version__, TwinDBBackupError
+import psutil
+
+from twindb_backup import setup_logging, LOG, __version__, TwinDBBackupError, \
+    LOCK_FILE
 from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.clone import clone_mysql
 from twindb_backup.configuration import get_destination
 from twindb_backup.ls import list_available_backups
+from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.restore import restore_from_mysql, restore_from_file
 from twindb_backup.share import share
-from twindb_backup.util import ensure_empty
+from twindb_backup.util import ensure_empty, kill_children
 from twindb_backup.verify import verify_mysql_backup
 
 PASS_CFG = click.make_pass_decorator(ConfigParser, ensure=True)
@@ -66,11 +73,30 @@ def main(ctx, cfg, debug, config, version):
 @click.argument('run_type',
                 type=click.Choice(['hourly', 'daily', 'weekly',
                                    'monthly', 'yearly']))
+@click.option('--lock-file', default=LOCK_FILE,
+              help='Lock file to protect against multiple backup tool'
+                   ' instances at same time.')
 @PASS_CFG
-def backup(cfg, run_type):
+def backup(cfg, run_type, lock_file):
     """Run backup job"""
+    try:
 
-    run_backup_job(cfg, run_type)
+        run_backup_job(cfg, run_type, lock_file=lock_file)
+
+    except IOError as err:
+        LOG.error(err)
+        LOG.debug(traceback.format_exc())
+        exit(1)
+
+    except ModifierException as err:
+        LOG.error('Error in modifier class')
+        LOG.error(err)
+        LOG.debug(traceback.format_exc())
+        exit(1)
+    except KeyboardInterrupt:
+        LOG.info('Exiting...')
+        kill_children()
+        exit(1)
 
 
 @main.command(name='ls')
@@ -162,6 +188,10 @@ def restore_file(cfg, dst, backup_copy):
         restore_from_file(cfg, backup_copy, dst)
     except TwinDBBackupError as err:
         LOG.error(err)
+        exit(1)
+    except KeyboardInterrupt:
+        LOG.info('Exiting...')
+        kill_children()
         exit(1)
 
 

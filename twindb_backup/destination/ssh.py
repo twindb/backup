@@ -57,7 +57,12 @@ class Ssh(BaseDestination):
         :param handler: stream with content of the backup.
         """
         remote_name = self.remote_path + '/' + name
-        self._mkdirname_r(remote_name)
+        try:
+            self._mkdirname_r(remote_name)
+        except SshClientException as err:
+            LOG.error('Failed to create directory for %s: %s',
+                      remote_name, err)
+            return False
 
         try:
             cmd = "cat - > %s" % remote_name
@@ -145,27 +150,39 @@ class Ssh(BaseDestination):
         with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
             read_process = None
 
-            def _read_to_pipe(handler, read_fd, write_fd):
+            def _write_to_pipe(handler, read_fd, write_fd):
+
                 os.close(read_fd)
-                with os.fdopen(write_fd, 'wb') as w_pipe:
-                    try:
-                        w_pipe.write(handler.read())
-                    except IOError as err:
-                        LOG.error(err)
-                        exit(1)
+
+                chunk_read_bytes = 0
+
+                while True:
+                    chunk_size = 16 * 1024
+                    chunk = handler.read(chunk_size)
+                    if chunk:
+                        print('Read a chunk %d/%d bytes',
+                                  len(chunk),
+                                  chunk_read_bytes)
+                        os.write(write_fd, chunk)
+                        chunk_read_bytes += len(chunk)
+                    else:
+                        break
+
             try:
                 read_pipe, write_pipe = os.pipe()
-                read_process = Process(target=_read_to_pipe,
-                                       args=(cout, read_pipe, write_pipe))
+                read_process = Process(target=_write_to_pipe,
+                                       args=(cout, read_pipe, write_pipe),
+                                       name='_write_to_pipe')
                 read_process.start()
                 os.close(write_pipe)
+
                 yield read_pipe
 
                 os.close(read_pipe)
                 read_process.join()
 
                 if read_process.exitcode:
-                    LOG.error('Failed to download %s', path)
+                    raise SshDestinationError('Failed to download %s' % path)
                 LOG.debug('Successfully streamed %s', path)
             finally:
                 if read_process:

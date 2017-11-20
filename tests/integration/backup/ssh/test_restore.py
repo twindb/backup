@@ -1,10 +1,13 @@
 import os
+
+import pytest
 from click.testing import CliRunner
 from subprocess import call, Popen, check_output
 
 from twindb_backup.cli import main
 
 
+@pytest.mark.timeout(600)
 def test_restore(instance1, config_content_ssh, tmpdir):
 
     my_cnf = tmpdir.join('.my.cnf')

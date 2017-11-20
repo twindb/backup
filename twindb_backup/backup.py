@@ -9,6 +9,7 @@ import fcntl
 import os
 import signal
 import time
+import traceback
 from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
@@ -267,6 +268,7 @@ def run_backup_job(cfg, run_type, lock_file=LOCK_FILE):
                 LOG.debug('Not running because run_%s is no', run_type)
         except IOError as err:
             if err.errno != errno.EINTR:
+                LOG.debug(traceback.format_exc())
                 raise err
             msg = 'Another instance of twindb-backup is running?'
             if run_type == 'hourly':

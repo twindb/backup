@@ -66,10 +66,11 @@ class SshClient(object):
                                              % (cmd, exit_code))
                 return stdin_, stdout_, stderr_
 
-        except SSHException as err:
+        except (SSHException, IOError) as err:
             if not quiet:
-                LOG.error('Failed to execute %s', cmd)
-            raise SshClientException(err)
+                LOG.error('Failed to execute %s: %s', cmd, err)
+            raise SshClientException('Failed to execute %s: %s'
+                                     % (cmd, err))
 
     @contextmanager
     def get_remote_handlers(self, cmd):
