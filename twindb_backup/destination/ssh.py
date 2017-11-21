@@ -7,6 +7,9 @@ import json
 import socket
 
 import os
+
+import time
+
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import SshDestinationError
@@ -16,6 +19,7 @@ from twindb_backup.ssh.exceptions import SshClientException
 
 class SshConnectInfo(object):  # pylint: disable=too-few-public-methods
     """Options for SSH connection"""
+
     def __init__(self, host='127.0.0.1', port=22, key='/root/.id_rsa',
                  user='root'):
         self.host = host
@@ -33,6 +37,7 @@ class Ssh(BaseDestination):
     :param remote_path: Path to store backup
     :param hostname: Hostname
     """
+
     def __init__(self, ssh_connect_info=SshConnectInfo(),
                  remote_path=None, hostname=socket.gethostname()):
         super(Ssh, self).__init__()
@@ -59,7 +64,7 @@ class Ssh(BaseDestination):
         try:
             cmd = "cat - > %s" % remote_name
             with self._ssh_client.get_remote_handlers(cmd) \
-                    as (cin, _, _):
+                as (cin, _, _):
                 with handler as file_obj:
                     cin.write(file_obj.read())
             return True
@@ -230,3 +235,30 @@ class Ssh(BaseDestination):
             return self.execute_command('nc -l %d | %s' % (port, command))
         except SshDestinationError as err:
             LOG.error(err)
+
+    def ensure_tcp_port_listening(self, port, wait_timeout=10):
+        """
+        Check that tcp port is open and ready to accept connections.
+        Keep checking up to wait_timeout seconds.
+
+        :param port: TCP port that is supposed to be listening.
+        :type port: int
+        :param wait_timeout: wait this many seconds until the port is ready.
+        :type wait_timeout: int
+        :return: True if the TCP port is listening.
+        :rtype: bool
+        """
+        stop_waiting_at = time.time() + wait_timeout
+        while time.time() < stop_waiting_at:
+            try:
+                cmd = 'netstat -an | grep -w ^tcp | grep -w LISTEN ' \
+                      '| grep -w 0.0.0.0:%d' % port
+                _, cout, cerr = self.execute_command(cmd)
+                LOG.debug('stdout: %s', cout.read())
+                LOG.debug('stderr: %s', cerr.read())
+                return True
+            except SshClientException as err:
+                LOG.debug(err)
+                time.sleep(1)
+
+        return False

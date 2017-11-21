@@ -5,6 +5,7 @@ Module defines clone feature
 import ConfigParser
 from multiprocessing import Process
 
+import time
 from pymysql import OperationalError
 
 from twindb_backup import INTERVALS, LOG, TwinDBBackupError
@@ -26,10 +27,11 @@ def _mysql_service(dst, action):
     for service in ['mysqld', 'mysql']:
         try:
             return dst.execute_command(
-                "sudo service %s %s" % (service, action),
+                "PATH=$PATH:/sbin sudo service %s %s" % (service, action),
                 quiet=True
             )
-        except SshClientException:
+        except SshClientException as err:
+            LOG.debug(err)
             pass
 
     raise TwinDBBackupError('Failed to %s MySQL on %r'
@@ -38,7 +40,8 @@ def _mysql_service(dst, action):
 
 def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
                 replication_user, replication_password,
-                netcat_port=9990):
+                netcat_port=9990,
+                compress=False):
     """Clone mysql backup of remote machine and stream it to slave"""
     try:
         LOG.debug('Remote MySQL Source: %s', split_host_port(source)[0])
@@ -78,22 +81,43 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
             LOG.error("Destination datadir is not empty: %s", datadir)
             exit(1)
 
+        netcat_cmd = "xbstream -x -C {datadir}".format(
+            datadir=datadir
+        )
+
+        if compress:
+            netcat_cmd = "gunzip -c - | %s" % netcat_cmd
+
+        # find unused port
+        while netcat_port < 64000:
+            if dst.ensure_tcp_port_listening(netcat_port, wait_timeout=1):
+                netcat_port += 1
+            else:
+                LOG.debug('Will use port %d for streaming', netcat_port)
+                break
+
         proc_netcat = Process(
             target=dst.netcat,
-            args=(
-                "xbstream -x -C {datadir}".format(
-                    datadir=datadir
-                ),
-            ),
+            args=(netcat_cmd, ),
             kwargs={
                 'port': netcat_port
             }
         )
-        proc_netcat.start()
         LOG.debug('Starting netcat on the destination')
+        proc_netcat.start()
+
+        nc_wait_timeout = 10
+        if not dst.ensure_tcp_port_listening(netcat_port,
+                                             wait_timeout=nc_wait_timeout):
+            LOG.error('netcat on the destination '
+                      'is not ready after %d seconds', nc_wait_timeout)
+            proc_netcat.terminate()
+            exit(1)
+
         src.clone(
             dest_host=split_host_port(destination)[0],
-            port=netcat_port
+            port=netcat_port,
+            compress=compress
         )
         proc_netcat.join()
         LOG.debug('Copying MySQL config to the destination')
