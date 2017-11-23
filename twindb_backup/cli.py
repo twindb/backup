@@ -4,13 +4,11 @@ Entry points for twindb-backup tool
 """
 from __future__ import print_function
 
-import multiprocessing
 import traceback
 from ConfigParser import ConfigParser
 import json
 import os
 import click
-import psutil
 
 from twindb_backup import setup_logging, LOG, __version__, TwinDBBackupError, \
     LOCK_FILE

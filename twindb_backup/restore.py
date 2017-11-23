@@ -24,7 +24,7 @@ from twindb_backup.exporter.base_exporter import ExportCategory,\
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, \
-    get_hostname_from_backup_copy, empty_dir, kill_children
+    get_hostname_from_backup_copy, empty_dir
 
 
 def _get_status_key(status, key, variable):

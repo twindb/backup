@@ -141,6 +141,9 @@ def split_host_port(host_port):
 
 
 def kill_children():
+    """
+    Kill child process
+    """
     for proc in multiprocessing.active_children():
         LOG.info('Terminating %r [%d] ...', proc, proc.pid)
         proc.terminate()

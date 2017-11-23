@@ -152,12 +152,12 @@ class Ssh(BaseDestination):
         """
         cmd = "cat %s" % path
 
-        def _read_write_chunk(channel, fd, size=1024):
+        def _read_write_chunk(channel, write_fd, size=1024):
             while channel.recv_ready():
                 chunk = channel.recv(size)
-                LOG.debug('read %d bytes' % len(chunk))
+                LOG.debug('read %d bytes', len(chunk))
                 if chunk:
-                    os.write(fd, chunk)
+                    os.write(write_fd, chunk)
 
         def _write_to_pipe(read_fd, write_fd):
             try:

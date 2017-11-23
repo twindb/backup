@@ -23,6 +23,12 @@ class SshClient(object):
 
     @contextmanager
     def session(self):
+        """
+        Get SSH session
+
+        :rtype: generator
+        :return: SSH session
+        """
         with self._shell() as client:
             transport = client.get_transport()
             session = transport.open_session()
@@ -81,7 +87,8 @@ class SshClient(object):
 
     @contextmanager
     def get_remote_handlers(self, cmd):
-        """Get remote stdin, stdout and stderr handler
+        """
+        Get remote stdin, stdout and stderr handler
 
         :param cmd: Command for execution
         :type cmd: str
