@@ -1,14 +1,12 @@
-import os
-
 import pytest
 from click.testing import CliRunner
-from subprocess import call, Popen, check_output
+from subprocess import check_output
 
 from twindb_backup.cli import main
 
 
 @pytest.mark.timeout(600)
-def test_restore(instance1, config_content_ssh, tmpdir):
+def test_restore(backup_server, config_content_ssh, tmpdir):
 
     my_cnf = tmpdir.join('.my.cnf')
     my_cnf.write("""
@@ -46,29 +44,41 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
 8Wt4BxW6kFA7+Su7n8o4DxCqhZYmK9ZUhNjE+uUhxJCJaGr4
 -----END RSA PRIVATE KEY-----
 """)
+    backup_dir = tmpdir.mkdir("etc")
+    etcfile = backup_dir.join('foo')
+    etcfile.write('restore bar')
+
     content = config_content_ssh.format(
         PRIVATE_KEY=str(id_rsa),
-        BACKUP_DIR="/etc",
-        HOST_IP=instance1['ip']
+        BACKUP_DIR=str(backup_dir),
+        HOST_IP=backup_server['ip']
     )
     config.write(content)
-    cmd = ['sudo', 'twindb-backup', '--debug',
-           '--config', str(config),
-           'backup', 'hourly']
-    assert call(cmd) == 0
+    runner = CliRunner()
+    result = runner.invoke(main, [
+        '--debug',
+        '--config', str(config),
+        'backup', 'daily'
+    ])
 
-    cmd = 'sudo twindb-backup --debug --config %s ls | grep etc | grep tmp | awk -F/ \'{ print $NF}\' | sort | tail -1' % str(config)
-    print('CMD : %s' %cmd)
+    assert result.exit_code == 0
+
+    cmd = 'twindb-backup --debug --config %s ls | grep etc | grep tmp ' \
+          '| awk -F/ \'{ print $NF}\' | sort | tail -1' % str(config)
+    print('CMD : %s' % cmd)
     basename = check_output(args=cmd, shell=True).rstrip()
-    cmd = 'sudo twindb-backup --debug --config %s ls | grep /tmp/backup | grep %s | head -1' % (str(config), basename)
+    cmd = 'twindb-backup --debug --config %s ls ' \
+          '| grep /tmp/backup | grep %s | head -1' % (str(config), basename)
     print('CMD : %s' %cmd)
     url = check_output(cmd, shell=True).rstrip()
     print('Url:')
     print(url)
+    restore_dir = tmpdir.mkdir('restore')
     runner = CliRunner()
     result = runner.invoke(main,
                            ['--config', str(config),
-                            'restore', 'file', url, "--dst", "/tmp/test_dir"]
+                            'restore', 'file', url,
+                            "--dst", str(restore_dir)]
                            )
     if result.exit_code != 0:
         print('Command output:')
@@ -76,4 +86,5 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
         print(result.exception)
         print(result.exc_info)
     assert result.exit_code == 0
-    assert os.listdir("/tmp/test_dir") is not None
+    with open("%s/etc/foo" % str(restore_dir)) as fp:
+        assert fp.read() == 'restore bar'

@@ -85,7 +85,7 @@ def container_network(docker_client):
         api.remove_network(net_id=network['Id'])
 
 
-def get_container(n, client, network):
+def get_container(name, bootstrap_script, client, network, last_n=1):
     """
 
     :param n: 1 or 2
@@ -105,7 +105,7 @@ def get_container(n, client, network):
         dns=['8.8.8.8']
     )
 
-    ip = '172.%d.3.%d' % (network['second_octet'], n)
+    ip = '172.%d.3.%d' % (network['second_octet'], last_n)
     networking_config = api.create_networking_config({
         network['NAME']: api.create_endpoint_config(ipv4_address=ip)
     })
@@ -114,13 +114,12 @@ def get_container(n, client, network):
 
     container = api.create_container(
         image=NODE_IMAGE,
-        name='master%d' % n,
+        name='%s_%d' % (name, last_n),
         ports=[22, 3306],
         host_config=host_config,
         networking_config=networking_config,
         volumes=['/twindb-backup'],
-        command='bash /twindb-backup/support/clone/master%d.sh' % n
-        # command='/bin/sleep 36000'
+        command='bash %s' % bootstrap_script
     )
     container['ip'] = ip
     LOG.info('Created container %r', container)

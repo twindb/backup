@@ -72,20 +72,6 @@ class profile::master {
     returns => [16, 8]
   }
 
-  file { "/etc/twindb":
-    ensure => directory,
-    owner  => 'root',
-    mode   => "0700"
-  }
-
-  file { "/etc/twindb/twindb-backup.cfg":
-    ensure  => present,
-    owner   => 'root',
-    mode    => "0600",
-    source  => 'puppet:///modules/profile/twindb-backup.cfg',
-    require => File['/etc/twindb']
-  }
-
   service { 'mysql':
     ensure  => running,
     enable  => true,

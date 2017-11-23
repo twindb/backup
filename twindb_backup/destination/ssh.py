@@ -66,10 +66,14 @@ class Ssh(BaseDestination):
 
         try:
             cmd = "cat - > %s" % remote_name
-            with self._ssh_client.get_remote_handlers(cmd) \
-                    as (cin, _, _):
+            with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
                 with handler as file_obj:
-                    cin.write(file_obj.read())
+                    while True:
+                        chunk = file_obj.read(1024)
+                        if chunk:
+                            cin.write(chunk)
+                        else:
+                            break
             return True
         except SshClientException:
             return False
@@ -147,48 +151,52 @@ class Ssh(BaseDestination):
         :return: Standard output.
         """
         cmd = "cat %s" % path
-        with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
-            read_process = None
 
-            def _write_to_pipe(handler, read_fd, write_fd):
+        def _read_write_chunk(channel, fd, size=1024):
+            while channel.recv_ready():
+                chunk = channel.recv(size)
+                LOG.debug('read %d bytes' % len(chunk))
+                if chunk:
+                    os.write(fd, chunk)
 
+        def _write_to_pipe(read_fd, write_fd):
+            try:
                 os.close(read_fd)
 
-                chunk_read_bytes = 0
+                with self._ssh_client.session() as channel:
+                    LOG.debug('Executing %s', cmd)
+                    channel.exec_command(cmd)
 
-                while True:
-                    chunk_size = 16 * 1024
-                    chunk = handler.read(chunk_size)
-                    if chunk:
-                        print('Read a chunk %d/%d bytes',
-                                  len(chunk),
-                                  chunk_read_bytes)
-                        os.write(write_fd, chunk)
-                        chunk_read_bytes += len(chunk)
-                    else:
-                        break
+                    while not channel.exit_status_ready():
+                        _read_write_chunk(channel, write_fd)
 
-            try:
-                read_pipe, write_pipe = os.pipe()
-                read_process = Process(target=_write_to_pipe,
-                                       args=(cout, read_pipe, write_pipe),
-                                       name='_write_to_pipe')
-                read_process.start()
-                os.close(write_pipe)
+                    LOG.debug('closing channel')
+                    _read_write_chunk(channel, write_fd)
+                    channel.recv_exit_status()
 
-                yield read_pipe
+            except KeyboardInterrupt:
+                return
 
-                os.close(read_pipe)
+        read_process = None
+
+        try:
+            read_pipe, write_pipe = os.pipe()
+            read_process = Process(target=_write_to_pipe,
+                                   args=(read_pipe, write_pipe),
+                                   name='_write_to_pipe')
+            read_process.start()
+            os.close(write_pipe)
+            yield read_pipe
+
+            os.close(read_pipe)
+            read_process.join()
+
+            if read_process.exitcode:
+                raise SshDestinationError('Failed to download %s' % path)
+            LOG.debug('Successfully streamed %s', path)
+        finally:
+            if read_process:
                 read_process.join()
-
-                if read_process.exitcode:
-                    raise SshDestinationError('Failed to download %s' % path)
-                LOG.debug('Successfully streamed %s', path)
-            finally:
-                if read_process:
-                    read_process.join()
-
-            yield cout
 
     def _write_status(self, status):
         """

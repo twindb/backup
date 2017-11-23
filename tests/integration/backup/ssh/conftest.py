@@ -9,9 +9,15 @@ from twindb_backup import LOG
 
 # noinspection PyShadowingNames
 @pytest.yield_fixture
-def instance1(docker_client, container_network):
+def backup_server(docker_client, container_network):
 
-    container = get_container(1, docker_client, container_network)
+    bootstrap_script = '/twindb-backup/support/bootstrap/backup_server.sh'
+    container = get_container(
+        'backup_server',
+        bootstrap_script,
+        docker_client,
+        container_network
+    )
 
     timeout = time.time() + 30 * 60
 
@@ -21,13 +27,8 @@ def instance1(docker_client, container_network):
             break
         time.sleep(1)
 
-    raw_container = docker_client.containers.get('master1')
-    privileges_file = "/twindb-backup/vagrant/environment/puppet/" \
-                      "modules/profile/files/mysql_grants.sql"
-    raw_container.exec_run('bash -c "mysql mysql < %s"'
-                           % privileges_file)
-
     yield container
+
     if container:
         LOG.info('Removing container %s', container['Id'])
         docker_client.api.remove_container(container=container['Id'],

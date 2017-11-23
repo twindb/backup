@@ -22,6 +22,13 @@ class SshClient(object):
         self.ssh_connect_info = ssh_connect_info
 
     @contextmanager
+    def session(self):
+        with self._shell() as client:
+            transport = client.get_transport()
+            session = transport.open_session()
+            yield session
+
+    @contextmanager
     def _shell(self):
         """
         Create SSHClient instance and connect to the destination host.

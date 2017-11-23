@@ -1,10 +1,9 @@
 from click.testing import CliRunner
-from subprocess import call
 
 from twindb_backup.cli import main
 
 
-def test_backup(instance1, config_content_ssh, tmpdir):
+def test_backup(backup_server, config_content_ssh, tmpdir):
 
     my_cnf = tmpdir.join('.my.cnf')
     my_cnf.write("""
@@ -42,13 +41,21 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
 8Wt4BxW6kFA7+Su7n8o4DxCqhZYmK9ZUhNjE+uUhxJCJaGr4
 -----END RSA PRIVATE KEY-----
 """)
+    backup_dir = tmpdir.mkdir("etc")
+    etcfile = backup_dir.join('foo')
+    etcfile.write('bar')
+
     content = config_content_ssh.format(
         PRIVATE_KEY=str(id_rsa),
-        BACKUP_DIR="/etc",
-        HOST_IP=instance1['ip']
+        BACKUP_DIR=str(backup_dir),
+        HOST_IP=backup_server['ip']
     )
     config.write(content)
-    cmd = ['sudo', 'twindb-backup', '--debug',
-           '--config', str(config),
-           'backup', 'hourly']
-    assert call(cmd) == 0
+    runner = CliRunner()
+    result = runner.invoke(main, [
+        '--debug',
+        '--config', str(config),
+        'backup', 'daily'
+    ])
+
+    assert result.exit_code == 0

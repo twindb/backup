@@ -438,16 +438,6 @@ def restore_from_file(config, backup_copy, dst_dir):
         try:
             LOG.debug('handler type: %s', type(handler))
             LOG.debug('stream type: %s', type(stream))
-            with open('/tmp/file_content.tar.gz', 'w') as fp:
-                while True:
-                    chunk = os.read(handler, 16 * 1024)
-                    if chunk:
-                        fp.write(chunk)
-                    else:
-                        break
-
-
-            1/0
             cmd = ["tar", "zvxf", "-"]
             LOG.debug('Running %s', ' '.join(cmd))
             proc = Popen(cmd, stdin=handler, cwd=dst_dir)
