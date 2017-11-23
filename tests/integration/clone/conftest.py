@@ -12,7 +12,14 @@ from twindb_backup import LOG, setup_logging
 @pytest.yield_fixture
 def master1(docker_client, container_network):
 
-    container = get_container(1, docker_client, container_network)
+
+    bootstrap_script = '/twindb-backup/support/bootstrap/master1.sh'
+    container = get_container(
+        'master1',
+        bootstrap_script,
+        docker_client,
+        container_network
+    )
 
     timeout = time.time() + 30 * 60
 
@@ -39,8 +46,13 @@ def master1(docker_client, container_network):
 @pytest.yield_fixture
 def master2(docker_client, container_network):
 
-    container = get_container(2, docker_client, container_network)
-
+    bootstrap_script = '/twindb-backup/support/bootstrap/master2.sh'
+    container = get_container(
+        'master2',
+        bootstrap_script,
+        docker_client,
+        container_network
+    )
     timeout = time.time() + 30 * 60
     while time.time() < timeout:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
