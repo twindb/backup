@@ -12,7 +12,6 @@ from twindb_backup import LOG, setup_logging
 @pytest.yield_fixture
 def master1(docker_client, container_network):
 
-
     bootstrap_script = '/twindb-backup/support/bootstrap/master1.sh'
     container = get_container(
         'master1',
@@ -29,11 +28,10 @@ def master1(docker_client, container_network):
             break
         time.sleep(1)
 
-    raw_container = docker_client.containers.get('master1')
     privileges_file = "/twindb-backup/vagrant/environment/puppet/" \
                       "modules/profile/files/mysql_grants.sql"
-    raw_container.exec_run('bash -c "mysql mysql < %s"'
-                           % privileges_file)
+    container.exec_run('bash -c "mysql mysql < %s"'
+                       % privileges_file)
 
     yield container
     if container:
