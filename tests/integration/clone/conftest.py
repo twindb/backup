@@ -28,10 +28,11 @@ def master1(docker_client, container_network):
             break
         time.sleep(1)
 
+    raw_container = docker_client.containers.get(container['Id'])
     privileges_file = "/twindb-backup/vagrant/environment/puppet/" \
                       "modules/profile/files/mysql_grants.sql"
-    container.exec_run('bash -c "mysql mysql < %s"'
-                       % privileges_file)
+    raw_container.exec_run('bash -c "mysql mysql < %s"'
+                           % privileges_file)
 
     yield container
     if container:
