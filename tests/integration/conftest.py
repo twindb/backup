@@ -86,11 +86,6 @@ def container_network(docker_client):
 
 
 def get_container(name, bootstrap_script, client, network, last_n=1):
-    """
-
-    :param n: 1 or 2
-    :return: Container
-    """
     api = client.api
 
     api.pull(NODE_IMAGE)

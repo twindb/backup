@@ -34,27 +34,6 @@ def backup_server(docker_client, container_network):
         docker_client.api.remove_container(container=container['Id'],
                                            force=True)
 
-
-# noinspection PyShadowingNames
-@pytest.yield_fixture
-def instance2(docker_client, container_network):
-
-    container = get_container(2, docker_client, container_network)
-
-    timeout = time.time() + 30 * 60
-    while time.time() < timeout:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if sock.connect_ex((container['ip'], 22)) == 0:
-            break
-        time.sleep(1)
-
-    yield container
-    if container:
-        LOG.info('Removing container %s', container['Id'])
-        docker_client.api.remove_container(container=container['Id'],
-                                           force=True)
-
-
 @pytest.fixture
 def config_content_ssh():
     return """

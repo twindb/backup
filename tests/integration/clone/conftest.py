@@ -17,7 +17,8 @@ def master1(docker_client, container_network):
         'master1',
         bootstrap_script,
         docker_client,
-        container_network
+        container_network,
+        1
     )
 
     timeout = time.time() + 30 * 60
@@ -50,7 +51,8 @@ def master2(docker_client, container_network):
         'master2',
         bootstrap_script,
         docker_client,
-        container_network
+        container_network,
+        2
     )
     timeout = time.time() + 30 * 60
     while time.time() < timeout:
