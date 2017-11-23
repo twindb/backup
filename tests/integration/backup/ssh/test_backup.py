@@ -1,6 +1,6 @@
 from click.testing import CliRunner
-from subprocess import call
 
+from twindb_backup import LOG
 from twindb_backup.cli import main
 
 
@@ -48,12 +48,17 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
 
     content = config_content_ssh.format(
         PRIVATE_KEY=str(id_rsa),
-        BACKUP_DIR=str(backup_dir),
+        BACKUP_DIR="/etc",
         HOST_IP=backup_server['ip']
     )
-    config.write(content)
-    cmd = ['sudo', 'twindb-backup', '--debug',
-           '--config', str(config),
-           'backup', 'hourly']
-    assert call(cmd) == 0
 
+    config.write(content)
+    LOG.debug('CONFIG CONTENT: %s' % content)
+    runner = CliRunner()
+    result = runner.invoke(main, [
+        '--debug',
+        '--config', str(config),
+        'backup', 'daily'
+    ])
+
+    assert result.exit_code == 0
