@@ -36,7 +36,7 @@ function start_sshd() {
 rpm -q epel-release || install_package epel-release
 rpm -q percona-release || install_package http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm
 
-install_package
+install_package \
     openssh-server \
     nc \
     sudo
