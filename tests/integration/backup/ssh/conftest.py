@@ -23,7 +23,7 @@ def backup_server(docker_client, container_network):
 
     while time.time() < timeout:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if sock.connect_ex((container['ip'], 3306)) == 0:
+        if sock.connect_ex((container['ip'], 22)) == 0:
             break
         time.sleep(1)
 

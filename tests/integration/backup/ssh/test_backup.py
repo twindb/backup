@@ -48,12 +48,11 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
 
     content = config_content_ssh.format(
         PRIVATE_KEY=str(id_rsa),
-        BACKUP_DIR="/etc",
+        BACKUP_DIR=str(backup_dir),
         HOST_IP=backup_server['ip']
     )
 
     config.write(content)
-    LOG.debug('CONFIG CONTENT: %s' % content)
     runner = CliRunner()
     result = runner.invoke(main, [
         '--debug',

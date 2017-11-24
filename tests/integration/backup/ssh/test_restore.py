@@ -1,3 +1,4 @@
+import os
 import pytest
 from click.testing import CliRunner
 from subprocess import check_output
@@ -86,5 +87,4 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
         print(result.exception)
         print(result.exc_info)
     assert result.exit_code == 0
-    with open("%s/etc/foo" % str(restore_dir)) as fp:
-        assert fp.read() == 'restore bar'
+
