@@ -62,8 +62,12 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
         'backup', 'daily'
     ])
 
+    if result.exit_code != 0:
+        print('Command output:')
+        print(result.output)
+        print(result.exception)
+        print(result.exc_info)
     assert result.exit_code == 0
-
     cmd = 'twindb-backup --debug --config %s ls | grep etc | grep tmp ' \
           '| awk -F/ \'{ print $NF}\' | sort | tail -1' % str(config)
     print('CMD : %s' % cmd)

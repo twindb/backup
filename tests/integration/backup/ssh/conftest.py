@@ -34,11 +34,13 @@ def backup_server(docker_client, container_network):
         docker_client.api.remove_container(container=container['Id'],
                                            force=True)
 
+
 @pytest.fixture
 def config_content_ssh():
     return """
 [source]
 backup_dirs={BACKUP_DIR}
+backup_mysql=no
 
 [destination]
 backup_destination=ssh

@@ -42,13 +42,10 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
 8Wt4BxW6kFA7+Su7n8o4DxCqhZYmK9ZUhNjE+uUhxJCJaGr4
 -----END RSA PRIVATE KEY-----
 """)
-    backup_dir = tmpdir.mkdir("etc")
-    etcfile = backup_dir.join('foo')
-    etcfile.write('bar')
 
     content = config_content_ssh.format(
         PRIVATE_KEY=str(id_rsa),
-        BACKUP_DIR=str(backup_dir),
+        BACKUP_DIR="/etc",
         HOST_IP=backup_server['ip']
     )
 
@@ -60,4 +57,9 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
         'backup', 'daily'
     ])
 
+    if result.exit_code != 0:
+        print('Command output:')
+        print(result.output)
+        print(result.exception)
+        print(result.exc_info)
     assert result.exit_code == 0
