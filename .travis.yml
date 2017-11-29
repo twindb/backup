@@ -14,9 +14,9 @@ before_install:
 
 script:
   - sudo make bootstrap
-  - make docker-test
   - make test-integration-clone
   - make test-integration-backup-ssh
+  - make docker-test
 
 before_deploy:
   - travis_wait 30 make package
