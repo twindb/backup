@@ -4,7 +4,6 @@ Module that implements SSH client.
 import socket
 from contextlib import contextmanager
 
-import time
 from paramiko import SSHClient, AutoAddPolicy, AuthenticationException, \
     SSHException
 
