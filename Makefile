@@ -101,11 +101,7 @@ test: ## run tests quickly with the default Python
 	pytest -xv --cov-report term-missing --cov=./twindb_backup tests/unit
 	codecov
 
-test-integration: ## run integration tests
-	py.test -xsv tests/integration
-
-
-test-integration-backup: ## run backup integration tests
+test-integration-backup-s3: ## run backup (S3) integration tests
 	py.test -xsv tests/integration/backup/s3
 
 test-integration-backup-ssh: ## run backup(ssh) integration tests
@@ -113,7 +109,6 @@ test-integration-backup-ssh: ## run backup(ssh) integration tests
 
 test-integration-clone: ## run clone integration tests
 	py.test -xsv tests/integration/clone
-
 
 test-all: ## run tests on every Python version with tox
 	tox
