@@ -14,8 +14,8 @@ before_install:
 
 script:
   - sudo make bootstrap
-  - make test-integration-clone
-  - make test-integration-backup-ssh
+  - sudo make test-integration-clone
+  - sudo make test-integration-backup-ssh
   - make docker-test
 
 before_deploy:
