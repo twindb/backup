@@ -5,7 +5,6 @@ Module defines clone feature
 import ConfigParser
 from multiprocessing import Process
 
-import time
 from pymysql import OperationalError
 
 from twindb_backup import INTERVALS, LOG, TwinDBBackupError
@@ -80,7 +79,8 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
             LOG.error("Destination datadir is not empty: %s", datadir)
             exit(1)
 
-        _run_remote_netcat(compress, datadir, destination, dst, netcat_port, src)
+        _run_remote_netcat(compress, datadir, destination,
+                           dst, netcat_port, src)
         LOG.debug('Copying MySQL config to the destination')
         src.clone_config(dst)
 
