@@ -25,7 +25,10 @@ class SshConnectInfo(object):  # pylint: disable=too-few-public-methods
     def __init__(self, host='127.0.0.1', port=22, key='/root/.id_rsa',
                  user='root'):
         self.host = host
-        self.port = port
+        if isinstance(port, int):
+            self.port = port
+        else:
+            raise ValueError("Port is not integer")
         self.key = key
         self.user = user
 
