@@ -71,7 +71,7 @@ class Ssh(BaseDestination):
         try:
             cmd = "cat - > %s" % remote_name
             with self._ssh_client.get_remote_handlers(cmd) \
-                as (cin, _, _):
+                    as (cin, _, _):
                 with handler as file_obj:
                     while True:
                         chunk = file_obj.read(1024)

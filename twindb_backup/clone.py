@@ -129,8 +129,8 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
         exit(1)
 
 
-def _run_remote_netcat(compress, datadir, destination,  # pylint: disable=too-many-arguments
-                       dst, netcat_port, src):
+def _run_remote_netcat(compress, datadir,  # pylint: disable=too-many-arguments
+                       destination, dst, netcat_port, src):
     netcat_cmd = "xbstream -x -C {datadir}".format(
         datadir=datadir
     )
