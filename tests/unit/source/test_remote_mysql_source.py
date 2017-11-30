@@ -8,39 +8,6 @@ from twindb_backup.source.mysql_source import MySQLConnectInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
 
 
-@pytest.mark.parametrize('dest,port', [
-    ('1',
-     1),
-    ('2',
-     2),
-    ('3',
-     3),
-    ('4',
-     4)
-])
-def test__clone(dest, port):
-    rmt_sql = RemoteMySQLSource({
-        "run_type": INTERVALS[0],
-        "full_backup": INTERVALS[0],
-        "mysql_connect_info": MySQLConnectInfo("/"),
-        "ssh_connection_info": None
-    })
-    error_log = "/tmp/{src}_{src_port}-{dst}_{dst_port}.log".format(
-        src=rmt_sql._ssh_client.ssh_connect_info.host,
-        src_port=rmt_sql._ssh_client.ssh_connect_info.port,
-        dst=dest,
-        dst_port=port
-    )
-    cmd = "bash -c \"sudo innobackupex --stream=xbstream ./ 2> %s " \
-          "| nc %s %d\"" \
-          % (error_log, dest, port)
-    mock_client = mock.Mock()
-
-    rmt_sql._ssh_client = mock_client
-    rmt_sql.clone(dest, port)
-    mock_client.execute.assert_called_with(cmd)
-
-
 @mock.patch.object(RemoteMySQLSource, "_save_cfg")
 @mock.patch.object(RemoteMySQLSource, "_get_root_my_cnf")
 def test__clone_config(mock_get_root, mock_save):
@@ -72,6 +39,7 @@ def test___mem_available():
     })
     rmt_sql._ssh_client = mock_client
     assert rmt_sql._mem_available() == 100500 * 1024
+
 
 def test__mem_available_raise_exception():
     mock_stdout = mock.Mock()
