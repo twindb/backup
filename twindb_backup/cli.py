@@ -240,10 +240,14 @@ def clone(cfg):
 @click.option('--replication-password', default='slavepass',
               help='Replication MySQL password.',
               show_default=True)
+@click.option('--compress', is_flag=True,
+              help='Compress stream while sending it over network.',
+              default=False)
 @PASS_CFG
 def clone_mysql_backup(cfg, netcat_port,  # pylint: disable=too-many-arguments
                        replication_user,
                        replication_password,
+                       compress,
                        destination, source):
     """
      Clone mysql backup on remote server and make it a slave.
@@ -256,4 +260,5 @@ def clone_mysql_backup(cfg, netcat_port,  # pylint: disable=too-many-arguments
     """
     clone_mysql(cfg, source, destination,
                 replication_user, replication_password,
-                netcat_port=netcat_port)
+                netcat_port=netcat_port,
+                compress=compress)

@@ -69,7 +69,11 @@ class SshClient(object):
         """
         try:
             with self._shell() as shell:
+                LOG.debug('Executing %s', cmd)
                 stdin_, stdout_, stderr_ = shell.exec_command(cmd)
+                # while not stdout_.channel.exit_status_ready():
+                #     LOG.debug('%s: waiting', cmd)
+                #     time.sleep(1)
                 exit_code = stdout_.channel.recv_exit_status()
                 if exit_code != 0:
                     if not quiet:
