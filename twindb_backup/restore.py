@@ -436,6 +436,8 @@ def restore_from_file(config, backup_copy, dst_dir):
 
     with stream as handler:
         try:
+            LOG.debug('handler type: %s', type(handler))
+            LOG.debug('stream type: %s', type(stream))
             cmd = ["tar", "zvxf", "-"]
             LOG.debug('Running %s', ' '.join(cmd))
             proc = Popen(cmd, stdin=handler, cwd=dst_dir)
@@ -449,9 +451,10 @@ def restore_from_file(config, backup_copy, dst_dir):
                     LOG.error('STDERR: %s', cerr)
                 return
             LOG.info('Successfully restored %s in %s', backup_copy, dst_dir)
-        except OSError as err:
+        except (OSError, DestinationError) as err:
             LOG.error('Failed to decompress %s: %s', backup_copy, err)
             exit(1)
+
     export_info(config, data=time.time() - restore_start,
                 category=ExportCategory.files,
                 measure_type=ExportMeasureType.restore)

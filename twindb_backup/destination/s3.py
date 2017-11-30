@@ -342,12 +342,14 @@ class S3(BaseDestination):
 
             download_proc = Process(target=_download_object,
                                     args=(self.s3_client, self.bucket,
-                                          object_key, read_pipe, write_pipe))
+                                          object_key, read_pipe, write_pipe),
+                                    name='_download_object')
             download_proc.start()
 
             # The write end of the pipe must be closed in this process before
             # we start reading from it.
             os.close(write_pipe)
+            LOG.debug('read_pipe type: %s', type(read_pipe))
             yield read_pipe
 
             os.close(read_pipe)

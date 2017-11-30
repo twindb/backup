@@ -7,6 +7,9 @@ import json
 import socket
 
 import os
+from contextlib import contextmanager
+from multiprocessing import Process
+
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import SshDestinationError
@@ -54,14 +57,23 @@ class Ssh(BaseDestination):
         :param handler: stream with content of the backup.
         """
         remote_name = self.remote_path + '/' + name
-        self._mkdirname_r(remote_name)
+        try:
+            self._mkdirname_r(remote_name)
+        except SshClientException as err:
+            LOG.error('Failed to create directory for %s: %s',
+                      remote_name, err)
+            return False
 
         try:
             cmd = "cat - > %s" % remote_name
-            with self._ssh_client.get_remote_handlers(cmd) \
-                    as (cin, _, _):
+            with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
                 with handler as file_obj:
-                    cin.write(file_obj.read())
+                    while True:
+                        chunk = file_obj.read(1024)
+                        if chunk:
+                            cin.write(chunk)
+                        else:
+                            break
             return True
         except SshClientException:
             return False
@@ -128,6 +140,7 @@ class Ssh(BaseDestination):
         cmd = "rm %s" % obj
         self.execute_command(cmd)
 
+    @contextmanager
     def get_stream(self, path):
         """
         Get a PIPE handler with content of the backup copy streamed from
@@ -138,8 +151,52 @@ class Ssh(BaseDestination):
         :return: Standard output.
         """
         cmd = "cat %s" % path
-        with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
-            yield cout
+
+        def _read_write_chunk(channel, write_fd, size=1024):
+            while channel.recv_ready():
+                chunk = channel.recv(size)
+                LOG.debug('read %d bytes', len(chunk))
+                if chunk:
+                    os.write(write_fd, chunk)
+
+        def _write_to_pipe(read_fd, write_fd):
+            try:
+                os.close(read_fd)
+
+                with self._ssh_client.session() as channel:
+                    LOG.debug('Executing %s', cmd)
+                    channel.exec_command(cmd)
+
+                    while not channel.exit_status_ready():
+                        _read_write_chunk(channel, write_fd)
+
+                    LOG.debug('closing channel')
+                    _read_write_chunk(channel, write_fd)
+                    channel.recv_exit_status()
+
+            except KeyboardInterrupt:
+                return
+
+        read_process = None
+
+        try:
+            read_pipe, write_pipe = os.pipe()
+            read_process = Process(target=_write_to_pipe,
+                                   args=(read_pipe, write_pipe),
+                                   name='_write_to_pipe')
+            read_process.start()
+            os.close(write_pipe)
+            yield read_pipe
+
+            os.close(read_pipe)
+            read_process.join()
+
+            if read_process.exitcode:
+                raise SshDestinationError('Failed to download %s' % path)
+            LOG.debug('Successfully streamed %s', path)
+        finally:
+            if read_process:
+                read_process.join()
 
     def _write_status(self, status):
         """
