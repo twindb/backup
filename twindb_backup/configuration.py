@@ -35,7 +35,7 @@ def get_destination(config, hostname=socket.gethostname()):
     if destination == "ssh":
         host = config.get('ssh', 'backup_host')
         try:
-            port = config.get('ssh', 'port')
+            port = int(config.get('ssh', 'port'))
         except ConfigParser.NoOptionError:
             port = 22
         try:
