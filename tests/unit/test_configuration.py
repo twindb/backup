@@ -8,12 +8,24 @@ from twindb_backup.destination.ssh import Ssh
 
 
 def test__get_destination_ssh_valid_port(config_content):
-    s_config = config_content.format(destination="ssh", port=22)
+    s_config = config_content.format(destination="ssh", port=4321)
     buf = StringIO.StringIO(s_config)
     config = ConfigParser.ConfigParser()
     config.readfp(buf)
     dst = get_destination(config)
     assert isinstance(dst, Ssh)
+    assert dst._ssh_client.ssh_connect_info.port == 4321
+
+
+def test__get_destination_ssh_valid_port_as_str(config_content):
+    s_config = config_content.format(destination="ssh", port='1234')
+    buf = StringIO.StringIO(s_config)
+    config = ConfigParser.ConfigParser()
+    config.readfp(buf)
+    dst = get_destination(config)
+    assert isinstance(dst, Ssh)
+    assert dst._ssh_client.ssh_connect_info.port == 1234
+
 
 def test__get_destination_ssh_invalid_port(config_content):
     s_config = config_content.format(destination="ssh", port='foo')
