@@ -43,7 +43,6 @@ class RemoteMySQLSource(MySQLSource):
         retry = 1
         retry_time = 2
         cmd = "bash -c \"sudo innobackupex --stream=xbstream ./ " \
-              "| gzip -c - " \
               "| nc %s %d\"" \
               % (dest_host, port)
         while retry < 3:

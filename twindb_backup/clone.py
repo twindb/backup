@@ -78,17 +78,10 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
             LOG.error("Destination datadir is not empty: %s", datadir)
             exit(1)
 
-        try:
-            LOG.debug('Stopping MySQL on the destination')
-            _mysql_service(dst, action='stop')
-        except TwinDBBackupError as err:
-            LOG.error(err)
-            exit(1)
-
         proc_netcat = Process(
             target=dst.netcat,
             args=(
-                "gunzip -c - | xbstream -x -C {datadir}".format(
+                "xbstream -x -C {datadir}".format(
                     datadir=datadir
                 ),
             ),
