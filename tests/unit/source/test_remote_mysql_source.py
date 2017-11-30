@@ -19,17 +19,27 @@ from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
      4)
 ])
 def test__clone(dest, port):
-    arg = 'bash -c "sudo innobackupex --stream=xbstream ./ | nc %s %d"' % (dest, port)
-    mock_client = mock.Mock()
     rmt_sql = RemoteMySQLSource({
         "run_type": INTERVALS[0],
         "full_backup": INTERVALS[0],
         "mysql_connect_info": MySQLConnectInfo("/"),
         "ssh_connection_info": None
     })
+    error_log = "/tmp/{src}_{src_port}-{dst}_{dst_port}.log".format(
+        src=rmt_sql._ssh_client.ssh_connect_info.host,
+        src_port=rmt_sql._ssh_client.ssh_connect_info.port,
+        dst=dest,
+        dst_port=port
+    )
+    cmd = "bash -c \"sudo innobackupex --stream=xbstream ./ 2> %s " \
+          "| nc %s %d\"" \
+          % (error_log, dest, port)
+    mock_client = mock.Mock()
+
     rmt_sql._ssh_client = mock_client
     rmt_sql.clone(dest, port)
-    mock_client.execute.assert_called_with(arg)
+    mock_client.execute.assert_called_with(cmd)
+
 
 @mock.patch.object(RemoteMySQLSource, "_save_cfg")
 @mock.patch.object(RemoteMySQLSource, "_get_root_my_cnf")
