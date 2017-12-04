@@ -22,6 +22,19 @@ class SshClient(object):
         self.ssh_connect_info = ssh_connect_info
 
     @contextmanager
+    def session(self):
+        """
+        Get SSH session
+
+        :rtype: generator
+        :return: SSH session
+        """
+        with self._shell() as client:
+            transport = client.get_transport()
+            session = transport.open_session()
+            yield session
+
+    @contextmanager
     def _shell(self):
         """
         Create SSHClient instance and connect to the destination host.
@@ -56,7 +69,11 @@ class SshClient(object):
         """
         try:
             with self._shell() as shell:
+                LOG.debug('Executing %s', cmd)
                 stdin_, stdout_, stderr_ = shell.exec_command(cmd)
+                # while not stdout_.channel.exit_status_ready():
+                #     LOG.debug('%s: waiting', cmd)
+                #     time.sleep(1)
                 exit_code = stdout_.channel.recv_exit_status()
                 if exit_code != 0:
                     if not quiet:
@@ -66,14 +83,16 @@ class SshClient(object):
                                              % (cmd, exit_code))
                 return stdin_, stdout_, stderr_
 
-        except SSHException as err:
+        except (SSHException, IOError) as err:
             if not quiet:
-                LOG.error('Failed to execute %s', cmd)
-            raise SshClientException(err)
+                LOG.error('Failed to execute %s: %s', cmd, err)
+            raise SshClientException('Failed to execute %s: %s'
+                                     % (cmd, err))
 
     @contextmanager
     def get_remote_handlers(self, cmd):
-        """Get remote stdin, stdout and stderr handler
+        """
+        Get remote stdin, stdout and stderr handler
 
         :param cmd: Command for execution
         :type cmd: str

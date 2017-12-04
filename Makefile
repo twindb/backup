@@ -18,7 +18,7 @@ for line in sys.stdin:
 	match = re.match(r'^([a-zA-Z_-]+):.*?## (.*)$$', line)
 	if match:
 		target, help = match.groups()
-		print("%-20s %s" % (target, help))
+		print("%-40s %s" % (target, help))
 endef
 export PRINT_HELP_PYSCRIPT
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
@@ -101,17 +101,14 @@ test: ## run tests quickly with the default Python
 	pytest -xv --cov-report term-missing --cov=./twindb_backup tests/unit
 	codecov
 
-test-integration: ## run integration tests
-	py.test -xsv tests/integration
+test-integration-backup-s3: ## run backup (S3) integration tests
+	py.test -xsv tests/integration/backup/s3
 
-
-test-integration-backup: ## run backup integration tests
-	py.test -xsv tests/integration/backup
-
+test-integration-backup-ssh: ## run backup(ssh) integration tests
+	py.test -xsv tests/integration/backup/ssh
 
 test-integration-clone: ## run clone integration tests
 	py.test -xsv tests/integration/clone
-
 
 test-all: ## run tests on every Python version with tox
 	tox

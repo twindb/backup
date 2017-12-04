@@ -3,10 +3,13 @@
 Module with helper functions
 """
 import errno
+import multiprocessing
 import os
 import shutil
 from contextlib import contextmanager
 from subprocess import Popen, PIPE
+
+import psutil
 
 from twindb_backup import LOG, INTERVALS, TwinDBBackupError
 
@@ -135,3 +138,16 @@ def split_host_port(host_port):
     except (IndexError, AttributeError, ValueError):
         port = None
     return host, port
+
+
+def kill_children():
+    """
+    Kill child process
+    """
+    for proc in multiprocessing.active_children():
+        LOG.info('Terminating %r [%d] ...', proc, proc.pid)
+        proc.terminate()
+    parent = psutil.Process(os.getpid())
+    for child in parent.children(recursive=True):
+        LOG.info('Terminating process %r', child)
+        child.kill()

@@ -8,6 +8,7 @@ import socket
 from twindb_backup import LOG
 from twindb_backup.destination.s3 import S3, AWSAuthOptions
 from twindb_backup.destination.ssh import Ssh, SshConnectInfo
+from twindb_backup.exporter.datadog_exporter import DataDogExporter
 
 
 def get_destination(config, hostname=socket.gethostname()):
@@ -34,13 +35,15 @@ def get_destination(config, hostname=socket.gethostname()):
     if destination == "ssh":
         host = config.get('ssh', 'backup_host')
         try:
-            port = config.get('ssh', 'port')
+            port = int(config.get('ssh', 'port'))
         except ConfigParser.NoOptionError:
             port = 22
         try:
             ssh_key = config.get('ssh', 'ssh_key')
         except ConfigParser.NoOptionError:
             ssh_key = '/root/.ssh/id_rsa'
+            LOG.debug('ssh_key is not defined in config. '
+                      'Will use default %s', ssh_key)
         user = config.get('ssh', 'ssh_user')
         remote_path = config.get('ssh', 'backup_dir')
         return Ssh(SshConnectInfo(host=host,
@@ -65,3 +68,22 @@ def get_destination(config, hostname=socket.gethostname()):
     else:
         LOG.critical('Destination %s is not supported', destination)
         exit(-1)
+
+
+def get_export_transport(config):
+    """
+    Read config and return export transport instance
+
+    :param config: Config file
+    :return: Instance of export transport, if it set
+    :raise: NotImplementedError, if transport isn't implemented
+    """
+    try:
+        transport = config.get("export", "transport")
+        if transport == "datadog":
+            app_key = config.get("export", "app_key")
+            api_key = config.get("export", "api_key")
+            return DataDogExporter(app_key, api_key)
+        raise NotImplementedError
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        return None

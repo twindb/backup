@@ -9,12 +9,16 @@ import fcntl
 import os
 import signal
 import time
+import traceback
 from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
     TwinDBBackupError, save_measures)
 from twindb_backup.configuration import get_destination
+from twindb_backup.export import export_info
+from twindb_backup.exporter.base_exporter import ExportCategory, \
+    ExportMeasureType
 from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
@@ -31,11 +35,11 @@ def backup_files(run_type, config):
     :param config: Configuration
     :type config: ConfigParser.ConfigParser
     """
+    backup_start = time.time()
     for directory in get_directories_to_backup(config):
         LOG.debug('copying %s', directory)
         src = FileSource(directory, run_type)
         dst = get_destination(config)
-
         stream = src.get_stream()
 
         # Gzip modifier
@@ -67,8 +71,10 @@ def backup_files(run_type, config):
             LOG.warning('Will skip encryption')
 
         dst.save(stream, src.get_name())
-
         src.apply_retention_policy(dst, config, run_type)
+    export_info(config, data=time.time() - backup_start,
+                category=ExportCategory.files,
+                measure_type=ExportMeasureType.backup)
 
 
 def backup_mysql(run_type, config):
@@ -142,9 +148,13 @@ def backup_mysql(run_type, config):
         LOG.error('Failed to save backup copy %s', src_name)
         exit(1)
     status = prepare_status(dst, src, run_type, src_name, backup_start)
-
     src.apply_retention_policy(dst, config, run_type, status)
-
+    backup_duration = \
+        status[run_type][src_name]['backup_finished'] - \
+        status[run_type][src_name]['backup_started']
+    export_info(config, data=backup_duration,
+                category=ExportCategory.mysql,
+                measure_type=ExportMeasureType.backup)
     dst.status(status)
 
     LOG.debug('Callbacks are %r', callbacks)
@@ -258,6 +268,7 @@ def run_backup_job(cfg, run_type, lock_file=LOCK_FILE):
                 LOG.debug('Not running because run_%s is no', run_type)
         except IOError as err:
             if err.errno != errno.EINTR:
+                LOG.debug(traceback.format_exc())
                 raise err
             msg = 'Another instance of twindb-backup is running?'
             if run_type == 'hourly':

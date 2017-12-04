@@ -64,7 +64,7 @@ password=qwerty
     'percona-xtrabackup',
     'python2-pip',
     'gcc', 'python-devel', 'zlib-devel', 'openssl-devel',
-    'rpm-build','docker']
+    'rpm-build','docker', 'strace']
 
   package { $packages:
     ensure  => installed,
@@ -103,4 +103,19 @@ password=qwerty
     command => '/sbin/sysctl net.ipv4.ip_forward=1',
     unless  => 'sysctl net.ipv4.ip_forward | grep "net.ipv4.ip_forward = 1"'
   }
+
+  file { "/etc/twindb":
+    ensure => directory,
+    owner  => 'root',
+    mode   => "0700"
+  }
+
+  file { "/etc/twindb/twindb-backup.cfg":
+    ensure  => present,
+    owner   => 'root',
+    mode    => "0600",
+    source  => 'puppet:///modules/profile/twindb-backup.cfg',
+    require => File['/etc/twindb']
+  }
+
 }

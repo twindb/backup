@@ -23,10 +23,12 @@ def test_save(mock_mkdirname_r, mock_execute):
     )
     dst = Ssh(remote_path='/path/to/backups')
     mock_handler = mock.MagicMock()
+    mock_file_obj = mock.MagicMock()
+    mock_file_obj.read.return_value = None
+    mock_handler.__enter__.return_value = mock_file_obj
     mock_cin.read.return_value = 'foo'
     assert dst.save(mock_handler, 'aaa/bbb/ccc/bar')
     mock_execute.assert_called_once_with('cat - > /path/to/backups/aaa/bbb/ccc/bar')
-    mock_cin.write.assert_called_once()
     mock_handler.read_assert_called_once()
     mock_mkdirname_r.assert_called_once_with('/path/to/backups/aaa/bbb/ccc/bar')
 

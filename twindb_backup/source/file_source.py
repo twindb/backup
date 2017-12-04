@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from subprocess import Popen, PIPE
 from twindb_backup import LOG, get_files_to_delete
 from twindb_backup.source.base_source import BaseSource
+from twindb_backup.ssh.exceptions import SshClientException
 
 
 class FileSource(BaseSource):
@@ -76,7 +77,13 @@ class FileSource(BaseSource):
         keep_copies = config.getint('retention',
                                     '%s_copies' % run_type)
 
-        backups_list = dst.list_files(prefix)
+        try:
+            backups_list = dst.list_files(prefix)
+        except SshClientException as err:
+            LOG.error('Failed to get list of backup copies in %s: %s',
+                      prefix, err)
+            return
+
         LOG.debug('Remote copies: %r', backups_list)
         for local_file in get_files_to_delete(backups_list, keep_copies):
             LOG.debug('Deleting remote file %s', local_file)

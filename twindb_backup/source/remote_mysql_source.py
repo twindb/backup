@@ -30,7 +30,7 @@ class RemoteMySQLSource(MySQLSource):
     def get_stream(self):
         raise NotImplementedError("Method get_stream not implemented")
 
-    def clone(self, dest_host, port):
+    def clone(self, dest_host, port, compress=False):
         """
         Send backup to destination host
 
@@ -38,14 +38,26 @@ class RemoteMySQLSource(MySQLSource):
         :type dest_host: str
         :param port: Port to sending backup
         :type port: int
+        :param compress: If True compress stream
+        :type compress: bool
         :raise RemoteMySQLSourceError: if any error
         """
         retry = 1
         retry_time = 2
-        cmd = "bash -c \"sudo innobackupex --stream=xbstream ./ " \
-              "| gzip -c - " \
-              "| nc %s %d\"" \
-              % (dest_host, port)
+        error_log = "/tmp/{src}_{src_port}-{dst}_{dst_port}.log".format(
+            src=self._ssh_client.ssh_connect_info.host,
+            src_port=self._ssh_client.ssh_connect_info.port,
+            dst=dest_host,
+            dst_port=port
+        )
+        if compress:
+            compress_cmd = "| gzip -c - "
+        else:
+            compress_cmd = ""
+
+        cmd = "bash -c \"sudo innobackupex --stream=xbstream ./ 2> %s" \
+              " %s | nc %s %d\"" \
+              % (error_log, compress_cmd, dest_host, port)
         while retry < 3:
             try:
                 return self._ssh_client.execute(cmd)
@@ -54,6 +66,7 @@ class RemoteMySQLSource(MySQLSource):
                 LOG.info('Will try again in after %d seconds', retry_time)
                 time.sleep(retry_time)
                 retry_time *= 2
+                retry += 1
 
     def clone_config(self, dst):
         """
@@ -162,12 +175,14 @@ class RemoteMySQLSource(MySQLSource):
 
         try:
             self._ssh_client.execute(
-                'sudo innobackupex --apply-log %s --use-memory %d'
+                'sudo innobackupex --apply-log %s --use-memory %d '
+                '> /tmp/innobackupex-apply-log.log 2>&1'
                 % (datadir, self._mem_available() / 2)
             )
         except OSError:
             self._ssh_client.execute(
-                'sudo innobackupex --apply-log %s' % datadir
+                'sudo innobackupex --apply-log %s '
+                '> /tmp/innobackupex-apply-log.log 2>&1' % datadir
             )
 
         self._ssh_client.execute("sudo chown -R mysql %s" % datadir)
