@@ -32,7 +32,7 @@ cd /twindb-backup
 if [ "$OS_VERSION" = 6 ] ; then
     yum install -y centos-release-scl
     yum install -y python27
-    scl enable python27 bash &&  make bootstrap lint test test-integration-backup-s3
+    scl enable python27 bash ; bash -c "make bootstrap lint test test-integration-backup-s3"
 else
     make bootstrap lint test test-integration-backup-s3
 fi
