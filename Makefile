@@ -166,6 +166,7 @@ docker-test: ## Test twindb-backup in a docker container
 		-e "TRAVIS_JOB_ID"=${TRAVIS_JOB_ID} \
 		-e "TRAVIS_REPO_SLUG"=${TRAVIS_REPO_SLUG} \
 		-e "TRAVIS_TAG"=${TRAVIS_TAG} \
+		-e "OS_VERSION"=${OS_VERSION}
 		${DOCKER_IMAGE} /bin/bash /twindb-backup/support/docker-test-${PLATFORM}.sh
 
 
@@ -185,6 +186,3 @@ package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
 		-v ${pwd}:/twindb-backup \
 		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
 		bash -l /twindb-backup/omnibus/omnibus_build.sh
-
-update_python: ## For Centos 6
-	@sudo bash /twindb-backup/support/update_python.sh

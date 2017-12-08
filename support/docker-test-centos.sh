@@ -29,4 +29,10 @@ while [ ${timeout} -gt 0 ] ; do mysqladmin ping && break; sleep 1; timeout=$((${
 
 cd /twindb-backup
 
+if [ "$OS_VERSION" = 6 ] ; then
+    yum install -y centos-release-scl
+    yum install -y python27
+    scl enable python27 bash
+fi
+
 make bootstrap lint test test-integration-backup-s3
