@@ -189,6 +189,7 @@ def gpg_secret_keyring(tmpdir):
     keyring.write('')
     proc = Popen(['gpg',
                   '--no-default-keyring',
+                  '--no-tty',
                   '--secret-keyring', str(keyring),
                   '--import'],
                  stdin=PIPE, stdout=PIPE, stderr=PIPE)
