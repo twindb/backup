@@ -8,12 +8,9 @@ yum install -y  http://www.percona.com/downloads/percona-release/redhat/0.1-4/pe
 for i in $(seq 5); do
     yum install -y \
       gcc \
-      python-devel \
       zlib-devel \
       openssl-devel \
       make \
-      python-setuptools \
-      python-pip \
       Percona-Server-server-56 \
       Percona-Server-devel-56 \
       percona-xtrabackup-24 \
@@ -32,7 +29,8 @@ cd /twindb-backup
 if [ "$OS_VERSION" = 6 ] ; then
     yum install -y centos-release-scl
     yum install -y python27
-    scl enable python27 bash ; bash -c "make bootstrap lint test test-integration-backup-s3"
+    scl enable python27 bash && /bin/bash -l && make bootstrap lint test test-integration-backup-s3
 else
+    yum install -y python-devel python-setuptools python-pip
     make bootstrap lint test test-integration-backup-s3
 fi
