@@ -38,16 +38,10 @@ if [ "$OS_VERSION" = 6 ] ; then
     strip /usr/local/lib/libpython2.7.so.1.0
     wget https://bootstrap.pypa.io/get-pip.py
     python2.7 get-pip.py
-    pip2.7 install virtualenv
-    virtualenv stub_env
-    source stub_env/bin/activate
+    alias python=/usr/local/bin/python2.7
 else
     yum install -y python-devel python-setuptools python-pip
 fi
 
 cd /twindb-backup
 make bootstrap lint test test-integration-backup-s3
-
-if [ "$OS_VERSION" = 6 ] ; then
-    deactivate
-fi
