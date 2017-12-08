@@ -26,8 +26,6 @@ mysql_install_db && mysqld --user=root &
 timeout=300
 while [ ${timeout} -gt 0 ] ; do mysqladmin ping && break; sleep 1; timeout=$((${timeout} - 1)); done
 
-cd /twindb-backup
-
 if [ "$OS_VERSION" = 6 ] ; then
     cd /tmp
     wget http://python.org/ftp/python/2.7.14/Python-2.7.14.tgz
