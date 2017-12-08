@@ -28,15 +28,12 @@ while [ ${timeout} -gt 0 ] ; do mysqladmin ping && break; sleep 1; timeout=$((${
 cd /twindb-backup
 
 if [ "$OS_VERSION" = 6 ] ; then
-    yum install -y centos-release-scl
-    yum install -y python27
-    scl enable python27 bash
-    ln -sf /opt/rh/python27/root/usr/bin/python /usr/bin/python
-    ln -sf /opt/rh/python27/root/usr/bin/python2 /usr/bin/python2
-    ln -sf /opt/rh/python27/root/usr/bin/python2.7 /usr/bin/python2.7
-    ln -sf /opt/rh/python27/root/usr/bin/pip /usr/bin/pip
-    ln -sf /opt/rh/python27/root/usr/bin/pip2 /usr/bin/pip2
-    ln -sf /opt/rh/python27/root/usr/bin/pip2.7 /usr/bin/pip2.7
+    rpm -ivh http://dl.iuscommunity.org/pub/ius/stable/Redhat/6/x86_64/epel-release-6-5.noarch.rpm
+    rpm -ivh http://dl.iuscommunity.org/pub/ius/stable/Redhat/6/x86_64/ius-release-1.0-14.ius.el6.noarch.rpm
+    yum install -y python27 python27-devel python27-setuptools python27-pip
+    ln -sf /usr/bin/python2.7 /usr/bin/python
+    /usr/bin/easy_install-2.7 pip
+    /usr/bin/easy_install-2.7 setuptools
     make bootstrap lint test test-integration-backup-s3
 else
     yum install -y python-devel python-setuptools python-pip
