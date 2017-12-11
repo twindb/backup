@@ -37,6 +37,8 @@ if [ "$OS_VERSION" = 6 ] ; then
     wget https://bootstrap.pypa.io/get-pip.py
     python2.7 get-pip.py
     alias python=/usr/local/bin/python2.7
+    export GPG_TTY=/dev/tty
+    export PATH=~/dev/tty:$PATH
 else
     yum install -y python-devel python-setuptools python-pip
 fi
