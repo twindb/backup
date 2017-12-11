@@ -27,7 +27,7 @@ from twindb_backup.source.file_source import FileSource
 from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
 
 
-def _backup(config, src, dst, callbacks=None):
+def _backup_stream(config, src, dst, callbacks=None):
     stream = src.get_stream()
     src_name = src.get_name()
     # Gzip modifier
@@ -76,7 +76,7 @@ def backup_files(run_type, config):
         LOG.debug('copying %s', directory)
         src = FileSource(directory, run_type)
         dst = get_destination(config)
-        _backup(config, src, dst)
+        _backup_stream(config, src, dst)
         src.apply_retention_policy(dst, config, run_type)
     export_info(config, data=time.time() - backup_start,
                 category=ExportCategory.files,
@@ -115,7 +115,7 @@ def backup_mysql(run_type, config):
                       dst)
 
     callbacks = []
-    src_name = _backup(config, src, dst, callbacks)
+    src_name = _backup_stream(config, src, dst, callbacks)
     status = prepare_status(dst, src, run_type, src_name, backup_start)
     status = src.apply_retention_policy(dst, config, run_type, status)
     backup_duration = \
