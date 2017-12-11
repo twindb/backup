@@ -15,6 +15,7 @@ from twindb_backup import LOG, get_files_to_delete, INTERVALS, \
     MY_CNF_COMMON_PATHS
 from twindb_backup.source.base_source import BaseSource
 from twindb_backup.source.exceptions import MySQLSourceError
+from twindb_backup.ssh.exceptions import SshClientException
 
 
 class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
@@ -198,9 +199,14 @@ class MySQLSource(BaseSource):
         keep_copies = config.getint('retention',
                                     '%s_copies' % run_type)
 
-        objects = dst.list_files(prefix)
-
-        for backup_copy in get_files_to_delete(objects, keep_copies):
+        try:
+            backups_list = dst.list_files(prefix)
+        except SshClientException as err:
+            LOG.error('Failed to get list of backup copies in %s: %s',
+                      prefix, err)
+            return
+        LOG.debug('Remote copies: %r', backups_list)
+        for backup_copy in get_files_to_delete(backups_list, keep_copies):
             LOG.debug('Deleting remote file %s', backup_copy)
             dst.delete(backup_copy)
             status = self._delete_from_status(status,

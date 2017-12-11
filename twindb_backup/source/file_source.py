@@ -65,12 +65,8 @@ class FileSource(BaseSource):
 
     def apply_retention_policy(self, dst, config, run_type):
         """Apply retention policy"""
-        if dst.remote_path:
-            remote_path = dst.remote_path + '/'
-        else:
-            remote_path = ''
-        prefix = "{remote_path}{prefix}/files/{file}".format(
-            remote_path=remote_path,
+        prefix = "{remote_path}/{prefix}/files/{file}".format(
+            remote_path=dst.remote_path,
             prefix=self.get_prefix(),
             file=self._sanitize_filename()
         )
@@ -85,8 +81,8 @@ class FileSource(BaseSource):
             return
 
         LOG.debug('Remote copies: %r', backups_list)
-        for local_file in get_files_to_delete(backups_list, keep_copies):
-            LOG.debug('Deleting remote file %s', local_file)
-            dst.delete(local_file)
+        for backup_copy in get_files_to_delete(backups_list, keep_copies):
+            LOG.debug('Deleting remote file %s', backup_copy)
+            dst.delete(backup_copy)
 
         self._delete_local_files(self._sanitize_filename(), config)

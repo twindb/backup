@@ -117,7 +117,7 @@ def backup_mysql(run_type, config):
     callbacks = []
     src_name = _backup(config, src, dst, callbacks)
     status = prepare_status(dst, src, run_type, src_name, backup_start)
-    src.apply_retention_policy(dst, config, run_type, status)
+    status = src.apply_retention_policy(dst, config, run_type, status)
     backup_duration = \
         status[run_type][src_name]['backup_finished'] - \
         status[run_type][src_name]['backup_started']
