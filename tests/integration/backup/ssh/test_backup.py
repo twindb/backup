@@ -78,7 +78,7 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
         print(result.exc_info)
     assert result.exit_code == 0
 
-    dir_path = os.listdir("/var/backup/local")[0] + "hourly/files"
+    dir_path = os.listdir("/var/backup/local")[0] + "/hourly/files"
     assert len(os.listdir(dir_path)) == 1
 
     result = runner.invoke(main, [
@@ -107,5 +107,5 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
         print(result.exc_info)
     assert result.exit_code == 0
 
-    dir_path = os.listdir("/var/backup/local")[0] + "daily/files"
+    dir_path = os.listdir("/var/backup/local")[0] + "/daily/files"
     assert len(os.listdir(dir_path)) == 1
