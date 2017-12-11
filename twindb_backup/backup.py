@@ -29,16 +29,15 @@ from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
 
 def _backup(config, src, dst, callbacks=None):
     stream = src.get_stream()
-    src_name = src.get_name()
 
     # Gzip modifier
     stream = Gzip(stream).get_stream()
-    src_name += '.gz'
+    src.suffix += '.gz'
     # KeepLocal modifier
     try:
         keep_local_path = config.get('destination', 'keep_local_path')
         kl_modifier = KeepLocal(stream,
-                                os.path.join(keep_local_path, src_name))
+                                os.path.join(keep_local_path, src.get_name()))
         stream = kl_modifier.get_stream()
         if callbacks is not None:
             callbacks.append((kl_modifier, {
@@ -52,16 +51,16 @@ def _backup(config, src, dst, callbacks=None):
         stream = Gpg(stream,
                      config.get('gpg', 'recipient'),
                      config.get('gpg', 'keyring')).get_stream()
-        src_name += '.gpg'
+        src.suffix += '.gpg'
     except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
         pass
     except ModifierException as err:
         LOG.warning(err)
         LOG.warning('Will skip encryption')
-    if not dst.save(stream, src_name):
-        LOG.error('Failed to save backup copy %s', src_name)
+    if not dst.save(stream, src.get_name()):
+        LOG.error('Failed to save backup copy %s', src.get_name())
         exit(1)
-    return src_name
+    return src.get_name()
 
 
 def backup_files(run_type, config):
