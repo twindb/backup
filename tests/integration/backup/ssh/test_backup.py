@@ -1,3 +1,4 @@
+import os
 from click.testing import CliRunner
 
 from twindb_backup import LOG
@@ -54,6 +55,35 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
     result = runner.invoke(main, [
         '--debug',
         '--config', str(config),
+        'backup', 'hourly'
+    ])
+
+    if result.exit_code != 0:
+        print('Command output:')
+        print(result.output)
+        print(result.exception)
+        print(result.exc_info)
+    assert result.exit_code == 0
+
+    result = runner.invoke(main, [
+        '--debug',
+        '--config', str(config),
+        'backup', 'hourly'
+    ])
+
+    if result.exit_code != 0:
+        print('Command output:')
+        print(result.output)
+        print(result.exception)
+        print(result.exc_info)
+    assert result.exit_code == 0
+
+    dir_path = os.listdir("/var/backup/local")[0] + "hourly/files"
+    assert len(os.listdir(dir_path)) == 1
+
+    result = runner.invoke(main, [
+        '--debug',
+        '--config', str(config),
         'backup', 'daily'
     ])
 
@@ -63,3 +93,19 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
         print(result.exception)
         print(result.exc_info)
     assert result.exit_code == 0
+
+    result = runner.invoke(main, [
+        '--debug',
+        '--config', str(config),
+        'backup', 'daily'
+    ])
+
+    if result.exit_code != 0:
+        print('Command output:')
+        print(result.output)
+        print(result.exception)
+        print(result.exc_info)
+    assert result.exit_code == 0
+
+    dir_path = os.listdir("/var/backup/local")[0] + "daily/files"
+    assert len(os.listdir(dir_path)) == 1
