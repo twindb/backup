@@ -32,7 +32,6 @@ def _backup(config, src, dst, callbacks=None):
     # Gzip modifier
     stream = Gzip(stream).get_stream()
     src.suffix += '.gz'
-    callbacks = []
     # KeepLocal modifier
     try:
         keep_local_path = config.get('destination', 'keep_local_path')
