@@ -81,4 +81,3 @@ class BaseSource(object):
     @suffix.setter
     def suffix(self, suffix):
         self._suffix = suffix
-

@@ -7,7 +7,6 @@ from contextlib import contextmanager
 from subprocess import Popen, PIPE
 from twindb_backup import LOG, get_files_to_delete
 from twindb_backup.source.base_source import BaseSource
-from twindb_backup.ssh.exceptions import SshClientException
 
 
 class FileSource(BaseSource):
