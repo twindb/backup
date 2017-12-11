@@ -60,7 +60,7 @@ def _backup(config, src, dst, callbacks=None):
     if not dst.save(stream, src.get_name()):
         LOG.error('Failed to save backup copy %s', src.get_name())
         exit(1)
-    return src.suffix
+    return src.get_name()
 
 
 def backup_files(run_type, config):
@@ -76,7 +76,7 @@ def backup_files(run_type, config):
         LOG.debug('copying %s', directory)
         src = FileSource(directory, run_type)
         dst = get_destination(config)
-        src.suffix = _backup(config, src, dst)
+        _backup(config, src, dst)
         src.apply_retention_policy(dst, config, run_type)
     export_info(config, data=time.time() - backup_start,
                 category=ExportCategory.files,
@@ -115,12 +115,12 @@ def backup_mysql(run_type, config):
                       dst)
 
     callbacks = []
-    src.suffix = _backup(config, src, dst, callbacks)
-    status = prepare_status(dst, src, run_type, src.get_name(), backup_start)
+    src_name = _backup(config, src, dst, callbacks)
+    status = prepare_status(dst, src, run_type, src_name, backup_start)
     src.apply_retention_policy(dst, config, run_type, status)
     backup_duration = \
-        status[run_type][src.get_name()]['backup_finished'] - \
-        status[run_type][src.get_name()]['backup_started']
+        status[run_type][src_name]['backup_finished'] - \
+        status[run_type][src_name]['backup_started']
     export_info(config, data=backup_duration,
                 category=ExportCategory.mysql,
                 measure_type=ExportMeasureType.backup)
