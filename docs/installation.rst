@@ -35,13 +35,13 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/twindb/twindb_backup
+    $ git clone git://github.com/twindb/backup
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl  -OL https://github.com/twindb/twindb_backup/tarball/master
+    $ curl  -OL https://github.com/twindb/backup/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -50,5 +50,5 @@ Once you have a copy of the source, you can install it with:
     $ make install
 
 
-.. _Github repo: https://github.com/twindb/twindb_backup
-.. _tarball: https://github.com/twindb/twindb_backup/tarball/master
+.. _Github repo: https://github.com/twindb/backup
+.. _tarball: https://github.com/twindb/backup/tarball/master
