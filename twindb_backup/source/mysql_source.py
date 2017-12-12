@@ -15,7 +15,6 @@ from twindb_backup import LOG, get_files_to_delete, INTERVALS, \
     MY_CNF_COMMON_PATHS
 from twindb_backup.source.base_source import BaseSource
 from twindb_backup.source.exceptions import MySQLSourceError
-from twindb_backup.ssh.exceptions import SshClientException
 
 
 class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
