@@ -27,14 +27,14 @@ timeout=300
 while [ ${timeout} -gt 0 ] ; do mysqladmin ping && break; sleep 1; timeout=$((${timeout} - 1)); done
 
 if [ "$OS_VERSION" = 6 ] ; then
-    cd /tmp
-    wget http://python.org/ftp/python/2.7.14/Python-2.7.14.tgz
-    tar zxvf Python-2.7.14.tgz
+    cd /tmp > /dev/null
+    wget http://python.org/ftp/python/2.7.14/Python-2.7.14.tgz > /dev/null
+    tar zxvf Python-2.7.14.tgz > /dev/null
     cd Python-2.7.14
-    ./configure
-    make && make install
-    wget https://bootstrap.pypa.io/get-pip.py
-    python2.7 get-pip.py
+    ./configure > /dev/null
+    make && make install > /dev/null
+    wget https://bootstrap.pypa.io/get-pip.py > /dev/null
+    python2.7 get-pip.py > /dev/null
     export GPG_TTY=/dev/tty
 else
     yum install -y python-devel python-setuptools python-pip
