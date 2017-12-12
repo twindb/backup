@@ -8,8 +8,10 @@ Subpackages
 
     twindb_backup.cache
     twindb_backup.destination
+    twindb_backup.exporter
     twindb_backup.modifiers
     twindb_backup.source
+    twindb_backup.ssh
 
 Submodules
 ----------
@@ -30,10 +32,26 @@ twindb\_backup\.cli module
     :undoc-members:
     :show-inheritance:
 
+twindb\_backup\.clone module
+----------------------------
+
+.. automodule:: twindb_backup.clone
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 twindb\_backup\.configuration module
 ------------------------------------
 
 .. automodule:: twindb_backup.configuration
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+twindb\_backup\.export module
+-----------------------------
+
+.. automodule:: twindb_backup.export
     :members:
     :undoc-members:
     :show-inheritance:
