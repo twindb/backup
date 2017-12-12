@@ -199,12 +199,7 @@ class MySQLSource(BaseSource):
         keep_copies = config.getint('retention',
                                     '%s_copies' % run_type)
 
-        try:
-            backups_list = dst.list_files(prefix)
-        except SshClientException as err:
-            LOG.error('Failed to get list of backup copies in %s: %s',
-                      prefix, err)
-            return
+        backups_list = dst.list_files(prefix)
         LOG.debug('Remote copies: %r', backups_list)
         for backup_copy in get_files_to_delete(backups_list, keep_copies):
             LOG.debug('Deleting remote file %s', backup_copy)
