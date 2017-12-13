@@ -41,4 +41,7 @@ else
 fi
 
 cd /twindb-backup
-make bootstrap lint test test-integration-backup-s3
+make bootstrap lint test
+if [ "$OS_VERSION" = 7 ] ; then
+    make test-integration-backup-s3
+fi
