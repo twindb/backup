@@ -7,7 +7,6 @@ from contextlib import contextmanager
 from subprocess import Popen, PIPE
 from twindb_backup import LOG, get_files_to_delete
 from twindb_backup.source.base_source import BaseSource
-from twindb_backup.ssh.exceptions import SshClientException
 
 
 class FileSource(BaseSource):
@@ -65,28 +64,19 @@ class FileSource(BaseSource):
 
     def apply_retention_policy(self, dst, config, run_type):
         """Apply retention policy"""
-        if dst.remote_path:
-            remote_path = dst.remote_path + '/'
-        else:
-            remote_path = ''
-        prefix = "{remote_path}{prefix}/files/{file}".format(
-            remote_path=remote_path,
+        prefix = "{remote_path}/{prefix}/files/{file}".format(
+            remote_path=dst.remote_path,
             prefix=self.get_prefix(),
             file=self._sanitize_filename()
         )
         keep_copies = config.getint('retention',
                                     '%s_copies' % run_type)
 
-        try:
-            backups_list = dst.list_files(prefix)
-        except SshClientException as err:
-            LOG.error('Failed to get list of backup copies in %s: %s',
-                      prefix, err)
-            return
+        backups_list = dst.list_files(prefix)
 
         LOG.debug('Remote copies: %r', backups_list)
-        for local_file in get_files_to_delete(backups_list, keep_copies):
-            LOG.debug('Deleting remote file %s', local_file)
-            dst.delete(local_file)
+        for backup_copy in get_files_to_delete(backups_list, keep_copies):
+            LOG.debug('Deleting remote file %s', backup_copy)
+            dst.delete(backup_copy)
 
         self._delete_local_files(self._sanitize_filename(), config)

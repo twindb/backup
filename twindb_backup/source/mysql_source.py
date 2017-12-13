@@ -198,9 +198,9 @@ class MySQLSource(BaseSource):
         keep_copies = config.getint('retention',
                                     '%s_copies' % run_type)
 
-        objects = dst.list_files(prefix)
-
-        for backup_copy in get_files_to_delete(objects, keep_copies):
+        backups_list = dst.list_files(prefix)
+        LOG.debug('Remote copies: %r', backups_list)
+        for backup_copy in get_files_to_delete(backups_list, keep_copies):
             LOG.debug('Deleting remote file %s', backup_copy)
             dst.delete(backup_copy)
             status = self._delete_from_status(status,
