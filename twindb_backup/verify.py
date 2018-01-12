@@ -42,7 +42,7 @@ def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
     start_restore_time = time.time()
     success = True
     try:
-        restore_from_mysql(config, url, dst_path)
+        restore_from_mysql(config, url, dst_path, dst_path)
         edit_backup_my_cnf(dst_path)
     except (TwinDBBackupError, OSError, IOError) as err:
         LOG.error(err)

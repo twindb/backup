@@ -16,7 +16,7 @@ def test_verify_mysql_backup_if_restore_is_success(mock_get_dst, mock_restore, m
     mock_dst.get_latest_backup.return_value = "/foo/bar"
     mock_get_dst.return_value = mock_dst
     verify_mysql_backup(mock_config, dst_path='/dst/path', backup_copy='latest')
-    mock_restore.assert_called_once_with(mock_config, "/foo/bar", '/dst/path')
+    mock_restore.assert_called_once_with(mock_config, "/foo/bar", '/dst/path', '/dst/path')
     mock_edit.assert_called_once_with('/dst/path')
 
 
@@ -31,7 +31,7 @@ def test_verify_mysql_backup_if_restore_is_failed(mock_get_dst, mock_restore, mo
     mock_dst.get_latest_backup.return_value = "/foo/bar"
     mock_get_dst.return_value = mock_dst
     verify_mysql_backup(mock_config, '/foo/bar/', 'latest')
-    mock_restore.assert_called_once_with(mock_config, "/foo/bar", '/foo/bar/')
+    mock_restore.assert_called_once_with(mock_config, "/foo/bar", '/foo/bar/', '/foo/bar/')
     mock_edit.assert_not_called()
 
 
