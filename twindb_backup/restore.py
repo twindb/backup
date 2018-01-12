@@ -19,7 +19,7 @@ from twindb_backup.configuration import get_destination
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
 from twindb_backup.export import export_info
-from twindb_backup.exporter.base_exporter import ExportCategory,\
+from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
@@ -90,7 +90,7 @@ def get_my_cnf(status, key):
 
 
 def restore_from_mysql_full(stream, dst_dir, config,
-                            redo_only=False):
+                            tmp_dir=None, redo_only=False):
     """
     Restore MySQL datadir from a backup copy
 
@@ -99,6 +99,8 @@ def restore_from_mysql_full(stream, dst_dir, config,
     :type dst_dir: str
     :param config: Tool configuration.
     :type config: ConfigParser.ConfigParser
+    :param tmp_dir: Path to temp dir
+    :type tmp_dir: str
     :param redo_only: True if the function has to do final apply of
         the redo log. For example, if you restore backup from a full copy
         it should be False. If you restore from incremental copy and
@@ -131,6 +133,8 @@ def restore_from_mysql_full(stream, dst_dir, config,
                           '--apply-log']
         if redo_only:
             xtrabackup_cmd += ['--redo-only']
+        if tmp_dir is not None:
+            xtrabackup_cmd += ['--tmpdir=%s' % tmp_dir]
         xtrabackup_cmd += [dst_dir]
 
         LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
@@ -179,7 +183,8 @@ def _extract_xbstream(input_stream, working_dir):
         return False
 
 
-def restore_from_mysql_incremental(stream, dst_dir, config):
+# pylint: disable=too-many-locals,too-many-branches,too-many-statements
+def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None):
     """
     Restore MySQL datadir from an incremental copy.
 
@@ -188,6 +193,8 @@ def restore_from_mysql_incremental(stream, dst_dir, config):
     :type dst_dir: str
     :param config: Tool configuration.
     :type config: ConfigParser.ConfigParser
+    :param tmp_dir: Path to temp dir
+    :type tmp_dir: str
     :return: If success, return True
     :rtype: bool
     """
@@ -223,6 +230,8 @@ def restore_from_mysql_incremental(stream, dst_dir, config):
                               '--use-memory=%d' % (mem_usage.available / 2),
                               '--apply-log', '--redo-only', dst_dir,
                               '--incremental-dir', inc_dir]
+            if tmp_dir is not None:
+                xtrabackup_cmd += ['--tmpdir=%s' % tmp_dir]
             LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
             xtrabackup_proc = Popen(xtrabackup_cmd,
                                     stdout=None,
@@ -239,6 +248,8 @@ def restore_from_mysql_incremental(stream, dst_dir, config):
                               '--use-memory=%d' % (mem_usage.available / 2),
                               '--apply-log', dst_dir]
             LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
+            if tmp_dir is not None:
+                xtrabackup_cmd += ['--tmpdir=%s' % tmp_dir]
             xtrabackup_proc = Popen(xtrabackup_cmd,
                                     stdout=None,
                                     stderr=None)
@@ -303,7 +314,7 @@ def update_grastate(dst_dir, status, key):
 
 
 # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-def restore_from_mysql(config, backup_copy, dst_dir, cache=None):
+def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
     """
     Restore MySQL datadir in a given directory
 
@@ -313,6 +324,8 @@ def restore_from_mysql(config, backup_copy, dst_dir, cache=None):
     :type backup_copy: str
     :param dst_dir: Destination directory. Must exist and be empty.
     :type dst_dir: str
+    :param tmp_dir: Path to temp directory
+    :type tmp_dir: str
     :param cache: Local cache object.
     :type cache: Cache
     """
@@ -323,8 +336,8 @@ def restore_from_mysql(config, backup_copy, dst_dir, cache=None):
     restore_start = time.time()
     try:
         keep_local_path = config.get('destination', 'keep_local_path')
-        if os.path.exists(backup_copy) \
-                and backup_copy.startswith(keep_local_path):
+        if os.path.exists(backup_copy) and \
+                backup_copy.startswith(keep_local_path):
             dst = Local(keep_local_path)
     except ConfigParser.NoOptionError:
         pass
@@ -349,10 +362,10 @@ def restore_from_mysql(config, backup_copy, dst_dir, cache=None):
                 # restore from cache
                 cache.restore_in(cache_key, dst_dir)
             else:
-                restore_from_mysql_full(stream, dst_dir, config)
+                restore_from_mysql_full(stream, dst_dir, config, tmp_dir)
                 cache.add(dst_dir, cache_key)
         else:
-            restore_from_mysql_full(stream, dst_dir, config)
+            restore_from_mysql_full(stream, dst_dir, config, tmp_dir)
 
     else:
         full_copy = dst.get_full_copy_name(backup_copy)
@@ -367,13 +380,13 @@ def restore_from_mysql(config, backup_copy, dst_dir, cache=None):
                 cache.restore_in(cache_key, dst_dir)
             else:
                 restore_from_mysql_full(full_stream, dst_dir,
-                                        config, redo_only=True)
+                                        config, tmp_dir, redo_only=True)
                 cache.add(dst_dir, cache_key)
         else:
             restore_from_mysql_full(full_stream, dst_dir,
-                                    config, redo_only=True)
+                                    config, tmp_dir, redo_only=True)
 
-        restore_from_mysql_incremental(stream, dst_dir, config)
+        restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir)
 
     config_dir = os.path.join(dst_dir, "_config")
 
