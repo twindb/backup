@@ -3,8 +3,10 @@
 Module that verify backup copies.
 """
 import json
+import shutil
 import time
 import ConfigParser
+import tempfile
 
 from twindb_backup import LOG, TwinDBBackupError
 from twindb_backup.configuration import get_destination
@@ -42,8 +44,10 @@ def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
     start_restore_time = time.time()
     success = True
     try:
-        restore_from_mysql(config, url, dst_path, dst_path)
+        tmp_dir = tempfile.mkdtemp()
+        restore_from_mysql(config, url, dst_path, tmp_dir)
         edit_backup_my_cnf(dst_path)
+        shutil.rmtree(tmp_dir)
     except (TwinDBBackupError, OSError, IOError) as err:
         LOG.error(err)
         success = False

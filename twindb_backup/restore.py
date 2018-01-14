@@ -89,8 +89,7 @@ def get_my_cnf(status, key):
         yield k, value
 
 
-def restore_from_mysql_full(stream, dst_dir, config,
-                            tmp_dir=None, redo_only=False):
+def restore_from_mysql_full(stream, dst_dir, config, redo_only=False):
     """
     Restore MySQL datadir from a backup copy
 
@@ -99,8 +98,6 @@ def restore_from_mysql_full(stream, dst_dir, config,
     :type dst_dir: str
     :param config: Tool configuration.
     :type config: ConfigParser.ConfigParser
-    :param tmp_dir: Path to temp dir
-    :type tmp_dir: str
     :param redo_only: True if the function has to do final apply of
         the redo log. For example, if you restore backup from a full copy
         it should be False. If you restore from incremental copy and
@@ -133,8 +130,7 @@ def restore_from_mysql_full(stream, dst_dir, config,
                           '--apply-log']
         if redo_only:
             xtrabackup_cmd += ['--redo-only']
-        if tmp_dir is not None:
-            xtrabackup_cmd += ['--tmpdir=%s' % tmp_dir]
+
         xtrabackup_cmd += [dst_dir]
 
         LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
@@ -198,14 +194,17 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None):
     :return: If success, return True
     :rtype: bool
     """
-    try:
-        inc_dir = tempfile.mkdtemp()
-    except (IOError, OSError) as err:
+    if tmp_dir is None:
         try:
-            empty_dir(dst_dir)
+            inc_dir = tempfile.mkdtemp()
         except (IOError, OSError) as err:
+            try:
+                empty_dir(dst_dir)
+            except (IOError, OSError) as err:
+                raise
             raise
-        raise
+    else:
+        inc_dir = tmp_dir
     # GPG modifier
     try:
         gpg = Gpg(stream,
@@ -230,8 +229,6 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None):
                               '--use-memory=%d' % (mem_usage.available / 2),
                               '--apply-log', '--redo-only', dst_dir,
                               '--incremental-dir', inc_dir]
-            if tmp_dir is not None:
-                xtrabackup_cmd += ['--tmpdir=%s' % tmp_dir]
             LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
             xtrabackup_proc = Popen(xtrabackup_cmd,
                                     stdout=None,
@@ -248,8 +245,6 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None):
                               '--use-memory=%d' % (mem_usage.available / 2),
                               '--apply-log', dst_dir]
             LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
-            if tmp_dir is not None:
-                xtrabackup_cmd += ['--tmpdir=%s' % tmp_dir]
             xtrabackup_proc = Popen(xtrabackup_cmd,
                                     stdout=None,
                                     stderr=None)
@@ -380,11 +375,11 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
                 cache.restore_in(cache_key, dst_dir)
             else:
                 restore_from_mysql_full(full_stream, dst_dir,
-                                        config, tmp_dir, redo_only=True)
+                                        config, redo_only=True)
                 cache.add(dst_dir, cache_key)
         else:
             restore_from_mysql_full(full_stream, dst_dir,
-                                    config, tmp_dir, redo_only=True)
+                                    config, redo_only=True)
 
         restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir)
 
