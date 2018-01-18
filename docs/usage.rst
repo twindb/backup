@@ -82,12 +82,13 @@ MySQL
 ~~~~~
 
 XtraBackup needs to connect to MySQL. In ``[mysql]`` section you specify a defaults file with user and password.
+Besides this, You can specify period for MySQL full backup.
 
 ::
 
     [mysql]
     mysql_defaults_file=/etc/twindb/my.cnf
-
+    full_backup=daily
 
 Encryption
 ~~~~~~~~~~

@@ -1,35 +1,35 @@
-twindb_backup.modifiers package
-===============================
+twindb\_backup\.modifiers package
+=================================
 
 Submodules
 ----------
 
-twindb_backup.modifiers.base module
------------------------------------
+twindb\_backup\.modifiers\.base module
+--------------------------------------
 
 .. automodule:: twindb_backup.modifiers.base
     :members:
     :undoc-members:
     :show-inheritance:
 
-twindb_backup.modifiers.gpg module
-----------------------------------
+twindb\_backup\.modifiers\.gpg module
+-------------------------------------
 
 .. automodule:: twindb_backup.modifiers.gpg
     :members:
     :undoc-members:
     :show-inheritance:
 
-twindb_backup.modifiers.gzip module
------------------------------------
+twindb\_backup\.modifiers\.gzip module
+--------------------------------------
 
 .. automodule:: twindb_backup.modifiers.gzip
     :members:
     :undoc-members:
     :show-inheritance:
 
-twindb_backup.modifiers.keeplocal module
-----------------------------------------
+twindb\_backup\.modifiers\.keeplocal module
+-------------------------------------------
 
 .. automodule:: twindb_backup.modifiers.keeplocal
     :members:
