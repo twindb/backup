@@ -65,8 +65,7 @@ end
 dependency "preparation"
 
 # twindb-backup dependencies/components
-runtime_dependency 'percona-xtrabackup-24'
-
+dependency "xtrabackup"
 dependency 'python'
 dependency 'pip'
 dependency 'libffi'
