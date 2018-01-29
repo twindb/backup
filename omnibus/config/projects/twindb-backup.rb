@@ -88,10 +88,6 @@ if redhat?
     runtime_dependency 'cronie'
     runtime_dependency 'logrotate'
     runtime_dependency 'libaio'
-    runtime_dependency 'libaio-devel'
-    runtime_dependency 'libgcrypt-devel'
-    runtime_dependency 'libev-devel'
-    runtime_dependency 'libcurl-devel'
 end
 
 # twindb-backup
