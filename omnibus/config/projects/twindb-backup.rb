@@ -70,6 +70,7 @@ dependency 'python'
 dependency 'pip'
 dependency 'libffi'
 runtime_dependency 'libtool'
+dependency "xtrabackup"
 
 # Debian
 if debian?
