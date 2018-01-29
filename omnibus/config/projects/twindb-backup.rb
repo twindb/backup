@@ -76,9 +76,9 @@ if debian?
     dependency 'libyaml'
     runtime_dependency 'openssh-client'
     runtime_dependency 'cron'
-    runtime_dependency 'libev-dev'
-    runtime_dependency 'libgcrypt11-dev'
-    runtime_dependency 'libaio-dev'
+    runtime_dependency 'libev'
+    runtime_dependency 'libgcrypt11'
+    runtime_dependency 'libaio'
 end
 
 # RHEL/CentOS
