@@ -80,6 +80,9 @@ if debian?
     runtime_dependency 'libev'
     runtime_dependency 'libgcrypt11'
     runtime_dependency 'libaio'
+    runtime_dependency 'libev-dev'
+    runtime_dependency 'libgcrypt11-dev'
+    runtime_dependency 'libaio-dev'
 end
 
 # RHEL/CentOS
@@ -89,6 +92,11 @@ if redhat?
     runtime_dependency 'cronie'
     runtime_dependency 'logrotate'
     runtime_dependency 'libaio'
+    runtime_dependency 'libaio-devel'
+    runtime_dependency 'libgcrypt-devel'
+    runtime_dependency 'libev-devel'
+    runtime_dependency 'libcurl-devel'
+
 end
 
 # twindb-backup
