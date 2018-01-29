@@ -158,7 +158,7 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
     runner = CliRunner()
 
     #Try to overflow status file
-    for lp in range(200):
+    for lp in range(400):
         result = runner.invoke(main, [
             '--debug',
             '--config', str(config),
