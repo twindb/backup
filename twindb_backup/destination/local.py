@@ -85,7 +85,6 @@ class Local(BaseDestination):
         raw_status = base64.b64encode(json.dumps(status))
         with open(self.status_path, 'w') as fstatus:
             fstatus.write(raw_status)
-        return status
 
     def _read_status(self):
         if not self._status_exists():

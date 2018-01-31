@@ -55,6 +55,10 @@ class Ssh(BaseDestination):
             remote_path=self.remote_path,
             hostname=hostname
         )
+        self.status_tmp_file = "{remote_path}/{hostname}/status.tmp".format(
+            remote_path=self.remote_path,
+            hostname=hostname
+        )
 
     def save(self, handler, name):
         """
@@ -225,9 +229,11 @@ class Ssh(BaseDestination):
         :return: Status in JSON format, if it exist
         """
         if self._status_exists():
-            cmd = "cat %s" % self.status_path
-            with self._ssh_client.get_remote_handlers(cmd) as (_, stdout, _):
-                return json.loads(base64.b64decode(stdout.read()))
+            return json.loads(
+                base64.b64decode(
+                    self._get_file_content(self.status_path)
+                )
+            )
         else:
             return self._empty_status
 
@@ -322,3 +328,8 @@ class Ssh(BaseDestination):
                 time.sleep(1)
 
         return False
+
+    def _get_file_content(self, path):
+        cmd = "cat %s" % path
+        with self._ssh_client.get_remote_handlers(cmd) as (_, stdout, _):
+            return stdout.read()

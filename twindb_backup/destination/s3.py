@@ -425,8 +425,6 @@ class S3(BaseDestination):
 
         self.validate_client_response(response)
 
-        return status
-
     def _read_status(self):
 
         if self._status_exists():
