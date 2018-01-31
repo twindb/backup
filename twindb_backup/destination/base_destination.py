@@ -2,12 +2,16 @@
 """
 Module defines Base destination class and destination exception(s).
 """
+import base64
+import hashlib
+import json
 from abc import abstractmethod
 
 from subprocess import Popen, PIPE
 
 from twindb_backup import LOG, INTERVALS
-from twindb_backup.destination.exceptions import DestinationError
+from twindb_backup.destination.exceptions import DestinationError, \
+    StatusFileError
 
 
 class BaseDestination(object):
@@ -115,7 +119,13 @@ class BaseDestination(object):
         :return: dictionary with the status
         """
         if status:
-            return self._write_status(status)
+            status['checksum'] = hashlib.md5(
+                json.dumps(
+                    status, sort_keys=True
+                )
+            ).hexdigest()
+            raw_status = base64.b64encode(json.dumps(status, sort_keys=True))
+            return self._write_status(raw_status)
         else:
             return self._read_status()
 
@@ -125,7 +135,18 @@ class BaseDestination(object):
 
     @abstractmethod
     def _read_status(self):
-        """Function that actually reads status"""
+        pass
+
+    def _read_status_with_safe(self, status_path, status_tmp_path):
+        if self._status_exists():
+            if self._is_valid_status(status_path):
+                return self._get_pretty_status(status_path)
+            if self._is_valid_status(status_tmp_path):
+                self._move_file(status_tmp_path, status_path)
+                return self._get_pretty_status(status_path)
+            raise StatusFileError("Valid status file not found")
+        else:
+            return self._empty_status
 
     @abstractmethod
     def _status_exists(self):
@@ -193,3 +214,38 @@ class BaseDestination(object):
             filename=latest
         )
         return url
+
+    @abstractmethod
+    def _get_file_content(self, path):
+        """Function for get file content by path"""
+
+    def _is_valid_status(self, path):
+        expected_status = json.loads(
+            base64.b64decode(
+                self._get_file_content(path)
+            )
+        )
+        if "checksum" not in expected_status:
+            LOG.debug("Checksum key not found in expected status")
+            return False
+
+        expected_md5 = expected_status.pop('checksum')
+        actual_md5 = hashlib.md5(
+            json.dumps(
+                expected_status, sort_keys=True
+            )
+        ).hexdigest()
+        return actual_md5 == expected_md5
+
+    def _get_pretty_status(self, path):
+        status = json.loads(
+            base64.b64decode(
+                self._get_file_content(path)
+            )
+        )
+        del status['checksum']
+        return status
+
+    @abstractmethod
+    def _move_file(self, source, destination):
+        pass

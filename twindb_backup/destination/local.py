@@ -2,14 +2,13 @@
 """
 Module defines Local destination.
 """
-import base64
-import json
 import os
 import socket
 from subprocess import Popen
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
+from twindb_backup.destination.exceptions import StatusFileError
 from twindb_backup.util import run_command
 
 
@@ -29,6 +28,10 @@ class Local(BaseDestination):
             else:
                 raise
         self.status_path = "{path}/{hostname}/status".format(
+            path=self.path,
+            hostname=socket.gethostname()
+        )
+        self.status_tmp_path = "{path}/{hostname}/status.tmp".format(
             path=self.path,
             hostname=socket.gethostname()
         )
@@ -82,17 +85,24 @@ class Local(BaseDestination):
         return run_command(cmd)
 
     def _write_status(self, status):
-        raw_status = base64.b64encode(json.dumps(status))
-        with open(self.status_path, 'w') as fstatus:
-            fstatus.write(raw_status)
+        with open(self.status_tmp_path, 'w') as fstatus:
+            fstatus.write(status)
+        if self._is_valid_status(self.status_tmp_path):
+            self._move_file(self.status_tmp_path, self.status_path)
+            return
+        raise StatusFileError("Valid status file not found")
+
+    def _get_file_content(self, path):
+        f_descr = open(path, "r")
+        return f_descr.read()
+
+    def _move_file(self, source, destination):
+        cmd = ["cp", "-rf", source, destination]
+        run_command(cmd)
 
     def _read_status(self):
-        if not self._status_exists():
-            return self._empty_status
-
-        with open(self.status_path) as status_descriptor:
-            cout = status_descriptor.read()
-            return json.loads(base64.b64decode(cout))
+        return self._read_status_with_safe(self.status_path,
+                                           self.status_tmp_path)
 
     def _status_exists(self):
         return os.path.exists(self.status_path)

@@ -2,9 +2,6 @@
 """
 Module for S3 destination.
 """
-import base64
-
-import json
 import os
 import socket
 
@@ -22,7 +19,8 @@ from boto3.s3.transfer import TransferConfig
 
 from twindb_backup import LOG, TwinDBBackupError
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.destination.exceptions import S3DestinationError
+from twindb_backup.destination.exceptions import S3DestinationError, \
+    StatusFileError
 
 S3_CONNECT_TIMEOUT = 60
 S3_READ_TIMEOUT = 600
@@ -59,7 +57,7 @@ class S3FileAccess(object):  # pylint: disable=too-few-public-methods
     private = 'private'
 
 
-class S3(BaseDestination):
+class S3(BaseDestination):  # pylint: disable=too-many-instance-attributes
     """
     S3 destination class.
 
@@ -84,6 +82,9 @@ class S3(BaseDestination):
         os.environ["AWS_DEFAULT_REGION"] = self.default_region
 
         self.status_path = "{hostname}/status".format(
+            hostname=hostname
+        )
+        self.status_tmp_path = "{hostname}/status.tmp".format(
             hostname=hostname
         )
 
@@ -417,25 +418,18 @@ class S3(BaseDestination):
         return 0
 
     def _write_status(self, status):
-        raw_status = base64.b64encode(json.dumps(status))
-
-        response = self.s3_client.put_object(Body=raw_status,
+        response = self.s3_client.put_object(Body=status,
                                              Bucket=self.bucket,
-                                             Key=self.status_path)
-
+                                             Key=self.status_tmp_path)
         self.validate_client_response(response)
+        if self._is_valid_status(self.status_tmp_path):
+            self._move_file(self.status_tmp_path, self.status_path)
+            return
+        raise StatusFileError("Valid status file not found")
 
     def _read_status(self):
-
-        if self._status_exists():
-            response = self.s3_client.get_object(Bucket=self.bucket,
-                                                 Key=self.status_path)
-            self.validate_client_response(response)
-
-            content = response['Body'].read()
-            return json.loads(base64.b64decode(content))
-        else:
-            return self._empty_status
+        return self._read_status_with_safe(self.status_path,
+                                           self.status_tmp_path)
 
     def _status_exists(self):
         s3client = boto3.resource('s3')
@@ -531,3 +525,17 @@ class S3(BaseDestination):
             return self._get_file_url(s3_url)
         else:
             raise TwinDBBackupError("File not found via url: %s", s3_url)
+
+    def _get_file_content(self, path):
+        response = self.s3_client.get_object(Bucket=self.bucket,
+                                             Key=path)
+        self.validate_client_response(response)
+
+        content = response['Body'].read()
+        return content
+
+    def _move_file(self, source, destination):
+        response = self.s3_client.copy_object(Bucket=self.bucket,
+                                              CopySource=source,
+                                              Key=destination)
+        self.validate_client_response(response)

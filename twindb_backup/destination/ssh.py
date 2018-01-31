@@ -2,8 +2,6 @@
 """
 Module for SSH destination.
 """
-import base64
-import json
 import socket
 
 import os
@@ -14,7 +12,8 @@ import time
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.destination.exceptions import SshDestinationError
+from twindb_backup.destination.exceptions import SshDestinationError, \
+    StatusFileError
 from twindb_backup.ssh.client import SshClient
 from twindb_backup.ssh.exceptions import SshClientException
 
@@ -55,7 +54,7 @@ class Ssh(BaseDestination):
             remote_path=self.remote_path,
             hostname=hostname
         )
-        self.status_tmp_file = "{remote_path}/{hostname}/status.tmp".format(
+        self.status_tmp_path = "{remote_path}/{hostname}/status.tmp".format(
             remote_path=self.remote_path,
             hostname=hostname
         )
@@ -211,31 +210,14 @@ class Ssh(BaseDestination):
                 read_process.join()
 
     def _write_status(self, status):
-        """
-        Write status
 
-        :param status: Status fo write
-        :type status: str
-        """
-        raw_status = base64.b64encode(json.dumps(status))
-        cmd = "cat - > %s" % self.status_path
+        cmd = "cat - > %s" % self.status_tmp_path
         with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
-            cin.write(raw_status)
-
-    def _read_status(self):
-        """
-        Read status
-
-        :return: Status in JSON format, if it exist
-        """
-        if self._status_exists():
-            return json.loads(
-                base64.b64decode(
-                    self._get_file_content(self.status_path)
-                )
-            )
-        else:
-            return self._empty_status
+            cin.write(status)
+        if self._is_valid_status(self.status_tmp_path):
+            self._move_file(self.status_tmp_path, self.status_path)
+            return
+        raise StatusFileError("Valid status file not found")
 
     def _status_exists(self):
         """
@@ -329,7 +311,15 @@ class Ssh(BaseDestination):
 
         return False
 
+    def _read_status(self):
+        return self._read_status_with_safe(self.status_path,
+                                           self.status_tmp_path)
+
     def _get_file_content(self, path):
         cmd = "cat %s" % path
         with self._ssh_client.get_remote_handlers(cmd) as (_, stdout, _):
             return stdout.read()
+
+    def _move_file(self, source, destination):
+        cmd = 'yes | cp -rf %s %s' % (source, destination)
+        self.execute_command(cmd)
