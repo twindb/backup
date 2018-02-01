@@ -9,6 +9,8 @@ from abc import abstractmethod
 
 from subprocess import Popen, PIPE
 
+import time
+
 from twindb_backup import LOG, INTERVALS
 from twindb_backup.destination.exceptions import DestinationError, \
     StatusFileError
@@ -128,7 +130,9 @@ class BaseDestination(object):
                 )
             ).hexdigest()
             raw_status = base64.b64encode(json.dumps(status, sort_keys=True))
-            return self._write_status(raw_status)
+            self._write_status(raw_status)
+            # checksum only for internal usage, no public
+            return self._get_pretty_status(self.status_path)
         else:
             return self._read_status()
 
@@ -139,7 +143,13 @@ class BaseDestination(object):
     def _read_status(self):
         if not self._status_exists():
             return self._empty_status
-        if self._is_valid_status(self.status_path):
+        i = 1
+        while not self._is_valid_status(self.status_path):
+            if i == 4:
+                break
+            time.sleep(3 * i)
+            i = i + 1
+        if i < 4:
             return self._get_pretty_status(self.status_path)
         if self._is_valid_status(self.status_tmp_path):
             self._move_file(self.status_tmp_path, self.status_path)

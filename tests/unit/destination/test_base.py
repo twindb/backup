@@ -8,15 +8,18 @@ from twindb_backup.destination.exceptions import DestinationError
 
 
 # noinspection PyUnresolvedReferences
-#@mock.patch('twindb_backup.destination.base_destination.json')
+@mock.patch.object(BaseDestination, '_get_pretty_status')
 @mock.patch.object(BaseDestination, '_write_status')
 @mock.patch.object(BaseDestination, '_read_status')
-def test_status(mock_read_status, mock_write_status):
+def test_status(mock_read_status,
+                mock_write_status,
+                mock_pretty_status):
     dst = BaseDestination()
-    dst.status(status={})
-    mock_write_status.assesrt_called_once_with({})
+    dst.status_path = "/foo/bar"
     dst.status()
-
+    mock_read_status.assert_called_once_with()
+    dst.status(status={"foo": "bar"})
+    mock_pretty_status.assert_called_once_with(dst.status_path)
 
 @mock.patch('twindb_backup.destination.base_destination.Popen')
 def test__save(mock_popen, tmpdir):
