@@ -128,7 +128,9 @@ class BaseDestination(object):
                 )
             ).hexdigest()
             raw_status = base64.b64encode(json.dumps(status, sort_keys=True))
-            return self._write_status(raw_status)
+            self._write_status(raw_status)
+            # checksum only for internal usage, no public
+            return self._get_pretty_status(self.status_path)
         else:
             return self._read_status()
 

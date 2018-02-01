@@ -433,10 +433,9 @@ class S3(BaseDestination):
                                              Bucket=self.bucket,
                                              Key=self.status_tmp_path)
         self.validate_client_response(response)
-        if self._is_valid_status(self.status_tmp_path):
-            self._move_file(self.status_tmp_path, self.status_path)
-            return
-        raise StatusFileError("Valid status file not found")
+        if not self._is_valid_status(self.status_tmp_path):
+            raise StatusFileError("Valid status file not found")
+        self._move_file(self.status_tmp_path, self.status_path)
 
     @staticmethod
     def validate_client_response(response):

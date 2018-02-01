@@ -84,10 +84,9 @@ class Local(BaseDestination):
     def _write_status(self, status):
         with open(self.status_tmp_path, 'w') as fstatus:
             fstatus.write(status)
-        if self._is_valid_status(self.status_tmp_path):
-            self._move_file(self.status_tmp_path, self.status_path)
-            return
-        raise StatusFileError("Valid status file not found")
+        if not self._is_valid_status(self.status_tmp_path):
+            raise StatusFileError("Valid status file not found")
+        self._move_file(self.status_tmp_path, self.status_path)
 
     def _get_file_content(self, path):
         with open(path) as f_descr:
