@@ -131,8 +131,9 @@ class BaseDestination(object):
             ).hexdigest()
             raw_status = base64.b64encode(json.dumps(status, sort_keys=True))
             self._write_status(raw_status)
-        else:
-            return self._read_status()
+            # checksum only for internal usage, no public
+            return self._get_pretty_status(self.status_path)
+        return self._read_status()
 
     @abstractmethod
     def _write_status(self, status):

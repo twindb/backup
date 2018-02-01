@@ -93,8 +93,10 @@ class Local(BaseDestination):
             return f_descr.read()
 
     def _move_file(self, source, destination):
-        cmd = ["cp", "-rf", source, destination]
-        run_command(cmd)
+        LOG.debug("Move file form %s to %s", source, destination)
+        with open(source) as f_source:
+            with open(destination, 'w') as f_destination:
+                f_destination.write(f_source.read())
 
     def _status_exists(self):
         return os.path.exists(self.status_path)
