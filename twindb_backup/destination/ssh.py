@@ -207,13 +207,13 @@ class Ssh(BaseDestination):
                 read_process.join()
 
     def _write_status(self, status):
+
         cmd = "cat - > %s" % self.status_tmp_path
-        for _ in range(0, 3):
-            with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
-                cin.write(status)
-            if self._is_valid_status(self.status_tmp_path):
-                self._move_file(self.status_tmp_path, self.status_path)
-                return
+        with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
+            cin.write(status)
+        if self._is_valid_status(self.status_tmp_path):
+            self._move_file(self.status_tmp_path, self.status_path)
+            return
         raise StatusFileError("Valid status file not found")
 
     def _status_exists(self):
@@ -235,7 +235,8 @@ class Ssh(BaseDestination):
         elif status.strip() == 'not_exists':
             return False
         else:
-            raise SshDestinationError('Unrecognized response: %s' % status)
+            raise SshDestinationError('Unrecognized response: %s'
+                                      % cout.read())
 
     def execute_command(self, cmd, quiet=False):
         """Execute ssh command
