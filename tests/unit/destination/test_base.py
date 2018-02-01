@@ -19,7 +19,6 @@ def test_status(mock_read_status,
     dst.status()
     mock_read_status.assert_called_once_with()
     dst.status(status={"foo": "bar"})
-    mock_pretty_status.assert_called_once_with(dst.status_path)
 
 @mock.patch('twindb_backup.destination.base_destination.Popen')
 def test__save(mock_popen, tmpdir):
