@@ -19,6 +19,8 @@ class BaseDestination(object):
 
     def __init__(self):
         self.remote_path = ''
+        self.status_path = ''
+        self.status_tmp_path = ''
 
     @abstractmethod
     def save(self, handler, name):
@@ -102,7 +104,7 @@ class BaseDestination(object):
         will read status from the remote storage.
         Otherwise it will store the status remotely.
 
-        :param status: dictionary like
+        :param status: Dictionary with status
 
         ::
 
@@ -113,9 +115,10 @@ class BaseDestination(object):
                         'binlog': 'mysql-bin.000001',
                         'position': 43670
                     }
-                ]
+                ],
+                'checksum': 'c2a8ed7ddbf759a67b2d5ea256f05fb8'
             }
-
+        :type status: dict
         :return: dictionary with the status
         """
         if status:
@@ -133,20 +136,15 @@ class BaseDestination(object):
     def _write_status(self, status):
         """Function that actually writes status"""
 
-    @abstractmethod
     def _read_status(self):
-        pass
-
-    def _read_status_with_safe(self, status_path, status_tmp_path):
-        if self._status_exists():
-            if self._is_valid_status(status_path):
-                return self._get_pretty_status(status_path)
-            if self._is_valid_status(status_tmp_path):
-                self._move_file(status_tmp_path, status_path)
-                return self._get_pretty_status(status_path)
-            raise StatusFileError("Valid status file not found")
-        else:
+        if not self._status_exists():
             return self._empty_status
+        if self._is_valid_status(self.status_path):
+            return self._get_pretty_status(self.status_path)
+        if self._is_valid_status(self.status_tmp_path):
+            self._move_file(self.status_tmp_path, self.status_path)
+            return self._get_pretty_status(self.status_path)
+        raise StatusFileError("Valid status file not found")
 
     @abstractmethod
     def _status_exists(self):

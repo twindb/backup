@@ -82,9 +82,7 @@ class S3(BaseDestination):
         self.status_path = "{hostname}/status".format(
             hostname=hostname
         )
-        self.status_tmp_path = "{hostname}/status.tmp".format(
-            hostname=hostname
-        )
+        self.status_tmp_path = self.status_path + ".tmp"
 
         # Setup an authenticated S3 client that we will use throughout
         self.s3_client = self.setup_s3_client()
@@ -417,20 +415,6 @@ class S3(BaseDestination):
 
         return 0
 
-    def _write_status(self, status):
-        response = self.s3_client.put_object(Body=status,
-                                             Bucket=self.bucket,
-                                             Key=self.status_tmp_path)
-        self.validate_client_response(response)
-        if self._is_valid_status(self.status_tmp_path):
-            self._move_file(self.status_tmp_path, self.status_path)
-            return
-        raise StatusFileError("Valid status file not found")
-
-    def _read_status(self):
-        return self._read_status_with_safe(self.status_path,
-                                           self.status_tmp_path)
-
     def _status_exists(self):
         s3client = boto3.resource('s3')
         status_object = s3client.Object(self.bucket, self.status_path)
@@ -443,6 +427,16 @@ class S3(BaseDestination):
             else:
                 raise
         return False
+
+    def _write_status(self, status):
+        response = self.s3_client.put_object(Body=status,
+                                             Bucket=self.bucket,
+                                             Key=self.status_tmp_path)
+        self.validate_client_response(response)
+        if self._is_valid_status(self.status_tmp_path):
+            self._move_file(self.status_tmp_path, self.status_path)
+            return
+        raise StatusFileError("Valid status file not found")
 
     @staticmethod
     def validate_client_response(response):

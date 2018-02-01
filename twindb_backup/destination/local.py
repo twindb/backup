@@ -31,10 +31,7 @@ class Local(BaseDestination):
             path=self.path,
             hostname=socket.gethostname()
         )
-        self.status_tmp_path = "{path}/{hostname}/status.tmp".format(
-            path=self.path,
-            hostname=socket.gethostname()
-        )
+        self.status_tmp_path = self.status_path + ".tmp"
 
     def save(self, handler, name):
         """
@@ -93,16 +90,12 @@ class Local(BaseDestination):
         raise StatusFileError("Valid status file not found")
 
     def _get_file_content(self, path):
-        f_descr = open(path, "r")
-        return f_descr.read()
+        with open(path) as f_descr:
+            return f_descr.read()
 
     def _move_file(self, source, destination):
         cmd = ["cp", "-rf", source, destination]
         run_command(cmd)
-
-    def _read_status(self):
-        return self._read_status_with_safe(self.status_path,
-                                           self.status_tmp_path)
 
     def _status_exists(self):
         return os.path.exists(self.status_path)

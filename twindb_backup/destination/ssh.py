@@ -54,10 +54,7 @@ class Ssh(BaseDestination):
             remote_path=self.remote_path,
             hostname=hostname
         )
-        self.status_tmp_path = "{remote_path}/{hostname}/status.tmp".format(
-            remote_path=self.remote_path,
-            hostname=hostname
-        )
+        self.status_tmp_path = self.status_path + ".tmp"
 
     def save(self, handler, name):
         """
@@ -310,10 +307,6 @@ class Ssh(BaseDestination):
                 time.sleep(1)
 
         return False
-
-    def _read_status(self):
-        return self._read_status_with_safe(self.status_path,
-                                           self.status_tmp_path)
 
     def _get_file_content(self, path):
         cmd = "cat %s" % path
