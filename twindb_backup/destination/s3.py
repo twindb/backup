@@ -529,7 +529,6 @@ class S3(BaseDestination):
         return content
 
     def _move_file(self, source, destination):
-        response = self.s3_client.copy_object(Bucket=self.bucket,
-                                              CopySource=source,
-                                              Key=destination)
+        s3client = boto3.resource('s3')
+        response = s3client.Object(self.bucket, destination).copy_from(source)
         self.validate_client_response(response)
