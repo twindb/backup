@@ -429,13 +429,16 @@ class S3(BaseDestination):
         return False
 
     def _write_status(self, status):
-        response = self.s3_client.put_object(Body=status,
-                                             Bucket=self.bucket,
-                                             Key=self.status_tmp_path)
-        self.validate_client_response(response)
-        if not self._is_valid_status(self.status_tmp_path):
-            raise StatusFileError("Valid status file not found")
-        self._move_file(self.status_tmp_path, self.status_path)
+        for i in range(0, 3):
+            response = self.s3_client.put_object(Body=status,
+                                                 Bucket=self.bucket,
+                                                 Key=self.status_tmp_path)
+            self.validate_client_response(response)
+            if self._is_valid_status(self.status_tmp_path):
+                self._move_file(self.status_tmp_path, self.status_path)
+                return
+            time.sleep(3 * i)
+        raise StatusFileError("Valid status file not found")
 
     @staticmethod
     def validate_client_response(response):
