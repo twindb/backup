@@ -57,7 +57,7 @@ class S3FileAccess(object):  # pylint: disable=too-few-public-methods
     private = 'private'
 
 
-class S3(BaseDestination):  # pylint: disable=too-many-instance-attributes
+class S3(BaseDestination):
     """
     S3 destination class.
 
@@ -73,13 +73,11 @@ class S3(BaseDestination):  # pylint: disable=too-many-instance-attributes
         self.bucket = bucket
         self.remote_path = 's3://{bucket}'.format(bucket=self.bucket)
 
-        self.access_key_id = aws_options.access_key_id
-        self.secret_access_key = aws_options.secret_access_key
-        self.default_region = aws_options.default_region
+        self.aws = aws_options
 
-        os.environ["AWS_ACCESS_KEY_ID"] = self.access_key_id
-        os.environ["AWS_SECRET_ACCESS_KEY"] = self.secret_access_key
-        os.environ["AWS_DEFAULT_REGION"] = self.default_region
+        os.environ["AWS_ACCESS_KEY_ID"] = self.aws.access_key_id
+        os.environ["AWS_SECRET_ACCESS_KEY"] = self.aws.secret_access_key
+        os.environ["AWS_DEFAULT_REGION"] = self.aws.default_region
 
         self.status_path = "{hostname}/status".format(
             hostname=hostname
@@ -97,11 +95,15 @@ class S3(BaseDestination):  # pylint: disable=too-many-instance-attributes
         :return: S3 client instance.
         :rtype: botocore.client.BaseClient
         """
-        session = boto3.Session(aws_access_key_id=self.access_key_id,
-                                aws_secret_access_key=self.secret_access_key)
-        s3_config = Config(connect_timeout=S3_CONNECT_TIMEOUT,
-                           read_timeout=S3_READ_TIMEOUT)
-        client = session.client('s3', region_name=self.default_region,
+        session = boto3.Session(
+            aws_access_key_id=self.aws.access_key_id,
+            aws_secret_access_key=self.aws.secret_access_key
+        )
+        s3_config = Config(
+            connect_timeout=S3_CONNECT_TIMEOUT,
+            read_timeout=S3_READ_TIMEOUT
+        )
+        client = session.client('s3', region_name=self.aws.default_region,
                                 config=s3_config)
 
         return client
