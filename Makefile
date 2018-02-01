@@ -94,7 +94,7 @@ clean-docs:
 
 lint: ## check style with pylint
 	pylint twindb_backup
-	pep8 twindb_backup
+	pycodestyle twindb_backup
 
 
 test: ## run tests quickly with the default Python

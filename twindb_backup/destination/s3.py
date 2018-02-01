@@ -117,11 +117,10 @@ class S3(BaseDestination):  # pylint: disable=too-many-instance-attributes
             self.s3_client.head_bucket(Bucket=self.bucket)
         except ClientError as err:
             # We come here meaning we did not find the bucket
-            try:
-                if err.response['ResponseMetadata']['HTTPStatusCode'] == 404:
-                    bucket_exists = False
-            except:
-                raise err
+            if err.response['ResponseMetadata']['HTTPStatusCode'] == 404:
+                bucket_exists = False
+            else:
+                raise
 
         if not bucket_exists:
             LOG.info('Created bucket %s', self.bucket)
@@ -144,11 +143,10 @@ class S3(BaseDestination):  # pylint: disable=too-many-instance-attributes
             self.s3_client.head_bucket(Bucket=self.bucket)
         except ClientError as err:
             # We come here meaning we did not find the bucket
-            try:
-                if err.response['ResponseMetadata']['HTTPStatusCode'] == 404:
-                    bucket_exists = False
-            except:
-                raise err
+            if err.response['ResponseMetadata']['HTTPStatusCode'] == 404:
+                bucket_exists = False
+            else:
+                raise
 
         if bucket_exists:
             LOG.info('Deleting bucket %s', self.bucket)
