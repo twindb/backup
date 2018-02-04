@@ -153,7 +153,7 @@ class BaseDestination(object):
         if self._is_valid_status(self.status_tmp_path):
             self._move_file(self.status_tmp_path, self.status_path)
             return self._get_pretty_status(self.status_path)
-        raise StatusFileError("Valid status file not found")
+        return self._read_old_status()
 
     @abstractmethod
     def _status_exists(self):
@@ -244,15 +244,22 @@ class BaseDestination(object):
         ).hexdigest()
         return actual_md5 == expected_md5
 
-    def _get_pretty_status(self, path):
+    def _get_pretty_status(self, path, old_status=False):
         status = json.loads(
             base64.b64decode(
                 self._get_file_content(path)
             )
         )
-        del status['checksum']
+        if not old_status:
+            del status['checksum']
         return status
 
     @abstractmethod
     def _move_file(self, source, destination):
         pass
+
+    def _read_old_status(self):
+        try:
+            return self._get_pretty_status(self.status_path, True)
+        except (TypeError, ValueError):
+            raise StatusFileError("Valid status file not found")
