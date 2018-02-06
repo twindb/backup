@@ -110,6 +110,8 @@ test-integration-backup-ssh: ## run backup(ssh) integration tests
 test-integration-clone: ## run clone integration tests
 	py.test -xsv tests/integration/clone
 
+test-integration: test-integration-backup-s3 test-integration-backup-ssh test-integration-clone
+
 test-all: ## run tests on every Python version with tox
 	tox
 
