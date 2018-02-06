@@ -189,8 +189,8 @@ package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
 
 install_package: package
 	if [ "${PLATFORM}" == "centos" ]
-  	then
-    	yum install -y $(ls omnibus/pkg/*.rpm)
-    else
-    	dpkg -i $(ls omnibus/pkg/*.deb) | apt-get install -f
-  	fi
+	then
+		yum install -y $(ls omnibus/pkg/*.rpm)
+	else
+		dpkg -i $(ls omnibus/pkg/*.deb) | apt-get install -f
+	fi
