@@ -127,11 +127,11 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False):
     try:
         xtrabackup_cmd = ['/opt/twindb-backup/embedded/bin/xtrabackup',
                           '--use-memory=%d' % (mem_usage.available/2),
-                          '--apply-log']
+                          '--prepare']
         if redo_only:
-            xtrabackup_cmd += ['--redo-only']
+            xtrabackup_cmd += ['--apply-log-only']
 
-        xtrabackup_cmd += [dst_dir]
+        xtrabackup_cmd += ["--target-dir", dst_dir]
 
         LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
         xtrabackup_proc = Popen(xtrabackup_cmd,
@@ -227,7 +227,7 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None):
         try:
             xtrabackup_cmd = ['/opt/twindb-backup/embedded/bin/xtrabackup',
                               '--use-memory=%d' % (mem_usage.available / 2),
-                              '--apply-log', '--redo-only', dst_dir,
+                              '--apply-log-only', dst_dir,
                               '--incremental-dir', inc_dir]
             LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
             xtrabackup_proc = Popen(xtrabackup_cmd,
@@ -243,7 +243,7 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None):
 
             xtrabackup_cmd = ['/opt/twindb-backup/embedded/bin/xtrabackup',
                               '--use-memory=%d' % (mem_usage.available / 2),
-                              '--apply-log', dst_dir]
+                              '--prepare', "--target-dir", dst_dir]
             LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
             xtrabackup_proc = Popen(xtrabackup_cmd,
                                     stdout=None,

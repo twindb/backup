@@ -12,14 +12,10 @@ services:
 before_install:
   - sudo apt-get update -qq
   - sudo docker pull ${DOCKER_IMAGE}
-  - while sleep 60m; do echo "=====[ $SECONDS seconds still running ]====="; done &
-  - make package
-  - kill %1
   - sudo make install_package
 
 script:
   - sudo make bootstrap
-  - sudo make test-integration
   - make docker-test
 
 before_deploy:

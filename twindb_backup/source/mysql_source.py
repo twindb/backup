@@ -104,16 +104,16 @@ class MySQLSource(BaseSource):
             "/opt/twindb-backup/embedded/bin/xtrabackup",
             "--defaults-file=%s" % self._connect_info.defaults_file,
             "--stream=xbstream",
-            "--host=127.0.0.1"
+            "--host=127.0.0.1",
+            "--backup"
         ]
+        cmd += ["--target-dir", "."]
         if self.is_galera():
             cmd.append("--galera-info")
             cmd.append("--no-backup-locks")
-        if self.full:
-            cmd.append(".")
-        else:
+        if not self.full:
             cmd += [
-                "--incremental",
+                "--incremental-basedir",
                 ".",
                 "--incremental-lsn=%d" % self.parent_lsn
             ]
@@ -127,20 +127,20 @@ class MySQLSource(BaseSource):
                 wsrep_desynced = self.enable_wsrep_desync()
 
             LOG.debug('Running %s', ' '.join(cmd))
-            proc_innobackupex = Popen(cmd,
-                                      stderr=stderr_file,
-                                      stdout=PIPE)
+            proc_xtrabackup = Popen(cmd,
+                                    stderr=stderr_file,
+                                    stdout=PIPE)
 
-            yield proc_innobackupex.stdout
+            yield proc_xtrabackup.stdout
 
-            proc_innobackupex.communicate()
-            if proc_innobackupex.returncode:
-                LOG.error('Failed to run innobackupex. '
+            proc_xtrabackup.communicate()
+            if proc_xtrabackup.returncode:
+                LOG.error('Failed to run xtrabackup. '
                           'Check error output in %s', stderr_file.name)
                 self.dst.delete(self.get_name())
                 exit(1)
             else:
-                LOG.debug('Successfully streamed innobackupex output')
+                LOG.debug('Successfully streamed xtrabackup output')
             self._update_backup_info(stderr_file)
         except OSError as err:
             LOG.error('Failed to run %s: %s', cmd, err)
@@ -152,7 +152,7 @@ class MySQLSource(BaseSource):
     def _handle_failure_exec(self, err, stderr_file):
         """Cleanup on failure exec"""
         LOG.error(err)
-        LOG.error('Failed to run innobackupex. '
+        LOG.error('Failed to run xtrabackup. '
                   'Check error output in %s', stderr_file.name)
         self.dst.delete(self.get_name())
         exit(1)
@@ -160,7 +160,7 @@ class MySQLSource(BaseSource):
     def _update_backup_info(self, stderr_file):
         """Update backup_info from stderr"""
 
-        LOG.debug('/opt/twindb-backup/embedded/bin/xtrabackup error log file %s',
+        LOG.debug('xtrabackup error log file %s',
                   stderr_file.name)
         self._backup_info.lsn = self._get_lsn(stderr_file.name)
         self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
