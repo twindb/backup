@@ -12,6 +12,7 @@ services:
 before_install:
   - sudo apt-get update -qq
   - sudo docker pull ${DOCKER_IMAGE}
+  - sudo make install_package
 
 script:
   - sudo make bootstrap

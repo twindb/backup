@@ -125,7 +125,7 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False):
 
     mem_usage = psutil.virtual_memory()
     try:
-        xtrabackup_cmd = ['innobackupex',
+        xtrabackup_cmd = ['/opt/twindb-backup/embedded/bin/xtrabackup',
                           '--use-memory=%d' % (mem_usage.available/2),
                           '--apply-log']
         if redo_only:
@@ -225,7 +225,7 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None):
     try:
         mem_usage = psutil.virtual_memory()
         try:
-            xtrabackup_cmd = ['innobackupex',
+            xtrabackup_cmd = ['/opt/twindb-backup/embedded/bin/xtrabackup',
                               '--use-memory=%d' % (mem_usage.available / 2),
                               '--apply-log', '--redo-only', dst_dir,
                               '--incremental-dir', inc_dir]
@@ -241,7 +241,7 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None):
                           ret)
                 return False
 
-            xtrabackup_cmd = ['innobackupex',
+            xtrabackup_cmd = ['/opt/twindb-backup/embedded/bin/xtrabackup',
                               '--use-memory=%d' % (mem_usage.available / 2),
                               '--apply-log', dst_dir]
             LOG.debug('Running %s', ' '.join(xtrabackup_cmd))

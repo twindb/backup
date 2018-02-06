@@ -101,7 +101,7 @@ class MySQLSource(BaseSource):
         :return:
         """
         cmd = [
-            "innobackupex",
+            "/opt/twindb-backup/embedded/bin/xtrabackup",
             "--defaults-file=%s" % self._connect_info.defaults_file,
             "--stream=xbstream",
             "--host=127.0.0.1"
@@ -160,7 +160,7 @@ class MySQLSource(BaseSource):
     def _update_backup_info(self, stderr_file):
         """Update backup_info from stderr"""
 
-        LOG.debug('innobackupex error log file %s', stderr_file.name)
+        LOG.debug('/opt/twindb-backup/embedded/bin/xtrabackup error log file %s', stderr_file.name)
         self._backup_info.lsn = self._get_lsn(stderr_file.name)
         self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
             stderr_file.name
