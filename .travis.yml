@@ -12,7 +12,8 @@ services:
 before_install:
   - sudo apt-get update -qq
   - sudo docker pull ${DOCKER_IMAGE}
-  - travis_wait 30 sudo make install_package
+  - make package
+  - sudo make install_package
 
 script:
   - sudo make bootstrap

@@ -189,7 +189,7 @@ package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
 		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
 		bash -l /twindb-backup/omnibus/omnibus_build.sh
 
-install_package: package
+install_package:
 	if [ "${PLATFORM}" == "centos" ]
 	then
 		yum install -y $(ls omnibus/pkg/*.rpm)
