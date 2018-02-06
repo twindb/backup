@@ -2,12 +2,18 @@
 """
 Module defines Base destination class and destination exception(s).
 """
+import base64
+import hashlib
+import json
 from abc import abstractmethod
 
 from subprocess import Popen, PIPE
 
+import time
+
 from twindb_backup import LOG, INTERVALS
-from twindb_backup.destination.exceptions import DestinationError
+from twindb_backup.destination.exceptions import DestinationError, \
+    StatusFileError
 
 
 class BaseDestination(object):
@@ -15,6 +21,8 @@ class BaseDestination(object):
 
     def __init__(self):
         self.remote_path = ''
+        self.status_path = ''
+        self.status_tmp_path = ''
 
     @abstractmethod
     def save(self, handler, name):
@@ -98,7 +106,7 @@ class BaseDestination(object):
         will read status from the remote storage.
         Otherwise it will store the status remotely.
 
-        :param status: dictionary like
+        :param status: Dictionary with status
 
         ::
 
@@ -109,23 +117,43 @@ class BaseDestination(object):
                         'binlog': 'mysql-bin.000001',
                         'position': 43670
                     }
-                ]
+                ],
+                'checksum': 'c2a8ed7ddbf759a67b2d5ea256f05fb8'
             }
-
+        :type status: dict
         :return: dictionary with the status
         """
         if status:
-            return self._write_status(status)
-        else:
-            return self._read_status()
+            status['checksum'] = hashlib.md5(
+                json.dumps(
+                    status, sort_keys=True
+                )
+            ).hexdigest()
+            raw_status = base64.b64encode(json.dumps(status, sort_keys=True))
+            self._write_status(raw_status)
+            # checksum only for internal usage, no public
+            return self._get_pretty_status(self.status_path)
+        return self._read_status()
 
     @abstractmethod
     def _write_status(self, status):
         """Function that actually writes status"""
 
-    @abstractmethod
     def _read_status(self):
-        """Function that actually reads status"""
+        if not self._status_exists():
+            return self._empty_status
+        i = 1
+        while not self._is_valid_status(self.status_path):
+            if i == 4:
+                break
+            time.sleep(3 * i)
+            i = i + 1
+        if i < 4:
+            return self._get_pretty_status(self.status_path)
+        if self._is_valid_status(self.status_tmp_path):
+            self._move_file(self.status_tmp_path, self.status_path)
+            return self._get_pretty_status(self.status_path)
+        return self._read_old_status()
 
     @abstractmethod
     def _status_exists(self):
@@ -193,3 +221,53 @@ class BaseDestination(object):
             filename=latest
         )
         return url
+
+    @abstractmethod
+    def _get_file_content(self, path):
+        """Function for get file content by path"""
+
+    def _is_valid_status(self, path):
+        expected_status = json.loads(
+            base64.b64decode(
+                self._get_file_content(path)
+            )
+        )
+        if "checksum" not in expected_status:
+            LOG.debug("Checksum key not found in expected status")
+            return False
+
+        expected_md5 = expected_status.pop('checksum')
+        actual_md5 = hashlib.md5(
+            json.dumps(
+                expected_status, sort_keys=True
+            )
+        ).hexdigest()
+        return actual_md5 == expected_md5
+
+    def _get_pretty_status(self, path, old_status=False):
+        status = json.loads(
+            base64.b64decode(
+                self._get_file_content(path)
+            )
+        )
+        if not old_status:
+            del status['checksum']
+        return status
+
+    @abstractmethod
+    def _move_file(self, source, destination):
+        pass
+
+    def _read_old_status(self):
+        try:
+            return self._get_pretty_status(self.status_path, True)
+        except (TypeError, ValueError):
+            raise StatusFileError("Valid status file not found")
+
+    def _move_or_wait(self, wait_time):
+        if self._is_valid_status(self.status_tmp_path):
+            self._move_file(self.status_tmp_path, self.status_path)
+            return True
+        else:
+            time.sleep(wait_time)
+            return False

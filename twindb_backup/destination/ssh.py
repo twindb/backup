@@ -2,8 +2,6 @@
 """
 Module for SSH destination.
 """
-import base64
-import json
 import socket
 
 import os
@@ -14,7 +12,8 @@ import time
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.destination.exceptions import SshDestinationError
+from twindb_backup.destination.exceptions import SshDestinationError, \
+    StatusFileError
 from twindb_backup.ssh.client import SshClient
 from twindb_backup.ssh.exceptions import SshClientException
 
@@ -55,6 +54,7 @@ class Ssh(BaseDestination):
             remote_path=self.remote_path,
             hostname=hostname
         )
+        self.status_tmp_path = self.status_path + ".tmp"
 
     def save(self, handler, name):
         """
@@ -207,29 +207,13 @@ class Ssh(BaseDestination):
                 read_process.join()
 
     def _write_status(self, status):
-        """
-        Write status
-
-        :param status: Status fo write
-        :type status: str
-        """
-        raw_status = base64.b64encode(json.dumps(status))
-        cmd = "cat - > %s" % self.status_path
-        with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
-            cin.write(raw_status)
-
-    def _read_status(self):
-        """
-        Read status
-
-        :return: Status in JSON format, if it exist
-        """
-        if self._status_exists():
-            cmd = "cat %s" % self.status_path
-            with self._ssh_client.get_remote_handlers(cmd) as (_, stdout, _):
-                return json.loads(base64.b64decode(stdout.read()))
-        else:
-            return self._empty_status
+        cmd = "cat - > %s" % self.status_tmp_path
+        for i in range(0, 3):
+            with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
+                cin.write(status)
+            if self._move_or_wait(3 * i):
+                return
+        raise StatusFileError("Valid status file not found")
 
     def _status_exists(self):
         """
@@ -250,8 +234,7 @@ class Ssh(BaseDestination):
         elif status.strip() == 'not_exists':
             return False
         else:
-            raise SshDestinationError('Unrecognized response: %s'
-                                      % cout.read())
+            raise SshDestinationError('Unrecognized response: %s' % status)
 
     def execute_command(self, cmd, quiet=False):
         """Execute ssh command
@@ -322,3 +305,12 @@ class Ssh(BaseDestination):
                 time.sleep(1)
 
         return False
+
+    def _get_file_content(self, path):
+        cmd = "cat %s" % path
+        with self._ssh_client.get_remote_handlers(cmd) as (_, stdout, _):
+            return stdout.read()
+
+    def _move_file(self, source, destination):
+        cmd = 'yes | cp -rf %s %s' % (source, destination)
+        self.execute_command(cmd)

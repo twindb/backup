@@ -2,9 +2,6 @@
 """
 Module for S3 destination.
 """
-import base64
-
-import json
 import os
 import socket
 
@@ -22,7 +19,8 @@ from boto3.s3.transfer import TransferConfig
 
 from twindb_backup import LOG, TwinDBBackupError
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.destination.exceptions import S3DestinationError
+from twindb_backup.destination.exceptions import S3DestinationError, \
+    StatusFileError
 
 S3_CONNECT_TIMEOUT = 60
 S3_READ_TIMEOUT = 600
@@ -75,17 +73,16 @@ class S3(BaseDestination):
         self.bucket = bucket
         self.remote_path = 's3://{bucket}'.format(bucket=self.bucket)
 
-        self.access_key_id = aws_options.access_key_id
-        self.secret_access_key = aws_options.secret_access_key
-        self.default_region = aws_options.default_region
+        self.aws = aws_options
 
-        os.environ["AWS_ACCESS_KEY_ID"] = self.access_key_id
-        os.environ["AWS_SECRET_ACCESS_KEY"] = self.secret_access_key
-        os.environ["AWS_DEFAULT_REGION"] = self.default_region
+        os.environ["AWS_ACCESS_KEY_ID"] = self.aws.access_key_id
+        os.environ["AWS_SECRET_ACCESS_KEY"] = self.aws.secret_access_key
+        os.environ["AWS_DEFAULT_REGION"] = self.aws.default_region
 
         self.status_path = "{hostname}/status".format(
             hostname=hostname
         )
+        self.status_tmp_path = self.status_path + ".tmp"
 
         # Setup an authenticated S3 client that we will use throughout
         self.s3_client = self.setup_s3_client()
@@ -96,11 +93,15 @@ class S3(BaseDestination):
         :return: S3 client instance.
         :rtype: botocore.client.BaseClient
         """
-        session = boto3.Session(aws_access_key_id=self.access_key_id,
-                                aws_secret_access_key=self.secret_access_key)
-        s3_config = Config(connect_timeout=S3_CONNECT_TIMEOUT,
-                           read_timeout=S3_READ_TIMEOUT)
-        client = session.client('s3', region_name=self.default_region,
+        session = boto3.Session(
+            aws_access_key_id=self.aws.access_key_id,
+            aws_secret_access_key=self.aws.secret_access_key
+        )
+        s3_config = Config(
+            connect_timeout=S3_CONNECT_TIMEOUT,
+            read_timeout=S3_READ_TIMEOUT
+        )
+        client = session.client('s3', region_name=self.aws.default_region,
                                 config=s3_config)
 
         return client
@@ -116,11 +117,10 @@ class S3(BaseDestination):
             self.s3_client.head_bucket(Bucket=self.bucket)
         except ClientError as err:
             # We come here meaning we did not find the bucket
-            try:
-                if err.response['ResponseMetadata']['HTTPStatusCode'] == 404:
-                    bucket_exists = False
-            except:
-                raise err
+            if err.response['ResponseMetadata']['HTTPStatusCode'] == 404:
+                bucket_exists = False
+            else:
+                raise
 
         if not bucket_exists:
             LOG.info('Created bucket %s', self.bucket)
@@ -143,11 +143,10 @@ class S3(BaseDestination):
             self.s3_client.head_bucket(Bucket=self.bucket)
         except ClientError as err:
             # We come here meaning we did not find the bucket
-            try:
-                if err.response['ResponseMetadata']['HTTPStatusCode'] == 404:
-                    bucket_exists = False
-            except:
-                raise err
+            if err.response['ResponseMetadata']['HTTPStatusCode'] == 404:
+                bucket_exists = False
+            else:
+                raise
 
         if bucket_exists:
             LOG.info('Deleting bucket %s', self.bucket)
@@ -416,29 +415,6 @@ class S3(BaseDestination):
 
         return 0
 
-    def _write_status(self, status):
-        raw_status = base64.b64encode(json.dumps(status))
-
-        response = self.s3_client.put_object(Body=raw_status,
-                                             Bucket=self.bucket,
-                                             Key=self.status_path)
-
-        self.validate_client_response(response)
-
-        return status
-
-    def _read_status(self):
-
-        if self._status_exists():
-            response = self.s3_client.get_object(Bucket=self.bucket,
-                                                 Key=self.status_path)
-            self.validate_client_response(response)
-
-            content = response['Body'].read()
-            return json.loads(base64.b64decode(content))
-        else:
-            return self._empty_status
-
     def _status_exists(self):
         s3client = boto3.resource('s3')
         status_object = s3client.Object(self.bucket, self.status_path)
@@ -451,6 +427,16 @@ class S3(BaseDestination):
             else:
                 raise
         return False
+
+    def _write_status(self, status):
+        for i in range(0, 3):
+            response = self.s3_client.put_object(Body=status,
+                                                 Bucket=self.bucket,
+                                                 Key=self.status_tmp_path)
+            self.validate_client_response(response)
+            if self._move_or_wait(3 * i):
+                return
+        raise StatusFileError("Valid status file not found")
 
     @staticmethod
     def validate_client_response(response):
@@ -533,3 +519,23 @@ class S3(BaseDestination):
             return self._get_file_url(s3_url)
         else:
             raise TwinDBBackupError("File not found via url: %s", s3_url)
+
+    def _get_file_content(self, path):
+        response = self.s3_client.get_object(Bucket=self.bucket,
+                                             Key=path)
+        self.validate_client_response(response)
+
+        content = response['Body'].read()
+        return content
+
+    def _move_file(self, source, destination):
+        s3client = boto3.resource('s3')
+        response = s3client.Object(
+            self.bucket, destination
+        ).copy_from(
+            CopySource={
+                "Bucket": self.bucket,
+                "Key": source
+            }
+        )
+        self.validate_client_response(response)
