@@ -263,3 +263,11 @@ class BaseDestination(object):
             return self._get_pretty_status(self.status_path, True)
         except (TypeError, ValueError):
             raise StatusFileError("Valid status file not found")
+
+    def _move_or_wait(self, wait_time):
+        if self._is_valid_status(self.status_tmp_path):
+            self._move_file(self.status_tmp_path, self.status_path)
+            return True
+        else:
+            time.sleep(wait_time)
+            return False
