@@ -179,6 +179,8 @@ docker-start:
 		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
 		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
 		-it \
+		--name builder_xtrabackup \
+		--rm \
 		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
 		bash -l
 
@@ -186,6 +188,8 @@ docker-start:
 package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
 	@docker run \
 		-v ${pwd}:/twindb-backup \
+		--name builder_xtrabackup \
+		--rm \
 		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
 		bash -l /twindb-backup/omnibus/omnibus_build.sh
 
