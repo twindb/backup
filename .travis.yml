@@ -1,9 +1,10 @@
 sudo: required
-env:
-  matrix:
+matrix:
+  fast_finish: true
+  include:
+    - PLATFORM=centos DISTRO=el OS_VERSION=7 DOCKER_IMAGE=centos:centos7
     - PLATFORM=centos DISTRO=el OS_VERSION=6 DOCKER_IMAGE=centos:centos6
         if: branch = master
-    - PLATFORM=centos DISTRO=el OS_VERSION=7 DOCKER_IMAGE=centos:centos7
     - PLATFORM=debian DISTRO=debian OS_VERSION=jessie DOCKER_IMAGE=debian:jessie
         if: branch = master
     - PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=trusty DOCKER_IMAGE=ubuntu:trusty
