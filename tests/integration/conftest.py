@@ -5,12 +5,14 @@ import time
 from docker.errors import DockerException, APIError
 from docker.types import IPAMPool, IPAMConfig
 
+from tests.integration import ensure_aws_creds
 from twindb_backup import setup_logging, LOG
 
 NODE_IMAGE = 'centos:centos6'
 NETWORK_NAME = 'test_network'
 
 setup_logging(LOG, debug=True)
+ensure_aws_creds()
 
 
 @pytest.fixture

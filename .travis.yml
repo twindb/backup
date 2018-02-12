@@ -11,14 +11,17 @@ services:
 
 before_install:
   - sudo apt-get update -qq
-  - sudo docker pull ${DOCKER_IMAGE}
+
+install:
+  - make bootstrap
 
 script:
-  - sudo make bootstrap
-  - make docker-test
+  - make lint test
 
 before_deploy:
+  - sudo docker pull ${DOCKER_IMAGE}
   - travis_wait 30 make package
+  - make test-integration
 
 deploy:
   provider: packagecloud

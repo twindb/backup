@@ -202,10 +202,10 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
     if tmp_dir is None:
         try:
             inc_dir = tempfile.mkdtemp()
-        except (IOError, OSError) as err:
+        except (IOError, OSError):
             try:
                 empty_dir(dst_dir)
-            except (IOError, OSError) as err:
+            except (IOError, OSError):
                 raise
             raise
     else:
@@ -362,10 +362,12 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
                 # restore from cache
                 cache.restore_in(cache_key, dst_dir)
             else:
-                restore_from_mysql_full(stream, dst_dir, config, tmp_dir)
+                restore_from_mysql_full(stream, dst_dir, config,
+                                        redo_only=False)
                 cache.add(dst_dir, cache_key)
         else:
-            restore_from_mysql_full(stream, dst_dir, config, tmp_dir)
+            restore_from_mysql_full(stream, dst_dir, config,
+                                    redo_only=False)
 
     else:
         full_copy = dst.get_full_copy_name(backup_copy)

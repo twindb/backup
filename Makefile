@@ -97,23 +97,13 @@ lint: ## check style with pylint
 	pycodestyle twindb_backup
 
 
-test: ## run tests quickly with the default Python
+test: ## Run tests quickly with the default Python
 	pytest -xv --cov-report term-missing --cov=./twindb_backup tests/unit
 	codecov
 
-test-integration-backup-s3: ## run backup (S3) integration tests
-	py.test -xsv tests/integration/backup/s3
 
-test-integration-backup-ssh: ## run backup(ssh) integration tests
-	py.test -xsv tests/integration/backup/ssh
-
-test-integration-clone: ## run clone integration tests
-	py.test -xsv tests/integration/clone
-
-test-integration: test-integration-backup-s3 test-integration-backup-ssh test-integration-clone
-
-test-all: ## run tests on every Python version with tox
-	tox
+test-integration: ## Run integration tests. Must be run in vagrant
+	py.test -xsv tests/integration/
 
 coverage: ## check code coverage quickly with the default Python
 	py.test --cov-report term-missing  --cov=twindb_backup tests/unit
