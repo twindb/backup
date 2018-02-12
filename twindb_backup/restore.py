@@ -23,6 +23,7 @@ from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
+from twindb_backup.source.mysql_source import DEFAULT_XTRABACKUP_BINARY
 from twindb_backup.util import mkdir_p, \
     get_hostname_from_backup_copy, empty_dir
 
@@ -89,7 +90,8 @@ def get_my_cnf(status, key):
         yield k, value
 
 
-def restore_from_mysql_full(stream, dst_dir, config, redo_only=False):
+def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
+                            xtrabackup_binary=DEFAULT_XTRABACKUP_BINARY):
     """
     Restore MySQL datadir from a backup copy
 
@@ -103,6 +105,7 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False):
         it should be False. If you restore from incremental copy and
         you restore base full copy redo_only should be True.
     :type redo_only: bool
+    :param xtrabackup_binary: path to xtrabackup binary.
     :return: If success, return True
     :rtype: bool
     """
@@ -125,7 +128,7 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False):
 
     mem_usage = psutil.virtual_memory()
     try:
-        xtrabackup_cmd = ['/opt/twindb-backup/embedded/bin/xtrabackup',
+        xtrabackup_cmd = [xtrabackup_binary,
                           '--use-memory=%d' % (mem_usage.available/2),
                           '--prepare']
         if redo_only:
@@ -180,7 +183,8 @@ def _extract_xbstream(input_stream, working_dir):
 
 
 # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None):
+def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
+                                   xtrabackup_binary=DEFAULT_XTRABACKUP_BINARY):
     """
     Restore MySQL datadir from an incremental copy.
 
@@ -191,6 +195,7 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None):
     :type config: ConfigParser.ConfigParser
     :param tmp_dir: Path to temp dir
     :type tmp_dir: str
+    :param xtrabackup_binary: Path to xtrabackup binary.
     :return: If success, return True
     :rtype: bool
     """
@@ -225,7 +230,7 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None):
     try:
         mem_usage = psutil.virtual_memory()
         try:
-            xtrabackup_cmd = ['/opt/twindb-backup/embedded/bin/xtrabackup',
+            xtrabackup_cmd = [xtrabackup_binary,
                               '--use-memory=%d' % (mem_usage.available / 2),
                               '--apply-log-only', dst_dir,
                               '--incremental-dir', inc_dir]
@@ -241,7 +246,7 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None):
                           ret)
                 return False
 
-            xtrabackup_cmd = ['/opt/twindb-backup/embedded/bin/xtrabackup',
+            xtrabackup_cmd = [xtrabackup_binary,
                               '--use-memory=%d' % (mem_usage.available / 2),
                               '--prepare', "--target-dir", dst_dir]
             LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
