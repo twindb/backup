@@ -23,7 +23,7 @@ from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
-from twindb_backup.source.mysql_source import DEFAULT_XTRABACKUP_BINARY
+from twindb_backup.source.mysql_source import XTRABACKUP_BINARY
 from twindb_backup.util import mkdir_p, \
     get_hostname_from_backup_copy, empty_dir
 
@@ -91,7 +91,7 @@ def get_my_cnf(status, key):
 
 
 def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
-                            xtrabackup_binary=DEFAULT_XTRABACKUP_BINARY):
+                            xtrabackup_binary=XTRABACKUP_BINARY):
     """
     Restore MySQL datadir from a backup copy
 
@@ -184,7 +184,7 @@ def _extract_xbstream(input_stream, working_dir):
 
 # pylint: disable=too-many-locals,too-many-branches,too-many-statements
 def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
-                                   xtrabackup_binary=DEFAULT_XTRABACKUP_BINARY):
+                                   xtrabackup_binary=XTRABACKUP_BINARY):
     """
     Restore MySQL datadir from an incremental copy.
 

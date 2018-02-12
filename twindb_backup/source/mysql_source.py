@@ -16,7 +16,7 @@ from twindb_backup import LOG, get_files_to_delete, INTERVALS, \
 from twindb_backup.source.base_source import BaseSource
 from twindb_backup.source.exceptions import MySQLSourceError
 
-DEFAULT_XTRABACKUP_BINARY = '/opt/twindb-backup/embedded/bin/xtrabackup'
+XTRABACKUP_BINARY = '/opt/twindb-backup/embedded/bin/xtrabackup'
 
 
 class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
@@ -35,7 +35,7 @@ class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
 class MySQLSource(BaseSource):
     """MySQLSource class"""
     def __init__(self, mysql_connect_info, run_type, full_backup, dst=None,
-                 xtrabackup_binary=DEFAULT_XTRABACKUP_BINARY):
+                 xtrabackup_binary=XTRABACKUP_BINARY):
         """
         MySQLSource constructor
 
