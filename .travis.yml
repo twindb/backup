@@ -13,7 +13,7 @@ before_install:
   - sudo apt-get update -qq
 
 install:
-  - make bootstrap
+  - sudo make bootstrap
 
 script:
   - make lint test
