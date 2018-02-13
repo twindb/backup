@@ -9,6 +9,16 @@ from twindb_backup import LOG
 from twindb_backup.destination.s3 import S3, AWSAuthOptions
 
 
+def test_take_file_backup(
+    master1,
+    s3_client,
+    config_content_files_only,
+    tmpdir,
+    foo_bar_dir
+):
+    assert True
+
+
 def test__take_file_backup(s3_client, config_content_files_only, tmpdir,
                            foo_bar_dir):
     config = tmpdir.join('twindb-backup.cfg')
