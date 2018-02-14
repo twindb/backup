@@ -140,7 +140,15 @@ def get_container(name, bootstrap_script, client, network, last_n=1):
 @pytest.yield_fixture
 def master1(docker_client, container_network):
 
-    bootstrap_script = '/twindb-backup/support/bootstrap/master1.sh'
+    platform = None
+    try:
+        platform = os.environ['PLATFORM']
+    except KeyError:
+        print("""You must define environment variable PLATFORM.
+        Allowed values are centos, debian and ubuntu""")
+        exit(-1)
+    bootstrap_script = '/twindb-backup/support/bootstrap/master/' \
+                       '%s/master1.sh' % platform
     container = get_container(
         'master1',
         bootstrap_script,
