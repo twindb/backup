@@ -49,10 +49,7 @@ install_package lsb-release wget
 DEBIAN_FRONTEND=noninteractive dpkg -i /tmp/${mysql_repo}
 apt-get update
 
-#install_package "https://dev.mysql.com/get/mysql57-community-release-el${centos_version}-11.noarch.rpm"
-
 install_package netcat sudo
-
 
 install_package openssh-client openssh-server
 start_sshd
@@ -62,4 +59,11 @@ debconf-set-selections <<< "mysql-community-server mysql-community-server/root-p
 debconf-set-selections <<< "mysql-community-server mysql-community-server/re-root-pass password ${MYSQL_PASSORD}"
 
 install_package mysql-community-server mysql-community-client
+
+TB_VERSION=$(PYTHONPATH=/twindb-backup python -c "from twindb_backup import __version__; print __version__")
+
+install_package /twindb-backup/omnibus/pkg/twindb-backup_${TB_VERSION}-1_amd64.deb
+
+twindb-backup --version
+
 start_mysqld

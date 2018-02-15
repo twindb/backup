@@ -27,7 +27,9 @@ PYTHON := python
 PYTHON_LIB := $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; import sys; sys.stdout.write(get_python_lib())" )
 
 
-PLATFORM := $(shell if test -z "${PLATFORM}"; then echo "centos"; else echo ${PLATFORM}; fi)
+PLATFORM ?= centos
+OS_VERSION ?= 7
+
 pwd := $(shell pwd)
 build_dir = ${pwd}/build
 top_dir = ${build_dir}/rpmbuild
