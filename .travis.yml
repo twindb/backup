@@ -30,7 +30,7 @@ install:
 script:
   - make lint test
   - sudo docker pull ${DOCKER_IMAGE}
-  - travis_wait 30 make package
+  - travis_wait 120 make package
   - make test-integration
 
 before_deploy:
