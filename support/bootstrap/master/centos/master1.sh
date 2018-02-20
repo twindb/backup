@@ -49,12 +49,8 @@ centos_version=$(rpm --eval '%{centos}')
 
 install_package "https://dev.mysql.com/get/mysql57-community-release-el${centos_version}-11.noarch.rpm"
 
-install_package \
-    mysql-community-server \
-    mysql-community-client \
-    openssh-server \
-    nc \
-    sudo
+install_package mysql-community-server mysql-community-client
+install_package openssh-server nc sudo
 
 TB_VERSION=$(PYTHONPATH=/twindb-backup python -c "from twindb_backup import __version__; print __version__")
 

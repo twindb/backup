@@ -1,88 +1,87 @@
 import StringIO
-import json
 import os
-import socket
-
-from subprocess import call, Popen, PIPE
-
-from twindb_backup import LOG
-from twindb_backup.destination.s3 import S3, AWSAuthOptions
 
 
-def test_take_file_backup(
-    master1,
-    s3_client,
-    config_content_files_only,
-    tmpdir,
-    foo_bar_dir
-):
-    assert True
+def test__take_file_backup(master1,
+                           docker_client,
+                           s3_client,
+                           config_content_files_only):
+    api = docker_client.api
+    twindb_config = "%s/env/twindb/twindb-backup.cfg" % os.getcwd()
+    backup_dir = "/etc/twindb"
 
+    with open(twindb_config, 'w') as fp:
+        content = config_content_files_only.format(
+            TEST_DIR=backup_dir,
+            AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+            AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+            BUCKET=s3_client.bucket
+        )
+        fp.write(content)
 
-# def test__take_file_backup(s3_client, config_content_files_only, tmpdir,
-#                            foo_bar_dir):
-#     config = tmpdir.join('twindb-backup.cfg')
-#     content = config_content_files_only.format(
-#         TEST_DIR=foo_bar_dir,
-#         AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
-#         AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
-#         BUCKET=s3_client.bucket
-#     )
-#     config.write(content)
-#
-#     backup_dir = foo_bar_dir
-#
-#     # write some content to the directory
-#     with open(os.path.join(backup_dir, 'file'), 'w') as f:
-#         f.write("Hello world.")
-#
-#     hostname = socket.gethostname()
-#     s3_backup_path = 's3://%s/%s/hourly/files/%s' % \
-#                      (s3_client.bucket, hostname, backup_dir.replace('/', '_'))
-#
-#     cmd = ['twindb-backup', '--debug',
-#            '--config', str(config),
-#            'backup', 'hourly']
-#     assert call(cmd) == 0
-#
-#     cmd = ['twindb-backup', '--debug',
-#            '--config', str(config),
-#            'ls']
-#     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-#     out, err = proc.communicate()
-#
-#     LOG.debug('STDOUT: %s' % out)
-#     LOG.debug('STDERR: %s' % err)
-#
-#     assert proc.returncode == 0
-#
-#     assert s3_backup_path in out
-#
-#     backup_to_restore = None
-#     for line in StringIO.StringIO(out):
-#         if line.startswith(s3_backup_path):
-#             backup_to_restore = line.strip()
-#             break
-#
-#     dest_dir = tmpdir.mkdir("dst")
-#     cmd = ['twindb-backup', '--debug',
-#            '--config', str(config),
-#            'restore', 'file', '--dst', str(dest_dir), backup_to_restore]
-#
-#     assert call(cmd) == 0
-#
-#     path_to_file_restored = '%s/%s/file' % (str(dest_dir), backup_dir)
-#     assert os.path.exists(path_to_file_restored)
-#
-#     # And content is same
-#     path_to_file_orig = "%s/file" % backup_dir
-#     proc = Popen(['diff', '-Nur',
-#                   path_to_file_orig,
-#                   path_to_file_restored],
-#                  stdout=PIPE, stderr=PIPE)
-#     out, err = proc.communicate()
-#     assert not out
-#
+    cmd = ['twindb-backup', '--debug',
+           '--config', '/etc/twindb/twindb-backup.cfg',
+           'backup', 'hourly']
+    executor = api.exec_create('master1_1', cmd)
+    exec_id = executor['Id']
+    print(api.exec_start(exec_id))
+    assert api.exec_inspect(exec_id)['ExitCode'] == 0
+
+    # Check that backup copy is in "twindb-backup ls" output
+    hostname = 'master1_1'
+    s3_backup_path = 's3://%s/%s/hourly/files/%s' % (
+        s3_client.bucket,
+        hostname,
+        backup_dir.replace('/', '_')
+    )
+    cmd = ['twindb-backup', '--debug',
+           '--config', '/etc/twindb/twindb-backup.cfg',
+           'ls']
+    executor = api.exec_create('master1_1', cmd)
+    exec_id = executor['Id']
+    out = api.exec_start(exec_id)
+    print(out)
+    assert api.exec_inspect(exec_id)['ExitCode'] == 0
+
+    assert s3_backup_path in out
+
+    backup_to_restore = None
+    for line in StringIO.StringIO(out):
+        if line.startswith(s3_backup_path):
+            backup_to_restore = line.strip()
+            break
+
+    cmd = ['twindb-backup', '--debug',
+           '--config', '/etc/twindb/twindb-backup.cfg',
+           'restore', 'file', '--dst', '/tmp/restore', backup_to_restore]
+
+    executor = api.exec_create('master1_1', cmd)
+    exec_id = executor['Id']
+    out = api.exec_start(exec_id)
+    print(out)
+    assert api.exec_inspect(exec_id)['ExitCode'] == 0
+
+    # Check that restored file exists
+    path_to_file_restored = '/tmp/restore/etc/twindb/twindb-backup.cfg'
+    cmd = ['ls', path_to_file_restored]
+    executor = api.exec_create('master1_1', cmd)
+    exec_id = executor['Id']
+    out = api.exec_start(exec_id)
+    print(out)
+    assert api.exec_inspect(exec_id)['ExitCode'] == 0
+
+    # And content is same
+    cmd = ['diff',
+           '/tmp/restore/etc/twindb/twindb-backup.cfg',
+           '/etc/twindb/twindb-backup.cfg']
+    executor = api.exec_create('master1_1', cmd)
+    exec_id = executor['Id']
+    out = api.exec_start(exec_id)
+    # empty output
+    assert not out
+    # zero exit code if no differences
+    assert api.exec_inspect(exec_id)['ExitCode'] == 0
+
 #
 # def test__take_mysql_backup(s3_client, config_content_mysql_only, tmpdir):
 #     config = tmpdir.join('twindb-backup.cfg')

@@ -103,7 +103,11 @@ def get_container(name, bootstrap_script, client, network, last_n=1):
             cwd: {
                 'bind': '/twindb-backup',
                 'mode': 'rw',
-            }
+            },
+            cwd + '/env/twindb': {
+                'bind': '/etc/twindb',
+                'mode': 'rw',
+            },
         },
         dns=['8.8.8.8']
     )
@@ -115,10 +119,12 @@ def get_container(name, bootstrap_script, client, network, last_n=1):
 
     LOG.debug(networking_config)
 
+    container_hostname = '%s_%d' % (name, last_n)
     container = api.create_container(
         image=NODE_IMAGE,
-        name='%s_%d' % (name, last_n),
+        name=container_hostname,
         ports=[22, 3306],
+        hostname=container_hostname,
         host_config=host_config,
         networking_config=networking_config,
         volumes=['/twindb-backup'],
