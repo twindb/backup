@@ -9,11 +9,19 @@ from docker.types import IPAMPool, IPAMConfig
 
 from tests.integration import ensure_aws_creds
 from twindb_backup import setup_logging, LOG
+from twindb_backup.util import mkdir_p
 
 try:
     NODE_IMAGE = os.environ['DOCKER_IMAGE']
 except KeyError:
-    NODE_IMAGE = 'centos:centos7'
+    raise EnvironmentError("""You must define the DOCKER_IMAGE environment 
+    variable. Valid values are:
+    * centos:centos7
+    * centos:centos6
+    * debian:jessie
+    * ubuntu:trusty
+    * ubuntu:xenial
+    """)
 
 NETWORK_NAME = 'test_network'
 
@@ -98,13 +106,15 @@ def get_container(name, bootstrap_script, client, network, last_n=1):
 
     api.pull(NODE_IMAGE)
     cwd = os.getcwd()
+    twindb_config_dir = cwd + '/env/twindb'
+    mkdir_p(twindb_config_dir, mode=0755)
     host_config = api.create_host_config(
         binds={
             cwd: {
                 'bind': '/twindb-backup',
                 'mode': 'rw',
             },
-            cwd + '/env/twindb': {
+            twindb_config_dir: {
                 'bind': '/etc/twindb',
                 'mode': 'rw',
             },
@@ -146,13 +156,12 @@ def get_container(name, bootstrap_script, client, network, last_n=1):
 @pytest.yield_fixture
 def master1(docker_client, container_network):
 
-    platform = None
     try:
         platform = os.environ['PLATFORM']
     except KeyError:
-        print("""You must define environment variable PLATFORM.
+        raise EnvironmentError("""You must define environment variable PLATFORM.
         Allowed values are centos, debian and ubuntu""")
-        exit(-1)
+
     bootstrap_script = '/twindb-backup/support/bootstrap/master/' \
                        '%s/master1.sh' % platform
     container = get_container(
