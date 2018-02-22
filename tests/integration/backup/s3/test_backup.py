@@ -1,12 +1,14 @@
 import StringIO
+import json
 import os
+
+from tests.integration.conftest import docker_execute
 
 
 def test__take_file_backup(master1,
                            docker_client,
                            s3_client,
                            config_content_files_only):
-    api = docker_client.api
     twindb_config = "%s/env/twindb/twindb-backup.cfg" % os.getcwd()
     backup_dir = "/etc/twindb"
 
@@ -22,10 +24,9 @@ def test__take_file_backup(master1,
     cmd = ['twindb-backup', '--debug',
            '--config', '/etc/twindb/twindb-backup.cfg',
            'backup', 'hourly']
-    executor = api.exec_create('master1_1', cmd)
-    exec_id = executor['Id']
-    print(api.exec_start(exec_id))
-    assert api.exec_inspect(exec_id)['ExitCode'] == 0
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
 
     # Check that backup copy is in "twindb-backup ls" output
     hostname = 'master1_1'
@@ -37,16 +38,16 @@ def test__take_file_backup(master1,
     cmd = ['twindb-backup', '--debug',
            '--config', '/etc/twindb/twindb-backup.cfg',
            'ls']
-    executor = api.exec_create('master1_1', cmd)
-    exec_id = executor['Id']
-    out = api.exec_start(exec_id)
-    print(out)
-    assert api.exec_inspect(exec_id)['ExitCode'] == 0
 
-    assert s3_backup_path in out
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+
+    print(cout)
+    assert ret == 0
+
+    assert s3_backup_path in cout
 
     backup_to_restore = None
-    for line in StringIO.StringIO(out):
+    for line in StringIO.StringIO(cout):
         if line.startswith(s3_backup_path):
             backup_to_restore = line.strip()
             break
@@ -55,62 +56,63 @@ def test__take_file_backup(master1,
            '--config', '/etc/twindb/twindb-backup.cfg',
            'restore', 'file', '--dst', '/tmp/restore', backup_to_restore]
 
-    executor = api.exec_create('master1_1', cmd)
-    exec_id = executor['Id']
-    out = api.exec_start(exec_id)
-    print(out)
-    assert api.exec_inspect(exec_id)['ExitCode'] == 0
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
 
     # Check that restored file exists
     path_to_file_restored = '/tmp/restore/etc/twindb/twindb-backup.cfg'
     cmd = ['ls', path_to_file_restored]
-    executor = api.exec_create('master1_1', cmd)
-    exec_id = executor['Id']
-    out = api.exec_start(exec_id)
-    print(out)
-    assert api.exec_inspect(exec_id)['ExitCode'] == 0
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
 
     # And content is same
     cmd = ['diff',
            '/tmp/restore/etc/twindb/twindb-backup.cfg',
            '/etc/twindb/twindb-backup.cfg']
-    executor = api.exec_create('master1_1', cmd)
-    exec_id = executor['Id']
-    out = api.exec_start(exec_id)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     # empty output
-    assert not out
+    assert not cout
     # zero exit code if no differences
-    assert api.exec_inspect(exec_id)['ExitCode'] == 0
+    assert ret == 0
 
-#
-# def test__take_mysql_backup(s3_client, config_content_mysql_only, tmpdir):
-#     config = tmpdir.join('twindb-backup.cfg')
-#     content = config_content_mysql_only.format(
-#         AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
-#         AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
-#         BUCKET=s3_client.bucket,
-#         daily_copies=1,
-#         hourly_copies=2
-#     )
-#     config.write(content)
-#     cmd = ['twindb-backup',
-#            '--debug',
-#            '--config', str(config),
-#            'backup', 'hourly']
-#     assert call(cmd) == 0
-#
-#     cmd = ['twindb-backup',
-#            '--config', str(config),
-#            'status']
-#     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-#     cout, cerr = proc.communicate()
-#
-#     LOG.debug('STDOUT: %s', cout)
-#     LOG.debug('STDERR: %s', cerr)
-#
-#     key = json.loads(cout)['hourly'].keys()[0]
-#
-#     assert key.endswith('.xbstream.gz')
+
+def test__take_mysql_backup(master1,
+                            docker_client,
+                            s3_client,
+                            config_content_mysql_only):
+
+    twindb_config_host = "%s/env/twindb/twindb-backup.cfg" % os.getcwd()
+    twindb_config_guest = '/etc/twindb/twindb-backup.cfg'
+
+    with open(twindb_config_host, 'w') as fp:
+        content = config_content_mysql_only.format(
+            AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+            AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+            BUCKET=s3_client.bucket,
+            daily_copies=1,
+            hourly_copies=2
+        )
+        fp.write(content)
+
+    cmd = ['twindb-backup',
+           '--debug',
+           '--config', twindb_config_guest,
+           'backup', 'hourly']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+
+    cmd = ['twindb-backup',
+           '--config', twindb_config_guest,
+           'status']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+
+    key = json.loads(cout)['hourly'].keys()[0]
+
+    assert key.endswith('.xbstream.gz')
+
 #
 #
 # def test__take_mysql_backup_retention(s3_client, config_content_mysql_only,

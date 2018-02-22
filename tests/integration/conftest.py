@@ -29,7 +29,7 @@ setup_logging(LOG, debug=True)
 ensure_aws_creds()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def docker_client():
     for _ in xrange(5):
         try:
@@ -41,7 +41,7 @@ def docker_client():
 
 
 # noinspection PyShadowingNames
-@pytest.fixture
+@pytest.fixture(scope="module")
 def node_image(docker_client):
     docker_client.api.pull(NODE_IMAGE)
 
@@ -66,7 +66,7 @@ def _ipam_config():
 
 
 # noinspection PyShadowingNames
-@pytest.yield_fixture
+@pytest.yield_fixture(scope="module")
 def container_network(docker_client):
     api = docker_client.api
     network = None
@@ -153,7 +153,7 @@ def get_container(name, bootstrap_script, client, network, last_n=1):
 
 
 # noinspection PyShadowingNames
-@pytest.yield_fixture
+@pytest.yield_fixture(scope="module")
 def master1(docker_client, container_network):
 
     try:
@@ -185,7 +185,7 @@ def master1(docker_client, container_network):
                       "modules/profile/files/mysql_grants.sql"
     raw_container.exec_run('bash -c "mysql -uroot -pMyNewPass mysql < %s"'
                            % privileges_file)
-
+    docker_execute(docker_client, container['Id'], ['ls'])
     yield container
     if container:
         LOG.info('Removing container %s', container['Id'])
@@ -194,7 +194,7 @@ def master1(docker_client, container_network):
 
 
 # noinspection PyShadowingNames
-@pytest.yield_fixture
+@pytest.yield_fixture(scope="module")
 def master2(docker_client, container_network):
 
     bootstrap_script = '/twindb-backup/support/bootstrap/master2.sh'
@@ -218,3 +218,23 @@ def master2(docker_client, container_network):
         docker_client.api.remove_container(container=container['Id'],
                                            force=True)
 
+
+def docker_execute(client, container_id, cmd):
+    """Execute command in container
+
+    :param client: Docker client class instance
+    :type client: APIClient
+    :param container_id: Container Id from a dictionary that get_container
+        returns.
+    :type container_id: str
+    :param cmd: Command to execute
+    :type cmd: str or list
+    :return: A tuple with exit code and output.
+    :rtype: tuple(int, str)
+    """
+    api = client.api
+    executor = api.exec_create(container_id, cmd)
+    exec_id = executor['Id']
+    cout = api.exec_start(exec_id)
+    ret = api.exec_inspect(exec_id)['ExitCode']
+    return ret, cout

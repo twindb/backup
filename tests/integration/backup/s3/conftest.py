@@ -93,18 +93,15 @@ yearly_copies=0
 
 
 @pytest.fixture
-def config_content_mysql_only(tmpdir):
+def config_content_mysql_only():
     contents = """
 [client]
 user=root
-password=
+password=MyNewPass
 """
-    if os.path.exists(os.path.expanduser("~/.my.cnf")):
-        with open(os.path.expanduser("~/.my.cnf")) as my_cnf:
-            contents = my_cnf.read()
-
-    f = tmpdir.join('.my.cnf')
-    f.write(contents)
+    cwd = os.getcwd()
+    with open(cwd + "/env/twindb/my.cnf", "w") as my_cnf:
+        my_cnf.write(contents)
 
     return """
 [source]
@@ -114,7 +111,7 @@ backup_mysql=yes
 backup_destination=s3
 
 [mysql]
-mysql_defaults_file=%s
+mysql_defaults_file=/etc/twindb/my.cnf
 full_backup=daily
 
 [s3]
@@ -143,7 +140,7 @@ daily_copies=1
 weekly_copies=0
 monthly_copies=0
 yearly_copies=0
-""" % str(f)
+"""
 
 
 @pytest.fixture
