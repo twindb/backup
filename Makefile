@@ -182,7 +182,7 @@ package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
 		-v ${pwd}:/twindb-backup \
 		--name builder_xtrabackup \
 		--rm \
-		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
+		"twindb/omnibus-${PLATFORM}:backup-${OS_VERSION}" \
 		bash -l /twindb-backup/omnibus/omnibus_build.sh
 
 install_package:
