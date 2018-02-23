@@ -108,6 +108,8 @@ def get_container(name, client, network, datadir,
     api.pull(NODE_IMAGE)
     cwd = os.getcwd()
     twindb_config_dir = cwd + '/env/twindb'
+    LOG.debug('Current directory: %s', cwd)
+    LOG.debug('TwinDB config directory: %s', twindb_config_dir)
     mkdir_p(twindb_config_dir, mode=0755)
     host_config = api.create_host_config(
         binds={
