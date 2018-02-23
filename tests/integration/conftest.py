@@ -16,7 +16,7 @@ try:
 except KeyError:
     raise EnvironmentError("""You must define the DOCKER_IMAGE environment 
     variable. Valid values are:
-    * centos:centos7
+    * twindb/backup-test:centos-7
     * centos:centos6
     * debian:jessie
     * ubuntu:trusty
@@ -101,7 +101,8 @@ def container_network(docker_client):
         api.remove_network(net_id=network['Id'])
 
 
-def get_container(name, bootstrap_script, client, network, last_n=1):
+def get_container(name, client, network, datadir,
+                  bootstrap_script=None, last_n=1):
     api = client.api
 
     api.pull(NODE_IMAGE)
@@ -118,6 +119,10 @@ def get_container(name, bootstrap_script, client, network, last_n=1):
                 'bind': '/etc/twindb',
                 'mode': 'rw',
             },
+            datadir: {
+                'bind': '/var/lib/mysql',
+                'mode': 'rw',
+            }
         },
         dns=['8.8.8.8']
     )
@@ -130,16 +135,18 @@ def get_container(name, bootstrap_script, client, network, last_n=1):
     LOG.debug(networking_config)
 
     container_hostname = '%s_%d' % (name, last_n)
-    container = api.create_container(
-        image=NODE_IMAGE,
-        name=container_hostname,
-        ports=[22, 3306],
-        hostname=container_hostname,
-        host_config=host_config,
-        networking_config=networking_config,
-        volumes=['/twindb-backup'],
-        command='bash %s' % bootstrap_script
-    )
+    kwargs = {
+        'image': NODE_IMAGE,
+        'name': container_hostname,
+        'ports': [22, 3306],
+        'hostname': container_hostname,
+        'host_config': host_config,
+        'networking_config': networking_config,
+        'volumes': ['/twindb-backup']
+    }
+    if bootstrap_script:
+        kwargs['command'] = 'bash %s' % bootstrap_script
+    container = api.create_container(**kwargs)
     container['ip'] = ip
     LOG.info('Created container %r', container)
     try:
@@ -154,7 +161,7 @@ def get_container(name, bootstrap_script, client, network, last_n=1):
 
 # noinspection PyShadowingNames
 @pytest.yield_fixture(scope="module")
-def master1(docker_client, container_network):
+def master1(docker_client, container_network, tmpdir_factory):
 
     try:
         platform = os.environ['PLATFORM']
@@ -164,11 +171,12 @@ def master1(docker_client, container_network):
 
     bootstrap_script = '/twindb-backup/support/bootstrap/master/' \
                        '%s/master1.sh' % platform
+    datadir = tmpdir_factory.mktemp('mysql')
     container = get_container(
         'master1',
-        bootstrap_script,
         docker_client,
         container_network,
+        str(datadir),
         1
     )
 
@@ -183,9 +191,14 @@ def master1(docker_client, container_network):
     raw_container = docker_client.containers.get(container['Id'])
     privileges_file = "/twindb-backup/vagrant/environment/puppet/" \
                       "modules/profile/files/mysql_grants.sql"
-    raw_container.exec_run('bash -c "mysql -uroot -pMyNewPass mysql < %s"'
+    raw_container.exec_run('bash -c "mysql -uroot mysql < %s"'
                            % privileges_file)
     docker_execute(docker_client, container['Id'], ['ls'])
+    docker_execute(
+        docker_client,
+        container['Id'],
+        ['bash', bootstrap_script]
+    )
     yield container
     if container:
         LOG.info('Removing container %s', container['Id'])
@@ -200,7 +213,6 @@ def master2(docker_client, container_network):
     bootstrap_script = '/twindb-backup/support/bootstrap/master2.sh'
     container = get_container(
         'master2',
-        bootstrap_script,
         docker_client,
         container_network,
         2

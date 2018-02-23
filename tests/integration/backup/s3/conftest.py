@@ -96,8 +96,8 @@ yearly_copies=0
 def config_content_mysql_only():
     contents = """
 [client]
-user=root
-password=MyNewPass
+user=dba
+password=qwerty
 """
     cwd = os.getcwd()
     with open(cwd + "/env/twindb/my.cnf", "w") as my_cnf:

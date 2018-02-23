@@ -72,6 +72,7 @@ clean-build: ## remove build artifacts
 	rm -fr dist/
 	rm -fr .eggs/
 	rm -rf pkg/
+	rm -rf omnibus/pkg/
 	rm -rf cache/
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
@@ -173,7 +174,7 @@ docker-start:
 		-it \
 		--name builder_xtrabackup \
 		--rm \
-		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
+		"twindb/omnibus-${PLATFORM}:backup-${OS_VERSION}" \
 		bash -l
 
 
