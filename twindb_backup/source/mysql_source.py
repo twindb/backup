@@ -10,9 +10,9 @@ import time
 from ConfigParser import NoOptionError
 from contextlib import contextmanager
 from subprocess import Popen, PIPE
+import sys
 
 import pymysql
-import sys
 
 from twindb_backup import LOG, get_files_to_delete, INTERVALS, \
     MY_CNF_COMMON_PATHS, XTRABACKUP_BINARY
@@ -144,8 +144,8 @@ class MySQLSource(BaseSource):
                           'Check error output in %s', stderr_file.name)
                 try:
                     if LOG.debug_enabled:
-                        with open(stderr_file.name) as fp:
-                            for line in fp:
+                        with open(stderr_file.name) as xb_out:
+                            for line in xb_out:
                                 print(line, end='', file=sys.stderr)
                 except AttributeError:
                     pass
