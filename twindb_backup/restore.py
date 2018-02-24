@@ -14,7 +14,7 @@ import time
 
 import psutil
 
-from twindb_backup import LOG, INTERVALS
+from twindb_backup import LOG, INTERVALS, XTRABACKUP_BINARY
 from twindb_backup.configuration import get_destination
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
@@ -23,7 +23,6 @@ from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
-from twindb_backup.source.mysql_source import XTRABACKUP_BINARY
 from twindb_backup.util import mkdir_p, \
     get_hostname_from_backup_copy, empty_dir
 
@@ -91,7 +90,7 @@ def get_my_cnf(status, key):
 
 
 def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
-                            xtrabackup_binary=XTRABACKUP_BINARY):
+                            xtrabackup_binary=None):
     """
     Restore MySQL datadir from a backup copy
 

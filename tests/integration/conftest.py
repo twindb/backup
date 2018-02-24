@@ -102,30 +102,36 @@ def container_network(docker_client):
 
 
 def get_container(name, client, network, datadir,
-                  bootstrap_script=None, last_n=1):
+                  bootstrap_script=None, last_n=1,
+                  twindb_config_dir=None):
     api = client.api
 
     api.pull(NODE_IMAGE)
     cwd = os.getcwd()
-    twindb_config_dir = cwd + '/env/twindb'
     LOG.debug('Current directory: %s', cwd)
     LOG.debug('TwinDB config directory: %s', twindb_config_dir)
     mkdir_p(twindb_config_dir, mode=0755)
-    host_config = api.create_host_config(
-        binds={
-            cwd: {
-                'bind': '/twindb-backup',
-                'mode': 'rw',
-            },
-            twindb_config_dir: {
-                'bind': '/etc/twindb',
-                'mode': 'rw',
-            },
-            datadir: {
-                'bind': '/var/lib/mysql',
-                'mode': 'rw',
-            }
+    binds = {
+        cwd: {
+            'bind': '/twindb-backup',
+            'mode': 'rw',
         },
+        twindb_config_dir: {
+            'bind': '/etc/twindb',
+            'mode': 'rw',
+        },
+        datadir: {
+            'bind': '/var/lib/mysql',
+            'mode': 'rw',
+        }
+    }
+    if twindb_config_dir:
+        binds[twindb_config_dir] = {
+            'bind': '/etc/twindb',
+            'mode': 'rw',
+        }
+    host_config = api.create_host_config(
+        binds=binds,
         dns=['8.8.8.8']
     )
 
@@ -174,12 +180,14 @@ def master1(docker_client, container_network, tmpdir_factory):
     bootstrap_script = '/twindb-backup/support/bootstrap/master/' \
                        '%s/master1.sh' % platform
     datadir = tmpdir_factory.mktemp('mysql')
+    twindb_config_dir = tmpdir_factory.mktemp('twindb')
     container = get_container(
         'master1',
         docker_client,
         container_network,
         str(datadir),
-        1
+        twindb_config_dir=str(twindb_config_dir),
+        last_n=1
     )
 
     timeout = time.time() + 30 * 60
@@ -252,3 +260,27 @@ def docker_execute(client, container_id, cmd):
     cout = api.exec_start(exec_id)
     ret = api.exec_inspect(exec_id)['ExitCode']
     return ret, cout
+
+
+def get_twindb_config_dir(client, container_id):
+    """Read hostconfig of a container and return directory on a host server
+    that is mounted as /etc/twindb in the container
+
+    :param client: Docker client class instance
+    :type client: APIClient
+    :param container_id: container id. can be something like c870459a6724 or
+        container name like builder_xtrabackup
+    :return: directory on the host machine
+    :rtype: str
+    """
+    api = client.api
+    host_config = api.inspect_container(container_id)['HostConfig']
+    binds = host_config['Binds']
+    for bind_pair in binds:
+        print(bind_pair)
+        bind = bind_pair.split(':')
+        host_dir = bind[0]
+        guest_dir = bind[1]
+        if guest_dir == '/etc/twindb':
+            return host_dir
+    raise RuntimeError('Could not find binding for /etc/twindb')

@@ -10,8 +10,8 @@ import json
 import os
 import click
 
-from twindb_backup import setup_logging, LOG, __version__, TwinDBBackupError, \
-    LOCK_FILE
+from twindb_backup import setup_logging, LOG, __version__, \
+    TwinDBBackupError, LOCK_FILE, XTRABACKUP_BINARY
 from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.clone import clone_mysql
@@ -34,9 +34,14 @@ PASS_CFG = click.make_pass_decorator(ConfigParser, ensure=True)
               show_default=True)
 @click.option('--version', help='Show tool version and exit.', is_flag=True,
               default=False)
+@click.option('--xtrabackup-binary',
+              help='Path to xtrabackup binary.',
+              default=XTRABACKUP_BINARY,
+              show_default=True)
 @PASS_CFG
 @click.pass_context
-def main(ctx, cfg, debug, config, version):
+def main(ctx, cfg, debug, config, version,
+         xtrabackup_binary=XTRABACKUP_BINARY):
     """
     Main entry point
 
@@ -49,6 +54,8 @@ def main(ctx, cfg, debug, config, version):
     :param config: path to configuration file
     :type config: str
     :param version: If True print version string
+    :param xtrabackup_binary: Path to xtrabackup binary.
+    :type xtrabackup_binary: str
     :type version: bool
     """
     if not ctx.invoked_subcommand:
@@ -63,6 +70,7 @@ def main(ctx, cfg, debug, config, version):
 
     if os.path.exists(config):
         cfg.read(config)
+        cfg.set('mysql', 'xtrabackup_binary', xtrabackup_binary)
     else:
         LOG.warning("Config file %s doesn't exist", config)
 
@@ -155,7 +163,7 @@ def restore_mysql(cfg, dst, backup_copy, cache):
         ensure_empty(dst)
 
         if cache:
-            restore_from_mysql(cfg, backup_copy, dst, Cache(cache))
+            restore_from_mysql(cfg, backup_copy, dst, cache=Cache(cache))
         else:
             restore_from_mysql(cfg, backup_copy, dst)
 

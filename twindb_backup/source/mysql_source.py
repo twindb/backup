@@ -2,6 +2,7 @@
 """
 Module defines MySQL source class for backing up local MySQL.
 """
+from __future__ import print_function
 import os
 import tempfile
 import time
@@ -11,12 +12,12 @@ from contextlib import contextmanager
 from subprocess import Popen, PIPE
 
 import pymysql
+import sys
+
 from twindb_backup import LOG, get_files_to_delete, INTERVALS, \
-    MY_CNF_COMMON_PATHS
+    MY_CNF_COMMON_PATHS, XTRABACKUP_BINARY
 from twindb_backup.source.base_source import BaseSource
 from twindb_backup.source.exceptions import MySQLSourceError
-
-XTRABACKUP_BINARY = '/opt/twindb-backup/embedded/bin/xtrabackup'
 
 
 class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
@@ -141,6 +142,13 @@ class MySQLSource(BaseSource):
             if proc_xtrabackup.returncode:
                 LOG.error('Failed to run xtrabackup. '
                           'Check error output in %s', stderr_file.name)
+                try:
+                    if LOG.debug_enabled:
+                        with open(stderr_file.name) as fp:
+                            for line in fp:
+                                print(line, end='', file=sys.stderr)
+                except AttributeError:
+                    pass
                 self.dst.delete(self.get_name())
                 exit(1)
             else:

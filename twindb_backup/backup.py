@@ -108,11 +108,13 @@ def backup_mysql(run_type, config):
     except ConfigParser.NoOptionError:
         full_backup = 'daily'
     backup_start = time.time()
-    src = MySQLSource(MySQLConnectInfo(config.get('mysql',
-                                                  'mysql_defaults_file')),
-                      run_type,
-                      full_backup,
-                      dst)
+    src = MySQLSource(
+        MySQLConnectInfo(config.get('mysql', 'mysql_defaults_file')),
+        run_type,
+        full_backup,
+        dst=dst,
+        xtrabackup_binary=config.get('mysql', 'xtrabackup_binary')
+    )
 
     callbacks = []
     src_name = _backup_stream(config, src, dst, callbacks)

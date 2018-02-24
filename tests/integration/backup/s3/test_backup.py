@@ -2,14 +2,15 @@ import StringIO
 import json
 import os
 
-from tests.integration.conftest import docker_execute
+from tests.integration.conftest import docker_execute, get_twindb_config_dir
 
 
 def test__take_file_backup(master1,
                            docker_client,
                            s3_client,
                            config_content_files_only):
-    twindb_config = "%s/env/twindb/twindb-backup.cfg" % os.getcwd()
+    twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
+    twindb_config = "%s/twindb-backup.cfg" % twindb_config_dir
     backup_dir = "/etc/twindb"
 
     with open(twindb_config, 'w') as fp:
@@ -83,7 +84,9 @@ def test__take_mysql_backup(master1,
                             s3_client,
                             config_content_mysql_only):
 
-    twindb_config_host = "%s/env/twindb/twindb-backup.cfg" % os.getcwd()
+    twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
+
+    twindb_config_host = "%s/twindb-backup.cfg" % twindb_config_dir
     twindb_config_guest = '/etc/twindb/twindb-backup.cfg'
 
     with open(twindb_config_host, 'w') as fp:

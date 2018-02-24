@@ -61,7 +61,7 @@ password=qwerty
   $packages = [ 'vim-enhanced', 'nmap-ncat',
     'Percona-Server-client-56', 'Percona-Server-server-56',
     'Percona-Server-devel-56', 'Percona-Server-shared-56', 'percona-toolkit',
-    'percona-xtrabackup',
+    'percona-xtrabackup-24',
     'python2-pip',
     'gcc', 'python-devel', 'zlib-devel', 'openssl-devel',
     'rpm-build','docker', 'strace']
