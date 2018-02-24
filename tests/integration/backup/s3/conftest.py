@@ -94,15 +94,6 @@ yearly_copies=0
 
 @pytest.fixture
 def config_content_mysql_only():
-    contents = """
-[client]
-user=dba
-password=qwerty
-"""
-    cwd = os.getcwd()
-    with open(cwd + "/env/twindb/my.cnf", "w") as my_cnf:
-        my_cnf.write(contents)
-
     return """
 [source]
 backup_mysql=yes
@@ -111,7 +102,7 @@ backup_mysql=yes
 backup_destination=s3
 
 [mysql]
-mysql_defaults_file=/etc/twindb/my.cnf
+mysql_defaults_file={MY_CNF}
 full_backup=daily
 
 [s3]

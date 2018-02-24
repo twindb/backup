@@ -88,6 +88,16 @@ def test__take_mysql_backup(master1,
 
     twindb_config_host = "%s/twindb-backup.cfg" % twindb_config_dir
     twindb_config_guest = '/etc/twindb/twindb-backup.cfg'
+    my_cnf_path = "%s/my.cnf" % twindb_config_dir
+
+    contents = """
+[client]
+user=dba
+password=qwerty
+"""
+
+    with open(my_cnf_path, "w") as my_cnf:
+        my_cnf.write(contents)
 
     with open(twindb_config_host, 'w') as fp:
         content = config_content_mysql_only.format(
@@ -95,7 +105,8 @@ def test__take_mysql_backup(master1,
             AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
             BUCKET=s3_client.bucket,
             daily_copies=1,
-            hourly_copies=2
+            hourly_copies=2,
+            MY_CNF='/etc/twindb/my.cnf'
         )
         fp.write(content)
 

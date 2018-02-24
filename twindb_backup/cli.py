@@ -5,7 +5,7 @@ Entry points for twindb-backup tool
 from __future__ import print_function
 
 import traceback
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, NoSectionError
 import json
 import os
 import click
@@ -70,7 +70,11 @@ def main(ctx, cfg, debug, config, version,
 
     if os.path.exists(config):
         cfg.read(config)
-        cfg.set('mysql', 'xtrabackup_binary', xtrabackup_binary)
+        try:
+            cfg.set('mysql', 'xtrabackup_binary', xtrabackup_binary)
+        except NoSectionError:
+            # if there is no mysql section, we will not backup mysql
+            pass
     else:
         LOG.warning("Config file %s doesn't exist", config)
 
