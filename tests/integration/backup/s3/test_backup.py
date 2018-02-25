@@ -10,10 +10,13 @@ def test__take_file_backup(master1,
                            s3_client,
                            config_content_files_only):
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
-    twindb_config = "%s/twindb-backup.cfg" % twindb_config_dir
+
+    twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
+    twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
+
     backup_dir = "/etc/twindb"
 
-    with open(twindb_config, 'w') as fp:
+    with open(twindb_config_host, 'w') as fp:
         content = config_content_files_only.format(
             TEST_DIR=backup_dir,
             AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
@@ -23,7 +26,7 @@ def test__take_file_backup(master1,
         fp.write(content)
 
     cmd = ['twindb-backup', '--debug',
-           '--config', '/etc/twindb/twindb-backup.cfg',
+           '--config', twindb_config_guest,
            'backup', 'hourly']
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
@@ -37,7 +40,7 @@ def test__take_file_backup(master1,
         backup_dir.replace('/', '_')
     )
     cmd = ['twindb-backup', '--debug',
-           '--config', '/etc/twindb/twindb-backup.cfg',
+           '--config', twindb_config_guest,
            'ls']
 
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
@@ -54,7 +57,7 @@ def test__take_file_backup(master1,
             break
 
     cmd = ['twindb-backup', '--debug',
-           '--config', '/etc/twindb/twindb-backup.cfg',
+           '--config', twindb_config_guest,
            'restore', 'file', '--dst', '/tmp/restore', backup_to_restore]
 
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
@@ -62,7 +65,7 @@ def test__take_file_backup(master1,
     assert ret == 0
 
     # Check that restored file exists
-    path_to_file_restored = '/tmp/restore/etc/twindb/twindb-backup.cfg'
+    path_to_file_restored = '/tmp/restore/etc/twindb/twindb-backup-1.cfg'
     cmd = ['ls', path_to_file_restored]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
@@ -70,8 +73,8 @@ def test__take_file_backup(master1,
 
     # And content is same
     cmd = ['diff',
-           '/tmp/restore/etc/twindb/twindb-backup.cfg',
-           '/etc/twindb/twindb-backup.cfg']
+           '/tmp/restore/etc/twindb/twindb-backup-1.cfg',
+           twindb_config_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     # empty output
     assert not cout
@@ -86,8 +89,8 @@ def test__take_mysql_backup(master1,
 
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
 
-    twindb_config_host = "%s/twindb-backup.cfg" % twindb_config_dir
-    twindb_config_guest = '/etc/twindb/twindb-backup.cfg'
+    twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
+    twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
 
     contents = """
