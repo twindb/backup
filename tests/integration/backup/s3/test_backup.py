@@ -205,6 +205,7 @@ password=qwerty
 
     with open(my_cnf_path, "w") as my_cnf:
         my_cnf.write(contents)
+    backup_dir = "/etc/twindb"
 
     with open(twindb_config_host, 'w') as fp:
         content = config_content_mysql_only.format(
@@ -213,6 +214,7 @@ password=qwerty
             BUCKET=s3_client.bucket,
             daily_copies=7,
             hourly_copies=3,
+            TEST_DIR=backup_dir,
             MY_CNF='/etc/twindb/my.cnf'
         )
         fp.write(content)
