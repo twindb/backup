@@ -294,72 +294,73 @@ password=qwerty
 
     assert key.endswith(".xbstream.gz.gpg")
 
-# def test__take_file_backup_with_aenc(config_content_files_aenc,
-#                                           tmpdir,
-#                                           foo_bar_dir,
-#                                           s3_client):
-#     config = tmpdir.join('twindb-backup.cfg')
-#     content = config_content_files_aenc.format(
-#         TEST_DIR=foo_bar_dir,
-#         AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
-#         AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
-#         BUCKET=s3_client.bucket
-#     )
-#     config.write(content)
-#
-#     backup_dir = foo_bar_dir
-#
-#     # write some content to the directory
-#     with open(os.path.join(backup_dir, 'file'), 'w') as f:
-#         f.write("Hello world.")
-#
-#     hostname = socket.gethostname()
-#     s3_backup_path = 's3://%s/%s/hourly/files/%s' % \
-#                      (s3_client.bucket, hostname, backup_dir.replace('/', '_'))
-#
-#     cmd = ['twindb-backup', '--debug',
-#            '--config', str(config),
-#            'backup', 'hourly']
-#     assert call(cmd) == 0
-#
-#     cmd = ['twindb-backup', '--debug',
-#            '--config', str(config),
-#            'ls']
-#     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-#     out, err = proc.communicate()
-#
-#     LOG.debug('STDOUT: %s' % out)
-#     LOG.debug('STDERR: %s' % err)
-#
-#     assert proc.returncode == 0
-#
-#     assert s3_backup_path in out
-#
-#     backup_to_restore = None
-#     for line in StringIO.StringIO(out):
-#         if line.startswith(s3_backup_path):
-#             backup_to_restore = line.strip()
-#             break
-#
-#     dest_dir = tmpdir.mkdir("dst")
-#     cmd = ['twindb-backup', '--debug',
-#            '--config', str(config),
-#            'restore', 'file', '--dst', str(dest_dir), backup_to_restore]
-#
-#     assert call(cmd) == 0
-#
-#     path_to_file_restored = '%s/%s/file' % (str(dest_dir), backup_dir)
-#     assert os.path.exists(path_to_file_restored)
-#
-#     # And content is same
-#     path_to_file_orig = "%s/file" % backup_dir
-#     proc = Popen(['diff', '-Nur',
-#                   path_to_file_orig,
-#                   path_to_file_restored],
-#                  stdout=PIPE, stderr=PIPE)
-#     out, err = proc.communicate()
-#     assert not out
 
+def test__take_file_backup_with_aenc(master1,
+                                     docker_client,
+                                     s3_client,
+                                     config_content_mysql_aenc):
+    twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
+
+    twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
+    twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
+    my_cnf_path = "%s/my.cnf" % twindb_config_dir
+
+    contents = """
+[client]
+user=dba
+password=qwerty
+"""
+
+    with open(my_cnf_path, "w") as my_cnf:
+        my_cnf.write(contents)
+    backup_dir = "/etc/twindb"
+    with open(twindb_config_host, 'w') as fp:
+        content = config_content_mysql_aenc.format(
+            AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+            AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+            BUCKET=s3_client.bucket,
+            daily_copies=7,
+            hourly_copies=3,
+            TEST_DIR=backup_dir,
+            MY_CNF='/etc/twindb/my.cnf'
+        )
+        fp.write(content)
+    hostname = 'master1_1'
+    s3_backup_path = 's3://%s/%s/hourly/files/%s' % \
+                     (s3_client.bucket, hostname, backup_dir.replace('/', '_'))
+    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'backup', 'hourly']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+
+    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'ls']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    assert s3_backup_path in cout
+    backup_to_restore = None
+    for line in StringIO.StringIO(cout):
+        if line.startswith(s3_backup_path):
+            backup_to_restore = line.strip()
+            break
+
+    cmd = ['mkdir', '-p', '/tmp/dst_file_enc']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'restore', 'file', '--dst', '/tmp/dst_file_enc', backup_to_restore]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    path_to_file_restored = '/tmp/dst_file_enc/%s/file' % (backup_dir)
+    assert os.path.exists(path_to_file_restored)
+    # And content is same
+    path_to_file_orig = "%s/file" % backup_dir
+    cmd = ['diff', '-Nur', path_to_file_orig, path_to_file_restored]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    assert not cout
 
 
 def test__take_mysql_backup_aenc_restores_full(master1,
