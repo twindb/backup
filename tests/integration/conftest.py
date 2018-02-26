@@ -209,8 +209,8 @@ def master1(docker_client, container_network, tmpdir_factory):
            "mysql -uroot mysql < %s" % privileges_file]
     ret, cout = docker_execute(docker_client, container['Id'], cmd)
 
-    assert ret == 0
     print(cout)
+    assert ret == 0
 
     ret, _ = docker_execute(docker_client, container['Id'], ['ls'])
     assert ret == 0
@@ -220,8 +220,8 @@ def master1(docker_client, container_network, tmpdir_factory):
         container['Id'],
         ['bash', bootstrap_script]
     )
-    assert ret == 0
     print(cout)
+    assert ret == 0
 
     yield container
 
