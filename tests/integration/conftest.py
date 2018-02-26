@@ -17,10 +17,10 @@ except KeyError:
     raise EnvironmentError("""You must define the DOCKER_IMAGE environment 
     variable. Valid values are:
     * twindb/backup-test:centos-7
-    * centos:centos6
-    * debian:jessie
-    * ubuntu:trusty
-    * ubuntu:xenial
+    * twindb/backup-test:centos-6
+    * twindb/backup-test:jessie
+    * twindb/backup-test:trusty
+    * twindb/backup-test:xenial
     """)
 
 NETWORK_NAME = 'test_network'
@@ -174,8 +174,12 @@ def master1(docker_client, container_network, tmpdir_factory):
     try:
         platform = os.environ['PLATFORM']
     except KeyError:
-        raise EnvironmentError("""You must define environment variable PLATFORM.
-        Allowed values are centos, debian and ubuntu""")
+        raise EnvironmentError("""The environment variable PLATFORM 
+        must be defined. Allowed values are:
+        * centos
+        * debian
+        * ubuntu
+        """)
 
     bootstrap_script = '/twindb-backup/support/bootstrap/master/' \
                        '%s/master1.sh' % platform
@@ -191,25 +195,36 @@ def master1(docker_client, container_network, tmpdir_factory):
     )
 
     timeout = time.time() + 30 * 60
-
+    LOG.info('Waiting until port TCP/3306 becomes available')
     while time.time() < timeout:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if sock.connect_ex((container['ip'], 3306)) == 0:
             break
         time.sleep(1)
+        LOG.info('Still waiting')
 
-    raw_container = docker_client.containers.get(container['Id'])
     privileges_file = "/twindb-backup/vagrant/environment/puppet/" \
                       "modules/profile/files/mysql_grants.sql"
-    raw_container.exec_run('bash -c "mysql -uroot mysql < %s"'
-                           % privileges_file)
-    docker_execute(docker_client, container['Id'], ['ls'])
-    docker_execute(
+    cmd = ["bash", "-c",
+           "mysql -uroot mysql < %s" % privileges_file]
+    ret, cout = docker_execute(docker_client, container['Id'], cmd)
+
+    assert ret == 0
+    print(cout)
+
+    ret, _ = docker_execute(docker_client, container['Id'], ['ls'])
+    assert ret == 0
+
+    ret, cout = docker_execute(
         docker_client,
         container['Id'],
         ['bash', bootstrap_script]
     )
+    assert ret == 0
+    print(cout)
+
     yield container
+
     if container:
         LOG.info('Removing container %s', container['Id'])
         docker_client.api.remove_container(container=container['Id'],
