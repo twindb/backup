@@ -3,7 +3,7 @@ import json
 import os
 
 from tests.integration.conftest import docker_execute, get_twindb_config_dir
-from twindb_backup.destination.s3 import S3
+from twindb_backup.destination.s3 import S3, AWSAuthOptions
 
 
 def test__take_file_backup(master1,
@@ -212,8 +212,8 @@ password=qwerty
             AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
             AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
             BUCKET=s3_client.bucket,
-            daily_copies=7,
-            hourly_copies=3,
+            daily_copies=5,
+            hourly_copies=2,
             TEST_DIR=backup_dir,
             MY_CNF='/etc/twindb/my.cnf'
         )
@@ -221,26 +221,27 @@ password=qwerty
 
     cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'backup', 'daily']
 
-    n_runs = 5
+    n_runs = 3
     for x in xrange(n_runs):
         ret, cout = docker_execute(docker_client, master1['Id'], cmd)
         print(cout)
         assert ret == 0
-    cmd = ['hostname']
-    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
-    print(cout)
-    assert ret == 0
-    docker_hostname = cout
+    hostname = 'master1_1'
+    dst = S3(s3_client.bucket,
+             AWSAuthOptions(os.environ['AWS_ACCESS_KEY_ID'],
+                            os.environ['AWS_SECRET_ACCESS_KEY'])
+             )
+
     for x in xrange(10):
-        result = s3_client.find_files(s3_client.remote_path, 'daily')
+        result = dst.find_files(dst.remote_path, 'daily')
         assert len(result) == n_runs
         assert result == sorted(result)
         prefix = "{remote_path}/{hostname}/{run_type}/mysql/mysql-".format(
-            remote_path=s3_client.remote_path,
-            hostname=docker_hostname,
+            remote_path=dst.remote_path,
+            hostname=hostname,
             run_type='daily'
         )
-        files = s3_client.list_files(prefix)
+        files = dst.list_files(prefix)
         assert len(files) == n_runs
         assert files == sorted(files)
 
