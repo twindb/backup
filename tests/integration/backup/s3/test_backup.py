@@ -290,8 +290,9 @@ password=qwerty
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     assert ret == 0
     print(cout)
-    key = json.loads(cout)['daily'].keys()[0]
-    assert key.endswith('xbstream.gz.gpg')
+    key = json.loads(cout)['hourly'].keys()[0]
+
+    assert key.endswith(".xbstream.gz.gpg")
 
 # def test__take_file_backup_with_aenc(config_content_files_aenc,
 #                                           tmpdir,
