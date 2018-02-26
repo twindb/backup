@@ -259,8 +259,11 @@ def test__take_mysql_backup_aenc_suffix_gpg(master1,
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
-    keyring_path = "/etc/twindb/gpg_keyring"
-    secret_keyring_path = "/etc/twindb/secret_gpg_keyring"
+    keyring_path = "%s/gpg_keyring" % twindb_config_dir
+    secret_keyring_path = "%s/secret_gpg_keyring" % twindb_config_dir
+
+    keyring_path_guest = "/etc/twindb/gpg_keyring"
+    secret_keyring_path_guest = "/etc/twindb/secret_gpg_keyring"
 
     with open(keyring_path, "w") as fd:
         fd.write(gpg_keyring)
@@ -271,7 +274,7 @@ def test__take_mysql_backup_aenc_suffix_gpg(master1,
            '--no-default-keyring',
            '--yes',
            '--import',
-           keyring_path]
+           keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -279,7 +282,7 @@ def test__take_mysql_backup_aenc_suffix_gpg(master1,
            '--allow-secret-key-import',
            '--yes',
            '--import',
-           secret_keyring_path]
+           secret_keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -302,8 +305,8 @@ password=qwerty
             daily_copies=7,
             hourly_copies=3,
             MY_CNF='/etc/twindb/my.cnf',
-            gpg_keyring = keyring_path,
-            gpg_secret_keyring = secret_keyring_path
+            gpg_keyring = keyring_path_guest,
+            gpg_secret_keyring = secret_keyring_path_guest
         )
         fp.write(content)
 
@@ -333,8 +336,11 @@ def test__take_file_backup_with_aenc(master1,
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
-    keyring_path = "/etc/twindb/gpg_keyring"
-    secret_keyring_path = "/etc/twindb/secret_gpg_keyring"
+    keyring_path = "%s/gpg_keyring" % twindb_config_dir
+    secret_keyring_path = "%s/secret_gpg_keyring" % twindb_config_dir
+
+    keyring_path_guest = "/etc/twindb/gpg_keyring"
+    secret_keyring_path_guest = "/etc/twindb/secret_gpg_keyring"
 
     with open(keyring_path, "w") as fd:
         fd.write(gpg_keyring)
@@ -345,7 +351,7 @@ def test__take_file_backup_with_aenc(master1,
            '--no-default-keyring',
            '--yes',
            '--import',
-           keyring_path]
+           keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -353,7 +359,7 @@ def test__take_file_backup_with_aenc(master1,
            '--allow-secret-key-import',
            '--yes',
            '--import',
-           secret_keyring_path]
+           secret_keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -376,8 +382,8 @@ password=qwerty
             hourly_copies=3,
             TEST_DIR=backup_dir,
             MY_CNF='/etc/twindb/my.cnf',
-            gpg_keyring = keyring_path,
-            gpg_secret_keyring = secret_keyring_path
+            gpg_keyring = keyring_path_guest,
+            gpg_secret_keyring = secret_keyring_path_guest
         )
         fp.write(content)
     hostname = 'master1_1'
@@ -429,8 +435,11 @@ def test__take_mysql_backup_aenc_restores_full(master1,
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
-    keyring_path = "/etc/twindb/gpg_keyring"
-    secret_keyring_path = "/etc/twindb/secret_gpg_keyring"
+    keyring_path = "%s/gpg_keyring" % twindb_config_dir
+    secret_keyring_path = "%s/secret_gpg_keyring" % twindb_config_dir
+
+    keyring_path_guest = "/etc/twindb/gpg_keyring"
+    secret_keyring_path_guest = "/etc/twindb/secret_gpg_keyring"
 
     with open(keyring_path, "w") as fd:
         fd.write(gpg_keyring)
@@ -441,7 +450,7 @@ def test__take_mysql_backup_aenc_restores_full(master1,
            '--no-default-keyring',
            '--yes',
            '--import',
-           keyring_path]
+           keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -449,7 +458,7 @@ def test__take_mysql_backup_aenc_restores_full(master1,
            '--allow-secret-key-import',
            '--yes',
            '--import',
-           secret_keyring_path]
+           secret_keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -471,8 +480,8 @@ password=qwerty
             daily_copies=7,
             hourly_copies=3,
             MY_CNF='/etc/twindb/my.cnf',
-            gpg_keyring = keyring_path,
-            gpg_secret_keyring = secret_keyring_path
+            gpg_keyring = keyring_path_guest,
+            gpg_secret_keyring = secret_keyring_path_guest
         )
         fp.write(content)
 
@@ -533,8 +542,11 @@ def test__take_mysql_backup_aenc_restores_inc(master1,
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
-    keyring_path = "/etc/twindb/gpg_keyring"
-    secret_keyring_path = "/etc/twindb/secret_gpg_keyring"
+    keyring_path = "%s/gpg_keyring" % twindb_config_dir
+    secret_keyring_path = "%s/secret_gpg_keyring" % twindb_config_dir
+
+    keyring_path_guest = "/etc/twindb/gpg_keyring"
+    secret_keyring_path_guest = "/etc/twindb/secret_gpg_keyring"
 
     with open(keyring_path, "w") as fd:
         fd.write(gpg_keyring)
@@ -545,7 +557,7 @@ def test__take_mysql_backup_aenc_restores_inc(master1,
            '--no-default-keyring',
            '--yes',
            '--import',
-           keyring_path]
+           keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -553,7 +565,7 @@ def test__take_mysql_backup_aenc_restores_inc(master1,
            '--allow-secret-key-import',
            '--yes',
            '--import',
-           secret_keyring_path]
+           secret_keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -574,8 +586,8 @@ password=qwerty
             daily_copies=7,
             hourly_copies=3,
             MY_CNF='/etc/twindb/my.cnf',
-            gpg_keyring = keyring_path,
-            gpg_secret_keyring = secret_keyring_path
+            gpg_keyring = keyring_path_guest,
+            gpg_secret_keyring = secret_keyring_path_guest
         )
         fp.write(content)
 
