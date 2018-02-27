@@ -44,7 +44,7 @@ password=qwerty
     print(cout)
     assert ret == 0
 
-    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'status']
+    cmd = ['twindb-backup', '--config', twindb_config_guest, 'status']
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
