@@ -135,16 +135,7 @@ yearly_copies=0
 
 
 @pytest.fixture
-def gpg_keyring(tmpdir):
-    keyring = tmpdir.join('keyring')
-    keyring.write('')
-    proc = Popen(['gpg',
-                  '--no-default-keyring',
-                  '--yes',
-                  '--keyring', str(keyring),
-                  '--import'],
-                 stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    # foo@bar public key
+def gpg_keyring():
     key = """
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: GnuPG v2
@@ -166,23 +157,11 @@ s34qC2jpoQiiGmB0NFNI90epbvMQPK4AtuQOE1c=
 =p0uq
 -----END PGP PUBLIC KEY BLOCK-----
 """
-    cout, cerr = proc.communicate(input=key)
-    print(cerr)
-    assert proc.returncode == 0
-    return keyring
+    return key
 
 
 @pytest.fixture
-def gpg_secret_keyring(tmpdir):
-    keyring = tmpdir.join('secret_keyring')
-    keyring.write('')
-    proc = Popen(['gpg',
-                  '--no-default-keyring',
-                  '--yes',
-                  '--secret-keyring', str(keyring),
-                  '--import'],
-                 stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    # foo@bar private key
+def gpg_secret_keyring():
     key = """
 -----BEGIN PGP PRIVATE KEY BLOCK-----
 Version: GnuPG v2
@@ -217,34 +196,27 @@ FUHjabUaMlvK1faX8YHYrht8V0uy6IBhF90suXDFM67UyykDOK5PgLN+Kgto6aEI
 ohpgdDRTSPdHqW7zEDyuALbkDhNX
 =DjLy
 -----END PGP PRIVATE KEY BLOCK-----"""
-    cout, cerr = proc.communicate(input=key)
-    print(cerr)
-    assert proc.returncode == 0
-    return keyring
+    return key
 
 
 @pytest.fixture
-def config_content_mysql_aenc(config_content_mysql_only,
-                              gpg_keyring,
-                              gpg_secret_keyring):
+def config_content_mysql_aenc(config_content_mysql_only):
 
     return config_content_mysql_only + """
 
 [gpg]
-keyring = %s
-secret_keyring = %s
+keyring = {gpg_keyring}
+secret_keyring = {gpg_secret_keyring}
 recipient = foo@bar
-""" % (str(gpg_keyring), str(gpg_secret_keyring))
+"""
 
 
 @pytest.fixture
-def config_content_files_aenc(config_content_files_only,
-                              gpg_keyring,
-                              gpg_secret_keyring):
+def config_content_files_aenc(config_content_files_only):
     return config_content_files_only + """
 
 [gpg]
-keyring = %s
-secret_keyring = %s
+keyring = {gpg_keyring}
+secret_keyring = {gpg_secret_keyring}
 recipient = foo@bar
-""" % (str(gpg_keyring), str(gpg_secret_keyring))
+"""
