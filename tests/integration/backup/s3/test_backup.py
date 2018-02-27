@@ -412,8 +412,10 @@ password=qwerty
     print(cout)
     assert ret == 0
     path_to_file_restored = '/tmp/dst_file_enc/%s/file' % (backup_dir)
-    assert os.path.exists(path_to_file_restored)
-    # And content is same
+    cmd = ['test', '-f', path_to_file_restored]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
     path_to_file_orig = "%s/file" % backup_dir
     cmd = ['diff', '-Nur', path_to_file_orig, path_to_file_restored]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
