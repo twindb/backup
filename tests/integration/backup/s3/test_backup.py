@@ -279,6 +279,7 @@ def test__take_mysql_backup_aenc_suffix_gpg(master1,
     print(cout)
     assert ret == 0
     cmd = ['gpg',
+           '--no-default-keyring',
            '--allow-secret-key-import',
            '--yes',
            '--import',
@@ -356,6 +357,7 @@ def test__take_file_backup_with_aenc(master1,
     print(cout)
     assert ret == 0
     cmd = ['gpg',
+           '--no-default-keyring',
            '--allow-secret-key-import',
            '--yes',
            '--import',
@@ -455,6 +457,7 @@ def test__take_mysql_backup_aenc_restores_full(master1,
     print(cout)
     assert ret == 0
     cmd = ['gpg',
+           '--no-default-keyring',
            '--allow-secret-key-import',
            '--yes',
            '--import',
@@ -562,6 +565,7 @@ def test__take_mysql_backup_aenc_restores_inc(master1,
     print(cout)
     assert ret == 0
     cmd = ['gpg',
+           '--no-default-keyring',
            '--allow-secret-key-import',
            '--yes',
            '--import',
