@@ -65,33 +65,33 @@ password=qwerty
     print(cout)
     assert ret == 0
 
-    cmd = ['test', '-f', '/tmp/%s/ibdata1' % dst_dir]
+    cmd = ['test', '-f', '%s/ibdata1' % dst_dir]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
-    cmd = ['test', '-f', '/tmp/%s/ib_logfile0' % dst_dir]
+    cmd = ['test', '-f', '%s/ib_logfile0' % dst_dir]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
-    cmd = ['test', '-f', '/tmp/%s/ib_logfile1' % dst_dir]
+    cmd = ['test', '-f', '%s/ib_logfile1' % dst_dir]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
-    cmd = ['test', '-f', '/tmp/%s/mysql/user.MYD' % dst_dir]
+    cmd = ['test', '-f', '%s/mysql/user.MYD' % dst_dir]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
-    cmd = ['test', '-f', '/tmp/%s/backup-my.cnf' % dst_dir]
+    cmd = ['test', '-f', '%s/backup-my.cnf' % dst_dir]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
-    cmd = ['test', '-f', '/tmp/%s/xtrabackup_logfile' % dst_dir]
+    cmd = ['test', '-f', '%s/xtrabackup_logfile' % dst_dir]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
-    cmd = ['test', '-f', '/tmp/%s/_config/etc/my.cnf' % dst_dir,
+    cmd = ['test', '-f', '%s/_config/etc/my.cnf' % dst_dir,
            '||',
-           'test', '-f', '/tmp/%s/_config/etc/mysql/my.cnf' % dst_dir]
+           'test', '-f', '%s/_config/etc/mysql/my.cnf' % dst_dir]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
