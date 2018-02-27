@@ -277,7 +277,6 @@ def test__take_mysql_backup_aenc_suffix_gpg(master1,
            keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
-    assert ret == 0
     cmd = ['gpg',
            '--no-default-keyring',
            '--allow-secret-key-import',
@@ -286,7 +285,6 @@ def test__take_mysql_backup_aenc_suffix_gpg(master1,
            secret_keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
-    assert ret == 0
 
 
     contents = """
@@ -355,7 +353,6 @@ def test__take_file_backup_with_aenc(master1,
            keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
-    assert ret == 0
     cmd = ['gpg',
            '--no-default-keyring',
            '--allow-secret-key-import',
@@ -364,7 +361,6 @@ def test__take_file_backup_with_aenc(master1,
            secret_keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
-    assert ret == 0
 
     contents = """
 [client]
@@ -455,7 +451,6 @@ def test__take_mysql_backup_aenc_restores_full(master1,
            keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
-    assert ret == 0
     cmd = ['gpg',
            '--no-default-keyring',
            '--allow-secret-key-import',
@@ -464,7 +459,6 @@ def test__take_mysql_backup_aenc_restores_full(master1,
            secret_keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
-    assert ret == 0
 
     contents = """
 [client]
@@ -563,7 +557,6 @@ def test__take_mysql_backup_aenc_restores_inc(master1,
            keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
-    assert ret == 0
     cmd = ['gpg',
            '--no-default-keyring',
            '--allow-secret-key-import',
@@ -572,7 +565,7 @@ def test__take_mysql_backup_aenc_restores_inc(master1,
            secret_keyring_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
-    assert ret == 0
+
     contents = """
 [client]
 user=dba
