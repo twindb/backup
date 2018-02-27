@@ -3,6 +3,7 @@ import json
 import os
 
 from tests.integration.conftest import docker_execute, get_twindb_config_dir
+from twindb_backup.destination.s3 import S3, AWSAuthOptions
 
 
 def test__take_file_backup(master1,
@@ -130,279 +131,515 @@ password=qwerty
 
     assert key.endswith('.xbstream.gz')
 
-#
-#
-# def test__take_mysql_backup_retention(s3_client, config_content_mysql_only,
-#                                       tmpdir):
-#
-#     config = tmpdir.join('twindb-backup.cfg')
-#     content = config_content_mysql_only.format(
-#         AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
-#         AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
-#         BUCKET=s3_client.bucket,
-#         daily_copies=1,
-#         hourly_copies=2
-#     )
-#     config.write(content)
-#     cmd = ['twindb-backup', '--config', str(config), 'backup', 'daily']
-#     assert call(cmd) == 0
-#
-#     cmd = ['twindb-backup', '--config', str(config), 'backup', 'daily']
-#     assert call(cmd) == 0
-#
-#     cmd = ['twindb-backup', '--config', str(config), 'backup', 'hourly']
-#     assert call(cmd) == 0
-#
-#     cmd = ['twindb-backup', '--config', str(config), 'backup', 'hourly']
-#     assert call(cmd) == 0
-#
-#     cmd = ['twindb-backup', '--config', str(config), 'backup', 'hourly']
-#     assert call(cmd) == 0
-#
-#     cmd = ['twindb-backup',
-#            '--config', str(config),
-#            'status']
-#
-#     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-#     cout, cerr = proc.communicate()
-#
-#     status = json.loads(cout)
-#
-#     assert len(status['daily'].keys()) == 1
-#     assert len(status['hourly'].keys()) == 2
-#
-#
-# def test__s3_find_files_returns_sorted(s3_client, config_content_mysql_only,
-#                                        tmpdir):
-#     # cleanup the bucket first
-#     s3_client.delete_all_objects()
-#
-#     config = tmpdir.join('twindb-backup.cfg')
-#     content = config_content_mysql_only.format(
-#         AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
-#         AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
-#         BUCKET=s3_client.bucket,
-#         daily_copies=5,
-#         hourly_copies=2
-#     )
-#     config.write(content)
-#
-#     cmd = ['twindb-backup', '--debug', '--config', str(config),
-#            'backup', 'daily']
-#     n_runs = 3
-#     for x in xrange(n_runs):
-#         assert call(cmd) == 0
-#
-#     dst = S3(s3_client.bucket,
-#              AWSAuthOptions(os.environ['AWS_ACCESS_KEY_ID'],
-#                             os.environ['AWS_SECRET_ACCESS_KEY'])
-#              )
-#     for x in xrange(10):
-#         result = dst.find_files(dst.remote_path, 'daily')
-#         assert len(result) == n_runs
-#         assert result == sorted(result)
-#         prefix = "{remote_path}/{hostname}/{run_type}/mysql/mysql-".format(
-#             remote_path=dst.remote_path,
-#             hostname=socket.gethostname(),
-#             run_type='daily'
-#         )
-#         files = dst.list_files(prefix)
-#         assert len(files) == n_runs
-#         assert files == sorted(files)
-#
-#
-# def test_test__take_file_backup_with_aenc(config_content_files_aenc,
-#                                           tmpdir,
-#                                           foo_bar_dir,
-#                                           s3_client):
-#     config = tmpdir.join('twindb-backup.cfg')
-#     content = config_content_files_aenc.format(
-#         TEST_DIR=foo_bar_dir,
-#         AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
-#         AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
-#         BUCKET=s3_client.bucket
-#     )
-#     config.write(content)
-#
-#     backup_dir = foo_bar_dir
-#
-#     # write some content to the directory
-#     with open(os.path.join(backup_dir, 'file'), 'w') as f:
-#         f.write("Hello world.")
-#
-#     hostname = socket.gethostname()
-#     s3_backup_path = 's3://%s/%s/hourly/files/%s' % \
-#                      (s3_client.bucket, hostname, backup_dir.replace('/', '_'))
-#
-#     cmd = ['twindb-backup', '--debug',
-#            '--config', str(config),
-#            'backup', 'hourly']
-#     assert call(cmd) == 0
-#
-#     cmd = ['twindb-backup', '--debug',
-#            '--config', str(config),
-#            'ls']
-#     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-#     out, err = proc.communicate()
-#
-#     LOG.debug('STDOUT: %s' % out)
-#     LOG.debug('STDERR: %s' % err)
-#
-#     assert proc.returncode == 0
-#
-#     assert s3_backup_path in out
-#
-#     backup_to_restore = None
-#     for line in StringIO.StringIO(out):
-#         if line.startswith(s3_backup_path):
-#             backup_to_restore = line.strip()
-#             break
-#
-#     dest_dir = tmpdir.mkdir("dst")
-#     cmd = ['twindb-backup', '--debug',
-#            '--config', str(config),
-#            'restore', 'file', '--dst', str(dest_dir), backup_to_restore]
-#
-#     assert call(cmd) == 0
-#
-#     path_to_file_restored = '%s/%s/file' % (str(dest_dir), backup_dir)
-#     assert os.path.exists(path_to_file_restored)
-#
-#     # And content is same
-#     path_to_file_orig = "%s/file" % backup_dir
-#     proc = Popen(['diff', '-Nur',
-#                   path_to_file_orig,
-#                   path_to_file_restored],
-#                  stdout=PIPE, stderr=PIPE)
-#     out, err = proc.communicate()
-#     assert not out
-#
-#
-# def test__take_mysql_backup_aenc_suffix_gpg(s3_client,
-#                                             config_content_mysql_aenc,
-#                                             tmpdir):
-#     config = tmpdir.join('twindb-backup.cfg')
-#     content = config_content_mysql_aenc.format(
-#         AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
-#         AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
-#         BUCKET=s3_client.bucket,
-#         daily_copies=1,
-#         hourly_copies=2
-#     )
-#     config.write(content)
-#     cmd = ['twindb-backup',
-#            '--config', str(config),
-#            'backup', 'daily']
-#     assert call(cmd) == 0
-#
-#     cmd = ['twindb-backup',
-#            '--config', str(config),
-#            'status']
-#     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-#     cout, cerr = proc.communicate()
-#
-#     LOG.debug('STDOUT: %s', cout)
-#     LOG.debug('STDERR: %s', cerr)
-#
-#     key = json.loads(cout)['daily'].keys()[0]
-#
-#     assert key.endswith('xbstream.gz.gpg')
-#
-#
-# def test_take_mysql_backup_aenc_restores_full(s3_client,
-#                                             config_content_mysql_aenc,
-#                                             tmpdir):
-#     config = tmpdir.join('twindb-backup.cfg')
-#     content = config_content_mysql_aenc.format(
-#         AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
-#         AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
-#         BUCKET=s3_client.bucket,
-#         daily_copies=1,
-#         hourly_copies=2
-#     )
-#     config.write(content)
-#     cmd = ['twindb-backup',
-#            '--config', str(config),
-#            'backup', 'daily']
-#     assert call(cmd) == 0
-#
-#     cmd = ['twindb-backup',
-#            '--config', str(config),
-#            'status']
-#     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-#     cout, cerr = proc.communicate()
-#
-#     LOG.debug('STDOUT: %s', cout)
-#     LOG.debug('STDERR: %s', cerr)
-#
-#     key = json.loads(cout)['daily'].keys()[0]
-#
-#     backup_copy = 's3://' + s3_client.bucket + '/' + key
-#     dst_dir = str(tmpdir.mkdir('dst'))
-#     cmd = ['twindb-backup', '--debug',
-#            '--config', str(config),
-#            'restore', 'mysql',
-#            backup_copy,
-#            '--dst', dst_dir]
-#     assert call(cmd) == 0
-#     call(['find', dst_dir])
-#     assert os.path.exists(dst_dir + '/ibdata1')
-#     assert os.path.exists(dst_dir + '/ib_logfile0')
-#     assert os.path.exists(dst_dir + '/ib_logfile1')
-#     assert os.path.exists(dst_dir + '/mysql/user.MYD')
-#     assert os.path.exists(dst_dir + '/backup-my.cnf')
-#     assert os.path.exists(dst_dir + '/xtrabackup_logfile')
-#     assert os.path.exists(dst_dir + '/_config/etc/my.cnf') or \
-#            os.path.exists(dst_dir + '/_config/etc/mysql/my.cnf')
-#
-#
-# def test_take_mysql_backup_aenc_restores_inc(s3_client,
-#                                               config_content_mysql_aenc,
-#                                               tmpdir):
-#     config = tmpdir.join('twindb-backup.cfg')
-#     content = config_content_mysql_aenc.format(
-#         AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
-#         AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
-#         BUCKET=s3_client.bucket,
-#         daily_copies=1,
-#         hourly_copies=2
-#     )
-#     config.write(content)
-#
-#     assert call(['twindb-backup',
-#                  '--config', str(config),
-#                  'backup', 'daily']) == 0
-#
-#     assert call(['twindb-backup',
-#                  '--config', str(config),
-#                  'backup', 'hourly']) == 0
-#
-#     cmd = ['twindb-backup',
-#            '--config', str(config),
-#            'status']
-#     proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-#     cout, cerr = proc.communicate()
-#
-#     LOG.debug('STDOUT: %s', cout)
-#     LOG.debug('STDERR: %s', cerr)
-#
-#     key = json.loads(cout)['hourly'].keys()[0]
-#
-#     backup_copy = 's3://' + s3_client.bucket + '/' + key
-#     dst_dir = str(tmpdir.mkdir('dst'))
-#     cmd = ['twindb-backup', '--debug',
-#            '--config', str(config),
-#            'restore', 'mysql',
-#            backup_copy,
-#            '--dst', dst_dir]
-#     assert call(cmd) == 0
-#     call(['find', dst_dir])
-#     assert os.path.exists(dst_dir + '/ibdata1')
-#     assert os.path.exists(dst_dir + '/ib_logfile0')
-#     assert os.path.exists(dst_dir + '/ib_logfile1')
-#     assert os.path.exists(dst_dir + '/mysql/user.MYD')
-#     assert os.path.exists(dst_dir + '/backup-my.cnf')
-#     assert os.path.exists(dst_dir + '/xtrabackup_logfile')
-#     assert os.path.exists(dst_dir + '/_config/etc/my.cnf') or \
-#            os.path.exists(dst_dir + '/_config/etc/mysql/my.cnf')
-#
+
+def test__take_mysql_backup_retention(master1,
+                                      docker_client,
+                                      s3_client,
+                                      config_content_mysql_only):
+    twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
+
+    twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
+    twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
+    my_cnf_path = "%s/my.cnf" % twindb_config_dir
+
+    contents = """
+[client]
+user=dba
+password=qwerty
+"""
+
+    with open(my_cnf_path, "w") as my_cnf:
+        my_cnf.write(contents)
+
+    with open(twindb_config_host, 'w') as fp:
+        content = config_content_mysql_only.format(
+            AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+            AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+            BUCKET=s3_client.bucket,
+            daily_copies=1,
+            hourly_copies=2,
+            MY_CNF='/etc/twindb/my.cnf'
+        )
+        fp.write(content)
+
+    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'backup', 'daily']
+    for i in range(0, 3):
+        ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+        print(cout)
+        assert ret == 0
+
+    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'backup', 'hourly']
+    for i in range(0, 3):
+        ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+        print(cout)
+        assert ret == 0
+
+    cmd = ['twindb-backup', '--config', twindb_config_guest, 'status']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    print(cout)
+    status = json.loads(cout)
+
+    assert len(status['daily'].keys()) == 1
+    assert len(status['hourly'].keys()) == 2
+
+
+def test__s3_find_files_returns_sorted(master1,
+                                       docker_client,
+                                       s3_client,
+                                       config_content_mysql_only):
+    # cleanup the bucket first
+    s3_client.delete_all_objects()
+
+    twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
+
+    twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
+    twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
+    my_cnf_path = "%s/my.cnf" % twindb_config_dir
+
+    contents = """
+[client]
+user=dba
+password=qwerty
+"""
+
+    with open(my_cnf_path, "w") as my_cnf:
+        my_cnf.write(contents)
+
+    with open(twindb_config_host, 'w') as fp:
+        content = config_content_mysql_only.format(
+            AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+            AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+            BUCKET=s3_client.bucket,
+            daily_copies=5,
+            hourly_copies=2,
+            MY_CNF='/etc/twindb/my.cnf'
+        )
+        fp.write(content)
+
+    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'backup', 'daily']
+
+    n_runs = 3
+    for x in xrange(n_runs):
+        ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+        print(cout)
+        assert ret == 0
+    hostname = 'master1_1'
+    dst = S3(s3_client.bucket,
+             AWSAuthOptions(os.environ['AWS_ACCESS_KEY_ID'],
+                            os.environ['AWS_SECRET_ACCESS_KEY'])
+             )
+
+    for x in xrange(10):
+        result = dst.find_files(dst.remote_path, 'daily')
+        assert len(result) == n_runs
+        assert result == sorted(result)
+        prefix = "{remote_path}/{hostname}/{run_type}/mysql/mysql-".format(
+            remote_path=dst.remote_path,
+            hostname=hostname,
+            run_type='daily'
+        )
+        files = dst.list_files(prefix)
+        assert len(files) == n_runs
+        assert files == sorted(files)
+
+
+def test__take_mysql_backup_aenc_suffix_gpg(master1,
+                                            docker_client,
+                                            s3_client,
+                                            config_content_mysql_aenc,
+                                            gpg_keyring,
+                                            gpg_secret_keyring):
+
+    # cleanup the bucket first
+    s3_client.delete_all_objects()
+
+    twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
+
+    twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
+    twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
+    my_cnf_path = "%s/my.cnf" % twindb_config_dir
+    keyring_path = "%s/gpg_keyring" % twindb_config_dir
+    secret_keyring_path = "%s/secret_gpg_keyring" % twindb_config_dir
+
+    keyring_path_guest = "/etc/twindb/gpg_keyring"
+    secret_keyring_path_guest = "/etc/twindb/secret_gpg_keyring"
+
+    with open(keyring_path, "w") as fd:
+        fd.write(gpg_keyring)
+    with open(secret_keyring_path, "w") as fd:
+        fd.write(gpg_secret_keyring)
+
+    cmd = ['gpg',
+           '--no-default-keyring',
+           '--yes',
+           '--import',
+           keyring_path_guest]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['gpg',
+           '--no-default-keyring',
+           '--allow-secret-key-import',
+           '--yes',
+           '--import',
+           secret_keyring_path_guest]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+
+
+    contents = """
+[client]
+user=dba
+password=qwerty
+"""
+
+    with open(my_cnf_path, "w") as my_cnf:
+        my_cnf.write(contents)
+
+    with open(twindb_config_host, 'w') as fp:
+        content = config_content_mysql_aenc.format(
+            AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+            AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+            BUCKET=s3_client.bucket,
+            daily_copies=7,
+            hourly_copies=3,
+            MY_CNF='/etc/twindb/my.cnf',
+            gpg_keyring = keyring_path_guest,
+            gpg_secret_keyring = secret_keyring_path_guest
+        )
+        fp.write(content)
+
+    cmd = ['twindb-backup', '--config', twindb_config_guest, 'backup', 'daily']
+
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+
+    cmd = ['twindb-backup', '--config', twindb_config_guest, 'status']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    print(cout)
+    key = json.loads(cout)['daily'].keys()[0]
+
+    assert key.endswith(".xbstream.gz.gpg")
+
+
+def test__take_file_backup_with_aenc(master1,
+                                     docker_client,
+                                     s3_client,
+                                     config_content_files_aenc,
+                                     gpg_keyring,
+                                     gpg_secret_keyring):
+    twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
+
+    twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
+    twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
+    my_cnf_path = "%s/my.cnf" % twindb_config_dir
+    keyring_path = "%s/gpg_keyring" % twindb_config_dir
+    secret_keyring_path = "%s/secret_gpg_keyring" % twindb_config_dir
+
+    keyring_path_guest = "/etc/twindb/gpg_keyring"
+    secret_keyring_path_guest = "/etc/twindb/secret_gpg_keyring"
+
+    with open(keyring_path, "w") as fd:
+        fd.write(gpg_keyring)
+    with open(secret_keyring_path, "w") as fd:
+        fd.write(gpg_secret_keyring)
+
+    cmd = ['gpg',
+           '--no-default-keyring',
+           '--yes',
+           '--import',
+           keyring_path_guest]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['gpg',
+           '--no-default-keyring',
+           '--allow-secret-key-import',
+           '--yes',
+           '--import',
+           secret_keyring_path_guest]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+
+    contents = """
+[client]
+user=dba
+password=qwerty
+"""
+
+    with open(my_cnf_path, "w") as my_cnf:
+        my_cnf.write(contents)
+    backup_dir = "/etc/twindb"
+    with open(twindb_config_host, 'w') as fp:
+        content = config_content_files_aenc.format(
+            AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+            AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+            BUCKET=s3_client.bucket,
+            daily_copies=7,
+            hourly_copies=3,
+            TEST_DIR=backup_dir,
+            MY_CNF='/etc/twindb/my.cnf',
+            gpg_keyring = keyring_path_guest,
+            gpg_secret_keyring = secret_keyring_path_guest
+        )
+        fp.write(content)
+    hostname = 'master1_1'
+    s3_backup_path = 's3://%s/%s/hourly/files/%s' % \
+                     (s3_client.bucket, hostname, backup_dir.replace('/', '_'))
+    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'backup', 'hourly']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+
+    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'ls']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    assert s3_backup_path in cout
+    backup_to_restore = None
+    for line in StringIO.StringIO(cout):
+        if line.startswith(s3_backup_path):
+            backup_to_restore = line.strip()
+            break
+
+    cmd = ['mkdir', '-p', '/tmp/dst_file_enc']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'restore', 'file', '--dst', '/tmp/dst_file_enc', backup_to_restore]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    path_to_file_restored = '/tmp/dst_file_enc/%s/file' % (backup_dir)
+    assert os.path.exists(path_to_file_restored)
+    # And content is same
+    path_to_file_orig = "%s/file" % backup_dir
+    cmd = ['diff', '-Nur', path_to_file_orig, path_to_file_restored]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    assert not cout
+
+
+def test__take_mysql_backup_aenc_restores_full(master1,
+                                               docker_client,
+                                               s3_client,
+                                               config_content_mysql_aenc,
+                                               gpg_keyring,
+                                               gpg_secret_keyring):
+    twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
+
+    twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
+    twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
+    my_cnf_path = "%s/my.cnf" % twindb_config_dir
+    keyring_path = "%s/gpg_keyring" % twindb_config_dir
+    secret_keyring_path = "%s/secret_gpg_keyring" % twindb_config_dir
+
+    keyring_path_guest = "/etc/twindb/gpg_keyring"
+    secret_keyring_path_guest = "/etc/twindb/secret_gpg_keyring"
+
+    with open(keyring_path, "w") as fd:
+        fd.write(gpg_keyring)
+    with open(secret_keyring_path, "w") as fd:
+        fd.write(gpg_secret_keyring)
+
+    cmd = ['gpg',
+           '--no-default-keyring',
+           '--yes',
+           '--import',
+           keyring_path_guest]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['gpg',
+           '--no-default-keyring',
+           '--allow-secret-key-import',
+           '--yes',
+           '--import',
+           secret_keyring_path_guest]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+
+    contents = """
+[client]
+user=dba
+password=qwerty
+"""
+
+    with open(my_cnf_path, "w") as my_cnf:
+        my_cnf.write(contents)
+
+    with open(twindb_config_host, 'w') as fp:
+        content = config_content_mysql_aenc.format(
+            AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+            AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+            BUCKET=s3_client.bucket,
+            daily_copies=7,
+            hourly_copies=3,
+            MY_CNF='/etc/twindb/my.cnf',
+            gpg_keyring = keyring_path_guest,
+            gpg_secret_keyring = secret_keyring_path_guest
+        )
+        fp.write(content)
+
+    cmd = ['twindb-backup', '--config', twindb_config_guest, 'backup', 'daily']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+
+    cmd = ['twindb-backup',
+           '--config', twindb_config_guest,
+           'status']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    key = json.loads(cout)['daily'].keys()[0]
+    backup_copy = 's3://' + s3_client.bucket + '/' + key
+
+    cmd = ['mkdir', '-p', '/tmp/dst']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+
+    cmd = ['twindb-backup', '--debug',
+           '--config', twindb_config_guest,
+           'restore', 'mysql',
+           backup_copy,
+           '--dst', '/tmp/dst']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    cmd = ['test', '-f', '/tmp/dst/ibdata1']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    cmd = ['test', '-f', '/tmp/dst/ib_logfile0']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    cmd = ['test', '-f', '/tmp/dst/ib_logfile1']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    cmd = ['test', '-f', '/tmp/dst/mysql/user.MYD']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    cmd = ['test', '-f', '/tmp/dst/backup-my.cnf']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    cmd = ['test', '-f', '/tmp/dst/xtrabackup_logfile']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    cmd = ['test', '-f', '/tmp/dst/_config/etc/my.cnf', '||', 'test', '-f', '/tmp/dst/_config/etc/mysql/my.cnf']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+
+def test__take_mysql_backup_aenc_restores_inc(master1,
+                                              docker_client,
+                                              s3_client,
+                                              config_content_mysql_aenc,
+                                              gpg_keyring,
+                                              gpg_secret_keyring):
+    twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
+
+    twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
+    twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
+    my_cnf_path = "%s/my.cnf" % twindb_config_dir
+    keyring_path = "%s/gpg_keyring" % twindb_config_dir
+    secret_keyring_path = "%s/secret_gpg_keyring" % twindb_config_dir
+
+    keyring_path_guest = "/etc/twindb/gpg_keyring"
+    secret_keyring_path_guest = "/etc/twindb/secret_gpg_keyring"
+
+    with open(keyring_path, "w") as fd:
+        fd.write(gpg_keyring)
+    with open(secret_keyring_path, "w") as fd:
+        fd.write(gpg_secret_keyring)
+
+    cmd = ['gpg',
+           '--no-default-keyring',
+           '--yes',
+           '--import',
+           keyring_path_guest]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['gpg',
+           '--no-default-keyring',
+           '--allow-secret-key-import',
+           '--yes',
+           '--import',
+           secret_keyring_path_guest]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    contents = """
+[client]
+user=dba
+password=qwerty
+"""
+
+    with open(my_cnf_path, "w") as my_cnf:
+        my_cnf.write(contents)
+
+    with open(twindb_config_host, 'w') as fp:
+        content = config_content_mysql_aenc.format(
+            AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+            AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+            BUCKET=s3_client.bucket,
+            daily_copies=7,
+            hourly_copies=3,
+            MY_CNF='/etc/twindb/my.cnf',
+            gpg_keyring = keyring_path_guest,
+            gpg_secret_keyring = secret_keyring_path_guest
+        )
+        fp.write(content)
+
+    cmd = ['twindb-backup', '--config', twindb_config_guest, 'backup', 'daily']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['twindb-backup', '--config', twindb_config_guest, 'backup', 'hourly']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['twindb-backup', '--config', twindb_config_guest, 'status']
+    print(cout)
+    assert ret == 0
+    key = json.loads(cout)['hourly'].keys()[0]
+    backup_copy = 's3://' + s3_client.bucket + '/' + key
+
+    cmd = ['mkdir', '-p', '/tmp/dst_full']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+
+    cmd = ['twindb-backup', '--debug',
+           '--config', twindb_config_guest,
+           'restore', 'mysql',
+           backup_copy,
+           '--dst', '/tmp/dst_full']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    cmd = ['test', '-f', '/tmp/dst_full/ibdata1']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    cmd = ['test', '-f', '/tmp/dst_full/ib_logfile0']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    cmd = ['test', '-f', '/tmp/dst_full/ib_logfile1']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    cmd = ['test', '-f', '/tmp/dst_full/mysql/user.MYD']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    cmd = ['test', '-f', '/tmp/dst_full/backup-my.cnf']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    cmd = ['test', '-f', '/tmp/dst_full/xtrabackup_logfile']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    cmd = ['test', '-f', '/tmp/dst_full/_config/etc/my.cnf', '||', 'test', '-f', '/tmp/dst_full/_config/etc/mysql/my.cnf']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
