@@ -324,104 +324,104 @@ password=qwerty
     assert key.endswith(".xbstream.gz.gpg")
 
 
-def test__take_file_backup_with_aenc(master1,
-                                     docker_client,
-                                     s3_client,
-                                     config_content_files_aenc,
-                                     gpg_keyring,
-                                     gpg_secret_keyring):
-    twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
-
-    twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
-    twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
-    my_cnf_path = "%s/my.cnf" % twindb_config_dir
-    keyring_path = "%s/gpg_keyring" % twindb_config_dir
-    secret_keyring_path = "%s/secret_gpg_keyring" % twindb_config_dir
-
-    keyring_path_guest = "/etc/twindb/gpg_keyring"
-    secret_keyring_path_guest = "/etc/twindb/secret_gpg_keyring"
-
-    with open(keyring_path, "w") as fd:
-        fd.write(gpg_keyring)
-    with open(secret_keyring_path, "w") as fd:
-        fd.write(gpg_secret_keyring)
-
-    cmd = ['gpg',
-           '--no-default-keyring',
-           '--yes',
-           '--import',
-           keyring_path_guest]
-    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
-    print(cout)
-    cmd = ['gpg',
-           '--no-default-keyring',
-           '--allow-secret-key-import',
-           '--yes',
-           '--import',
-           secret_keyring_path_guest]
-    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
-    print(cout)
-
-    contents = """
-[client]
-user=dba
-password=qwerty
-"""
-
-    with open(my_cnf_path, "w") as my_cnf:
-        my_cnf.write(contents)
-    backup_dir = "/etc/twindb"
-    with open(twindb_config_host, 'w') as fp:
-        content = config_content_files_aenc.format(
-            AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
-            AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
-            BUCKET=s3_client.bucket,
-            daily_copies=7,
-            hourly_copies=3,
-            TEST_DIR=backup_dir,
-            MY_CNF='/etc/twindb/my.cnf',
-            gpg_keyring = keyring_path_guest,
-            gpg_secret_keyring = secret_keyring_path_guest
-        )
-        fp.write(content)
-    hostname = 'master1_1'
-    s3_backup_path = 's3://%s/%s/hourly/files/%s' % \
-                     (s3_client.bucket, hostname, backup_dir.replace('/', '_'))
-    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'backup', 'hourly']
-    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
-    print(cout)
-    assert ret == 0
-
-    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'ls']
-    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
-    print(cout)
-    assert ret == 0
-    assert s3_backup_path in cout
-    backup_to_restore = None
-    for line in StringIO.StringIO(cout):
-        if line.startswith(s3_backup_path):
-            backup_to_restore = line.strip()
-            break
-
-    cmd = ['mkdir', '-p', '/tmp/dst_file_enc']
-    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
-    print(cout)
-    assert ret == 0
-    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'restore', 'file', '--dst', '/tmp/dst_file_enc', backup_to_restore]
-    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
-    print(cout)
-    assert ret == 0
-    path_to_file_restored = '/tmp/dst_file_enc/%s/file' % (backup_dir)
-    cmd = ['test', '-f', path_to_file_restored]
-    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
-    print(cout)
-    assert ret == 0
-    path_to_file_orig = "%s/file" % backup_dir
-    cmd = ['diff', '-Nur', path_to_file_orig, path_to_file_restored]
-    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
-    print(cout)
-    assert ret == 0
-    assert not cout
+# def test__take_file_backup_with_aenc(master1,
+#                                      docker_client,
+#                                      s3_client,
+#                                      config_content_files_aenc,
+#                                      gpg_keyring,
+#                                      gpg_secret_keyring):
+#     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
+#
+#     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
+#     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
+#     my_cnf_path = "%s/my.cnf" % twindb_config_dir
+#     keyring_path = "%s/gpg_keyring" % twindb_config_dir
+#     secret_keyring_path = "%s/secret_gpg_keyring" % twindb_config_dir
+#
+#     keyring_path_guest = "/etc/twindb/gpg_keyring"
+#     secret_keyring_path_guest = "/etc/twindb/secret_gpg_keyring"
+#
+#     with open(keyring_path, "w") as fd:
+#         fd.write(gpg_keyring)
+#     with open(secret_keyring_path, "w") as fd:
+#         fd.write(gpg_secret_keyring)
+#
+#     cmd = ['gpg',
+#            '--no-default-keyring',
+#            '--yes',
+#            '--import',
+#            keyring_path_guest]
+#     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+#     print(cout)
+#     cmd = ['gpg',
+#            '--no-default-keyring',
+#            '--allow-secret-key-import',
+#            '--yes',
+#            '--import',
+#            secret_keyring_path_guest]
+#     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+#     print(cout)
+#
+#     contents = """
+# [client]
+# user=dba
+# password=qwerty
+# """
+#
+#     with open(my_cnf_path, "w") as my_cnf:
+#         my_cnf.write(contents)
+#     backup_dir = "/etc/twindb"
+#     with open(twindb_config_host, 'w') as fp:
+#         content = config_content_files_aenc.format(
+#             AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
+#             AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
+#             BUCKET=s3_client.bucket,
+#             daily_copies=7,
+#             hourly_copies=3,
+#             TEST_DIR=backup_dir,
+#             MY_CNF='/etc/twindb/my.cnf',
+#             gpg_keyring = keyring_path_guest,
+#             gpg_secret_keyring = secret_keyring_path_guest
+#         )
+#         fp.write(content)
+#     hostname = 'master1_1'
+#     s3_backup_path = 's3://%s/%s/hourly/files/%s' % \
+#                      (s3_client.bucket, hostname, backup_dir.replace('/', '_'))
+#     cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'backup', 'hourly']
+#     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+#     print(cout)
+#     assert ret == 0
+#
+#     cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'ls']
+#     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+#     print(cout)
+#     assert ret == 0
+#     assert s3_backup_path in cout
+#     backup_to_restore = None
+#     for line in StringIO.StringIO(cout):
+#         if line.startswith(s3_backup_path):
+#             backup_to_restore = line.strip()
+#             break
+#
+#     cmd = ['mkdir', '-p', '/tmp/dst_file_enc']
+#     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+#     print(cout)
+#     assert ret == 0
+#     cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'restore', 'file', '--dst', '/tmp/dst_file_enc', backup_to_restore]
+#     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+#     print(cout)
+#     assert ret == 0
+#     path_to_file_restored = '/tmp/dst_file_enc/%s/file' % (backup_dir)
+#     cmd = ['test', '-f', path_to_file_restored]
+#     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+#     print(cout)
+#     assert ret == 0
+#     path_to_file_orig = "%s/file" % backup_dir
+#     cmd = ['diff', '-Nur', path_to_file_orig, path_to_file_restored]
+#     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+#     print(cout)
+#     assert ret == 0
+#     assert not cout
 
 
 def test__take_mysql_backup_aenc_restores_full(master1,
