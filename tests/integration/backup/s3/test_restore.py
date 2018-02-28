@@ -64,7 +64,10 @@ password=qwerty
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
-
+    cmd = ['find', dst_dir]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
     cmd = ['test', '-f', '/tmp/dst_full_log_files/backup-my.cnf']
     print(cmd)
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
