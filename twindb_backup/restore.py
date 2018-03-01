@@ -151,7 +151,8 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
         return False
 
 
-def _extract_xbstream(input_stream, working_dir, xbstream_binary=XBSTREAM_BINARY):
+def _extract_xbstream(input_stream, working_dir,
+                      xbstream_binary=XBSTREAM_BINARY):
     """
     Extract xbstream stream in directory
 
@@ -376,7 +377,8 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
                 # restore from cache
                 cache.restore_in(cache_key, dst_dir)
             else:
-                restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
+                restore_from_mysql_full(stream, dst_dir, config,
+                                        redo_only=False,
                                         xtrabackup_binary=xtrabackup_binary,
                                         xbsteam_binary=xbstream_binary)
                 cache.add(dst_dir, cache_key)
