@@ -14,7 +14,7 @@ import time
 
 import psutil
 
-from twindb_backup import LOG, INTERVALS, XTRABACKUP_BINARY
+from twindb_backup import LOG, INTERVALS, XTRABACKUP_BINARY, XBSTREAM_BINARY
 from twindb_backup.configuration import get_destination
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
@@ -158,7 +158,7 @@ def _extract_xbstream(input_stream, working_dir):
     :return: True if extracted successfully
     """
     try:
-        cmd = ['xbstream', '-x']
+        cmd = [XBSTREAM_BINARY, '-x']
         LOG.debug('Running %s', ' '.join(cmd))
         LOG.debug('Working directory: %s', working_dir)
         proc = Popen(cmd,
