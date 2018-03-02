@@ -244,12 +244,12 @@ password=qwerty
         assert files == sorted(files)
 
 
-def test_test__take_file_backup_with_aenc(master1,
-                                          docker_client,
-                                          s3_client,
-                                          config_content_files_aenc,
-                                          gpg_keyring,
-                                          gpg_secret_keyring):
+def test_take_file_backup_with_aenc(master1,
+                                    docker_client,
+                                    s3_client,
+                                    config_content_files_aenc,
+                                    gpg_keyring_content,
+                                    gpg_secret_keyring_content):
 
 
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
@@ -259,29 +259,39 @@ def test_test__take_file_backup_with_aenc(master1,
     backup_dir = "/etc/twindb"
 
 
-    gpg_keyring_host = "%s/keyring" % twindb_config_dir
-    gpg_keyring_guest = "/etc/twindb/keyring"
-    secret_gpg_keyring_host = "%s/secret_keyring" % twindb_config_dir
-    secret_gpg_keyring_guest = "/etc/twindb/secret_keyring"
+    gpg_keyring_host_content = "%s/keyring_content" % twindb_config_dir
+    gpg_keyring_guest_content = "/etc/twindb/keyring_content"
+    secret_gpg_keyring_host_content = "%s/secret_keyring_content" % twindb_config_dir
+    secret_gpg_keyring_guest_content = "/etc/twindb/secret_keyring_content"
 
-    with open(gpg_keyring_host, "w") as fd:
-        fd.write(gpg_keyring)
-    with open(secret_gpg_keyring_host, "w") as fd:
-        fd.write(gpg_secret_keyring)
+    gpg_keyring = "/etc/twindb/keyring"
+    secret_gpg_keyring = "/etc/twindb/secret_keyring"
+
+
+
+    with open(gpg_keyring_host_content, "w") as fd:
+        fd.write(gpg_keyring_content)
+    with open(secret_gpg_keyring_host_content, "w") as fd:
+        fd.write(gpg_secret_keyring_content)
 
     cmd = ['gpg',
            '--no-default-keyring',
+           '--keyring',
+           gpg_keyring,
            '--yes',
            '--import',
-           gpg_keyring_guest]
+           '< ',
+           gpg_keyring_guest_content]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     cmd = ['gpg',
            '--no-default-keyring',
-           '--allow-secret-key-import',
+           '--secret-keyring',
+           secret_gpg_keyring,
            '--yes',
            '--import',
-           secret_gpg_keyring_guest]
+           '< ',
+           secret_gpg_keyring_guest_content]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
 
@@ -292,8 +302,8 @@ def test_test__take_file_backup_with_aenc(master1,
             AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID'],
             AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
             BUCKET=s3_client.bucket,
-            gpg_keyring=secret_gpg_keyring_guest,
-            gpg_secret_keyring=secret_gpg_keyring_guest
+            gpg_keyring=gpg_keyring,
+            gpg_secret_keyring=secret_gpg_keyring
         )
         fp.write(content)
 

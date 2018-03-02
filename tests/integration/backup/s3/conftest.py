@@ -135,7 +135,7 @@ yearly_copies=0
 
 
 @pytest.fixture
-def gpg_keyring():
+def gpg_keyring_content():
     key = """
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: GnuPG v2
@@ -161,7 +161,7 @@ s34qC2jpoQiiGmB0NFNI90epbvMQPK4AtuQOE1c=
 
 
 @pytest.fixture
-def gpg_secret_keyring():
+def gpg_secret_keyring_content():
     key = """
 -----BEGIN PGP PRIVATE KEY BLOCK-----
 Version: GnuPG v2
