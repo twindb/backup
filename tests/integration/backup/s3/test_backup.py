@@ -422,7 +422,8 @@ def test__take_mysql_backup_aenc_suffix_gpg(master1,
             AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
             BUCKET=s3_client.bucket,
             gpg_keyring=gpg_keyring,
-            gpg_secret_keyring=secret_gpg_keyring
+            gpg_secret_keyring=secret_gpg_keyring,
+            MY_CNF='/etc/twindb/my.cnf'
         )
         fp.write(content)
 
