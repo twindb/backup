@@ -101,33 +101,34 @@ def container_network(docker_client):
         api.remove_network(net_id=network['Id'])
 
 
-def get_container(name, client, network, datadir,
-                  bootstrap_script=None, last_n=1,
-                  twindb_config_dir=None):
+def get_container(name, client, network,
+                  datadir=None,
+                  bootstrap_script=None,
+                  last_n=1,
+                  twindb_config_dir=None,
+                  image=NODE_IMAGE):
     api = client.api
 
-    api.pull(NODE_IMAGE)
+    api.pull(image)
     cwd = os.getcwd()
     LOG.debug('Current directory: %s', cwd)
-    LOG.debug('TwinDB config directory: %s', twindb_config_dir)
-    mkdir_p(twindb_config_dir, mode=0755)
+
     binds = {
         cwd: {
             'bind': '/twindb-backup',
             'mode': 'rw',
-        },
-        twindb_config_dir: {
-            'bind': '/etc/twindb',
-            'mode': 'rw',
-        },
-        datadir: {
-            'bind': '/var/lib/mysql',
-            'mode': 'rw',
         }
     }
     if twindb_config_dir:
+        LOG.debug('TwinDB config directory: %s', twindb_config_dir)
+        mkdir_p(twindb_config_dir, mode=0755)
         binds[twindb_config_dir] = {
             'bind': '/etc/twindb',
+            'mode': 'rw',
+        }
+    if datadir:
+        binds[datadir] = {
+            'bind': '/var/lib/mysql',
             'mode': 'rw',
         }
     host_config = api.create_host_config(
@@ -144,7 +145,7 @@ def get_container(name, client, network, datadir,
 
     container_hostname = '%s_%d' % (name, last_n)
     kwargs = {
-        'image': NODE_IMAGE,
+        'image': image,
         'name': container_hostname,
         'ports': [22, 3306],
         'hostname': container_hostname,
