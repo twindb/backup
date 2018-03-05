@@ -1,5 +1,3 @@
-import os
-
 from tests.integration.conftest import get_twindb_config_dir, docker_execute
 
 
@@ -73,17 +71,45 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
     print(cout)
     assert ret == 0
 
+    cmd = ['twindb-backup',
+           '--debug',
+           '--config', twindb_config_guest,
+           'backup', 'hourly']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+
     cmd = ['test', '-d', '/tmp/backup']
 
     ret, cout = docker_execute(docker_client, storage_server['Id'], cmd)
     print(cout)
     assert ret == 0
+    dir_path = "/var/backup/local/master1_1/hourly/mysql"
+    cmd = ["bash", "-c", "ls %s | wc -l" % dir_path]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd, tty=True)
+    print(cout)
+    assert ret == 0
+    assert '1' in cout
 
-#     assert os.path.exists(dst_dir + '/ibdata1')
-#     assert os.path.exists(dst_dir + '/ib_logfile0')
-#     assert os.path.exists(dst_dir + '/ib_logfile1')
-#     assert os.path.exists(dst_dir + '/mysql/user.MYD')
-#     assert os.path.exists(dst_dir + '/backup-my.cnf')
-#     assert os.path.exists(dst_dir + '/xtrabackup_logfile')
-#     assert os.path.exists(dst_dir + '/_config/etc/my.cnf') or \
-#            os.path.exists(dst_dir + '/_config/etc/mysql/my.cnf')
+    cmd = ['twindb-backup',
+           '--debug',
+           '--config', twindb_config_guest,
+           'backup', 'daily']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+
+    cmd = ['twindb-backup',
+           '--debug',
+           '--config', twindb_config_guest,
+           'backup', 'daily']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+
+    dir_path = "/var/backup/local/master1_1/daily/mysql"
+    cmd = ["bash", "-c", "ls %s | wc -l" % dir_path]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd, tty=True)
+    print(cout)
+    assert ret == 0
+    assert '1' in cout

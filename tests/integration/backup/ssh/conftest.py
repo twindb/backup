@@ -45,6 +45,7 @@ backup_mysql=yes
 
 [destination]
 backup_destination=ssh
+keep_local_path=/var/backup/local
 
 [mysql]
 mysql_defaults_file={MY_CNF}
@@ -64,8 +65,8 @@ run_monthly=no
 run_yearly=yes
 
 [retention]
-hourly_copies=1
-daily_copies=1
+hourly_copies=24
+daily_copies=7
 weekly_copies=1
 monthly_copies=1
 yearly_copies=1
