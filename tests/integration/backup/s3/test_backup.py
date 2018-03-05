@@ -327,7 +327,7 @@ def test_take_file_backup_with_aenc(master1,
             break
     assert backup_to_restore.endswith('.tar.gz.gpg')
     key = backup_to_restore.lstrip('s3://').lstrip(s3_client.bucket).lstrip('/')
-    local_copy = '/etc/twindb/backup_to_restore.tar.gz.gpg'
+    local_copy = '%s/backup_to_restore.tar.gz.gpg' % twindb_config_dir
     s3_client.s3_client.download_file(
         s3_client.bucket,
         key,
@@ -441,7 +441,8 @@ password=qwerty
     assert ret == 0
     key = json.loads(cout)['daily'].keys()[0]
     assert key.endswith('xbstream.gz.gpg')
-    local_copy = '/etc/twindb/mysql_backup.tar.gz.gpg'
+    local_copy = '%s/mysql_backup.tar.gz.gpg' % twindb_config_dir
+
     s3_client.s3_client.download_file(
         s3_client.bucket,
         key,
