@@ -13,3 +13,4 @@ moto
 pylint==1.6.5
 pycodestyle
 docker
+python-magic
