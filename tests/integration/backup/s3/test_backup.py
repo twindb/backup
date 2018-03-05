@@ -280,6 +280,8 @@ def test_take_file_backup_with_aenc(master1,
            '--keyring', gpg_keyring,
            '--secret-keyring', gpg_secret_keyring,
            '--yes',
+           '--no-tty',
+           '--batch',
            '--import',
            gpg_private_key_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
@@ -408,6 +410,8 @@ password=qwerty
            '--keyring', gpg_keyring,
            '--secret-keyring', gpg_secret_keyring,
            '--yes',
+           '--no-tty',
+           '--batch',
            '--import',
            gpg_private_key_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
