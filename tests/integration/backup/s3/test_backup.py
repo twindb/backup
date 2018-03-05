@@ -1,6 +1,7 @@
 import StringIO
 import json
 import os
+import magic
 
 from tests.integration.conftest import docker_execute, get_twindb_config_dir
 from twindb_backup.destination.s3 import S3, AWSAuthOptions
@@ -248,9 +249,8 @@ def test_take_file_backup_with_aenc(master1,
                                     docker_client,
                                     s3_client,
                                     config_content_files_aenc,
-                                    gpg_keyring_content,
-                                    gpg_secret_keyring_content):
-
+                                    gpg_public_key,
+                                    gpg_private_key):
 
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
 
@@ -258,43 +258,33 @@ def test_take_file_backup_with_aenc(master1,
     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
     backup_dir = "/etc/twindb"
 
-
-    gpg_keyring_host_content = "%s/keyring_content" % twindb_config_dir
-    gpg_keyring_guest_content = "/etc/twindb/keyring_content"
-    secret_gpg_keyring_host_content = "%s/secret_keyring_content" % twindb_config_dir
-    secret_gpg_keyring_guest_content = "/etc/twindb/secret_keyring_content"
+    gpg_public_key_path_host = "%s/public_key" % twindb_config_dir
+    gpg_private_key_path_host = "%s/private_key" % twindb_config_dir
+    gpg_private_key_path_guest = "/etc/twindb/private_key"
 
     gpg_keyring = "/etc/twindb/keyring"
-    secret_gpg_keyring = "/etc/twindb/secret_keyring"
+    gpg_secret_keyring = "/etc/twindb/secret_keyring"
 
+    with open(gpg_public_key_path_host, "w") as fd:
+        fd.write(gpg_public_key)
+    with open(gpg_private_key_path_host, "w") as fd:
+        fd.write(gpg_private_key)
 
-
-    with open(gpg_keyring_host_content, "w") as fd:
-        fd.write(gpg_keyring_content)
-    with open(secret_gpg_keyring_host_content, "w") as fd:
-        fd.write(gpg_secret_keyring_content)
+    cmd = ['rm', '-f', gpg_keyring, gpg_secret_keyring]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
 
     cmd = ['gpg',
            '--no-default-keyring',
-           '--keyring',
-           gpg_keyring,
+           '--keyring', gpg_keyring,
+           '--secret-keyring', gpg_secret_keyring,
            '--yes',
            '--import',
-           '< ',
-           gpg_keyring_guest_content]
+           gpg_private_key_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
-    cmd = ['gpg',
-           '--no-default-keyring',
-           '--secret-keyring',
-           secret_gpg_keyring,
-           '--yes',
-           '--import',
-           '< ',
-           secret_gpg_keyring_guest_content]
-    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
-    print(cout)
-
+    assert ret == 0
 
     with open(twindb_config_host, 'w') as fp:
         content = config_content_files_aenc.format(
@@ -303,10 +293,9 @@ def test_take_file_backup_with_aenc(master1,
             AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
             BUCKET=s3_client.bucket,
             gpg_keyring=gpg_keyring,
-            gpg_secret_keyring=secret_gpg_keyring
+            gpg_secret_keyring=gpg_secret_keyring
         )
         fp.write(content)
-
 
     # write some content to the directory
     with open(os.path.join(twindb_config_dir, 'file'), 'w') as f:
@@ -329,7 +318,6 @@ def test_take_file_backup_with_aenc(master1,
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
-
     assert s3_backup_path in cout
 
     backup_to_restore = None
@@ -337,6 +325,15 @@ def test_take_file_backup_with_aenc(master1,
         if line.startswith(s3_backup_path):
             backup_to_restore = line.strip()
             break
+    assert backup_to_restore.endswith('.tar.gz.gpg')
+    key = backup_to_restore.lstrip('s3://').lstrip(s3_client.bucket).lstrip('/')
+    local_copy = '/etc/twindb/backup_to_restore.tar.gz.gpg'
+    s3_client.s3_client.download_file(
+        s3_client.bucket,
+        key,
+        local_copy
+    )
+    assert magic.from_file(local_copy) == 'data'
 
     dest_dir = '/tmp/simple_backup_aenc'
     cmd = ['mkdir', '-p', '/tmp/simple_backup_aenc']
@@ -367,54 +364,55 @@ def test_take_file_backup_with_aenc(master1,
     assert ret == 0
     assert not cout
 
+
 def test__take_mysql_backup_aenc_suffix_gpg(master1,
                                             docker_client,
                                             s3_client,
                                             config_content_mysql_aenc,
-                                            gpg_keyring_content,
-                                            gpg_secret_keyring_content):
+                                            gpg_public_key,
+                                            gpg_private_key):
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
 
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
-    backup_dir = "/etc/twindb"
 
+    my_cnf_path = "%s/my.cnf" % twindb_config_dir
+    contents = """
+[client]
+user=dba
+password=qwerty
+"""
 
-    gpg_keyring_host_content = "%s/keyring_content" % twindb_config_dir
-    gpg_keyring_guest_content = "/etc/twindb/keyring_content"
-    secret_gpg_keyring_host_content = "%s/secret_keyring_content" % twindb_config_dir
-    secret_gpg_keyring_guest_content = "/etc/twindb/secret_keyring_content"
+    with open(my_cnf_path, "w") as my_cnf:
+        my_cnf.write(contents)
+
+    gpg_public_key_path_host = "%s/public_key" % twindb_config_dir
+    gpg_private_key_path_host = "%s/private_key" % twindb_config_dir
+    gpg_private_key_path_guest = "/etc/twindb/private_key"
 
     gpg_keyring = "/etc/twindb/keyring"
-    secret_gpg_keyring = "/etc/twindb/secret_keyring"
+    gpg_secret_keyring = "/etc/twindb/secret_keyring"
 
+    with open(gpg_public_key_path_host, "w") as fd:
+        fd.write(gpg_public_key)
+    with open(gpg_private_key_path_host, "w") as fd:
+        fd.write(gpg_private_key)
 
-
-    with open(gpg_keyring_host_content, "w") as fd:
-        fd.write(gpg_keyring_content)
-    with open(secret_gpg_keyring_host_content, "w") as fd:
-        fd.write(gpg_secret_keyring_content)
+    cmd = ['rm', '-f', gpg_keyring, gpg_secret_keyring]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
 
     cmd = ['gpg',
            '--no-default-keyring',
-           '--keyring',
-           gpg_keyring,
+           '--keyring', gpg_keyring,
+           '--secret-keyring', gpg_secret_keyring,
            '--yes',
            '--import',
-           '< ',
-           gpg_keyring_guest_content]
+           gpg_private_key_path_guest]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
-    cmd = ['gpg',
-           '--no-default-keyring',
-           '--secret-keyring',
-           secret_gpg_keyring,
-           '--yes',
-           '--import',
-           '< ',
-           secret_gpg_keyring_guest_content]
-    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
-    print(cout)
+    assert ret == 0
 
     with open(twindb_config_host, 'w') as fp:
         content = config_content_mysql_aenc.format(
@@ -422,14 +420,14 @@ def test__take_mysql_backup_aenc_suffix_gpg(master1,
             AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY'],
             BUCKET=s3_client.bucket,
             gpg_keyring=gpg_keyring,
-            gpg_secret_keyring=secret_gpg_keyring,
+            gpg_secret_keyring=gpg_secret_keyring,
             daily_copies=1,
             hourly_copies=2,
             MY_CNF='/etc/twindb/my.cnf'
         )
         fp.write(content)
 
-    cmd = ['twindb-backup',
+    cmd = ['twindb-backup', '--debug',
            '--config', twindb_config_guest,
            'backup', 'daily']
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
@@ -443,6 +441,15 @@ def test__take_mysql_backup_aenc_suffix_gpg(master1,
     assert ret == 0
     key = json.loads(cout)['daily'].keys()[0]
     assert key.endswith('xbstream.gz.gpg')
+    local_copy = '/etc/twindb/mysql_backup.tar.gz.gpg'
+    s3_client.s3_client.download_file(
+        s3_client.bucket,
+        key,
+        local_copy
+    )
+    assert magic.from_file(local_copy) == 'data'
+
+
 #
 # def test_take_mysql_backup_aenc_restores_full(s3_client,
 #                                             config_content_mysql_aenc,
