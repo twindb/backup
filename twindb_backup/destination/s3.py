@@ -521,12 +521,27 @@ class S3(BaseDestination):
             raise TwinDBBackupError("File not found via url: %s", s3_url)
 
     def _get_file_content(self, path):
-        response = self.s3_client.get_object(Bucket=self.bucket,
-                                             Key=path)
-        self.validate_client_response(response)
+        attempts = 3
+        sleep_time = 2
+        while sleep_time <= 2**attempts:
+            try:
+                response = self.s3_client.get_object(
+                    Bucket=self.bucket,
+                    Key=path
+                )
+                self.validate_client_response(response)
 
-        content = response['Body'].read()
-        return content
+                content = response['Body'].read()
+                return content
+            except ClientError as err:
+                LOG.warning('Failed to read s3://%s/%s', self.bucket, path)
+                LOG.warning(err)
+                LOG.info('Will try again in %d seconds', sleep_time)
+                time.sleep(sleep_time)
+                sleep_time *= 2
+        msg = 'Failed to read s3://%s/%s after %d attempts' \
+              % (attempts, self.bucket, path)
+        raise TwinDBBackupError(msg)
 
     def _move_file(self, source, destination):
         s3client = boto3.resource('s3')
