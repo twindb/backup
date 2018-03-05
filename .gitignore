@@ -60,3 +60,4 @@ docs/_build/
 target/
 .DS_Store
 /vagrant/README.html
+/.pytest_cache/
