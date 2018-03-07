@@ -91,4 +91,3 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
                     LOG.info('Relication is up and running')
                     return
     LOG.error('Replication is not running after 30 seconds timeout')
-    assert 0

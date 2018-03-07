@@ -247,7 +247,7 @@ def slave(docker_client, container_network, tmpdir_factory):
     bootstrap_script = '/twindb-backup/support/bootstrap/master/' \
                        '%s/slave.sh' % platform
     separator_pos = NODE_IMAGE.find(':')
-    image_name = NODE_IMAGE[:separator_pos] + 'slave_' + NODE_IMAGE[separator_pos:]
+    image_name = NODE_IMAGE[:separator_pos+1] + 'slave_' + NODE_IMAGE[separator_pos+1:]
     datadir = tmpdir_factory.mktemp('mysql')
     twindb_config_dir = tmpdir_factory.mktemp('twindb')
     container = get_container(
