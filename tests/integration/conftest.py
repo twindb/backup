@@ -101,33 +101,34 @@ def container_network(docker_client):
         api.remove_network(net_id=network['Id'])
 
 
-def get_container(name, client, network, datadir,
-                  bootstrap_script=None, last_n=1,
-                  twindb_config_dir=None):
+def get_container(name, client, network,
+                  datadir=None,
+                  bootstrap_script=None,
+                  last_n=1,
+                  twindb_config_dir=None,
+                  image=NODE_IMAGE):
     api = client.api
 
-    api.pull(NODE_IMAGE)
+    api.pull(image)
     cwd = os.getcwd()
     LOG.debug('Current directory: %s', cwd)
-    LOG.debug('TwinDB config directory: %s', twindb_config_dir)
-    mkdir_p(twindb_config_dir, mode=0755)
+
     binds = {
         cwd: {
             'bind': '/twindb-backup',
             'mode': 'rw',
-        },
-        twindb_config_dir: {
-            'bind': '/etc/twindb',
-            'mode': 'rw',
-        },
-        datadir: {
-            'bind': '/var/lib/mysql',
-            'mode': 'rw',
         }
     }
     if twindb_config_dir:
+        LOG.debug('TwinDB config directory: %s', twindb_config_dir)
+        mkdir_p(twindb_config_dir, mode=0755)
         binds[twindb_config_dir] = {
             'bind': '/etc/twindb',
+            'mode': 'rw',
+        }
+    if datadir:
+        binds[datadir] = {
+            'bind': '/var/lib/mysql',
             'mode': 'rw',
         }
     host_config = api.create_host_config(
@@ -144,7 +145,7 @@ def get_container(name, client, network, datadir,
 
     container_hostname = '%s_%d' % (name, last_n)
     kwargs = {
-        'image': NODE_IMAGE,
+        'image': image,
         'name': container_hostname,
         'ports': [22, 3306],
         'hostname': container_hostname,
@@ -233,23 +234,52 @@ def master1(docker_client, container_network, tmpdir_factory):
 
 # noinspection PyShadowingNames
 @pytest.yield_fixture(scope="module")
-def master2(docker_client, container_network):
-
-    bootstrap_script = '/twindb-backup/support/bootstrap/master2.sh'
+def slave(docker_client, container_network, tmpdir_factory):
+    try:
+        platform = os.environ['PLATFORM']
+    except KeyError:
+        raise EnvironmentError("""The environment variable PLATFORM 
+        must be defined. Allowed values are:
+        * centos
+        * debian
+        * ubuntu
+        """)
+    bootstrap_script = '/twindb-backup/support/bootstrap/master/' \
+                       '%s/slave.sh' % platform
+    separator_pos = NODE_IMAGE.find(':')
+    image_name = NODE_IMAGE[:separator_pos] + 'slave_' + NODE_IMAGE[separator_pos:]
+    datadir = tmpdir_factory.mktemp('mysql')
+    twindb_config_dir = tmpdir_factory.mktemp('twindb')
     container = get_container(
-        'master2',
+        'slave',
         docker_client,
         container_network,
-        2
+        str(datadir),
+        twindb_config_dir=str(twindb_config_dir),
+        last_n=2,
+        image=image_name
     )
     timeout = time.time() + 30 * 60
+    LOG.info('Waiting until port TCP/22 becomes available')
     while time.time() < timeout:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if sock.connect_ex((container['ip'], 22)) == 0:
             break
         time.sleep(1)
+        LOG.info('Still waiting')
+    ret, _ = docker_execute(docker_client, container['Id'], ['ls'])
+    assert ret == 0
+
+    ret, cout = docker_execute(
+        docker_client,
+        container['Id'],
+        ['bash', bootstrap_script]
+    )
+    print(cout)
+    assert ret == 0
 
     yield container
+
     if container:
         LOG.info('Removing container %s', container['Id'])
         docker_client.api.remove_container(container=container['Id'],
