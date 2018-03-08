@@ -9,14 +9,16 @@ from twindb_backup import LOG
 
 # noinspection PyShadowingNames
 @pytest.yield_fixture
-def backup_server(docker_client, container_network):
+def storage_server(docker_client, container_network):
 
-    bootstrap_script = '/twindb-backup/support/bootstrap/backup_server.sh'
+    bootstrap_script = '/twindb-backup/support/bootstrap/storage_server.sh'
     container = get_container(
-        'backup_server',
-        bootstrap_script,
+        'storage_server',
         docker_client,
-        container_network
+        container_network,
+        bootstrap_script=bootstrap_script,
+        image="centos:centos7",
+        last_n=2
     )
 
     timeout = time.time() + 30 * 60
@@ -39,12 +41,15 @@ def backup_server(docker_client, container_network):
 def config_content_ssh():
     return """
 [source]
-backup_dirs={BACKUP_DIR}
-backup_mysql=no
+backup_mysql=yes
 
 [destination]
 backup_destination=ssh
 keep_local_path=/var/backup/local
+
+[mysql]
+mysql_defaults_file={MY_CNF}
+full_backup=daily
 
 [ssh]
 ssh_user=root
@@ -52,33 +57,24 @@ ssh_key={PRIVATE_KEY}
 backup_host={HOST_IP}
 backup_dir=/tmp/backup
 
+[intervals]
+run_hourly=yes
+run_daily=yes
+run_weekly=yes
+run_monthly=no
+run_yearly=yes
+
 [retention]
-
-# Remote retention policy
-
 hourly_copies=24
 daily_copies=7
-weekly_copies=4
-monthly_copies=12
-yearly_copies=3
+weekly_copies=1
+monthly_copies=1
+yearly_copies=1
 
 [retention_local]
-
-# Local retention policy
-
 hourly_copies=1
 daily_copies=1
 weekly_copies=0
 monthly_copies=0
 yearly_copies=0
-
-[intervals]
-
-# Run intervals
-
-run_hourly=yes
-run_daily=yes
-run_weekly=yes
-run_monthly=yes
-run_yearly=yes
 """
