@@ -227,14 +227,20 @@ class Ssh(BaseDestination):
               "then echo exists; " \
               "else echo not_exists; " \
               "fi'" % self.status_path
-        _, cout, _ = self._ssh_client.execute(cmd)
-        status = cout.read()
+        status, cerr = self._ssh_client.execute(cmd)
+
         if status.strip() == 'exists':
             return True
         elif status.strip() == 'not_exists':
             return False
         else:
-            raise SshDestinationError('Unrecognized response: %s' % status)
+            LOG.error(cerr)
+            msg = 'Unrecognized response: %s' % status
+            if status:
+                raise SshDestinationError(msg)
+            else:
+                raise SshDestinationError('Empty response from '
+                                          'SSH destination')
 
     def execute_command(self, cmd, quiet=False):
         """Execute ssh command

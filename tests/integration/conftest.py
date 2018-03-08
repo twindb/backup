@@ -204,6 +204,8 @@ def master1(docker_client, container_network, tmpdir_factory):
         time.sleep(1)
         LOG.info('Still waiting')
 
+    LOG.info('Port TCP/3306 is ready')
+
     privileges_file = "/twindb-backup/vagrant/environment/puppet/" \
                       "modules/profile/files/mysql_grants.sql"
     cmd = ["bash", "-c",
