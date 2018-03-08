@@ -71,7 +71,7 @@ class SshClient(object):
         try:
             with self._shell() as shell:
                 LOG.debug('Executing %s', cmd)
-                stdin_, stdout_, stderr_ = shell.exec_command(cmd)
+                stdin_, stdout_, _ = shell.exec_command(cmd)
                 channel = stdout_.channel
                 stdin_.close()
                 channel.shutdown_write()
@@ -88,15 +88,13 @@ class SshClient(object):
                         stderr_chunks.append(chunk)
 
                 exit_code = channel.recv_exit_status()
-                cout = ''.join(stdout_chunks)
-                cerr = ''.join(stderr_chunks)
                 if exit_code != 0:
                     if not quiet:
                         LOG.error("Failed while execute command %s", cmd)
-                        LOG.error(cerr)
+                        LOG.error(''.join(stderr_chunks))
                     raise SshClientException('%s exited with code %d'
                                              % (cmd, exit_code))
-                return cout, cerr
+                return ''.join(stdout_chunks), ''.join(stderr_chunks)
 
         except (SSHException, IOError) as err:
             if not quiet:

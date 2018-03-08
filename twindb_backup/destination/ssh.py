@@ -117,8 +117,8 @@ class Ssh(BaseDestination):
             prefix=prefix
         )
 
-        with self._ssh_client.get_remote_handlers(ls_cmd) as (_, cout, _):
-            return sorted(cout.read().split())
+        cout, _ = self._ssh_client.execute(ls_cmd)
+        return sorted(cout.split())
 
     def find_files(self, prefix, run_type):
         """
@@ -136,8 +136,8 @@ class Ssh(BaseDestination):
             run_type=run_type
         )
 
-        with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
-            return sorted(cout.read().split())
+        cout, _ = self._ssh_client.execute(cmd)
+        return sorted(cout.split())
 
     def delete(self, obj):
         """
@@ -302,9 +302,9 @@ class Ssh(BaseDestination):
             try:
                 cmd = 'netstat -an | grep -w ^tcp | grep -w LISTEN ' \
                       '| grep -w 0.0.0.0:%d' % port
-                _, cout, cerr = self.execute_command(cmd)
-                LOG.debug('stdout: %s', cout.read())
-                LOG.debug('stderr: %s', cerr.read())
+                cout, cerr = self.execute_command(cmd)
+                LOG.debug('stdout: %s', cout)
+                LOG.debug('stderr: %s', cerr)
                 return True
             except SshClientException as err:
                 LOG.debug(err)
@@ -314,8 +314,8 @@ class Ssh(BaseDestination):
 
     def _get_file_content(self, path):
         cmd = "cat %s" % path
-        with self._ssh_client.get_remote_handlers(cmd) as (_, stdout, _):
-            return stdout.read()
+        with self._ssh_client.get_remote_handlers(cmd) as (stdout, _):
+            return stdout
 
     def _move_file(self, source, destination):
         cmd = 'yes | cp -rf %s %s' % (source, destination)
