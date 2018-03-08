@@ -63,7 +63,8 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
 
     cmd = ['twindb-backup', '--debug',
            '--config', twindb_config_guest,
-           'clone', 'mysql', master1['ip'], slave['ip']]
+           'clone', 'mysql', "%s:3306" % master1['ip'], "%s:3306" % slave['ip'],
+           "--netcat-port", "9990"]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
