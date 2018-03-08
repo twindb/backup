@@ -112,7 +112,7 @@ class Ssh(BaseDestination):
         if recursive:
             ls_options = "-R"
 
-        ls_cmd = "ls {ls_options} {prefix}".format(
+        ls_cmd = "ls {ls_options} {prefix}*".format(
             ls_options=ls_options,
             prefix=prefix
         )
@@ -131,7 +131,7 @@ class Ssh(BaseDestination):
         :return: List of files
         :rtype: list
         """
-        cmd = "find {prefix}/*/{run_type} -type f".format(
+        cmd = "find {prefix}/ -wholename '*/{run_type}/*' -type f".format(
             prefix=prefix,
             run_type=run_type
         )
@@ -314,8 +314,8 @@ class Ssh(BaseDestination):
 
     def _get_file_content(self, path):
         cmd = "cat %s" % path
-        with self._ssh_client.get_remote_handlers(cmd) as (stdout, _):
-            return stdout
+        with self._ssh_client.get_remote_handlers(cmd) as (_, stdout, _):
+            return stdout.read()
 
     def _move_file(self, source, destination):
         cmd = 'yes | cp -rf %s %s' % (source, destination)

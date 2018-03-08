@@ -5,7 +5,6 @@ def test_backup(master1, storage_server,
                 config_content_ssh,
                 docker_client):
 
-
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
 
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
