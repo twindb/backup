@@ -44,7 +44,8 @@ PASS_CFG = click.make_pass_decorator(ConfigParser, ensure=True)
               show_default=True)
 @PASS_CFG
 @click.pass_context
-def main(ctx, cfg, debug, config, version,
+def main(ctx, cfg, debug,  # pylint: disable=too-many-arguments
+         config, version,
          xtrabackup_binary=XTRABACKUP_BINARY,
          xbstream_binary=XBSTREAM_BINARY):
     """

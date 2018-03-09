@@ -523,6 +523,7 @@ class S3(BaseDestination):
     def _get_file_content(self, path):
         attempts = 3
         sleep_time = 2
+        LOG.debug("PATH IS %s", path)
         while sleep_time <= 2**attempts:
             try:
                 response = self.s3_client.get_object(
@@ -540,7 +541,7 @@ class S3(BaseDestination):
                 time.sleep(sleep_time)
                 sleep_time *= 2
         msg = 'Failed to read s3://%s/%s after %d attempts' \
-              % (attempts, self.bucket, path)
+              % (self.bucket, path, attempts)
         raise TwinDBBackupError(msg)
 
     def _move_file(self, source, destination):
