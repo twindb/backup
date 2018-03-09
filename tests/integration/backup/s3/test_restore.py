@@ -102,7 +102,7 @@ password=qwerty
     print(cout)
     assert ret == 0
     cmd = ["bash", "-c", 'test -f /tmp/dst_full_log_files/_config/etc/my.cnf || '
-                         'test', '-f', '/tmp/dst_full_log_files/_config/etc/mysql/my.cnf']
+                         'test -f/tmp/dst_full_log_files/_config/etc/mysql/my.cnf']
     print(cmd)
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
