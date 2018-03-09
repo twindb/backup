@@ -523,7 +523,6 @@ class S3(BaseDestination):
     def _get_file_content(self, path):
         attempts = 3
         sleep_time = 2
-        LOG.debug("PATH IS %s", path)
         while sleep_time <= 2**attempts:
             try:
                 response = self.s3_client.get_object(
