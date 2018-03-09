@@ -33,13 +33,17 @@ password=qwerty
             MY_CNF='/etc/twindb/my.cnf'
         )
         fp.write(content)
-
-    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'backup', 'daily']
+    cmd = ['ls', '-la', '/var/lib/mysql']
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
 
     cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'backup', 'hourly']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+
+    cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest, 'backup', 'daily']
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -52,7 +56,6 @@ password=qwerty
     key = status['hourly'].keys()[0]
     backup_copy = 's3://' + s3_client.bucket + '/' + key
     dst_dir = '/tmp/dst_full_log_files'
-    cmd = ['mkdir', '-p', dst_dir]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -98,9 +101,8 @@ password=qwerty
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
-    cmd = ['test', '-f', '/tmp/dst_full_log_files/_config/etc/my.cnf',
-           '||',
-           'test', '-f', '/tmp/dst_full_log_files/_config/etc/mysql/my.cnf']
+    cmd = ["bash", "-c", 'test -f /tmp/dst_full_log_files/_config/etc/my.cnf || '
+                         'test', '-f', '/tmp/dst_full_log_files/_config/etc/mysql/my.cnf']
     print(cmd)
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
