@@ -112,7 +112,7 @@ class Ssh(BaseDestination):
         if recursive:
             ls_options = "-R"
 
-        ls_cmd = "ls {ls_options} {prefix}*".format(
+        ls_cmd = "ls {ls_options} {prefix}".format(
             ls_options=ls_options,
             prefix=prefix
         )
