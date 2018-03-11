@@ -55,9 +55,11 @@ class RemoteMySQLSource(MySQLSource):
         else:
             compress_cmd = ""
 
-        cmd = "bash -c \"sudo innobackupex --stream=xbstream ./ 2> %s" \
+        cmd = "bash -c \"sudo %s " \
+              "--stream=xbstream " \
+              "--backup ./ 2> %s" \
               " %s | nc %s %d\"" \
-              % (error_log, compress_cmd, dest_host, port)
+              % (self._xtrabackup, error_log, compress_cmd, dest_host, port)
         while retry < 3:
             try:
                 return self._ssh_client.execute(cmd)
@@ -96,7 +98,7 @@ class RemoteMySQLSource(MySQLSource):
                 self._save_cfg(dst, val.split()[1])
 
         with dst.client.get_remote_handlers("cat - > %s" % path) \
-                as (cin, _, _):
+            as (cin, _, _):
             cfg.write(cin)
 
     def _get_root_my_cnf(self):
@@ -148,13 +150,13 @@ class RemoteMySQLSource(MySQLSource):
                         "MASTER_USER = '{user}', " \
                         "MASTER_PASSWORD = '{password}', " \
                         "MASTER_LOG_FILE = '{binlog}', " \
-                        "MASTER_LOG_POS = {binlog_pos}"\
+                        "MASTER_LOG_POS = {binlog_pos}" \
                     .format(
-                        master=host,
-                        user=user,
-                        password=password,
-                        binlog=binlog,
-                        binlog_pos=binlog_position)
+                    master=host,
+                    user=user,
+                    password=password,
+                    binlog=binlog,
+                    binlog_pos=binlog_position)
                 cursor.execute(query)
                 cursor.execute("START SLAVE")
             return True
@@ -174,14 +176,22 @@ class RemoteMySQLSource(MySQLSource):
 
         try:
             self._ssh_client.execute(
-                'sudo innobackupex --apply-log %s --use-memory %d '
-                '> /tmp/innobackupex-apply-log.log 2>&1'
-                % (datadir, self._mem_available() / 2)
+                'sudo %s '
+                '--apply-log-only '
+                '--datadir %s '
+                '--prepare '
+                '--use-memory %d '
+                '> /tmp/xtrabackup-apply-log.log 2>&1'
+                % (self._xtrabackup, datadir, self._mem_available() / 2)
             )
         except OSError:
             self._ssh_client.execute(
-                'sudo innobackupex --apply-log %s '
-                '> /tmp/innobackupex-apply-log.log 2>&1' % datadir
+                'sudo %s '
+                '--apply-log-only '
+                '--datadir %s '
+                '--prepare '
+                '> /tmp/xtrabackup-apply-log.log 2>&1'
+                % (self._xtrabackup, datadir)
             )
 
         self._ssh_client.execute("sudo chown -R mysql %s" % datadir)
