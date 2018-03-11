@@ -25,11 +25,9 @@ def test__clone_config(mock_get_root, mock_save):
 
 
 def test___mem_available():
-    mock_stdout = mock.Mock()
-    mock_stdout.read.return_value = "100500"
 
     mock_client = mock.Mock()
-    mock_client.execute.return_value = (None, mock_stdout, None)
+    mock_client.execute.return_value = ("100500", None)
 
     rmt_sql = RemoteMySQLSource({
         "run_type": INTERVALS[0],
@@ -42,11 +40,9 @@ def test___mem_available():
 
 
 def test__mem_available_raise_exception():
-    mock_stdout = mock.Mock()
-    mock_stdout.read.return_value = ""
 
     mock_client = mock.Mock()
-    mock_client.execute.return_value = (None, mock_stdout, None)
+    mock_client.execute.return_value = ("", None)
 
     rmt_sql = RemoteMySQLSource({
         "run_type": INTERVALS[0],

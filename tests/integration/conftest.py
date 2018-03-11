@@ -204,6 +204,8 @@ def master1(docker_client, container_network, tmpdir_factory):
         time.sleep(1)
         LOG.info('Still waiting')
 
+    LOG.info('Port TCP/3306 is ready')
+
     privileges_file = "/twindb-backup/vagrant/environment/puppet/" \
                       "modules/profile/files/mysql_grants.sql"
     cmd = ["bash", "-c",
@@ -286,7 +288,7 @@ def slave(docker_client, container_network, tmpdir_factory):
                                            force=True)
 
 
-def docker_execute(client, container_id, cmd):
+def docker_execute(client, container_id, cmd, tty=False):
     """Execute command in container
 
     :param client: Docker client class instance
@@ -297,10 +299,12 @@ def docker_execute(client, container_id, cmd):
     :param cmd: Command to execute
     :type cmd: str or list
     :return: A tuple with exit code and output.
+    :param tty: Using pseudo-TTY
+    :type tty: bool
     :rtype: tuple(int, str)
     """
     api = client.api
-    executor = api.exec_create(container_id, cmd)
+    executor = api.exec_create(container_id, cmd, tty=tty)
     exec_id = executor['Id']
     cout = api.exec_start(exec_id)
     ret = api.exec_inspect(exec_id)['ExitCode']
