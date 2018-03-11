@@ -236,23 +236,52 @@ def master1(docker_client, container_network, tmpdir_factory):
 
 # noinspection PyShadowingNames
 @pytest.yield_fixture(scope="module")
-def master2(docker_client, container_network):
-
-    bootstrap_script = '/twindb-backup/support/bootstrap/master2.sh'
+def slave(docker_client, container_network, tmpdir_factory):
+    try:
+        platform = os.environ['PLATFORM']
+    except KeyError:
+        raise EnvironmentError("""The environment variable PLATFORM 
+        must be defined. Allowed values are:
+        * centos
+        * debian
+        * ubuntu
+        """)
+    bootstrap_script = '/twindb-backup/support/bootstrap/master/' \
+                       '%s/slave.sh' % platform
+    separator_pos = NODE_IMAGE.find(':')
+    image_name = NODE_IMAGE[:separator_pos+1] + 'slave_' + NODE_IMAGE[separator_pos+1:]
+    datadir = tmpdir_factory.mktemp('mysql')
+    twindb_config_dir = tmpdir_factory.mktemp('twindb')
     container = get_container(
-        'master2',
+        'slave',
         docker_client,
         container_network,
-        2
+        str(datadir),
+        twindb_config_dir=str(twindb_config_dir),
+        last_n=2,
+        image=image_name
     )
     timeout = time.time() + 30 * 60
+    LOG.info('Waiting until port TCP/22 becomes available')
     while time.time() < timeout:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if sock.connect_ex((container['ip'], 22)) == 0:
             break
         time.sleep(1)
+        LOG.info('Still waiting')
+    ret, _ = docker_execute(docker_client, container['Id'], ['ls'])
+    assert ret == 0
+
+    ret, cout = docker_execute(
+        docker_client,
+        container['Id'],
+        ['bash', bootstrap_script]
+    )
+    print(cout)
+    assert ret == 0
 
     yield container
+
     if container:
         LOG.info('Removing container %s', container['Id'])
         docker_client.api.remove_container(container=container['Id'],
