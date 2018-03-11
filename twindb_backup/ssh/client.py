@@ -62,26 +62,39 @@ class SshClient(object):
         :param cmd: Command for execution.
         :type cmd: str
         :param quiet: if quiet is True don't print error messages
-        :return: Handlers of stdin, stdout and stderr
+        :return: Strings with stdout and stderr
         :rtype: tuple
-        :raise SshDestinationError: if any error
+        :raise SshDestinationError: if any error or non-zero exit code
 
         """
+        max_chunk_size = 1024 * 1024
         try:
             with self._shell() as shell:
                 LOG.debug('Executing %s', cmd)
-                stdin_, stdout_, stderr_ = shell.exec_command(cmd)
-                # while not stdout_.channel.exit_status_ready():
-                #     LOG.debug('%s: waiting', cmd)
-                #     time.sleep(1)
-                exit_code = stdout_.channel.recv_exit_status()
+                stdin_, stdout_, _ = shell.exec_command(cmd)
+                channel = stdout_.channel
+                stdin_.close()
+                channel.shutdown_write()
+                stdout_chunks = []
+                stderr_chunks = []
+                while not channel.closed \
+                        or channel.recv_ready() \
+                        or channel.recv_stderr_ready():
+                    if channel.recv_ready():
+                        chunk = channel.recv(max_chunk_size)
+                        stdout_chunks.append(chunk)
+                    if channel.recv_stderr_ready():
+                        chunk = channel.recv_stderr(max_chunk_size)
+                        stderr_chunks.append(chunk)
+
+                exit_code = channel.recv_exit_status()
                 if exit_code != 0:
                     if not quiet:
                         LOG.error("Failed while execute command %s", cmd)
-                        LOG.error(stderr_.read())
+                        LOG.error(''.join(stderr_chunks))
                     raise SshClientException('%s exited with code %d'
                                              % (cmd, exit_code))
-                return stdin_, stdout_, stderr_
+                return ''.join(stdout_chunks), ''.join(stderr_chunks)
 
         except (SSHException, IOError) as err:
             if not quiet:

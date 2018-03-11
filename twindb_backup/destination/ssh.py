@@ -112,13 +112,13 @@ class Ssh(BaseDestination):
         if recursive:
             ls_options = "-R"
 
-        ls_cmd = "ls {ls_options} {prefix}".format(
+        ls_cmd = "ls {ls_options} {prefix}*".format(
             ls_options=ls_options,
             prefix=prefix
         )
 
-        with self._ssh_client.get_remote_handlers(ls_cmd) as (_, cout, _):
-            return sorted(cout.read().split())
+        cout, _ = self._ssh_client.execute(ls_cmd)
+        return sorted(cout.split())
 
     def find_files(self, prefix, run_type):
         """
@@ -131,13 +131,13 @@ class Ssh(BaseDestination):
         :return: List of files
         :rtype: list
         """
-        cmd = "find {prefix}/*/{run_type} -type f".format(
+        cmd = "find {prefix}/ -wholename '*/{run_type}/*' -type f".format(
             prefix=prefix,
             run_type=run_type
         )
 
-        with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
-            return sorted(cout.read().split())
+        cout, _ = self._ssh_client.execute(cmd)
+        return sorted(cout.split())
 
     def delete(self, obj):
         """
@@ -227,14 +227,20 @@ class Ssh(BaseDestination):
               "then echo exists; " \
               "else echo not_exists; " \
               "fi'" % self.status_path
-        _, cout, _ = self._ssh_client.execute(cmd)
-        status = cout.read()
+        status, cerr = self._ssh_client.execute(cmd)
+
         if status.strip() == 'exists':
             return True
         elif status.strip() == 'not_exists':
             return False
         else:
-            raise SshDestinationError('Unrecognized response: %s' % status)
+            LOG.error(cerr)
+            msg = 'Unrecognized response: %s' % status
+            if status:
+                raise SshDestinationError(msg)
+            else:
+                raise SshDestinationError('Empty response from '
+                                          'SSH destination')
 
     def execute_command(self, cmd, quiet=False):
         """Execute ssh command
@@ -296,9 +302,9 @@ class Ssh(BaseDestination):
             try:
                 cmd = 'netstat -an | grep -w ^tcp | grep -w LISTEN ' \
                       '| grep -w 0.0.0.0:%d' % port
-                _, cout, cerr = self.execute_command(cmd)
-                LOG.debug('stdout: %s', cout.read())
-                LOG.debug('stderr: %s', cerr.read())
+                cout, cerr = self.execute_command(cmd)
+                LOG.debug('stdout: %s', cout)
+                LOG.debug('stderr: %s', cerr)
                 return True
             except SshClientException as err:
                 LOG.debug(err)

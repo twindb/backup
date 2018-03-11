@@ -540,7 +540,7 @@ class S3(BaseDestination):
                 time.sleep(sleep_time)
                 sleep_time *= 2
         msg = 'Failed to read s3://%s/%s after %d attempts' \
-              % (attempts, self.bucket, path)
+              % (self.bucket, path, attempts)
         raise TwinDBBackupError(msg)
 
     def _move_file(self, source, destination):

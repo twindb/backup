@@ -60,6 +60,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
             "run_type": INTERVALS[0],
             "full_backup": INTERVALS[0],
         })
+        xbstream_binary = cfg.get('mysql', 'xbsteam_binary')
         LOG.debug('SSH destination: %s', split_host_port(destination)[0])
         LOG.debug('SSH username: %s', cfg.get('ssh', 'ssh_user'))
         LOG.debug('SSH key: %s', cfg.get('ssh', 'ssh_key'))
@@ -80,7 +81,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
             exit(1)
 
         _run_remote_netcat(compress, datadir, destination,
-                           dst, netcat_port, src)
+                           dst, netcat_port, src, xbstream_binary)
         LOG.debug('Copying MySQL config to the destination')
         src.clone_config(dst)
 
@@ -130,8 +131,9 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
 
 
 def _run_remote_netcat(compress, datadir,  # pylint: disable=too-many-arguments
-                       destination, dst, netcat_port, src):
-    netcat_cmd = "xbstream -x -C {datadir}".format(
+                       destination, dst, netcat_port, src, xbstream_path):
+    netcat_cmd = "{xbstream_binary} -x -C {datadir}".format(
+        xbstream_binary=xbstream_path,
         datadir=datadir
     )
     if compress:

@@ -90,9 +90,8 @@ class RemoteMySQLSource(MySQLSource):
             if '!includedir' in option:
                 val = val.split()[1]
                 ls_cmd = 'ls %s' % val
-                with self._ssh_client.get_remote_handlers(ls_cmd) \
-                        as (_, cout, _):
-                    file_list = sorted(cout.read().split())
+                cout, _ = self._ssh_client.execute(ls_cmd)
+                file_list = sorted(cout.split())
                 for sub_file in file_list:
                     self._save_cfg(dst, val + "/" + sub_file)
             elif '!include' in option:
@@ -197,14 +196,14 @@ class RemoteMySQLSource(MySQLSource):
 
         self._ssh_client.execute("sudo chown -R mysql %s" % datadir)
 
-        _, stdout_, _ = self._ssh_client.execute(
+        stdout_, _ = self._ssh_client.execute(
             'sudo cat %s/xtrabackup_binlog_pos_innodb' % datadir
         )
-        binlog_pos = stdout_.read().strip()
-        _, stdout_, _ = self._ssh_client.execute(
+        binlog_pos = stdout_.strip()
+        stdout_, _ = self._ssh_client.execute(
             'sudo cat %s/xtrabackup_binlog_info' % datadir
         )
-        binlog_info = stdout_.read().strip()
+        binlog_info = stdout_.strip()
         if binlog_pos in binlog_info:
             return tuple(binlog_info.split())
         raise RemoteMySQLSourceError("Invalid backup")
@@ -217,7 +216,7 @@ class RemoteMySQLSource(MySQLSource):
         :raise OSError: if can' detect memory
         """
         # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=34e431b0a
-        _, stdout_, _ = self._ssh_client.execute(
+        stdout_, _ = self._ssh_client.execute(
             "awk -v low=$(grep low /proc/zoneinfo | "
             "awk '{k+=$2}END{print k}') "
             "'{a[$1]=$2}END{m="
@@ -228,7 +227,7 @@ class RemoteMySQLSource(MySQLSource):
             "print a[\"MemAvailable:\"]}' "
             "/proc/meminfo"
         )
-        mem = stdout_.read().strip()
+        mem = stdout_.strip()
         if not mem:
             raise OSError("Cant get available mem")
         free_mem = int(mem) * 1024
