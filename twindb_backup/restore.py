@@ -165,6 +165,7 @@ def _extract_xbstream(input_stream, working_dir,
         cmd = [xbstream_binary, '-x']
         LOG.debug('Running %s', ' '.join(cmd))
         LOG.debug('Working directory: %s', working_dir)
+        LOG.debug('Xbstream binary: %s', xbstream_binary)
         proc = Popen(cmd,
                      stdin=input_stream,
                      stdout=PIPE,
@@ -383,7 +384,8 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
                                         xbstream_binary=xbstream_binary)
                 cache.add(dst_dir, cache_key)
         else:
-            restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
+            restore_from_mysql_full(stream, dst_dir, config,
+                                    redo_only=False,
                                     xtrabackup_binary=xtrabackup_binary,
                                     xbstream_binary=xbstream_binary)
 

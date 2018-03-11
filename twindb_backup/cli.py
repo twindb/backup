@@ -40,7 +40,7 @@ PASS_CFG = click.make_pass_decorator(ConfigParser, ensure=True)
               show_default=True)
 @click.option('--xbstream-binary',
               help='Path to xbstream binary.',
-              default=XTRABACKUP_BINARY,
+              default=XBSTREAM_BINARY,
               show_default=True)
 @PASS_CFG
 @click.pass_context
