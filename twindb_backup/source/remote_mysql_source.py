@@ -57,7 +57,8 @@ class RemoteMySQLSource(MySQLSource):
 
         cmd = "bash -c \"sudo %s " \
               "--stream=xbstream " \
-              "--backup ./ 2> %s" \
+              "--backup " \
+              "--target-dir ./ 2> %s" \
               " %s | nc %s %d\"" \
               % (self._xtrabackup, error_log, compress_cmd, dest_host, port)
         while retry < 3:
@@ -178,7 +179,7 @@ class RemoteMySQLSource(MySQLSource):
             self._ssh_client.execute(
                 'sudo %s '
                 '--apply-log-only '
-                '--datadir %s '
+                '--target-dir %s '
                 '--prepare '
                 '--use-memory %d '
                 '> /tmp/xtrabackup-apply-log.log 2>&1'
@@ -188,7 +189,7 @@ class RemoteMySQLSource(MySQLSource):
             self._ssh_client.execute(
                 'sudo %s '
                 '--apply-log-only '
-                '--datadir %s '
+                '--target-dir %s '
                 '--prepare '
                 '> /tmp/xtrabackup-apply-log.log 2>&1'
                 % (self._xtrabackup, datadir)
