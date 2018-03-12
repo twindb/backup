@@ -57,6 +57,7 @@ class RemoteMySQLSource(MySQLSource):
 
         cmd = "bash -c \"sudo %s " \
               "--stream=xbstream " \
+              "--host=127.0.0.1 " \
               "--backup " \
               "--target-dir ./ 2> %s" \
               " %s | nc %s %d\"" \
