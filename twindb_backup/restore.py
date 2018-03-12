@@ -235,29 +235,41 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
     try:
         mem_usage = psutil.virtual_memory()
         try:
-            xtrabackup_cmd = [xtrabackup_binary,
-                              '--use-memory=%d' % (mem_usage.available / 2),
-                              '--apply-log-only', dst_dir,
-                              '--incremental-dir', inc_dir]
+            xtrabackup_cmd = [
+                xtrabackup_binary,
+                '--use-memory=%d' % (mem_usage.available / 2),
+                '--prepare',
+                '--apply-log-only',
+                '--target-dir=%s' % dst_dir
+            ]
             LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
-            xtrabackup_proc = Popen(xtrabackup_cmd,
-                                    stdout=None,
-                                    stderr=None)
+            xtrabackup_proc = Popen(
+                xtrabackup_cmd,
+                stdout=None,
+                stderr=None
+            )
             xtrabackup_proc.communicate()
             ret = xtrabackup_proc.returncode
             if ret:
-                LOG.error('%s exited with code %d',
-                          " ".join(xtrabackup_cmd),
-                          ret)
+                LOG.error(
+                    '%s exited with code %d',
+                    " ".join(xtrabackup_cmd),
+                    ret)
                 return False
 
-            xtrabackup_cmd = [xtrabackup_binary,
-                              '--use-memory=%d' % (mem_usage.available / 2),
-                              '--prepare', "--target-dir", dst_dir]
+            xtrabackup_cmd = [
+                xtrabackup_binary,
+                '--use-memory=%d' % (mem_usage.available / 2),
+                '--prepare',
+                "--target-dir=%s" % dst_dir,
+                "--incremental-dir=%s" % inc_dir
+            ]
             LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
-            xtrabackup_proc = Popen(xtrabackup_cmd,
-                                    stdout=None,
-                                    stderr=None)
+            xtrabackup_proc = Popen(
+                xtrabackup_cmd,
+                stdout=None,
+                stderr=None
+            )
             xtrabackup_proc.communicate()
             ret = xtrabackup_proc.returncode
             if ret:
