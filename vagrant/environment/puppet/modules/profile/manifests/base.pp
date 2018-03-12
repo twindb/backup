@@ -95,7 +95,11 @@ password=qwerty
   service { 'docker':
     ensure => running,
     enable => true,
-    require => Package['docker'],
+    require => [
+      Package['docker'],
+      Exec['disable_selinux'],
+      File['/etc/sysconfig/docker'],
+    ]
   }
 
   exec { 'net.ipv4.ip_forward':
@@ -116,6 +120,17 @@ password=qwerty
     mode    => "0600",
     source  => 'puppet:///modules/profile/twindb-backup.cfg',
     require => File['/etc/twindb']
+  }
+
+  file { "/etc/sysconfig/docker":
+    ensure  => present,
+    owner   => 'root',
+    mode    => "0644",
+    source  => 'puppet:///modules/profile/sysconfig_docker',
+  }
+
+  exec {'disable_selinux':
+    command => '/usr/sbin/setenforce 0'
   }
 
 }

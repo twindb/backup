@@ -521,7 +521,7 @@ class S3(BaseDestination):
             raise TwinDBBackupError("File not found via url: %s", s3_url)
 
     def _get_file_content(self, path):
-        attempts = 3
+        attempts = 10  # up to 1024 seconds
         sleep_time = 2
         while sleep_time <= 2**attempts:
             try:
