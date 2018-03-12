@@ -64,7 +64,7 @@ class FileSource(BaseSource):
 
     def apply_retention_policy(self, dst, config, run_type):
         """Apply retention policy"""
-        prefix = "{remote_path}/{prefix}/files/{file}".format(
+        prefix = "{remote_path}/{prefix}/files/{file}*".format(
             remote_path=dst.remote_path,
             prefix=self.get_prefix(),
             file=self._sanitize_filename()

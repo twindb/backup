@@ -204,7 +204,7 @@ class MySQLSource(BaseSource):
         :rtype: dict
         """
 
-        prefix = "{remote_path}/{prefix}/mysql/mysql-".format(
+        prefix = "{remote_path}/{prefix}/mysql/mysql-*".format(
             remote_path=dst.remote_path,
             prefix=self.get_prefix()
         )
