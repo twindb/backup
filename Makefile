@@ -58,7 +58,7 @@ upgrade-requirements: ## Upgrade requirements
 	pip-compile --upgrade --verbose --no-index --output-file requirements_dev.txt requirements_dev.in
 
 .PHONY: bootstrap
-bootstrap: clean ## bootstrap the development environment
+bootstrap: ## bootstrap the development environment
 	pip install -U "setuptools>=32.3.1"
 	pip install -U "pip>=9.0.1"
 	pip install -U "pip-tools>=1.6.0"
