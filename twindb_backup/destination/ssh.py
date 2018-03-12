@@ -111,12 +111,12 @@ class Ssh(BaseDestination):
 
         if recursive:
             ls_options = "-R"
-
         ls_cmd = "ls {ls_options} {prefix}".format(
             ls_options=ls_options,
             prefix=prefix
         )
-
+        if not prefix.endswith('/'):
+            ls_cmd += '*'
         cout, _ = self._ssh_client.execute(ls_cmd)
         return sorted(cout.split())
 
