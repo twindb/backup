@@ -5,7 +5,7 @@ Module defines MySQL source class for backing up remote MySQL.
 import ConfigParser
 import socket
 import struct
-
+import re
 from contextlib import contextmanager
 
 import time
@@ -201,13 +201,13 @@ class RemoteMySQLSource(MySQLSource):
         stdout_, _ = self._ssh_client.execute(
             'sudo cat %s/xtrabackup_binlog_pos_innodb' % datadir
         )
-        binlog_pos = stdout_.strip()
+        binlog_pos = re.split(r'\t+', stdout_)[1].rstrip()
         stdout_, _ = self._ssh_client.execute(
             'sudo cat %s/xtrabackup_binlog_info' % datadir
         )
-        binlog_info = stdout_.strip()
+        binlog_info = re.split(r'\t+', stdout_.rstrip())
         if binlog_pos in binlog_info:
-            return tuple(binlog_info.split())
+            return tuple(binlog_info[:-1])
         raise RemoteMySQLSourceError("Invalid backup")
 
     def _mem_available(self):
