@@ -6,9 +6,9 @@ from twindb_backup.source.mysql_source import MySQLConnectInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
 
 
-def test_clone(master1, slave, docker_client, config_content_clone):
+def test_clone(runner, master1, slave, docker_client, config_content_clone):
 
-    twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
+    twindb_config_dir = get_twindb_config_dir(docker_client, runner['Id'])
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
@@ -61,11 +61,17 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
         )
         fp.write(content)
 
+    cmd = '/usr/sbin/sshd'
+    # Run SSH daemon on master1_1
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+
     cmd = ['twindb-backup', '--debug',
            '--config', twindb_config_guest,
-           'clone', 'mysql', "%s:3306" % master1['ip'], "%s:3306" % slave['ip'],
-           "--netcat-port", "9990"]
-    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+           'clone', 'mysql',
+           "%s:3306" % master1['ip'], "%s:3306" % slave['ip']
+           ]
+    ret, cout = docker_execute(docker_client, runner['Id'], cmd)
     print(cout)
     assert ret == 0
     sql_master_2 = RemoteMySQLSource({
