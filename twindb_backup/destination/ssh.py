@@ -223,7 +223,7 @@ class Ssh(BaseDestination):
         :rtype: bool
         :raise SshDestinationError: if any error.
         """
-        cmd = "bash -c 'if test -f %s; " \
+        cmd = "bash -c 'if test -s %s; " \
               "then echo exists; " \
               "else echo not_exists; " \
               "fi'" % self.status_path

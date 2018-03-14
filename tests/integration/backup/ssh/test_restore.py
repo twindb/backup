@@ -77,14 +77,54 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
     url = cout.strip()
     print(cout)
     assert ret == 0
+    dst_dir = "/tmp/ssh_dest_restore/"
     cmd = ['twindb-backup',
            '--debug',
            '--config', twindb_config_guest,
            'restore',
            'mysql', url,
-           "--dst", "/tmp/ssh_dest_restore/"]
+           "--dst", dst_dir]
     print('CMD : %s' % cmd)
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
-
+    cmd = ['find', dst_dir]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['test', '-f', '%s/backup-my.cnf' % dst_dir]
+    print(cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['test', '-f', '%s/ibdata1' % dst_dir]
+    print(cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['test', '-f', '%s/ib_logfile0' % dst_dir]
+    print(cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['test', '-f', '%s/ib_logfile1' % dst_dir]
+    print(cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['test', '-f', '%s/mysql/user.MYD' % dst_dir]
+    print(cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['test', '-f', '%s/xtrabackup_logfile' % dst_dir]
+    print(cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ["bash", "-c", 'test -f %s/_config/etc/my.cnf || '
+                         'test -f %s/_config/etc/mysql/my.cnf' %(dst_dir,  dst_dir)]
+    print(cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
