@@ -242,18 +242,24 @@ class Ssh(BaseDestination):
                 raise SshDestinationError('Empty response from '
                                           'SSH destination')
 
-    def execute_command(self, cmd, quiet=False):
+    def execute_command(self, cmd, quiet=False, background=False):
         """Execute ssh command
 
 
         :param cmd: Command for execution
         :type cmd: str
         :param quiet: If True don't print errors
+        :param background: Don't wait until the command exits.
+        :type background: bool
         :return: Handlers of stdin, stdout and stderr
         :rtype: tuple
         """
         LOG.debug('Executing: %s', cmd)
-        return self._ssh_client.execute(cmd, quiet=quiet)
+        return self._ssh_client.execute(
+            cmd,
+            quiet=quiet,
+            background=background
+        )
 
     @property
     def client(self):

@@ -54,3 +54,15 @@ def test__mem_available_raise_exception():
     with pytest.raises(OSError):
         rmt_sql._mem_available()
 
+
+def test__get_binlog_info_parses_file():
+    mock_client = mock.Mock()
+    mock_client.execute.return_value = ("mysql-bin.000002\t1054", None)
+    rmt_sql = RemoteMySQLSource({
+        "run_type": INTERVALS[0],
+        "full_backup": INTERVALS[0],
+        "mysql_connect_info": MySQLConnectInfo("/"),
+        "ssh_connection_info": None
+    })
+    rmt_sql._ssh_client = mock_client
+    assert rmt_sql._get_binlog_info('foo') == ("mysql-bin.000002", 1054)

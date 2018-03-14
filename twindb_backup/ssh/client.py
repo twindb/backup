@@ -56,45 +56,57 @@ class SshClient(object):
         finally:
             shell.close()
 
-    def execute(self, cmd, quiet=False):
+    def execute(self, cmd, quiet=False, background=False):
         """Execute a command on a remote SSH server.
 
         :param cmd: Command for execution.
         :type cmd: str
         :param quiet: if quiet is True don't print error messages
-        :return: Strings with stdout and stderr
+        :param background: Don't wait until the command exits.
+        :type background: bool
+        :return: Strings with stdout and stderr. If command is executed
+            in background the method will return None.
         :rtype: tuple
-        :raise SshDestinationError: if any error or non-zero exit code
+        :raise SshClientException: if any error or non-zero exit code
 
         """
         max_chunk_size = 1024 * 1024
         try:
             with self._shell() as shell:
-                LOG.debug('Executing %s', cmd)
-                stdin_, stdout_, _ = shell.exec_command(cmd)
-                channel = stdout_.channel
-                stdin_.close()
-                channel.shutdown_write()
-                stdout_chunks = []
-                stderr_chunks = []
-                while not channel.closed \
-                        or channel.recv_ready() \
-                        or channel.recv_stderr_ready():
-                    if channel.recv_ready():
-                        chunk = channel.recv(max_chunk_size)
-                        stdout_chunks.append(chunk)
-                    if channel.recv_stderr_ready():
-                        chunk = channel.recv_stderr(max_chunk_size)
-                        stderr_chunks.append(chunk)
+                if not background:
+                    LOG.debug('Executing command: %s', cmd)
+                    stdin_, stdout_, _ = shell.exec_command(cmd)
+                    channel = stdout_.channel
+                    stdin_.close()
+                    channel.shutdown_write()
+                    stdout_chunks = []
+                    stderr_chunks = []
+                    while not channel.closed \
+                            or channel.recv_ready() \
+                            or channel.recv_stderr_ready():
+                        if channel.recv_ready():
+                            stdout_chunks.append(
+                                channel.recv(max_chunk_size)
+                            )
+                        if channel.recv_stderr_ready():
+                            stderr_chunks.append(
+                                channel.recv_stderr(max_chunk_size)
+                            )
 
-                exit_code = channel.recv_exit_status()
-                if exit_code != 0:
-                    if not quiet:
-                        LOG.error("Failed while execute command %s", cmd)
-                        LOG.error(''.join(stderr_chunks))
-                    raise SshClientException('%s exited with code %d'
-                                             % (cmd, exit_code))
-                return ''.join(stdout_chunks), ''.join(stderr_chunks)
+                    exit_code = channel.recv_exit_status()
+                    if exit_code != 0:
+                        if not quiet:
+                            LOG.error("Failed while execute command %s", cmd)
+                            LOG.error(''.join(stderr_chunks))
+                        raise SshClientException('%s exited with code %d'
+                                                 % (cmd, exit_code))
+                    return ''.join(stdout_chunks), ''.join(stderr_chunks)
+                else:
+                    LOG.debug('Executing in background: %s', cmd)
+                    transport = shell.get_transport()
+                    channel = transport.open_session()
+                    channel.exec_command(cmd)
+                    LOG.debug('Ran %s in background', cmd)
 
         except (SSHException, IOError) as err:
             if not quiet:

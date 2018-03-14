@@ -173,48 +173,34 @@ class RemoteMySQLSource(MySQLSource):
         :param datadir: Path to datadir
         :return: Binlog file name and position
         :rtype: tuple
-        :raise TwinDBBackupError: if binary positions is different
+        :raise RemoteMySQLSourceError: if any error.
         """
+        try:
+            use_memory = "--use-memory %d" % int(self._mem_available() / 2)
+        except OSError:
+            use_memory = ""
+
+        cmd = "sudo {xtrabackup} --prepare --apply-log-only " \
+              "--target-dir {target_dir} {use_memory} " \
+              "> /tmp/xtrabackup-apply-log.log 2>&1" \
+              "".format(
+                  xtrabackup=self._xtrabackup,
+                  target_dir=datadir,
+                  use_memory=use_memory)
 
         try:
-            self._ssh_client.execute(
-                'sudo %s '
-                '--prepare '
-                '--apply-log-only '
-                '--target-dir %s '
-                '--use-memory %d '
-                '> /tmp/xtrabackup-apply-log.log 2>&1'
-                % (self._xtrabackup, datadir, self._mem_available() / 2)
-            )
-        except OSError:
-            self._ssh_client.execute(
-                'sudo %s '
-                '--prepare '
-                '--apply-log-only '
-                '--target-dir %s '
-                '> /tmp/xtrabackup-apply-log.log 2>&1'
-                % (self._xtrabackup, datadir)
-            )
-
-        self._ssh_client.execute("sudo chown -R mysql %s" % datadir)
-
-        stdout_, _ = self._ssh_client.execute(
-            'sudo cat %s/xtrabackup_binlog_pos_innodb' % datadir
-        )
-        binlog_pos = re.split(r'\t+', stdout_)[1].rstrip()
-        stdout_, _ = self._ssh_client.execute(
-            'sudo cat %s/xtrabackup_binlog_info' % datadir
-        )
-        binlog_info = re.split(r'\t+', stdout_.rstrip())
-        if binlog_pos in binlog_info:
-            return tuple(binlog_info[:-1])
-        raise RemoteMySQLSourceError("Invalid backup")
+            self._ssh_client.execute(cmd)
+            self._ssh_client.execute("sudo chown -R mysql %s" % datadir)
+            return self._get_binlog_info(datadir)
+        except SshClientException as err:
+            raise RemoteMySQLSourceError(err)
 
     def _mem_available(self):
         """
         Get available memory size
 
         :return: Size of available memory in bytes
+        :rtype: int
         :raise OSError: if can' detect memory
         """
         # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=34e431b0a
@@ -244,3 +230,17 @@ class RemoteMySQLSource(MySQLSource):
             server_ip = socket.gethostbyname(host)
             server_id = struct.unpack("!I", socket.inet_aton(server_ip))[0]
         return server_id
+
+    def _get_binlog_info(self, backup_path):
+        """Get binlog coordinates from an xtrabackup_binlog_info.
+
+        :param backup_path: Path where to look for xtrabackup_binlog_info.
+        :type backup_path: str
+        :return: Tuple with binlog coordinates - (file_name, pos)
+        :rtype: tuple
+        """
+        stdout_, _ = self._ssh_client.execute(
+            'sudo cat %s/xtrabackup_binlog_info' % backup_path
+        )
+        binlog_info = re.split(r'\t+', stdout_.rstrip())
+        return binlog_info[0], int(binlog_info[1])

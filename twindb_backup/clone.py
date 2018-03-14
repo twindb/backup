@@ -5,6 +5,7 @@ Module defines clone feature
 import ConfigParser
 from multiprocessing import Process
 
+import time
 from pymysql import OperationalError
 
 from twindb_backup import INTERVALS, LOG, TwinDBBackupError
@@ -32,8 +33,24 @@ def _mysql_service(dst, action):
         except SshClientException as err:
             LOG.debug(err)
 
-    raise TwinDBBackupError('Failed to %s MySQL on %r'
-                            % (action, dst))
+    try:
+        LOG.warning('Failed to %s MySQL with an init script. '
+                    'Will try to %s mysqld.', action, action)
+        if action == "start":
+            ret = dst.execute_command(
+                "PATH=$PATH:/sbin sudo bash -c 'nohup mysqld &'",
+                background=True
+            )
+            time.sleep(10)
+            return ret
+        elif action == "stop":
+            return dst.execute_command(
+                "PATH=$PATH:/sbin sudo kill $(pidof mysqld)"
+            )
+    except SshClientException as err:
+        LOG.error(err)
+        raise TwinDBBackupError('Failed to %s MySQL on %r'
+                                % (action, dst))
 
 
 def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
@@ -113,6 +130,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
         try:
             LOG.debug('Starting MySQL on the destination')
             _mysql_service(dst, action='start')
+            LOG.debug('MySQL started')
         except TwinDBBackupError as err:
             LOG.error(err)
             exit(1)
@@ -121,9 +139,11 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
         LOG.debug('Master host: %s', source)
         LOG.debug('Replication user: %s', replication_user)
         LOG.debug('Replication password: %s', replication_password)
-        dst_mysql.setup_slave(source,
-                              replication_user, replication_password,
-                              binlog, position)
+        dst_mysql.setup_slave(
+            source,
+            replication_user, replication_password,
+            binlog, position
+        )
 
     except (ConfigParser.NoOptionError, OperationalError) as err:
         LOG.error(err)

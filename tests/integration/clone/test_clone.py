@@ -1,7 +1,7 @@
 import time
 from tests.integration.conftest import get_twindb_config_dir, docker_execute
 from twindb_backup import INTERVALS, LOG
-from twindb_backup.destination.ssh import SshConnectInfo, Ssh
+from twindb_backup.destination.ssh import SshConnectInfo
 from twindb_backup.source.mysql_source import MySQLConnectInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
 
