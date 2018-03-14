@@ -179,9 +179,9 @@ class RemoteMySQLSource(MySQLSource):
         try:
             self._ssh_client.execute(
                 'sudo %s '
+                '--prepare '
                 '--apply-log-only '
                 '--target-dir %s '
-                '--prepare '
                 '--use-memory %d '
                 '> /tmp/xtrabackup-apply-log.log 2>&1'
                 % (self._xtrabackup, datadir, self._mem_available() / 2)
@@ -189,9 +189,9 @@ class RemoteMySQLSource(MySQLSource):
         except OSError:
             self._ssh_client.execute(
                 'sudo %s '
+                '--prepare '
                 '--apply-log-only '
                 '--target-dir %s '
-                '--prepare '
                 '> /tmp/xtrabackup-apply-log.log 2>&1'
                 % (self._xtrabackup, datadir)
             )
