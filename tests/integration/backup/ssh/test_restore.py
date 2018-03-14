@@ -70,11 +70,11 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
     print(cout)
     assert ret == 0
 
-    cmd = ["bash", "-c", "twindb-backup --debug --config %s ls | grep /tmp/backup "
+    cmd = ["bash", "-c", "twindb-backup --config %s ls | grep /tmp/backup "
                           "| grep mysql | sort | tail -1" % twindb_config_guest]
     print('CMD : %s' % cmd)
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
-    url = cout.rstrip()
+    url = cout.strip()
     print(cout)
     assert ret == 0
     cmd = ['twindb-backup',
@@ -83,6 +83,7 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
            'restore',
            'mysql', url,
            "--dst", "/tmp/ssh_dest_restore/"]
+    print('CMD : %s' % cmd)
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
