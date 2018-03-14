@@ -269,6 +269,7 @@ def slave(docker_client, container_network, tmpdir_factory):
             break
         time.sleep(1)
         LOG.info('Still waiting')
+    LOG.info('Port TCP/22 is ready')
     ret, _ = docker_execute(docker_client, container['Id'], ['ls'])
     assert ret == 0
 
