@@ -1,3 +1,5 @@
+import time
+
 from tests.integration.conftest import get_twindb_config_dir, docker_execute
 from twindb_backup.cli import main
 
@@ -75,9 +77,11 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
     url = cout.rstrip()
     print(cout)
     assert ret == 0
-
-    cmd = ['twindb-backup', '--config', twindb_config_guest,
-           'restore', 'file', url,
+    cmd = ['twindb-backup',
+           '--debug',
+           '--config', twindb_config_guest,
+           'restore',
+           'mysql', url,
            "--dst", "/tmp/ssh_dest_restore/"]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
