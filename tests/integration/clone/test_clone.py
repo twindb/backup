@@ -65,17 +65,12 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
     # Run SSH daemon on master1_1
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
-
     cmd = ['twindb-backup', '--debug',
            '--config', twindb_config_guest,
            'clone', 'mysql',
            "%s:3306" % master1['ip'], "%s:3306" % slave['ip']
            ]
     ret, cout = docker_execute(docker_client, runner['Id'], cmd)
-    for cfg_path in MY_CNF_COMMON_PATHS:
-        cmd = ['cat', cfg_path]
-        _, output = docker_execute(docker_client, slave['Id'], cmd)
-        print(output)
     print(cout)
     assert ret == 0
     sql_master_2 = RemoteMySQLSource({
