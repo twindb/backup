@@ -12,6 +12,7 @@ import time
 
 import pymysql
 from twindb_backup import LOG, MY_CNF_COMMON_PATHS
+from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.source.exceptions import RemoteMySQLSourceError
 from twindb_backup.source.mysql_source import MySQLSource
 from twindb_backup.ssh.client import SshClient
@@ -106,10 +107,10 @@ class RemoteMySQLSource(MySQLSource):
         """Return root my.cnf path"""
         for cfg_path in MY_CNF_COMMON_PATHS:
             try:
-                cfg = self._get_config(cfg_path)
-                if cfg.has_section("mysqld"):
+                cmd = "cat %s" % cfg_path
+                with self._ssh_client.get_remote_handlers(cmd):
                     return cfg_path
-            except RemoteMySQLSourceError:
+            except SshDestinationError:
                 continue
         raise OSError("Root my.cnf not found")
 
@@ -127,10 +128,9 @@ class RemoteMySQLSource(MySQLSource):
             cmd = "cat %s" % cfg_path
             with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
                 cfg.readfp(cout)
-        except (ConfigParser.ParsingError,
-                ConfigParser.MissingSectionHeaderError) as err:
+        except ConfigParser.ParsingError as err:
             LOG.error(err)
-            raise RemoteMySQLSourceError(err)
+            exit(1)
         return cfg
 
     def setup_slave(self, host, user, password, binlog, binlog_position):  # noqa # pylint: disable=too-many-arguments

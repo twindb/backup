@@ -48,7 +48,6 @@ INTERVALS = ['hourly', 'daily', 'weekly', 'monthly', 'yearly']
 XTRABACKUP_BINARY = '/opt/twindb-backup/embedded/bin/xtrabackup'
 XBSTREAM_BINARY = '/opt/twindb-backup/embedded/bin/xbstream'
 MY_CNF_COMMON_PATHS = [
-    '/etc/mysql/mysql.conf.d/mysqld.cnf'
     '/etc/my.cnf',
     '/etc/mysql/my.cnf'
 ]
