@@ -108,8 +108,11 @@ class RemoteMySQLSource(MySQLSource):
         for cfg_path in MY_CNF_COMMON_PATHS:
             try:
                 cmd = "cat %s" % cfg_path
-                with self._ssh_client.get_remote_handlers(cmd):
-                    return cfg_path
+                cfg = ConfigParser.ConfigParser(allow_no_value=True)
+                with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
+                    cfg.readfp(cout)
+                    if "mysqld" in cfg.sections():
+                        return cfg_path
             except SshDestinationError:
                 continue
         raise OSError("Root my.cnf not found")
