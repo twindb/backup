@@ -49,7 +49,8 @@ XTRABACKUP_BINARY = '/opt/twindb-backup/embedded/bin/xtrabackup'
 XBSTREAM_BINARY = '/opt/twindb-backup/embedded/bin/xbstream'
 MY_CNF_COMMON_PATHS = [
     '/etc/my.cnf',
-    '/etc/mysql/my.cnf'
+    '/etc/mysql/my.cnf',
+    '/etc/mysql/mysql.conf.d/mysqld.cnf'
 ]
 
 LOG = logging.getLogger(__name__)
