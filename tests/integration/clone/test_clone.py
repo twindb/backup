@@ -1,6 +1,6 @@
 import time
 from tests.integration.conftest import get_twindb_config_dir, docker_execute
-from twindb_backup import INTERVALS, LOG
+from twindb_backup import INTERVALS, LOG, MY_CNF_COMMON_PATHS
 from twindb_backup.destination.ssh import SshConnectInfo
 from twindb_backup.source.mysql_source import MySQLConnectInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
@@ -72,6 +72,10 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
            "%s:3306" % master1['ip'], "%s:3306" % slave['ip']
            ]
     ret, cout = docker_execute(docker_client, runner['Id'], cmd)
+    for cfg_path in MY_CNF_COMMON_PATHS:
+        cmd = ['cat', cfg_path]
+        _, output = docker_execute(docker_client, slave['Id'], cmd)
+        print(output)
     print(cout)
     assert ret == 0
     sql_master_2 = RemoteMySQLSource({
