@@ -72,10 +72,6 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
            "%s:3306" % master1['ip'], "%s:3306" % slave['ip']
            ]
     ret, cout = docker_execute(docker_client, runner['Id'], cmd)
-    for cfg_path in MY_CNF_COMMON_PATHS:
-        cmd = ['cat', cfg_path]
-        _, output = docker_execute(docker_client, slave['Id'], cmd)
-        print(output)
     print(cout)
     assert ret == 0
     sql_master_2 = RemoteMySQLSource({
@@ -85,7 +81,7 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
             key=private_key_guest
         ),
         "mysql_connect_info": MySQLConnectInfo(
-            '/etc/twindb/my.cnf',
+            my_cnf_path,
             hostname=slave['ip']
         ),
         "run_type": INTERVALS[0],
