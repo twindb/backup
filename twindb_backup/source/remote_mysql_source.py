@@ -146,7 +146,7 @@ class RemoteMySQLSource(MySQLSource):
                 query = "CHANGE MASTER TO " \
                         "MASTER_HOST = '{master}', " \
                         "MASTER_USER = '{user}', " \
-                        "MASTER_PORT = '{port}', " \
+                        "MASTER_PORT = {port}, " \
                         "MASTER_PASSWORD = '{password}', " \
                         "MASTER_LOG_FILE = '{binlog}', " \
                         "MASTER_LOG_POS = {binlog_pos}"\
