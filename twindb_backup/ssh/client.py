@@ -133,3 +133,28 @@ class SshClient(object):
         except SSHException as err:
             LOG.error('Failed to execute %s', cmd)
             raise SshClientException(err)
+
+    def list_files(self, path, recursive=False):
+        """
+        Get list of file by prefix
+
+        :param path: Path
+        :param recursive: Recursive return list of files
+        :type path: str
+        :type recursive: bool
+        :return: List of files
+        :rtype: list
+        """
+
+        ls_options = ""
+
+        if recursive:
+            ls_options = "-R"
+        ls_cmd = "ls {ls_options} {prefix}".format(
+            ls_options=ls_options,
+            prefix=path
+        )
+        if not path.endswith('/'):
+            ls_cmd += '*'
+        cout, _ = self.execute(ls_cmd)
+        return cout.split()

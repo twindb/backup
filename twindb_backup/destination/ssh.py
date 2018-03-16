@@ -107,18 +107,7 @@ class Ssh(BaseDestination):
         :return: List of files
         :rtype: list
         """
-        ls_options = ""
-
-        if recursive:
-            ls_options = "-R"
-        ls_cmd = "ls {ls_options} {prefix}".format(
-            ls_options=ls_options,
-            prefix=prefix
-        )
-        if not prefix.endswith('/'):
-            ls_cmd += '*'
-        cout, _ = self._ssh_client.execute(ls_cmd)
-        return sorted(cout.split())
+        return sorted(self._ssh_client.list_files(prefix, recursive))
 
     def find_files(self, prefix, run_type):
         """

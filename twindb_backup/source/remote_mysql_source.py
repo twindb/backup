@@ -91,9 +91,7 @@ class RemoteMySQLSource(MySQLSource):
             val = cfg.get('mysqld', option)
             if '!includedir' in option:
                 val = val.split()[1]
-                ls_cmd = 'ls %s' % val
-                cout, _ = self._ssh_client.execute(ls_cmd)
-                file_list = sorted(cout.split())
+                file_list = sorted(self._ssh_client.list_files(val))
                 for sub_file in file_list:
                     self._save_cfg(dst, val + "/" + sub_file)
             elif '!include' in option:
