@@ -96,6 +96,6 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
                 row = cursor.fetchone()
                 if row['Slave_IO_Running'] == 'Yes' and row['Slave_SQL_Running'] == 'Yes':
                     LOG.info('Relication is up and running')
-                    assert True
+                    return
     LOG.error('Replication is not running after 30 seconds timeout')
     assert False
