@@ -10,7 +10,7 @@ from pymysql import OperationalError
 
 from twindb_backup import INTERVALS, LOG, TwinDBBackupError
 from twindb_backup.destination.ssh import Ssh, SshConnectInfo
-from twindb_backup.source.mysql_source import MySQLConnectInfo
+from twindb_backup.source.mysql_source import MySQLConnectInfo, MySQLMasterInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
 from twindb_backup.ssh.exceptions import SshClientException
 from twindb_backup.util import split_host_port
@@ -140,9 +140,14 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
         LOG.debug('Replication user: %s', replication_user)
         LOG.debug('Replication password: %s', replication_password)
         dst_mysql.setup_slave(
-            source,
-            replication_user, replication_password,
-            binlog, position
+            MySQLMasterInfo(
+                host=split_host_port(source)[0],
+                port=split_host_port(source)[1],
+                user=replication_user,
+                password=replication_password,
+                binlog=binlog,
+                binlog_pos=position
+            )
         )
 
     except (ConfigParser.NoOptionError, OperationalError) as err:

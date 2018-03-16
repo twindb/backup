@@ -133,16 +133,12 @@ class RemoteMySQLSource(MySQLSource):
             exit(1)
         return cfg
 
-    def setup_slave(self, host, user, password, binlog, binlog_position):  # noqa # pylint: disable=too-many-arguments
+    def setup_slave(self, master_info):  # noqa # pylint: disable=too-many-arguments
         """
         Change master
 
-        :param host: Master host name.
-        :type host: str
-        :param user: Replication user.
-        :param password: Replication password
-        :param binlog: Binlog file on the master
-        :param binlog_position: Binlog position
+        :param master_info: Master details.
+        :type master_info: MySQLMasterInfo
 
         """
         try:
@@ -150,15 +146,18 @@ class RemoteMySQLSource(MySQLSource):
                 query = "CHANGE MASTER TO " \
                         "MASTER_HOST = '{master}', " \
                         "MASTER_USER = '{user}', " \
+                        "MASTER_PORT = '{port}', " \
                         "MASTER_PASSWORD = '{password}', " \
                         "MASTER_LOG_FILE = '{binlog}', " \
                         "MASTER_LOG_POS = {binlog_pos}"\
                     .format(
-                        master=host,
-                        user=user,
-                        password=password,
-                        binlog=binlog,
-                        binlog_pos=binlog_position)
+                        master=master_info.host,
+                        user=master_info.user,
+                        password=master_info.password,
+                        binlog=master_info.binlog,
+                        binlog_pos=master_info.binlog_position,
+                        port=master_info.port
+                    )
                 cursor.execute(query)
                 cursor.execute("START SLAVE")
             return True
