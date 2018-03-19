@@ -79,6 +79,7 @@ class RemoteMySQLSource(MySQLSource):
         :type dst: Ssh
         """
         cfg_path = self._get_root_my_cnf()
+        LOG.debug("Root my.cnf is: %s", cfg_path)
         self._save_cfg(dst, cfg_path)
 
     def _find_all_cnf(self, root_path):
@@ -110,7 +111,6 @@ class RemoteMySQLSource(MySQLSource):
 
     def _save_cfg(self, dst, root_cfg):
         """Save configs on destination recursively"""
-
         files = self._find_all_cnf(root_cfg)
         server_id = self._get_server_id(dst.host)
         is_server_id_set = False
@@ -140,9 +140,8 @@ class RemoteMySQLSource(MySQLSource):
         """Return root my.cnf path"""
         for cfg_path in MY_CNF_COMMON_PATHS:
             try:
-                cmd = "cat %s" % cfg_path
-                with self._ssh_client.get_remote_handlers(cmd):
-                    return cfg_path
+                self._ssh_client.get_text_content(cfg_path)
+                return cfg_path
             except SshClientException:
                 continue
         raise OSError("Root my.cnf not found")

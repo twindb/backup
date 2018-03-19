@@ -127,6 +127,7 @@ class SshClient(object):
         """
         try:
             with self._shell() as shell:
+                LOG.debug("Try to get remote handlers: %s", cmd)
                 stdin_, stdout_, stderr_ = shell.exec_command(cmd)
                 yield stdin_, stdout_, stderr_
 
