@@ -171,3 +171,25 @@ class SshClient(object):
 
         cout, _ = self.execute("cat %s" % path)
         return cout
+
+    def write_content(self, path, content):
+        """
+        Write content to path
+
+        :param path: Path to file
+        :param content: Content
+        """
+        with self.get_remote_handlers("cat - > %s" % path) \
+                as (cin, _, _):
+            cin.write(content)
+
+    def write_config(self, path, cfg):
+        """
+        Write config to file
+
+        :param path: Path to file
+        :param cfg: Instance of ConfigParser
+        """
+        with self.get_remote_handlers("cat - > %s" % path) \
+                as (cin, _, _):
+            cfg.write(cin)

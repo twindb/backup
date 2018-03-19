@@ -82,7 +82,7 @@ class RemoteMySQLSource(MySQLSource):
         cfg_path = self._get_root_my_cnf()
         self._save_cfg(dst, cfg_path)
 
-    def _find_all_cnf(self, dst, root_path):
+    def _find_all_cnf(self, root_path):
         """ Return list of embed cnf files"""
         files = [root_path]
         cfg_content = self._ssh_client.get_text_content(root_path)
@@ -92,29 +92,50 @@ class RemoteMySQLSource(MySQLSource):
                 file_list = sorted(self._ssh_client.list_files(path))
                 for sub_file in file_list:
                     file_path = path + sub_file
-                    files.extend(self._find_all_cnf(dst, file_path))
+                    files.extend(self._find_all_cnf(file_path))
             elif '!include' in line:
-                files.extend(self._find_all_cnf(dst, line.split()[1]))
+                files.extend(self._find_all_cnf(line.split()[1]))
         return files
 
-    def _save_cfg(self, dst, path):
-        """Save configs on destination recursively"""
-        cfg = self._get_config(path)
-        server_id = self._get_server_id(dst.host)
-        cfg.set('mysqld', 'server_id', value=str(server_id))
-        for option in cfg.options('mysqld'):
-            val = cfg.get('mysqld', option)
-            if '!includedir' in option:
-                val = val.split()[1]
-                file_list = sorted(self._ssh_client.list_files(val))
-                for sub_file in file_list:
-                    self._save_cfg(dst, val + "/" + sub_file)
-            elif '!include' in option:
-                self._save_cfg(dst, val.split()[1])
+    @staticmethod
+    def _find_server_id_by_path(cfg):
+        """Find path with server_id"""
+        options = ["server_id", "server-id"]
+        for option in options:
+            try:
+                if cfg.has_option("mysqld", option):
+                    return option
+            except ConfigParser.Error:
+                pass
+        return None
 
-        with dst.client.get_remote_handlers("cat - > %s" % path) \
-                as (cin, _, _):
-            cfg.write(cin)
+    def _save_cfg(self, dst, root_cfg):
+        """Save configs on destination recursively"""
+
+        files = self._find_all_cnf(root_cfg)
+        server_id = self._get_server_id(dst.host)
+        is_server_id_set = False
+        valid_cfg = []
+        for path in files:
+            try:
+                cfg = self._get_config(path)
+                option = self._find_server_id_by_path(cfg)
+                if option:
+                    cfg.set('mysqld', option, value=str(server_id))
+                    is_server_id_set = True
+                dst.client.write_config(path, cfg)
+                valid_cfg.append(path)
+            except ConfigParser.ParsingError:
+                cfg_content = self._ssh_client.get_text_content(path)
+                dst.client.write_content(path, cfg_content)
+
+        if not is_server_id_set:
+            for path in valid_cfg:
+                cfg = self._get_config(path)
+                if cfg.has_section("mysqld"):
+                    cfg.set('mysqld', "server_id", value=str(server_id))
+                    dst.client.write_config(path, cfg)
+                    return
 
     def _get_root_my_cnf(self):
         """Return root my.cnf path"""
@@ -143,7 +164,7 @@ class RemoteMySQLSource(MySQLSource):
                 cfg.readfp(cout)
         except ConfigParser.ParsingError as err:
             LOG.error(err)
-            exit(1)
+            raise
         return cfg
 
     def setup_slave(self, master_info):  # noqa # pylint: disable=too-many-arguments
