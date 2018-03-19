@@ -12,7 +12,6 @@ import time
 
 import pymysql
 from twindb_backup import LOG, MY_CNF_COMMON_PATHS
-from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.source.exceptions import RemoteMySQLSourceError
 from twindb_backup.source.mysql_source import MySQLSource
 from twindb_backup.ssh.client import SshClient
@@ -144,7 +143,7 @@ class RemoteMySQLSource(MySQLSource):
                 cmd = "cat %s" % cfg_path
                 with self._ssh_client.get_remote_handlers(cmd):
                     return cfg_path
-            except SshDestinationError:
+            except SshClientException:
                 continue
         raise OSError("Root my.cnf not found")
 
