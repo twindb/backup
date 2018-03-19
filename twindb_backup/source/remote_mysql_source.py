@@ -82,6 +82,21 @@ class RemoteMySQLSource(MySQLSource):
         cfg_path = self._get_root_my_cnf()
         self._save_cfg(dst, cfg_path)
 
+    def _find_all_cnf(self, dst, root_path):
+        """ Return list of embed cnf files"""
+        files = [root_path]
+        cfg_content = self._ssh_client.get_text_content(root_path)
+        for line in cfg_content.splitlines():
+            if '!includedir' in line:
+                path = line.split()[1]
+                file_list = sorted(self._ssh_client.list_files(path))
+                for sub_file in file_list:
+                    file_path = path + sub_file
+                    files.extend(self._find_all_cnf(dst, file_path))
+            elif '!include' in line:
+                files.extend(self._find_all_cnf(dst, line.split()[1]))
+        return files
+
     def _save_cfg(self, dst, path):
         """Save configs on destination recursively"""
         cfg = self._get_config(path)

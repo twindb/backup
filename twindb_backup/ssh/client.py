@@ -158,3 +158,16 @@ class SshClient(object):
             ls_cmd += '*'
         cout, _ = self.execute(ls_cmd)
         return cout.split()
+
+    def get_text_content(self, path):
+        """
+        Get text content of file by path
+
+        :param path: File path
+        :type path: str
+        :return: File content
+        :rtype: str
+        """
+
+        cout, _ = self.execute("cat %s" % path)
+        return cout
