@@ -237,6 +237,20 @@ server_id=0
         4,
         1
     ),
+    (
+        "my.cnf", {
+            "my.cnf": """
+[mysqld]
+
+!include {tmp_dir}/conf.d/2.cnf
+""",
+            "conf.d/2.cnf": """
+[mysqld]
+"""
+        },
+        3,
+        0
+    ),
 ])
 @mock.patch.object(SshClient, "get_text_content")
 @mock.patch.object(RemoteMySQLSource, "_get_config")
