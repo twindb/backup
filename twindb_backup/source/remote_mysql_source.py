@@ -210,14 +210,16 @@ class RemoteMySQLSource(MySQLSource):
             use_memory = "--use-memory %d" % int(self._mem_available() / 2)
         except OSError:
             use_memory = ""
-
+        logfile_path = "/tmp/xtrabackup-apply-log.log"
         cmd = "sudo {xtrabackup} --prepare --apply-log-only " \
               "--target-dir {target_dir} {use_memory} " \
-              "> /tmp/xtrabackup-apply-log.log 2>&1" \
+              "> {logfile} 2>&1" \
               "".format(
                   xtrabackup=self._xtrabackup,
                   target_dir=datadir,
-                  use_memory=use_memory)
+                  use_memory=use_memory,
+                  logfile=logfile_path
+              )
 
         try:
             self._ssh_client.execute(cmd)
