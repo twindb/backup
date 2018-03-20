@@ -276,7 +276,7 @@ class Ssh(BaseDestination):
 
         """
         try:
-            return self.execute_command("bash -c \"nc -l %d | %s\""
+            return self.execute_command("script -c \"nc -l %d | %s\""
                                         % (port, command))
         except SshDestinationError as err:
             LOG.error(err)
@@ -296,8 +296,8 @@ class Ssh(BaseDestination):
         stop_waiting_at = time.time() + wait_timeout
         while time.time() < stop_waiting_at:
             try:
-                cmd = "bash -c \"netstat -an | grep -w ^tcp | grep -w LISTEN " \
-                      "| grep -w 0.0.0.0:%d\"" % port
+                cmd = "netstat -an | grep -w ^tcp | grep -w LISTEN " \
+                      "| grep -w 0.0.0.0:%d" % port
                 cout, cerr = self.execute_command(cmd)
                 LOG.debug('stdout: %s', cout)
                 LOG.debug('stderr: %s', cerr)
