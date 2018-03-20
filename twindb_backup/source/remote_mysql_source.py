@@ -59,7 +59,7 @@ class RemoteMySQLSource(MySQLSource):
               "--host=127.0.0.1 " \
               "--backup " \
               "--target-dir ./ 2> %s" \
-              " %s | nc %s %d\"" \
+              " %s | nc %s %d --send-only\"" \
               % (self._xtrabackup, error_log, compress_cmd, dest_host, port)
         while retry < 3:
             try:
