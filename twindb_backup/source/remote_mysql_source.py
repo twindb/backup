@@ -224,6 +224,8 @@ class RemoteMySQLSource(MySQLSource):
             self._ssh_client.execute("sudo chown -R mysql %s" % datadir)
             return self._get_binlog_info(datadir)
         except SshClientException as err:
+            LOG.debug("Logfile is:")
+            LOG.debug(self._ssh_client.get_text_content(logfile_path))
             raise RemoteMySQLSourceError(err)
 
     def _mem_available(self):

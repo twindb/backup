@@ -276,7 +276,7 @@ class Ssh(BaseDestination):
 
         """
         try:
-            return self.execute_command('nc -l %d | %s' % (port, command))
+            return self.execute_command('nc -dl %d | %s' % (port, command))
         except SshDestinationError as err:
             LOG.error(err)
 
