@@ -276,7 +276,7 @@ class Ssh(BaseDestination):
 
         """
         try:
-            return self.execute_command("script -c \"nc -l %d "
+            return self.execute_command("bash -c \"ncat -l %d "
                                         "--recv-only | %s\""
                                         % (port, command))
         except SshDestinationError as err:
