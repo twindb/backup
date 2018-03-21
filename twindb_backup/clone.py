@@ -88,9 +88,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
                 key=cfg.get('ssh', 'ssh_key')
             ),
         )
-
         datadir = src.datadir
-
         LOG.debug('datadir: %s', datadir)
 
         if dst.list_files(datadir):
@@ -149,7 +147,6 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
                 binlog_pos=position
             )
         )
-
     except (ConfigParser.NoOptionError, OperationalError) as err:
         LOG.error(err)
         exit(1)

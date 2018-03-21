@@ -196,10 +196,8 @@ class Ssh(BaseDestination):
                 read_process.join()
 
     def _write_status(self, status):
-        cmd = "cat - > %s" % self.status_tmp_path
         for i in range(0, 3):
-            with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
-                cin.write(status)
+            self._ssh_client.write_content(self.status_tmp_path, status)
             if self._move_or_wait(3 * i):
                 return
         raise StatusFileError("Valid status file not found")
@@ -276,9 +274,8 @@ class Ssh(BaseDestination):
 
         """
         try:
-            return self.execute_command("bash -c \"ncat -l %d "
-                                        "--recv-only | %s\""
-                                        % (port, command))
+            return self.execute_command("ncat -l %d --recv-only | "
+                                        "%s" % (port, command))
         except SshDestinationError as err:
             LOG.error(err)
 
@@ -297,8 +294,9 @@ class Ssh(BaseDestination):
         stop_waiting_at = time.time() + wait_timeout
         while time.time() < stop_waiting_at:
             try:
-                cmd = "netstat -an | grep -w ^tcp | grep -w LISTEN " \
-                      "| grep -w 0.0.0.0:%d" % port
+
+                cmd = "netstat -ln | grep -w 0.0.0.0:%d 2>&1 " \
+                      "> /dev/null" % port
                 cout, cerr = self.execute_command(cmd)
                 LOG.debug('stdout: %s', cout)
                 LOG.debug('stderr: %s', cerr)
