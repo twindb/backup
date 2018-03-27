@@ -91,7 +91,7 @@ def get_my_cnf(status, key):
 
 def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
                             xtrabackup_binary=XTRABACKUP_BINARY,
-                            xbsteam_binary=XBSTREAM_BINARY):
+                            xbstream_binary=XBSTREAM_BINARY):
     """
     Restore MySQL datadir from a backup copy
 
@@ -106,7 +106,7 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
         you restore base full copy redo_only should be True.
     :type redo_only: bool
     :param xtrabackup_binary: path to xtrabackup binary.
-    :param xbsteam_binary: Path to xbstream binary
+    :param xbstream_binary: Path to xbstream binary
     :return: If success, return True
     :rtype: bool
     """
@@ -124,7 +124,7 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
     stream = Gzip(stream).revert_stream()
 
     with stream as handler:
-        if not _extract_xbstream(handler, dst_dir, xbsteam_binary):
+        if not _extract_xbstream(handler, dst_dir, xbstream_binary):
             return False
 
     mem_usage = psutil.virtual_memory()
@@ -165,6 +165,7 @@ def _extract_xbstream(input_stream, working_dir,
         cmd = [xbstream_binary, '-x']
         LOG.debug('Running %s', ' '.join(cmd))
         LOG.debug('Working directory: %s', working_dir)
+        LOG.debug('Xbstream binary: %s', xbstream_binary)
         proc = Popen(cmd,
                      stdin=input_stream,
                      stdout=PIPE,
@@ -188,7 +189,7 @@ def _extract_xbstream(input_stream, working_dir,
 # pylint: disable=too-many-locals,too-many-branches,too-many-statements
 def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
                                    xtrabackup_binary=XTRABACKUP_BINARY,
-                                   xbsteam_binary=XBSTREAM_BINARY):
+                                   xbstream_binary=XBSTREAM_BINARY):
     """
     Restore MySQL datadir from an incremental copy.
 
@@ -200,7 +201,7 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
     :param tmp_dir: Path to temp dir
     :type tmp_dir: str
     :param xtrabackup_binary: Path to xtrabackup binary.
-    :param xbsteam_binary: Path to xbstream binary
+    :param xbstream_binary: Path to xbstream binary
     :return: If success, return True
     :rtype: bool
     """
@@ -229,7 +230,7 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
     stream = Gzip(stream).revert_stream()
 
     with stream as handler:
-        if not _extract_xbstream(handler, inc_dir, xbsteam_binary):
+        if not _extract_xbstream(handler, inc_dir, xbstream_binary):
             return False
 
     try:
@@ -357,7 +358,7 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
     except ConfigParser.NoOptionError:
         xtrabackup_binary = XTRABACKUP_BINARY
     try:
-        xbstream_binary = config.get('mysql', 'xbsteam_binary')
+        xbstream_binary = config.get('mysql', 'xbstream_binary')
     except ConfigParser.NoOptionError:
         xbstream_binary = XBSTREAM_BINARY
 
@@ -392,12 +393,13 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
                 restore_from_mysql_full(stream, dst_dir, config,
                                         redo_only=False,
                                         xtrabackup_binary=xtrabackup_binary,
-                                        xbsteam_binary=xbstream_binary)
+                                        xbstream_binary=xbstream_binary)
                 cache.add(dst_dir, cache_key)
         else:
-            restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
+            restore_from_mysql_full(stream, dst_dir, config,
+                                    redo_only=False,
                                     xtrabackup_binary=xtrabackup_binary,
-                                    xbsteam_binary=xbstream_binary)
+                                    xbstream_binary=xbstream_binary)
 
     else:
         full_copy = dst.get_full_copy_name(backup_copy)
@@ -414,17 +416,17 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
                 restore_from_mysql_full(full_stream, dst_dir,
                                         config, redo_only=True,
                                         xtrabackup_binary=xtrabackup_binary,
-                                        xbsteam_binary=xbstream_binary)
+                                        xbstream_binary=xbstream_binary)
                 cache.add(dst_dir, cache_key)
         else:
             restore_from_mysql_full(full_stream, dst_dir,
                                     config, redo_only=True,
                                     xtrabackup_binary=xtrabackup_binary,
-                                    xbsteam_binary=xbstream_binary)
+                                    xbstream_binary=xbstream_binary)
 
         restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir,
                                        xtrabackup_binary=xtrabackup_binary,
-                                       xbsteam_binary=xbstream_binary)
+                                       xbstream_binary=xbstream_binary)
 
     config_dir = os.path.join(dst_dir, "_config")
 

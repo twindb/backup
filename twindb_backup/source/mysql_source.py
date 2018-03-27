@@ -33,6 +33,18 @@ class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
         self.hostname = hostname
 
 
+class MySQLMasterInfo(object):  # pylint: disable=too-few-public-methods
+    """MySQL master details """
+    def __init__(self, host, port,  # pylint: disable=too-many-arguments
+                 user, password, binlog, binlog_pos):
+        self.host = host
+        self.user = user
+        self.password = password
+        self.binlog = binlog
+        self.binlog_position = binlog_pos
+        self.port = 3306 if port is None else port
+
+
 class MySQLSource(BaseSource):
     """MySQLSource class"""
     def __init__(self, mysql_connect_info, run_type, full_backup, dst=None,
