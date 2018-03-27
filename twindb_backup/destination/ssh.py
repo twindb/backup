@@ -107,18 +107,7 @@ class Ssh(BaseDestination):
         :return: List of files
         :rtype: list
         """
-        ls_options = ""
-
-        if recursive:
-            ls_options = "-R"
-
-        ls_cmd = "ls {ls_options} {prefix}".format(
-            ls_options=ls_options,
-            prefix=prefix
-        )
-
-        with self._ssh_client.get_remote_handlers(ls_cmd) as (_, cout, _):
-            return sorted(cout.read().split())
+        return sorted(self._ssh_client.list_files(prefix, recursive))
 
     def find_files(self, prefix, run_type):
         """
@@ -131,13 +120,13 @@ class Ssh(BaseDestination):
         :return: List of files
         :rtype: list
         """
-        cmd = "find {prefix}/*/{run_type} -type f".format(
+        cmd = "find {prefix}/ -wholename '*/{run_type}/*' -type f".format(
             prefix=prefix,
             run_type=run_type
         )
 
-        with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
-            return sorted(cout.read().split())
+        cout, _ = self._ssh_client.execute(cmd)
+        return sorted(cout.split())
 
     def delete(self, obj):
         """
@@ -207,10 +196,8 @@ class Ssh(BaseDestination):
                 read_process.join()
 
     def _write_status(self, status):
-        cmd = "cat - > %s" % self.status_tmp_path
         for i in range(0, 3):
-            with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
-                cin.write(status)
+            self._ssh_client.write_content(self.status_tmp_path, status)
             if self._move_or_wait(3 * i):
                 return
         raise StatusFileError("Valid status file not found")
@@ -227,27 +214,39 @@ class Ssh(BaseDestination):
               "then echo exists; " \
               "else echo not_exists; " \
               "fi'" % self.status_path
-        _, cout, _ = self._ssh_client.execute(cmd)
-        status = cout.read()
+        status, cerr = self._ssh_client.execute(cmd)
+
         if status.strip() == 'exists':
             return True
         elif status.strip() == 'not_exists':
             return False
         else:
-            raise SshDestinationError('Unrecognized response: %s' % status)
+            LOG.error(cerr)
+            msg = 'Unrecognized response: %s' % status
+            if status:
+                raise SshDestinationError(msg)
+            else:
+                raise SshDestinationError('Empty response from '
+                                          'SSH destination')
 
-    def execute_command(self, cmd, quiet=False):
+    def execute_command(self, cmd, quiet=False, background=False):
         """Execute ssh command
 
 
         :param cmd: Command for execution
         :type cmd: str
         :param quiet: If True don't print errors
+        :param background: Don't wait until the command exits.
+        :type background: bool
         :return: Handlers of stdin, stdout and stderr
         :rtype: tuple
         """
         LOG.debug('Executing: %s', cmd)
-        return self._ssh_client.execute(cmd, quiet=quiet)
+        return self._ssh_client.execute(
+            cmd,
+            quiet=quiet,
+            background=background
+        )
 
     @property
     def client(self):
@@ -275,7 +274,8 @@ class Ssh(BaseDestination):
 
         """
         try:
-            return self.execute_command('nc -l %d | %s' % (port, command))
+            return self.execute_command("ncat -l %d --recv-only | "
+                                        "%s" % (port, command))
         except SshDestinationError as err:
             LOG.error(err)
 
@@ -294,11 +294,12 @@ class Ssh(BaseDestination):
         stop_waiting_at = time.time() + wait_timeout
         while time.time() < stop_waiting_at:
             try:
-                cmd = 'netstat -an | grep -w ^tcp | grep -w LISTEN ' \
-                      '| grep -w 0.0.0.0:%d' % port
-                _, cout, cerr = self.execute_command(cmd)
-                LOG.debug('stdout: %s', cout.read())
-                LOG.debug('stderr: %s', cerr.read())
+
+                cmd = "netstat -ln | grep -w 0.0.0.0:%d 2>&1 " \
+                      "> /dev/null" % port
+                cout, cerr = self.execute_command(cmd)
+                LOG.debug('stdout: %s', cout)
+                LOG.debug('stderr: %s', cerr)
                 return True
             except SshClientException as err:
                 LOG.debug(err)

@@ -5,11 +5,12 @@ Module defines clone feature
 import ConfigParser
 from multiprocessing import Process
 
+import time
 from pymysql import OperationalError
 
 from twindb_backup import INTERVALS, LOG, TwinDBBackupError
 from twindb_backup.destination.ssh import Ssh, SshConnectInfo
-from twindb_backup.source.mysql_source import MySQLConnectInfo
+from twindb_backup.source.mysql_source import MySQLConnectInfo, MySQLMasterInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
 from twindb_backup.ssh.exceptions import SshClientException
 from twindb_backup.util import split_host_port
@@ -32,8 +33,24 @@ def _mysql_service(dst, action):
         except SshClientException as err:
             LOG.debug(err)
 
-    raise TwinDBBackupError('Failed to %s MySQL on %r'
-                            % (action, dst))
+    try:
+        LOG.warning('Failed to %s MySQL with an init script. '
+                    'Will try to %s mysqld.', action, action)
+        if action == "start":
+            ret = dst.execute_command(
+                "PATH=$PATH:/sbin sudo bash -c 'nohup mysqld &'",
+                background=True
+            )
+            time.sleep(10)
+            return ret
+        elif action == "stop":
+            return dst.execute_command(
+                "PATH=$PATH:/sbin sudo kill $(pidof mysqld)"
+            )
+    except SshClientException as err:
+        LOG.error(err)
+        raise TwinDBBackupError('Failed to %s MySQL on %r'
+                                % (action, dst))
 
 
 def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
@@ -60,6 +77,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
             "run_type": INTERVALS[0],
             "full_backup": INTERVALS[0],
         })
+        xbstream_binary = cfg.get('mysql', 'xbstream_binary')
         LOG.debug('SSH destination: %s', split_host_port(destination)[0])
         LOG.debug('SSH username: %s', cfg.get('ssh', 'ssh_user'))
         LOG.debug('SSH key: %s', cfg.get('ssh', 'ssh_key'))
@@ -70,9 +88,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
                 key=cfg.get('ssh', 'ssh_key')
             ),
         )
-
         datadir = src.datadir
-
         LOG.debug('datadir: %s', datadir)
 
         if dst.list_files(datadir):
@@ -80,7 +96,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
             exit(1)
 
         _run_remote_netcat(compress, datadir, destination,
-                           dst, netcat_port, src)
+                           dst, netcat_port, src, xbstream_binary)
         LOG.debug('Copying MySQL config to the destination')
         src.clone_config(dst)
 
@@ -112,6 +128,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
         try:
             LOG.debug('Starting MySQL on the destination')
             _mysql_service(dst, action='start')
+            LOG.debug('MySQL started')
         except TwinDBBackupError as err:
             LOG.error(err)
             exit(1)
@@ -120,18 +137,25 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
         LOG.debug('Master host: %s', source)
         LOG.debug('Replication user: %s', replication_user)
         LOG.debug('Replication password: %s', replication_password)
-        dst_mysql.setup_slave(source,
-                              replication_user, replication_password,
-                              binlog, position)
-
+        dst_mysql.setup_slave(
+            MySQLMasterInfo(
+                host=split_host_port(source)[0],
+                port=split_host_port(source)[1],
+                user=replication_user,
+                password=replication_password,
+                binlog=binlog,
+                binlog_pos=position
+            )
+        )
     except (ConfigParser.NoOptionError, OperationalError) as err:
         LOG.error(err)
         exit(1)
 
 
 def _run_remote_netcat(compress, datadir,  # pylint: disable=too-many-arguments
-                       destination, dst, netcat_port, src):
-    netcat_cmd = "xbstream -x -C {datadir}".format(
+                       destination, dst, netcat_port, src, xbstream_path):
+    netcat_cmd = "{xbstream_binary} -x -C {datadir}".format(
+        xbstream_binary=xbstream_path,
         datadir=datadir
     )
     if compress:

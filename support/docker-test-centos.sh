@@ -3,7 +3,6 @@
 set -eux
 yum clean all
 yum install -y epel-release
-yum install -y  http://www.percona.com/downloads/percona-release/redhat/0.1-4/percona-release-0.1-4.noarch.rpm
 
 for i in $(seq 5); do
     yum install -y \
@@ -42,6 +41,3 @@ fi
 
 cd /twindb-backup
 make bootstrap lint test
-if [ "$OS_VERSION" = 7 ] ; then
-    make test-integration-backup-s3
-fi

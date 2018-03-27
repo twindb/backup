@@ -1,23 +1,31 @@
-import os
-import pytest
-from click.testing import CliRunner
-from subprocess import check_output
+import time
 
+from tests.integration.conftest import get_twindb_config_dir, docker_execute
 from twindb_backup.cli import main
 
 
-@pytest.mark.timeout(600)
-def test_restore(backup_server, config_content_ssh, tmpdir):
+def test_restore(master1, storage_server,
+                 config_content_ssh,
+                 docker_client):
 
-    my_cnf = tmpdir.join('.my.cnf')
-    my_cnf.write("""
+    twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
+
+    twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
+    twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
+    my_cnf_path = "%s/my.cnf" % twindb_config_dir
+
+    ssh_key_host = "%s/id_rsa" % twindb_config_dir
+    ssh_key_guest = '/etc/twindb/id_rsa'
+
+    contents = """
 [client]
 user=dba
 password=qwerty
-""")
-    config = tmpdir.join('twindb-backup.cfg')
-    id_rsa = tmpdir.join('id_rsa')
-    id_rsa.write("""-----BEGIN RSA PRIVATE KEY-----
+"""
+    with open(my_cnf_path, "w") as my_cnf:
+        my_cnf.write(contents)
+
+    ssh_key = """-----BEGIN RSA PRIVATE KEY-----
 MIIEoAIBAAKCAQEAyXxAjPShNGAedbaEtltFI6A7RlsyI+4evxTq6uQrgbJ6Hm+p
 HBXshXQYXDyVjvytaM+6GKF+r+6+C+6Wc5Xz4lLO/ZiSCdPbyEgqw1JoHrgPNpc6
 wmCtjJExxjzvpwSVgbZg3xOdqW1y+TyqeUkXEg/Lm4VZhN1Q/KyGCgBlWuAXoOYR
@@ -44,49 +52,79 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
 8knW8+YtEOfl5R053SKQgVsmRjjDfvCirGgqC4kSAN4A6MD+GNVXZVUUjAUBVUbU
 8Wt4BxW6kFA7+Su7n8o4DxCqhZYmK9ZUhNjE+uUhxJCJaGr4
 -----END RSA PRIVATE KEY-----
-""")
+"""
 
-    content = config_content_ssh.format(
-        PRIVATE_KEY=str(id_rsa),
-        BACKUP_DIR="/etc",
-        HOST_IP=backup_server['ip']
-    )
-    config.write(content)
-    runner = CliRunner()
-    result = runner.invoke(main, [
-        '--debug',
-        '--config', str(config),
-        'backup', 'daily'
-    ])
+    with open(ssh_key_host, "w") as ssh_fd:
+        ssh_fd.write(ssh_key)
 
-    if result.exit_code != 0:
-        print('Command output:')
-        print(result.output)
-        print(result.exception)
-        print(result.exc_info)
-    assert result.exit_code == 0
+    with open(twindb_config_host, 'w') as fp:
+        content = config_content_ssh.format(
+            PRIVATE_KEY=ssh_key_guest,
+            HOST_IP=storage_server['ip'],
+            MY_CNF='/etc/twindb/my.cnf'
+        )
+        fp.write(content)
 
-    cmd = 'twindb-backup --debug --config %s ls | grep etc | grep tmp ' \
-          '| awk -F/ \'{ print $NF}\' | sort | tail -1' % str(config)
+    cmd = ["twindb-backup", '--debug', '--config', twindb_config_guest, 'backup', 'daily']
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+
+    cmd = ["bash", "-c", "twindb-backup --config %s ls | grep /tmp/backup "
+                          "| grep mysql | sort | tail -1" % twindb_config_guest]
     print('CMD : %s' % cmd)
-    basename = check_output(args=cmd, shell=True).rstrip()
-    cmd = 'twindb-backup --debug --config %s ls ' \
-          '| grep /tmp/backup | grep %s | head -1' % (str(config), basename)
-    print('CMD : %s' %cmd)
-    url = check_output(cmd, shell=True).rstrip()
-    print('Url:')
-    print(url)
-    restore_dir = tmpdir.mkdir('restore')
-    runner = CliRunner()
-    result = runner.invoke(main,
-                           ['--config', str(config),
-                            'restore', 'file', url,
-                            "--dst", str(restore_dir)]
-                           )
-    if result.exit_code != 0:
-        print('Command output:')
-        print(result.output)
-        print(result.exception)
-        print(result.exc_info)
-    assert result.exit_code == 0
-
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    url = cout.strip()
+    print(cout)
+    assert ret == 0
+    dst_dir = "/tmp/ssh_dest_restore/"
+    cmd = ['twindb-backup',
+           '--debug',
+           '--config', twindb_config_guest,
+           'restore',
+           'mysql', url,
+           "--dst", dst_dir]
+    print('CMD : %s' % cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['find', dst_dir]
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['test', '-f', '%s/backup-my.cnf' % dst_dir]
+    print(cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['test', '-f', '%s/ibdata1' % dst_dir]
+    print(cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['test', '-f', '%s/ib_logfile0' % dst_dir]
+    print(cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['test', '-f', '%s/ib_logfile1' % dst_dir]
+    print(cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['test', '-f', '%s/mysql/user.MYD' % dst_dir]
+    print(cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ['test', '-f', '%s/xtrabackup_logfile' % dst_dir]
+    print(cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0
+    cmd = ["bash", "-c", 'test -f %s/_config/etc/my.cnf || '
+                         'test -f %s/_config/etc/mysql/my.cnf' %(dst_dir,  dst_dir)]
+    print(cmd)
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
+    assert ret == 0

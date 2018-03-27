@@ -11,7 +11,7 @@ from subprocess import Popen, PIPE
 
 import time
 
-from twindb_backup import LOG, INTERVALS
+from twindb_backup import LOG, INTERVALS, TwinDBBackupError
 from twindb_backup.destination.exceptions import DestinationError, \
     StatusFileError
 
@@ -227,11 +227,14 @@ class BaseDestination(object):
         """Function for get file content by path"""
 
     def _is_valid_status(self, path):
-        expected_status = json.loads(
-            base64.b64decode(
-                self._get_file_content(path)
+        try:
+            expected_status = json.loads(
+                base64.b64decode(
+                    self._get_file_content(path)
+                )
             )
-        )
+        except TwinDBBackupError:
+            return False
         if "checksum" not in expected_status:
             LOG.debug("Checksum key not found in expected status")
             return False

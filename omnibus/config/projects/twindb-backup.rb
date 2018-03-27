@@ -14,23 +14,20 @@
 # limitations under the License.
 #
 
-require "./lib/ostools.rb"
+# require "./lib/ostools.rb"
 
-name "twindb-backup"
-maintainer "TwinDB Packager (TwinDB packager key) <packager@twindb.com>"
-homepage "https://twindb.com"
+name 'twindb-backup'
+maintainer 'TwinDB Packager (TwinDB packager key) <packager@twindb.com>'
+homepage 'https://twindb.com'
 
 # and /opt/twindb-backup on all other platforms
-install_dir "/opt/twindb-backup"
+install_dir '/opt/twindb-backup'
 
-build_version do
-    source :git, from_dependency: 'twindb-backup'
-    output_format :semver
-end
+build_version '2.15.3'
 
 build_iteration 1
 
-description 'backup and recovery tool for MySQL
+description 'Backup and recovery tool for MySQL
  TwinDB Backup tool for files, MySQL et al.'
 
 # ------------------------------------
@@ -62,7 +59,7 @@ end
 # ------------------------------------
 
 # Creates required build directories
-dependency "preparation"
+dependency 'preparation'
 
 # twindb-backup dependencies/components
 
@@ -70,7 +67,8 @@ dependency 'python'
 dependency 'pip'
 dependency 'libffi'
 runtime_dependency 'libtool'
-dependency "xtrabackup"
+runtime_dependency 'nmap'
+dependency 'xtrabackup'
 
 # Debian
 if debian?
@@ -98,7 +96,7 @@ end
 dependency 'twindb-backup'
 
 # Version manifest file
-dependency "version-manifest"
+dependency 'version-manifest'
 
-exclude "**/.git"
-exclude "**/bundler/git"
+exclude '**/.git'
+exclude '**/bundler/git'

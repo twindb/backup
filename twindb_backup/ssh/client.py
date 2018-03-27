@@ -56,32 +56,57 @@ class SshClient(object):
         finally:
             shell.close()
 
-    def execute(self, cmd, quiet=False):
+    def execute(self, cmd, quiet=False, background=False):
         """Execute a command on a remote SSH server.
 
         :param cmd: Command for execution.
         :type cmd: str
         :param quiet: if quiet is True don't print error messages
-        :return: Handlers of stdin, stdout and stderr
+        :param background: Don't wait until the command exits.
+        :type background: bool
+        :return: Strings with stdout and stderr. If command is executed
+            in background the method will return None.
         :rtype: tuple
-        :raise SshDestinationError: if any error
+        :raise SshClientException: if any error or non-zero exit code
 
         """
+        max_chunk_size = 1024 * 1024
         try:
             with self._shell() as shell:
-                LOG.debug('Executing %s', cmd)
-                stdin_, stdout_, stderr_ = shell.exec_command(cmd)
-                # while not stdout_.channel.exit_status_ready():
-                #     LOG.debug('%s: waiting', cmd)
-                #     time.sleep(1)
-                exit_code = stdout_.channel.recv_exit_status()
-                if exit_code != 0:
-                    if not quiet:
-                        LOG.error("Failed while execute command %s", cmd)
-                        LOG.error(stderr_.read())
-                    raise SshClientException('%s exited with code %d'
-                                             % (cmd, exit_code))
-                return stdin_, stdout_, stderr_
+                if not background:
+                    LOG.debug('Executing command: %s', cmd)
+                    stdin_, stdout_, _ = shell.exec_command(cmd)
+                    channel = stdout_.channel
+                    stdin_.close()
+                    channel.shutdown_write()
+                    stdout_chunks = []
+                    stderr_chunks = []
+                    while not channel.closed \
+                            or channel.recv_ready() \
+                            or channel.recv_stderr_ready():
+                        if channel.recv_ready():
+                            stdout_chunks.append(
+                                channel.recv(max_chunk_size)
+                            )
+                        if channel.recv_stderr_ready():
+                            stderr_chunks.append(
+                                channel.recv_stderr(max_chunk_size)
+                            )
+
+                    exit_code = channel.recv_exit_status()
+                    if exit_code != 0:
+                        if not quiet:
+                            LOG.error("Failed while execute command %s", cmd)
+                            LOG.error(''.join(stderr_chunks))
+                        raise SshClientException('%s exited with code %d'
+                                                 % (cmd, exit_code))
+                    return ''.join(stdout_chunks), ''.join(stderr_chunks)
+                else:
+                    LOG.debug('Executing in background: %s', cmd)
+                    transport = shell.get_transport()
+                    channel = transport.open_session()
+                    channel.exec_command(cmd)
+                    LOG.debug('Ran %s in background', cmd)
 
         except (SSHException, IOError) as err:
             if not quiet:
@@ -102,9 +127,70 @@ class SshClient(object):
         """
         try:
             with self._shell() as shell:
+                LOG.debug("Try to get remote handlers: %s", cmd)
                 stdin_, stdout_, stderr_ = shell.exec_command(cmd)
                 yield stdin_, stdout_, stderr_
 
         except SSHException as err:
             LOG.error('Failed to execute %s', cmd)
             raise SshClientException(err)
+
+    def list_files(self, path, recursive=False):
+        """
+        Get list of file by prefix
+
+        :param path: Path
+        :param recursive: Recursive return list of files
+        :type path: str
+        :type recursive: bool
+        :return: List of files
+        :rtype: list
+        """
+
+        ls_options = ""
+
+        if recursive:
+            ls_options = "-R"
+        ls_cmd = "ls {ls_options} {prefix}".format(
+            ls_options=ls_options,
+            prefix=path
+        )
+        if not path.endswith('/'):
+            ls_cmd += '*'
+        cout, _ = self.execute(ls_cmd)
+        return cout.split()
+
+    def get_text_content(self, path):
+        """
+        Get text content of file by path
+
+        :param path: File path
+        :type path: str
+        :return: File content
+        :rtype: str
+        """
+
+        cout, _ = self.execute("cat %s" % path)
+        return cout
+
+    def write_content(self, path, content):
+        """
+        Write content to path
+
+        :param path: Path to file
+        :param content: Content
+        """
+        with self.get_remote_handlers("cat - > %s" % path) \
+                as (cin, _, _):
+            cin.write(content)
+
+    def write_config(self, path, cfg):
+        """
+        Write config to file
+
+        :param path: Path to file
+        :param cfg: Instance of ConfigParser
+        """
+        with self.get_remote_handlers("cat - > %s" % path) \
+                as (cin, _, _):
+            cfg.write(cin)

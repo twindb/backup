@@ -14,7 +14,7 @@ from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
-    TwinDBBackupError, save_measures)
+    TwinDBBackupError, save_measures, XTRABACKUP_BINARY)
 from twindb_backup.configuration import get_destination
 from twindb_backup.export import export_info
 from twindb_backup.exporter.base_exporter import ExportCategory, \
@@ -108,11 +108,17 @@ def backup_mysql(run_type, config):
     except ConfigParser.NoOptionError:
         full_backup = 'daily'
     backup_start = time.time()
-    src = MySQLSource(MySQLConnectInfo(config.get('mysql',
-                                                  'mysql_defaults_file')),
-                      run_type,
-                      full_backup,
-                      dst)
+    try:
+        xtrabackup_binary = config.get('mysql', 'xtrabackup_binary')
+    except ConfigParser.NoOptionError:
+        xtrabackup_binary = XTRABACKUP_BINARY
+    src = MySQLSource(
+        MySQLConnectInfo(config.get('mysql', 'mysql_defaults_file')),
+        run_type,
+        full_backup,
+        dst=dst,
+        xtrabackup_binary=xtrabackup_binary
+    )
 
     callbacks = []
     src_name = _backup_stream(config, src, dst, callbacks)

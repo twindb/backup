@@ -14,15 +14,19 @@ import psutil
 from twindb_backup import LOG, INTERVALS, TwinDBBackupError
 
 
-def mkdir_p(path):
+def mkdir_p(path, mode=0777):
     """
-    Emulate mkdir -p
+    Emulate mkdir -p.
+    Create a directory named path with numeric mode mode.
+    The default mode is 0777 (octal)
 
     :param path: Directory path.
     :type path: str
+    :param mode: Directory permissions. The default mode is 0777 (octal)
+    :type mode: int
     """
     try:
-        os.makedirs(path)
+        os.makedirs(path, mode=mode)
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass

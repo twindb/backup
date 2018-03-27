@@ -5,13 +5,13 @@ Entry points for twindb-backup tool
 from __future__ import print_function
 
 import traceback
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, NoSectionError
 import json
 import os
 import click
 
-from twindb_backup import setup_logging, LOG, __version__, TwinDBBackupError, \
-    LOCK_FILE
+from twindb_backup import setup_logging, LOG, __version__, \
+    TwinDBBackupError, LOCK_FILE, XTRABACKUP_BINARY, XBSTREAM_BINARY
 from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.clone import clone_mysql
@@ -34,9 +34,20 @@ PASS_CFG = click.make_pass_decorator(ConfigParser, ensure=True)
               show_default=True)
 @click.option('--version', help='Show tool version and exit.', is_flag=True,
               default=False)
+@click.option('--xtrabackup-binary',
+              help='Path to xtrabackup binary.',
+              default=XTRABACKUP_BINARY,
+              show_default=True)
+@click.option('--xbstream-binary',
+              help='Path to xbstream binary.',
+              default=XBSTREAM_BINARY,
+              show_default=True)
 @PASS_CFG
 @click.pass_context
-def main(ctx, cfg, debug, config, version):
+def main(ctx, cfg, debug,  # pylint: disable=too-many-arguments
+         config, version,
+         xtrabackup_binary=XTRABACKUP_BINARY,
+         xbstream_binary=XBSTREAM_BINARY):
     """
     Main entry point
 
@@ -50,6 +61,10 @@ def main(ctx, cfg, debug, config, version):
     :type config: str
     :param version: If True print version string
     :type version: bool
+    :param xtrabackup_binary: Path to xtrabackup binary.
+    :type xtrabackup_binary: str
+    :param xbstream_binary: Path to xbstream binary.
+    :type xbstream_binary: str
     """
     if not ctx.invoked_subcommand:
         if version:
@@ -63,6 +78,12 @@ def main(ctx, cfg, debug, config, version):
 
     if os.path.exists(config):
         cfg.read(config)
+        try:
+            cfg.set('mysql', 'xtrabackup_binary', xtrabackup_binary)
+            cfg.set('mysql', 'xbstream_binary', xbstream_binary)
+        except NoSectionError:
+            # if there is no mysql section, we will not backup mysql
+            pass
     else:
         LOG.warning("Config file %s doesn't exist", config)
 
@@ -153,9 +174,8 @@ def restore_mysql(cfg, dst, backup_copy, cache):
 
     try:
         ensure_empty(dst)
-
         if cache:
-            restore_from_mysql(cfg, backup_copy, dst, Cache(cache))
+            restore_from_mysql(cfg, backup_copy, dst, cache=Cache(cache))
         else:
             restore_from_mysql(cfg, backup_copy, dst)
 

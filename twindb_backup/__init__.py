@@ -45,6 +45,8 @@ __version__ = '2.15.3'
 LOCK_FILE = '/var/run/twindb-backup.lock'
 LOG_FILE = '/var/log/twindb-backup-measures.log'
 INTERVALS = ['hourly', 'daily', 'weekly', 'monthly', 'yearly']
+XTRABACKUP_BINARY = '/opt/twindb-backup/embedded/bin/xtrabackup'
+XBSTREAM_BINARY = '/opt/twindb-backup/embedded/bin/xbstream'
 MY_CNF_COMMON_PATHS = [
     '/etc/my.cnf',
     '/etc/mysql/my.cnf'
@@ -97,6 +99,7 @@ def setup_logging(logger, debug=False):  # pragma: no cover
 
     if debug:
         logger.addHandler(console_handler_debug)
+        logger.debug_enabled = True
 
     logger.setLevel(logging.DEBUG)
 

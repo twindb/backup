@@ -5,14 +5,13 @@ Module defines MySQL source class for backing up remote MySQL.
 import ConfigParser
 import socket
 import struct
-
+import re
 from contextlib import contextmanager
 
 import time
 
 import pymysql
 from twindb_backup import LOG, MY_CNF_COMMON_PATHS
-from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.source.exceptions import RemoteMySQLSourceError
 from twindb_backup.source.mysql_source import MySQLSource
 from twindb_backup.ssh.client import SshClient
@@ -55,9 +54,13 @@ class RemoteMySQLSource(MySQLSource):
         else:
             compress_cmd = ""
 
-        cmd = "bash -c \"sudo innobackupex --stream=xbstream ./ 2> %s" \
-              " %s | nc %s %d\"" \
-              % (error_log, compress_cmd, dest_host, port)
+        cmd = "bash -c \"sudo %s " \
+              "--stream=xbstream " \
+              "--host=127.0.0.1 " \
+              "--backup " \
+              "--target-dir ./ 2> %s" \
+              " %s | ncat %s %d --send-only\"" \
+              % (self._xtrabackup, error_log, compress_cmd, dest_host, port)
         while retry < 3:
             try:
                 return self._ssh_client.execute(cmd)
@@ -76,38 +79,70 @@ class RemoteMySQLSource(MySQLSource):
         :type dst: Ssh
         """
         cfg_path = self._get_root_my_cnf()
+        LOG.debug("Root my.cnf is: %s", cfg_path)
         self._save_cfg(dst, cfg_path)
 
-    def _save_cfg(self, dst, path):
-        """Save configs on destination recursively"""
-        cfg = self._get_config(path)
-        server_id = self._get_server_id(dst.host)
-        cfg.set('mysqld', 'server_id', value=str(server_id))
-        for option in cfg.options('mysqld'):
-            val = cfg.get('mysqld', option)
-            if '!includedir' in option:
-                val = val.split()[1]
-                ls_cmd = 'ls %s' % val
-                with self._ssh_client.get_remote_handlers(ls_cmd) \
-                        as (_, cout, _):
-                    file_list = sorted(cout.read().split())
+    def _find_all_cnf(self, root_path):
+        """ Return list of embed cnf files"""
+        files = [root_path]
+        cfg_content = self._ssh_client.get_text_content(root_path)
+        for line in cfg_content.splitlines():
+            if '!includedir' in line:
+                path = line.split()[1]
+                file_list = sorted(self._ssh_client.list_files(path))
                 for sub_file in file_list:
-                    self._save_cfg(dst, val + "/" + sub_file)
-            elif '!include' in option:
-                self._save_cfg(dst, val.split()[1])
+                    file_path = path + sub_file
+                    files.extend(self._find_all_cnf(file_path))
+            elif '!include' in line:
+                files.extend(self._find_all_cnf(line.split()[1]))
+        return files
 
-        with dst.client.get_remote_handlers("cat - > %s" % path) \
-                as (cin, _, _):
-            cfg.write(cin)
+    @staticmethod
+    def _find_server_id_by_path(cfg):
+        """Find path with server_id"""
+        options = ["server_id", "server-id"]
+        for option in options:
+            try:
+                if cfg.has_option("mysqld", option):
+                    return option
+            except ConfigParser.Error:
+                pass
+        return None
+
+    def _save_cfg(self, dst, root_cfg):
+        """Save configs on destination recursively"""
+        files = self._find_all_cnf(root_cfg)
+        server_id = self._get_server_id(dst.host)
+        is_server_id_set = False
+        valid_cfg = []
+        for path in files:
+            try:
+                cfg = self._get_config(path)
+                option = self._find_server_id_by_path(cfg)
+                if option:
+                    cfg.set('mysqld', option, value=str(server_id))
+                    is_server_id_set = True
+                dst.client.write_config(path, cfg)
+                valid_cfg.append(path)
+            except ConfigParser.ParsingError:
+                cfg_content = self._ssh_client.get_text_content(path)
+                dst.client.write_content(path, cfg_content)
+
+        if not is_server_id_set:
+            for path in valid_cfg:
+                cfg = self._get_config(path)
+                if cfg.has_section("mysqld"):
+                    cfg.set('mysqld', "server_id", value=str(server_id))
+                    dst.client.write_config(path, cfg)
+                    return
 
     def _get_root_my_cnf(self):
         """Return root my.cnf path"""
         for cfg_path in MY_CNF_COMMON_PATHS:
             try:
-                cmd = "cat %s" % cfg_path
-                with self._ssh_client.get_remote_handlers(cmd):
-                    return cfg_path
-            except SshDestinationError:
+                self._ssh_client.get_text_content(cfg_path)
+                return cfg_path
+            except SshClientException:
                 continue
         raise OSError("Root my.cnf not found")
 
@@ -127,19 +162,15 @@ class RemoteMySQLSource(MySQLSource):
                 cfg.readfp(cout)
         except ConfigParser.ParsingError as err:
             LOG.error(err)
-            exit(1)
+            raise
         return cfg
 
-    def setup_slave(self, host, user, password, binlog, binlog_position):  # noqa # pylint: disable=too-many-arguments
+    def setup_slave(self, master_info):  # noqa # pylint: disable=too-many-arguments
         """
         Change master
 
-        :param host: Master host name.
-        :type host: str
-        :param user: Replication user.
-        :param password: Replication password
-        :param binlog: Binlog file on the master
-        :param binlog_position: Binlog position
+        :param master_info: Master details.
+        :type master_info: MySQLMasterInfo
 
         """
         try:
@@ -147,15 +178,18 @@ class RemoteMySQLSource(MySQLSource):
                 query = "CHANGE MASTER TO " \
                         "MASTER_HOST = '{master}', " \
                         "MASTER_USER = '{user}', " \
+                        "MASTER_PORT = {port}, " \
                         "MASTER_PASSWORD = '{password}', " \
                         "MASTER_LOG_FILE = '{binlog}', " \
                         "MASTER_LOG_POS = {binlog_pos}"\
                     .format(
-                        master=host,
-                        user=user,
-                        password=password,
-                        binlog=binlog,
-                        binlog_pos=binlog_position)
+                        master=master_info.host,
+                        user=master_info.user,
+                        password=master_info.password,
+                        binlog=master_info.binlog,
+                        binlog_pos=master_info.binlog_position,
+                        port=master_info.port
+                    )
                 cursor.execute(query)
                 cursor.execute("START SLAVE")
             return True
@@ -170,44 +204,42 @@ class RemoteMySQLSource(MySQLSource):
         :param datadir: Path to datadir
         :return: Binlog file name and position
         :rtype: tuple
-        :raise TwinDBBackupError: if binary positions is different
+        :raise RemoteMySQLSourceError: if any error.
         """
+        try:
+            use_memory = "--use-memory %d" % int(self._mem_available() / 2)
+        except OSError:
+            use_memory = ""
+        logfile_path = "/tmp/xtrabackup-apply-log.log"
+        cmd = "sudo {xtrabackup} --prepare --apply-log-only " \
+              "--target-dir {target_dir} {use_memory} " \
+              "> {logfile} 2>&1" \
+              "".format(
+                  xtrabackup=self._xtrabackup,
+                  target_dir=datadir,
+                  use_memory=use_memory,
+                  logfile=logfile_path
+              )
 
         try:
-            self._ssh_client.execute(
-                'sudo innobackupex --apply-log %s --use-memory %d '
-                '> /tmp/innobackupex-apply-log.log 2>&1'
-                % (datadir, self._mem_available() / 2)
-            )
-        except OSError:
-            self._ssh_client.execute(
-                'sudo innobackupex --apply-log %s '
-                '> /tmp/innobackupex-apply-log.log 2>&1' % datadir
-            )
-
-        self._ssh_client.execute("sudo chown -R mysql %s" % datadir)
-
-        _, stdout_, _ = self._ssh_client.execute(
-            'sudo cat %s/xtrabackup_binlog_pos_innodb' % datadir
-        )
-        binlog_pos = stdout_.read().strip()
-        _, stdout_, _ = self._ssh_client.execute(
-            'sudo cat %s/xtrabackup_binlog_info' % datadir
-        )
-        binlog_info = stdout_.read().strip()
-        if binlog_pos in binlog_info:
-            return tuple(binlog_info.split())
-        raise RemoteMySQLSourceError("Invalid backup")
+            self._ssh_client.execute(cmd)
+            self._ssh_client.execute("sudo chown -R mysql %s" % datadir)
+            return self._get_binlog_info(datadir)
+        except SshClientException as err:
+            LOG.debug("Logfile is:")
+            LOG.debug(self._ssh_client.get_text_content(logfile_path))
+            raise RemoteMySQLSourceError(err)
 
     def _mem_available(self):
         """
         Get available memory size
 
         :return: Size of available memory in bytes
+        :rtype: int
         :raise OSError: if can' detect memory
         """
         # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=34e431b0a
-        _, stdout_, _ = self._ssh_client.execute(
+        stdout_, _ = self._ssh_client.execute(
             "awk -v low=$(grep low /proc/zoneinfo | "
             "awk '{k+=$2}END{print k}') "
             "'{a[$1]=$2}END{m="
@@ -218,7 +250,7 @@ class RemoteMySQLSource(MySQLSource):
             "print a[\"MemAvailable:\"]}' "
             "/proc/meminfo"
         )
-        mem = stdout_.read().strip()
+        mem = stdout_.strip()
         if not mem:
             raise OSError("Cant get available mem")
         free_mem = int(mem) * 1024
@@ -233,3 +265,17 @@ class RemoteMySQLSource(MySQLSource):
             server_ip = socket.gethostbyname(host)
             server_id = struct.unpack("!I", socket.inet_aton(server_ip))[0]
         return server_id
+
+    def _get_binlog_info(self, backup_path):
+        """Get binlog coordinates from an xtrabackup_binlog_info.
+
+        :param backup_path: Path where to look for xtrabackup_binlog_info.
+        :type backup_path: str
+        :return: Tuple with binlog coordinates - (file_name, pos)
+        :rtype: tuple
+        """
+        stdout_, _ = self._ssh_client.execute(
+            'sudo cat %s/xtrabackup_binlog_info' % backup_path
+        )
+        binlog_info = re.split(r'\t+', stdout_.rstrip())
+        return binlog_info[0], int(binlog_info[1])

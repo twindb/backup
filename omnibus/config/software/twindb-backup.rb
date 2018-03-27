@@ -15,25 +15,13 @@
 #
 
 # These options are required for all software definitions
-name "twindb-backup"
+name 'twindb-backup'
 
-license "Apache-2.0"
-license_file "LICENSE"
+license 'Apache-2.0'
+license_file 'LICENSE'
 skip_transitive_dependency_licensing true
 
-local_twindb_backup_repo = ENV['LOCAL_TWINDB_BACKUP_REPO']
-if local_twindb_backup_repo.nil? || local_twindb_backup_repo.empty?
-  source git: 'https://github.com/twindb/backup.git'
-else
-  source path: ENV['LOCAL_TWINDB_BACKUP_REPO']
-end
-
-twindb_backup_branch = ENV['OMNIBUS_SOFTWARE_BRANCH']
-if twindb_backup_branch.nil? || twindb_backup_branch.empty?
-  default_version 'master'
-else
-  default_version twindb_backup_branch
-end
+source path: '/twindb-backup'
 
 relative_path 'twindb-backup'
 
