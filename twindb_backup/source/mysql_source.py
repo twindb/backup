@@ -314,7 +314,7 @@ class MySQLSource(BaseSource):
     def type(self):
         """Get backup copy type - full or incremental
 
-        :return: 'full' or 'incrmental'
+        :return: 'full' or 'incremental'
         :rtype: str
         """
         return self._get_backup_type()

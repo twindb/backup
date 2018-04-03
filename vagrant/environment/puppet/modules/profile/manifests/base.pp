@@ -64,7 +64,7 @@ password=qwerty
     'percona-xtrabackup-24',
     'python2-pip',
     'gcc', 'python-devel', 'zlib-devel', 'openssl-devel',
-    'rpm-build','docker', 'strace']
+    'rpm-build','docker', 'strace', 'jq']
 
   package { $packages:
     ensure  => installed,
