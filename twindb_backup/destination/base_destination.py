@@ -2,27 +2,31 @@
 """
 Module defines Base destination class and destination exception(s).
 """
-import base64
-import hashlib
-import json
 from abc import abstractmethod
 
 from subprocess import Popen, PIPE
 
-import time
-
-from twindb_backup import LOG, INTERVALS, TwinDBBackupError
-from twindb_backup.destination.exceptions import DestinationError, \
-    StatusFileError
+from twindb_backup import LOG
+from twindb_backup.destination.exceptions import DestinationError
 
 
 class BaseDestination(object):
     """Base destination class"""
 
-    def __init__(self):
-        self.remote_path = ''
-        self.status_path = ''
-        self.status_tmp_path = ''
+    def __init__(self, remote_path, status_path=None, status_tmp_path=None):
+        if not remote_path:
+            raise DestinationError(
+                'remote path must be defined and cannot be %r' % remote_path
+            )
+        self.remote_path = remote_path.rstrip('/')
+        if status_path:
+            self.status_path = status_path
+        else:
+            self.status_path = '%s/status' % remote_path
+        if status_tmp_path:
+            self.status_tmp_path = status_tmp_path
+        else:
+            self.status_tmp_path = '%s.tmp' % self.status_path
 
     @abstractmethod
     def save(self, handler, name):
@@ -89,101 +93,82 @@ class BaseDestination(object):
         :return:
         """
 
-    @property
-    def _empty_status(self):
-        return {
-            'hourly': {},
-            'daily': {},
-            'weekly': {},
-            'monthly': {},
-            'yearly': {}
-        }
-
     def status(self, status=None):
         """
-        Read or save backup status. Status is a dictionary with available
-        backups and their properties. If status is None the function
-        will read status from the remote storage.
+        Read or save backup status. Status is an instance of Status class.
+        If status is None the function will read status from
+        the remote storage.
         Otherwise it will store the status remotely.
 
-        :param status: Dictionary with status
-
-        ::
-
-            {
-                'hourly': [
-                    {
-                        'filename': '/remote/path',
-                        'binlog': 'mysql-bin.000001',
-                        'position': 43670
-                    }
-                ],
-                'checksum': 'c2a8ed7ddbf759a67b2d5ea256f05fb8'
-            }
-        :type status: dict
-        :return: dictionary with the status
+        :param status: instance of Status class
+        :type status: Status
+        :return: instance of Status class
+        :rtype: Status
         """
         if status:
-            status['checksum'] = hashlib.md5(
-                json.dumps(
-                    status, sort_keys=True
-                )
-            ).hexdigest()
-            raw_status = base64.b64encode(json.dumps(status, sort_keys=True))
-            self._write_status(raw_status)
-            # checksum only for internal usage, no public
-            return self._get_pretty_status(self.status_path)
-        return self._read_status()
+            return self._write_status(status)
+        else:
+            return self._read_status()
 
     @abstractmethod
     def _write_status(self, status):
         """Function that actually writes status"""
 
+    @abstractmethod
     def _read_status(self):
-        if not self._status_exists():
-            return self._empty_status
-        i = 1
-        while not self._is_valid_status(self.status_path):
-            if i == 4:
-                break
-            time.sleep(3 * i)
-            i = i + 1
-        if i < 4:
-            return self._get_pretty_status(self.status_path)
-        if self._is_valid_status(self.status_tmp_path):
-            self._move_file(self.status_tmp_path, self.status_path)
-            return self._get_pretty_status(self.status_path)
-        return self._read_old_status()
+        """Function that actually reads status"""
 
     @abstractmethod
     def _status_exists(self):
         """Check if status file exists"""
 
-    def get_full_copy_name(self, file_path):
+    def get_run_type_from_full_path(self, path):
         """
-        For a given backup copy find a parent. If it's a full copy
-        then return itself
+        For a given backup copy path find what run_type it was.
+        For example,
+        s3://bucket/ip-10-0-52-101/daily/files/_etc-2018-04-05_00_07_13.tar.gz
+        is a daily backup and
+        /path/to/twindb-server-backups/master1/hourly/
+        mysql/mysql-2018-04-08_03_51_18.xbstream.gz
+        is an hourly backup.
 
-        :param file_path:
-        :return:
+        :param path: Full path of the backup copy
+        :return: Run type this backup was taken on:
+
+            - hourly
+            - daily
+            - weekly
+            - monthly
+            - yearly
+        :rtype: str
         """
-        try:
-            for run_type in INTERVALS:
-                for key in self.status()[run_type].keys():
-                    if file_path.endswith(key):
-                        if self.status()[run_type][key]['type'] == "full":
-                            return file_path
-                        else:
-                            remote_part = file_path.replace(key, '')
-                            parent = self.status()[run_type][key]['parent']
-                            result = "%s%s" % (remote_part, parent)
-                            return result
-        except (TypeError, KeyError) as err:
-            LOG.error('Failed to find parent of %s', file_path)
-            raise DestinationError(err)
+        return self.basename(path).split('/')[1]
 
-        raise DestinationError('Failed to find parent of %s' % file_path)
-
+    # def get_full_copy_name(self, file_path):
+    #     """
+    #     For a given backup copy find a parent. If it's a full copy
+    #     then return itself
+    #
+    #     :param file_path:
+    #     :return:
+    #     """
+    #     try:
+    #         for run_type in INTERVALS:
+    #             for key in self.status()[run_type].keys():
+    #                 if file_path.endswith(key):
+    #                     if self.status()[run_type][key]['type'] == "full":
+    #                         return file_path
+    #                     else:
+    #                         remote_part = file_path.replace(key, '')
+    #                         parent = self.status()[run_type][key]['parent']
+    #                         result = "%s%s" % (remote_part, parent)
+    #                         return result
+    #     except (TypeError, KeyError) as err:
+    #         LOG.error('Failed to find parent of %s', file_path)
+    #         raise DestinationError(err)
+    #
+    #     raise DestinationError('Failed to find parent of %s' % file_path)
+    #
     def basename(self, filename):
         """
         Basename of backup copy
@@ -196,24 +181,7 @@ class BaseDestination(object):
     def get_latest_backup(self):
         """Get latest backup path"""
         cur_status = self.status()
-        latest = None
-        max_finish = 0
-        for _, backups in cur_status.iteritems():
-            for key, backup in backups.iteritems():
-                try:
-                    if backup['backup_finished'] >= max_finish:
-                        max_finish = backup['backup_finished']
-                        latest = key
-                except KeyError:
-                    pass
-        if latest is None:
-            filename = None
-            for _, backups in cur_status.iteritems():
-                for key, _ in backups.iteritems():
-                    backup_name = key.rsplit('/', 1)[-1]
-                    if backup_name > filename:
-                        filename = backup_name
-                        latest = key
+        latest = cur_status.get_latest_backup()
         if latest is None:
             return None
         url = "{remote_path}/{filename}".format(
@@ -221,56 +189,3 @@ class BaseDestination(object):
             filename=latest
         )
         return url
-
-    @abstractmethod
-    def _get_file_content(self, path):
-        """Function for get file content by path"""
-
-    def _is_valid_status(self, path):
-        try:
-            expected_status = json.loads(
-                base64.b64decode(
-                    self._get_file_content(path)
-                )
-            )
-        except TwinDBBackupError:
-            return False
-        if "checksum" not in expected_status:
-            LOG.debug("Checksum key not found in expected status")
-            return False
-
-        expected_md5 = expected_status.pop('checksum')
-        actual_md5 = hashlib.md5(
-            json.dumps(
-                expected_status, sort_keys=True
-            )
-        ).hexdigest()
-        return actual_md5 == expected_md5
-
-    def _get_pretty_status(self, path, old_status=False):
-        status = json.loads(
-            base64.b64decode(
-                self._get_file_content(path)
-            )
-        )
-        if not old_status:
-            del status['checksum']
-        return status
-
-    @abstractmethod
-    def _move_file(self, source, destination):
-        pass
-
-    def _read_old_status(self):
-        try:
-            return self._get_pretty_status(self.status_path, True)
-        except (TypeError, ValueError):
-            raise StatusFileError("Valid status file not found")
-
-    def _move_or_wait(self, wait_time):
-        if self._is_valid_status(self.status_tmp_path):
-            self._move_file(self.status_tmp_path, self.status_path)
-            return True
-        else:
-            time.sleep(wait_time)
-            return False

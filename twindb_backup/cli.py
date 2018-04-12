@@ -6,7 +6,6 @@ from __future__ import print_function
 
 import traceback
 from ConfigParser import ConfigParser, NoSectionError
-import json
 import os
 import click
 
@@ -146,7 +145,7 @@ def share_backup(cfg, s3_url):
 def status(cfg):
     """Print backups status"""
     dst = get_destination(cfg)
-    print(json.dumps(dst.status(), indent=4, sort_keys=True))
+    print(dst.status())
 
 
 @main.group('restore')

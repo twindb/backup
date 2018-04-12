@@ -155,3 +155,37 @@ def kill_children():
     for child in parent.children(recursive=True):
         LOG.info('Terminating process %r', child)
         child.kill()
+
+
+def my_cnfs(common_paths=None):
+    """
+    Start reading a root my.cnf file given in common paths and parse included
+    files.
+
+    :param common_paths: list of my.cnf files to start parsing from.
+    :type common_paths: list
+    :return: list of all included my.cnf files
+    :rtype: list
+    """
+    result = []
+    for my_cnf in common_paths:
+        if os.path.exists(my_cnf):
+            result.append(my_cnf)
+            with open(my_cnf) as fp_my_cnf:
+                for line in fp_my_cnf.read().splitlines():
+                    if '!includedir' in line:
+                        path = line.split()[1]
+                        c_paths = []
+                        for included_file in os.listdir(path):
+                            if included_file.endswith('.cnf'):
+                                c_paths.append("%s%s" % (path, included_file))
+                        result.extend(
+                            my_cnfs(common_paths=c_paths)
+                        )
+                    elif '!include' in line:
+
+                        include_file = line.split()[1]
+                        result.extend(
+                            my_cnfs(common_paths=[include_file])
+                        )
+    return result

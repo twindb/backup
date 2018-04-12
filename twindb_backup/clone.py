@@ -82,6 +82,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
         LOG.debug('SSH username: %s', cfg.get('ssh', 'ssh_user'))
         LOG.debug('SSH key: %s', cfg.get('ssh', 'ssh_key'))
         dst = Ssh(
+            '/tmp',
             ssh_connect_info=SshConnectInfo(
                 host=split_host_port(destination)[0],
                 user=cfg.get('ssh', 'ssh_user'),

@@ -16,6 +16,7 @@ from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
     TwinDBBackupError, save_measures, XTRABACKUP_BINARY)
 from twindb_backup.configuration import get_destination
+from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.export import export_info
 from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
@@ -25,19 +26,24 @@ from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.file_source import FileSource
 from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
+from twindb_backup.util import my_cnfs
 
 
 def _backup_stream(config, src, dst, callbacks=None):
     stream = src.get_stream()
-    src_name = src.get_name()
     # Gzip modifier
     stream = Gzip(stream).get_stream()
-    src_name += '.gz'
+    src.suffix += '.gz'
     # KeepLocal modifier
     try:
         keep_local_path = config.get('destination', 'keep_local_path')
-        kl_modifier = KeepLocal(stream,
-                                os.path.join(keep_local_path, src_name))
+        kl_modifier = KeepLocal(
+            stream,
+            os.path.join(
+                keep_local_path,
+                src.get_name()
+            )
+        )
         stream = kl_modifier.get_stream()
         if callbacks is not None:
             callbacks.append((kl_modifier, {
@@ -48,19 +54,19 @@ def _backup_stream(config, src, dst, callbacks=None):
         LOG.debug('keep_local_path is not present in the config file')
     # GPG modifier
     try:
-        stream = Gpg(stream,
-                     config.get('gpg', 'recipient'),
-                     config.get('gpg', 'keyring')).get_stream()
-        src_name += '.gpg'
+        stream = Gpg(
+            stream,
+            config.get('gpg', 'recipient'),
+            config.get('gpg', 'keyring')).get_stream()
+        src.suffix += '.gpg'
     except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
         pass
     except ModifierException as err:
         LOG.warning(err)
         LOG.warning('Will skip encryption')
-    if not dst.save(stream, src_name):
-        LOG.error('Failed to save backup copy %s', src_name)
+    if not dst.save(stream, src.get_name()):
+        LOG.error('Failed to save backup copy %s', src.get_name())
         exit(1)
-    return src_name
 
 
 def backup_files(run_type, config):
@@ -112,24 +118,63 @@ def backup_mysql(run_type, config):
         xtrabackup_binary = config.get('mysql', 'xtrabackup_binary')
     except ConfigParser.NoOptionError:
         xtrabackup_binary = XTRABACKUP_BINARY
+
+    status = dst.status()
+
+    kwargs = {
+        'backup_type': status.next_backup_type(full_backup, run_type),
+        'dst': dst,
+        'xtrabackup_binary': xtrabackup_binary
+    }
+    parent = status.eligble_parent(run_type)
+
+    if kwargs['backup_type'] == 'incremental':
+        kwargs['parent_lsn'] = parent.lsn
+
+    LOG.debug('Creating source %r', kwargs)
     src = MySQLSource(
         MySQLConnectInfo(config.get('mysql', 'mysql_defaults_file')),
         run_type,
-        full_backup,
-        dst=dst,
-        xtrabackup_binary=xtrabackup_binary
+        **kwargs
     )
 
     callbacks = []
-    src_name = _backup_stream(config, src, dst, callbacks)
-    status = prepare_status(dst, src, run_type, src_name, backup_start)
+    _backup_stream(config, src, dst, callbacks=callbacks)
+    LOG.debug('Backup copy name: %s', src.get_name())
+
+    kwargs = {
+        'type': src.type,
+        'binlog': src.binlog_coordinate[0],
+        'position': src.binlog_coordinate[1],
+        'lsn': src.lsn,
+        'backup_started': backup_start,
+        'backup_finished': time.time(),
+        'config_files': my_cnfs()
+    }
+    if src.incremental:
+        kwargs['parent'] = parent.key
+
+    backup_copy = MySQLCopy(
+        src.host,
+        run_type,
+        src.basename,
+        **kwargs
+    )
+    LOG.debug('status before prepare():\n%s', status)
+    status.add(backup_copy)
+    # status = prepare_status(dst, src, run_type, src_name, backup_start)
+    LOG.debug('status after prepare():\n%s', status)
+
     status = src.apply_retention_policy(dst, config, run_type, status)
-    backup_duration = \
-        status[run_type][src_name]['backup_finished'] - \
-        status[run_type][src_name]['backup_started']
-    export_info(config, data=backup_duration,
-                category=ExportCategory.mysql,
-                measure_type=ExportMeasureType.backup)
+    LOG.debug('status after apply_retention_policy():\n%s', status)
+
+    backup_duration = status.backup_duration(run_type, src.get_name())
+    export_info(
+        config,
+        data=backup_duration,
+        category=ExportCategory.mysql,
+        measure_type=ExportMeasureType.backup
+    )
     dst.status(status)
 
     LOG.debug('Callbacks are %r', callbacks)
@@ -138,9 +183,13 @@ def backup_mysql(run_type, config):
 
 
 def prepare_status(dst, src, run_type, src_name, backup_start):
-    """Prepare status for update"""
+    """Prepare status for update
+
+    :return: Updates status with a new backup copy in it.
+    :rtype: Status
+    """
     status = dst.status()
-    status[run_type][src_name] = {
+    kwargs = {
         'binlog': src.binlog_coordinate[0],
         'position': src.binlog_coordinate[1],
         'lsn': src.lsn,
@@ -150,16 +199,16 @@ def prepare_status(dst, src, run_type, src_name, backup_start):
         'config': []
     }
     for path, content in src.get_my_cnf():
-        status[run_type][src_name]['config'].append({
+        kwargs['config'].append({
             path: base64.b64encode(content)
         })
 
     if src.incremental:
-        status[run_type][src_name]['parent'] = src.parent
+        kwargs['parent'] = src.parent
 
     if src.galera:
-        status[run_type][src_name]['wsrep_provider_version'] = \
-            src.wsrep_provider_version
+        kwargs['wsrep_provider_version'] = src.wsrep_provider_version
+    status.add(run_type, src_name, **kwargs)
     return status
 
 

@@ -10,10 +10,9 @@ def test_get_status_empty(mock_status_exists):
     mock_status_exists.return_value = False
 
     dst = Ssh(remote_path='/foo/bar')
-    assert dst.status() == {
-        'hourly': {},
-        'daily': {},
-        'weekly': {},
-        'monthly': {},
-        'yearly': {}
-    }
+    status = dst.status()
+    assert status.hourly == {}
+    assert status.daily == {}
+    assert status.weekly == {}
+    assert status.monthly == {}
+    assert status.yearly == {}

@@ -12,10 +12,10 @@ import time
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.destination.exceptions import SshDestinationError, \
-    StatusFileError
+from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.ssh.client import SshClient
 from twindb_backup.ssh.exceptions import SshClientException
+from twindb_backup.status.mysql_status import MySQLStatus
 
 
 class SshConnectInfo(object):  # pylint: disable=too-few-public-methods
@@ -41,12 +41,10 @@ class Ssh(BaseDestination):
     :param remote_path: Path to store backup
     :param hostname: Hostname
     """
-
-    def __init__(self, ssh_connect_info=SshConnectInfo(),
-                 remote_path=None, hostname=socket.gethostname()):
-        super(Ssh, self).__init__()
-        if remote_path:
-            self.remote_path = remote_path.rstrip('/')
+    def __init__(self, remote_path,
+                 ssh_connect_info=SshConnectInfo(),
+                 hostname=socket.gethostname()):
+        super(Ssh, self).__init__(remote_path)
 
         self._ssh_client = SshClient(ssh_connect_info)
 
@@ -195,12 +193,18 @@ class Ssh(BaseDestination):
             if read_process:
                 read_process.join()
 
+    def _read_status(self):
+        if self._status_exists():
+            cmd = "cat %s" % self.status_path
+            with self._ssh_client.get_remote_handlers(cmd) as (_, stdout, _):
+                return MySQLStatus(content=stdout.read())
+        else:
+            return MySQLStatus()
+
     def _write_status(self, status):
-        for i in range(0, 3):
-            self._ssh_client.write_content(self.status_tmp_path, status)
-            if self._move_or_wait(3 * i):
-                return
-        raise StatusFileError("Valid status file not found")
+        cmd = "cat - > %s" % self.status_path
+        with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
+            cin.write(status.serialize())
 
     def _status_exists(self):
         """

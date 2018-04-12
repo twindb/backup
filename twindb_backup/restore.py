@@ -402,8 +402,10 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
                                     xbstream_binary=xbstream_binary)
 
     else:
-        full_copy = dst.get_full_copy_name(backup_copy)
-
+        full_copy = status.get_full_copy_name(
+            dst.get_run_type_from_full_path(backup_copy),
+            dst.basename(backup_copy)
+        )
         full_stream = dst.get_stream(full_copy)
 
         cache_key = os.path.basename(full_copy)
