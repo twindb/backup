@@ -22,10 +22,7 @@ services:
   - docker
 
 before_install:
-  - sudo apt-key list | \
-     grep "expired: " | \
-     sed -ne 's|pub .*/\([^ ]*\) .*|\1|gp' | \
-     xargs -n1 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys
+  - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
   - sudo apt-get update -qq
 
 install:
