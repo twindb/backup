@@ -26,7 +26,7 @@ before_install:
   - sudo apt-get update -qq
 
 install:
-  - sudo make bootstrap
+  - sudo -H make bootstrap
 
 script:
   - make lint test
