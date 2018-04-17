@@ -14,7 +14,7 @@ import sys
 import pymysql
 
 from twindb_backup import LOG, get_files_to_delete, INTERVALS, \
-    MY_CNF_COMMON_PATHS, XTRABACKUP_BINARY
+    XTRABACKUP_BINARY
 from twindb_backup.source.base_source import BaseSource
 from twindb_backup.source.exceptions import MySQLSourceError
 from twindb_backup.status.exceptions import StatusKeyNotFound

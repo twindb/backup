@@ -3,7 +3,6 @@
 backup jobs.
 """
 import ConfigParser
-import base64
 import errno
 import fcntl
 import os
@@ -180,6 +179,7 @@ def backup_mysql(run_type, config):
     LOG.debug('Callbacks are %r', callbacks)
     for callback in callbacks:
         callback[0].callback(**callback[1])
+
 
 def set_open_files_limit():
     """Detect maximum supported number of open file and set it"""
