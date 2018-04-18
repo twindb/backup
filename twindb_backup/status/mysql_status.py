@@ -8,7 +8,8 @@ from os.path import basename
 from twindb_backup import INTERVALS, LOG
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.status.base_status import BaseStatus
-from twindb_backup.status.exceptions import CorruptedStatus, StatusError
+from twindb_backup.status.exceptions import CorruptedStatus, \
+    StatusError, StatusKeyNotFound
 
 
 # For backward compatibility content of my.cnf files is base64 encoded.
@@ -138,3 +139,17 @@ class MySQLStatus(BaseStatus):
         :rtype: bool
         """
         return self.eligble_parent(run_type) is not None
+
+    def get_full_copy_name(self, run_type, name):
+        """
+        Return path to full copy name
+
+        :param run_type: Run type
+        :param name: Basename
+        :return: Path to full copy
+        """
+        period_copies = getattr(self, run_type)
+        for key, value in period_copies.iteritems():
+            if name in key:
+                return value.parent
+        raise StatusKeyNotFound("Full copy not found")

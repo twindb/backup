@@ -2,6 +2,7 @@
 For now status is created/maintained for MySQL copies only.
 """
 import json
+from abc import abstractmethod
 from base64 import b64encode
 
 from twindb_backup import INTERVALS
@@ -161,3 +162,7 @@ class BaseStatus(object):
 
     def __getitem__(self, item):
         return getattr(self, item)
+
+    @abstractmethod
+    def get_full_copy_name(self, run_type, basename):
+        """Get full copy by run type and basename"""
