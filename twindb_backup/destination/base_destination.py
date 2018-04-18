@@ -144,31 +144,6 @@ class BaseDestination(object):
         """
         return self.basename(path).split('/')[1]
 
-    # def get_full_copy_name(self, file_path):
-    #     """
-    #     For a given backup copy find a parent. If it's a full copy
-    #     then return itself
-    #
-    #     :param file_path:
-    #     :return:
-    #     """
-    #     try:
-    #         for run_type in INTERVALS:
-    #             for key in self.status()[run_type].keys():
-    #                 if file_path.endswith(key):
-    #                     if self.status()[run_type][key]['type'] == "full":
-    #                         return file_path
-    #                     else:
-    #                         remote_part = file_path.replace(key, '')
-    #                         parent = self.status()[run_type][key]['parent']
-    #                         result = "%s%s" % (remote_part, parent)
-    #                         return result
-    #     except (TypeError, KeyError) as err:
-    #         LOG.error('Failed to find parent of %s', file_path)
-    #         raise DestinationError(err)
-    #
-    #     raise DestinationError('Failed to find parent of %s' % file_path)
-    #
     def basename(self, filename):
         """
         Basename of backup copy

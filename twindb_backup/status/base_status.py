@@ -34,15 +34,13 @@ class BaseStatus(object):
         )
 
     def __str__(self):
-        return pformat(
-            {
-                "hourly": self._hourly,
-                "daily": self._daily,
-                "weekly": self._weekly,
-                "monthly": self._monthly,
-                "yearly": self._yearly
-            }
-        )
+        return json.dumps({
+            "hourly": str(self._hourly),
+            "daily": str(self._daily),
+            "weekly": str(self._weekly),
+            "monthly": str(self._monthly),
+            "yearly": str(self._yearly)
+        }, indent=4, sort_keys=True)
 
     @property
     def valid(self):
@@ -136,14 +134,6 @@ class BaseStatus(object):
             period_copies = getattr(self, i)
             for key, value in period_copies.iteritems():
                 status[i][key] = value.as_dict()
-        # status = {
-        #     'hourly': deepcopy(self._hourly),
-        #     'daily': deepcopy(self._daily),
-        #     'weekly': deepcopy(self._weekly),
-        #     'monthly': deepcopy(self._monthly),
-        #     'yearly': deepcopy(self._yearly)
-        # }
-        # status = _encode_mycnf(status)
         return b64encode(json.dumps(status))
 
     def backup_duration(self, run_type, key):

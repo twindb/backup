@@ -159,10 +159,7 @@ def backup_mysql(run_type, config):
         src.basename,
         **kwargs
     )
-    LOG.debug('status before prepare():\n%s', status)
     status.add(backup_copy)
-    # status = prepare_status(dst, src, run_type, src_name, backup_start)
-    LOG.debug('status after prepare():\n%s', status)
 
     status = src.apply_retention_policy(dst, config, run_type, status)
     LOG.debug('status after apply_retention_policy():\n%s', status)
