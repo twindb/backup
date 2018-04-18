@@ -39,7 +39,7 @@ class BaseStatus(object):
             period_copies = getattr(self, i)
             for key, value in period_copies.iteritems():
                 status[i][key] = value.as_dict()
-        return json.dumps(status)
+        return json.dumps(status, indent=4, sort_keys=True)
 
     @property
     def valid(self):

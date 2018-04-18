@@ -5,7 +5,6 @@ Module that restores backup copies.
 from __future__ import print_function
 import ConfigParser
 import base64
-import json
 from subprocess import Popen, PIPE
 import os
 import tempfile
@@ -28,7 +27,7 @@ from twindb_backup.util import mkdir_p, \
 
 
 def _get_status_key(status, key, variable):
-    LOG.debug('status = %s', json.dumps(status, indent=4, sort_keys=True))
+    LOG.debug('status = %s', str(status))
     LOG.debug('key = %s', key)
     try:
         for run_type in INTERVALS:

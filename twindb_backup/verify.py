@@ -40,7 +40,7 @@ def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
             'backup_copy': url,
             'restore_time': 0,
             'success': False
-        })
+        }, indent=4, sort_keys=True)
     start_restore_time = time.time()
     success = True
     try:
@@ -57,4 +57,4 @@ def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
         'backup_copy': url,
         'restore_time': restore_time,
         'success': success
-    })
+    }, indent=4, sort_keys=True)
