@@ -3,7 +3,6 @@ For now status is created/maintained for MySQL copies only.
 """
 import json
 from base64 import b64encode
-from pprint import pformat
 
 from twindb_backup import INTERVALS
 from twindb_backup.status.exceptions import StatusError, StatusKeyNotFound
