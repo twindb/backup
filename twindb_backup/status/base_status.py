@@ -36,11 +36,11 @@ class BaseStatus(object):
     def __str__(self):
         return pformat(
             {
-                "hourly": json.dumps(self._hourly),
-                "daily": json.dumps(self._daily),
-                "weekly": json.dumps(self._weekly),
-                "monthly": json.dumps(self._monthly),
-                "yearly": json.dumps(self._yearly)
+                "hourly": self._hourly,
+                "daily": self._daily,
+                "weekly": self._weekly,
+                "monthly": self._monthly,
+                "yearly": self._yearly
             }
         )
 

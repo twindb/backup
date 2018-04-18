@@ -1,7 +1,6 @@
 """Class to describe MySQL backup copy"""
 import json
 from base64 import b64encode
-from pprint import pformat
 
 from twindb_backup.copy.base_copy import BaseCopy
 from twindb_backup.copy.exceptions import WrongInputData
@@ -181,6 +180,6 @@ class MySQLCopy(BaseCopy):  # pylint: disable=too-many-instance-attributes
             result['config'] = encoded_configs
         return result
 
-    def __str__(self):
+    def __repr__(self):
         json_view = json.dumps(self.as_dict())
-        return pformat(json_view)
+        return json_view
