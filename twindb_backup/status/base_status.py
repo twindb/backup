@@ -158,3 +158,6 @@ class BaseStatus(object):
                     latest_backup_time = value.backup_started
 
         return latest_copy
+
+    def __getitem__(self, item):
+        return getattr(self, item)
