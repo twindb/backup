@@ -127,7 +127,7 @@ password=qwerty
            '--config', twindb_config_guest,
            'status']
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
-
+    print(cout)
     key = json.loads(cout)['hourly'].keys()[0]
 
     assert key.endswith('.xbstream.gz')
