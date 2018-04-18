@@ -33,13 +33,13 @@ class BaseStatus(object):
         )
 
     def __str__(self):
-        return json.dumps({
-            "hourly": str(self._hourly),
-            "daily": str(self._daily),
-            "weekly": str(self._weekly),
-            "monthly": str(self._monthly),
-            "yearly": str(self._yearly)
-        }, indent=4, sort_keys=True)
+        status = {}
+        for i in INTERVALS:
+            status[i] = {}
+            period_copies = getattr(self, i)
+            for key, value in period_copies.iteritems():
+                status[i][key] = value.as_dict()
+        return json.dumps(status)
 
     @property
     def valid(self):
@@ -127,13 +127,8 @@ class BaseStatus(object):
         """
         Return a string that represents current state
         """
-        status = {}
-        for i in INTERVALS:
-            status[i] = {}
-            period_copies = getattr(self, i)
-            for key, value in period_copies.iteritems():
-                status[i][key] = value.as_dict()
-        return b64encode(json.dumps(status))
+
+        return b64encode(self.__str__())
 
     def backup_duration(self, run_type, key):
         """
