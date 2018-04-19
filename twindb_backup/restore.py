@@ -13,7 +13,7 @@ import time
 
 import psutil
 
-from twindb_backup import LOG, INTERVALS, XBSTREAM_BINARY, XTRABACKUP_BINARY
+from twindb_backup import LOG, XBSTREAM_BINARY, XTRABACKUP_BINARY
 from twindb_backup.configuration import get_destination
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
@@ -356,7 +356,9 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
                                     xbstream_binary=xbstream_binary)
 
     else:
-        full_copy = status.eligble_parent(dst.get_run_type_from_full_path(backup_copy))
+        full_copy = status.eligble_parent(
+            dst.get_run_type_from_full_path(backup_copy)
+        )
         full_stream = dst.get_stream(full_copy)
 
         cache_key = os.path.basename(full_copy)

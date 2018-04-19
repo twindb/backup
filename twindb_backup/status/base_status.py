@@ -2,7 +2,6 @@
 For now status is created/maintained for MySQL copies only.
 """
 import json
-from abc import abstractmethod
 from base64 import b64encode
 
 from twindb_backup import INTERVALS
@@ -166,4 +165,3 @@ class BaseStatus(object):
             if item in period_copies:
                 return period_copies[item]
         return None
-

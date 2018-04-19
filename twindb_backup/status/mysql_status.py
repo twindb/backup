@@ -9,7 +9,7 @@ from twindb_backup import INTERVALS, LOG
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.status.base_status import BaseStatus
 from twindb_backup.status.exceptions import CorruptedStatus, \
-    StatusError, StatusKeyNotFound
+    StatusError
 
 
 # For backward compatibility content of my.cnf files is base64 encoded.
@@ -139,4 +139,3 @@ class MySQLStatus(BaseStatus):
         :rtype: bool
         """
         return self.eligble_parent(run_type) is not None
-
