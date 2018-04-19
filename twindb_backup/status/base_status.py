@@ -161,5 +161,9 @@ class BaseStatus(object):
         return latest_copy
 
     def __getitem__(self, item):
-        return getattr(self, item)
+        for i in INTERVALS:
+            period_copies = getattr(self, i)
+            if item in period_copies:
+                return period_copies[item]
+        return None
 
