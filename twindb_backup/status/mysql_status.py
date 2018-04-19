@@ -140,16 +140,3 @@ class MySQLStatus(BaseStatus):
         """
         return self.eligble_parent(run_type) is not None
 
-    def get_full_copy_name(self, run_type, name):
-        """
-        Return path to full copy name
-
-        :param run_type: Run type
-        :param name: Basename
-        :return: Path to full copy
-        """
-        period_copies = getattr(self, run_type)
-        for key, value in period_copies.iteritems():
-            if name in key:
-                return value.parent
-        raise StatusKeyNotFound("Full copy not found")

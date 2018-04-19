@@ -26,51 +26,6 @@ from twindb_backup.util import mkdir_p, \
     get_hostname_from_backup_copy, empty_dir
 
 
-def _get_status_key(status, key, variable):
-    LOG.debug('status = %s', str(status))
-    LOG.debug('key = %s', key)
-    try:
-        for run_type in INTERVALS:
-            if key in status[run_type]:
-                return status[run_type][key][variable]
-    except KeyError:
-        pass
-    LOG.warning('key %s is not found', key)
-    return None
-
-
-def get_galera_version(status, key):
-    """
-    Get Galera version from backup status
-
-    :param status: backup status
-    :type status: dict
-    :param key: backup name
-    :type key: str
-    :return: Galera version or None if not listed in the status
-    :rtype: str
-    """
-    return _get_status_key(status, key, 'wsrep_provider_version')
-
-
-def get_backup_type(status, key):
-    """
-    Get backup type - full or incremental - from the backup status.
-
-    :param status: backup status
-    :type status: dict
-    :param key: backup name
-    :type key: str
-    :return: Backup type or None if backup name is not found
-    :rtype: str
-    """
-    backup_type = _get_status_key(status, key, 'type')
-    if backup_type:
-        return backup_type
-
-    raise DestinationError('Unknown backup type for backup copy %s' % key)
-
-
 def get_my_cnf(status, key):
     """
     Get MySQL config from the status.
@@ -82,7 +37,7 @@ def get_my_cnf(status, key):
     :return: Content of my.cnf or None if not found
     :rtype: str
     """
-    for cnf in _get_status_key(status, key, 'config'):
+    for cnf in status[key].config:
         k = cnf.keys()[0]
         value = base64.b64decode(cnf[k])
         yield k, value
@@ -319,7 +274,7 @@ def update_grastate(dst_dir, status, key):
     :type key: str
     """
     if os.path.exists(dst_dir + '/xtrabackup_galera_info'):
-        version = get_galera_version(status, key)
+        version = status[key].wsrep_provider_version
 
         with open(dst_dir + '/xtrabackup_galera_info') as galera_info:
             galera_info = galera_info.read()
@@ -381,7 +336,7 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
 
     stream = dst.get_stream(backup_copy)
 
-    if get_backup_type(status, key) == "full":
+    if status[key].type == "full":
 
         cache_key = os.path.basename(key)
         if cache:
@@ -401,10 +356,7 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
                                     xbstream_binary=xbstream_binary)
 
     else:
-        full_copy = status.get_full_copy_name(
-            dst.get_run_type_from_full_path(backup_copy),
-            dst.basename(backup_copy)
-        )
+        full_copy = status.eligble_parent(dst.get_run_type_from_full_path(backup_copy))
         full_stream = dst.get_stream(full_copy)
 
         cache_key = os.path.basename(full_copy)

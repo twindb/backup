@@ -36,6 +36,3 @@ class BaseCopy(object):
             )
         else:
             raise UnknownSourceType("Source type is not defined")
-
-    def __getitem__(self, item):
-        return getattr(self, item)
