@@ -359,9 +359,9 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
         full_copy = status.eligble_parent(
             dst.get_run_type_from_full_path(backup_copy)
         )
-        full_stream = dst.get_stream(full_copy)
+        full_stream = dst.get_stream(full_copy.parent)
 
-        cache_key = os.path.basename(full_copy)
+        cache_key = os.path.basename(full_copy.parent)
 
         if cache:
             if cache_key in cache:
