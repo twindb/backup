@@ -189,3 +189,16 @@ def my_cnfs(common_paths=None):
                             my_cnfs(common_paths=[include_file])
                         )
     return result
+
+
+def normalize_b64_data(coding):
+    """
+    Normalize base64 key
+
+    :param coding: Encoded data
+    :return: Normalized encoded data
+    """
+    missing_padding = len(coding) % 4
+    if missing_padding != 0:
+        coding += b'=' * (4 - missing_padding)
+    return coding

@@ -23,7 +23,7 @@ from twindb_backup.exporter.base_exporter import ExportCategory, \
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, \
-    get_hostname_from_backup_copy, empty_dir
+    get_hostname_from_backup_copy, empty_dir, normalize_b64_data
 
 
 def get_my_cnf(status, key):
@@ -39,6 +39,7 @@ def get_my_cnf(status, key):
     """
     for cnf in status[key].config:
         k = cnf.keys()[0]
+        cnf[k] = normalize_b64_data(cnf[k])
         value = base64.b64decode(cnf[k])
         yield k, value
 
