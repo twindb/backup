@@ -193,7 +193,7 @@ def my_cnfs(common_paths=None):
 
 def normalize_b64_data(coding):
     """
-    Normalize base64 key
+    Normalize base64 key. See http://bit.ly/2vxIAnC for details.
 
     :param coding: Encoded data
     :return: Normalized encoded data
