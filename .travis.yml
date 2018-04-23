@@ -7,16 +7,12 @@ matrix:
       env: PLATFORM=centos DISTRO=el OS_VERSION=7 DOCKER_IMAGE=twindb/backup-test:centos-7
     - python: '2.7'
       env: PLATFORM=centos DISTRO=el OS_VERSION=6 DOCKER_IMAGE=twindb/backup-test:centos-6
-#      if: branch = master
     - python: '2.7'
       env: PLATFORM=debian DISTRO=debian OS_VERSION=jessie DOCKER_IMAGE=twindb/backup-test:jessie
-#      if: branch = master
     - python: '2.7'
       env: PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=trusty DOCKER_IMAGE=twindb/backup-test:trusty
-#      if: branch = master
     - python: '2.7'
       env: PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=xenial DOCKER_IMAGE=twindb/backup-test:xenial
-#      if: branch = master
 
 services:
   - docker
@@ -30,13 +26,10 @@ install:
 
 script:
   - make lint test
-  - sudo docker pull ${DOCKER_IMAGE}
-  - travis_wait 120 make package
-  - make test-integration
 
 before_deploy:
   - sudo docker pull ${DOCKER_IMAGE}
-  - travis_wait 30 make package
+  - travis_wait 120 make package
   - make test-integration
 
 deploy:
