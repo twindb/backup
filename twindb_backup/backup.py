@@ -3,7 +3,6 @@
 backup jobs.
 """
 import ConfigParser
-import base64
 import errno
 import fcntl
 import os
@@ -14,7 +13,7 @@ from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
-    TwinDBBackupError, save_measures, XTRABACKUP_BINARY)
+    TwinDBBackupError, save_measures, XTRABACKUP_BINARY, MY_CNF_COMMON_PATHS)
 from twindb_backup.configuration import get_destination
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.export import export_info
@@ -149,7 +148,7 @@ def backup_mysql(run_type, config):
         'lsn': src.lsn,
         'backup_started': backup_start,
         'backup_finished': time.time(),
-        'config_files': my_cnfs()
+        'config_files': my_cnfs(MY_CNF_COMMON_PATHS)
     }
     if src.incremental:
         kwargs['parent'] = parent.key
@@ -160,10 +159,7 @@ def backup_mysql(run_type, config):
         src.basename,
         **kwargs
     )
-    LOG.debug('status before prepare():\n%s', status)
     status.add(backup_copy)
-    # status = prepare_status(dst, src, run_type, src_name, backup_start)
-    LOG.debug('status after prepare():\n%s', status)
 
     status = src.apply_retention_policy(dst, config, run_type, status)
     LOG.debug('status after apply_retention_policy():\n%s', status)
@@ -180,36 +176,6 @@ def backup_mysql(run_type, config):
     LOG.debug('Callbacks are %r', callbacks)
     for callback in callbacks:
         callback[0].callback(**callback[1])
-
-
-def prepare_status(dst, src, run_type, src_name, backup_start):
-    """Prepare status for update
-
-    :return: Updates status with a new backup copy in it.
-    :rtype: Status
-    """
-    status = dst.status()
-    kwargs = {
-        'binlog': src.binlog_coordinate[0],
-        'position': src.binlog_coordinate[1],
-        'lsn': src.lsn,
-        'type': src.type,
-        'backup_started': backup_start,
-        'backup_finished': time.time(),
-        'config': []
-    }
-    for path, content in src.get_my_cnf():
-        kwargs['config'].append({
-            path: base64.b64encode(content)
-        })
-
-    if src.incremental:
-        kwargs['parent'] = src.parent
-
-    if src.galera:
-        kwargs['wsrep_provider_version'] = src.wsrep_provider_version
-    status.add(run_type, src_name, **kwargs)
-    return status
 
 
 def set_open_files_limit():

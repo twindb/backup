@@ -75,7 +75,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
                 hostname=split_host_port(source)[0]
             ),
             "run_type": INTERVALS[0],
-            "full_backup": INTERVALS[0],
+            "backup_type": 'full'
         })
         xbstream_binary = cfg.get('mysql', 'xbstream_binary')
         LOG.debug('SSH destination: %s', split_host_port(destination)[0])
@@ -119,7 +119,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
                 hostname=split_host_port(destination)[0]
             ),
             "run_type": INTERVALS[0],
-            "full_backup": INTERVALS[0],
+            "backup_type": 'full'
         })
 
         binlog, position = dst_mysql.apply_backup(datadir)

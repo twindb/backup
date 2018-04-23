@@ -8,10 +8,14 @@ from os.path import basename
 from twindb_backup import INTERVALS, LOG
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.status.base_status import BaseStatus
-from twindb_backup.status.exceptions import CorruptedStatus, StatusError
+from twindb_backup.status.exceptions import CorruptedStatus, \
+    StatusError
 
 
 # For backward compatibility content of my.cnf files is base64 encoded.
+from twindb_backup.util import normalize_b64_data
+
+
 def _decode_mycnf(_json):
     for interval in INTERVALS:
         for bcopy in _json[interval]:
@@ -52,7 +56,9 @@ def _deserialize_config_dict(config):
         for name, cnf_content in cnf.iteritems():
             config_deserialized.append(
                 {
-                    name: b64decode(cnf_content)
+                    name: b64decode(
+                        normalize_b64_data(cnf_content)
+                    )
                 }
             )
     return config_deserialized
@@ -68,7 +74,7 @@ class MySQLStatus(BaseStatus):
         self.__version__ = version if version else 0
         if content:
             try:
-                _json = json.loads(b64decode(content))
+                _json = json.loads(b64decode(normalize_b64_data(content)))
                 _json = _decode_mycnf(_json)
             except TypeError as err:
                 LOG.debug('Corrupted status content: %s', content)

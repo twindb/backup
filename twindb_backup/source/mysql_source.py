@@ -14,7 +14,7 @@ import sys
 import pymysql
 
 from twindb_backup import LOG, get_files_to_delete, INTERVALS, \
-    MY_CNF_COMMON_PATHS, XTRABACKUP_BINARY
+    XTRABACKUP_BINARY
 from twindb_backup.source.base_source import BaseSource
 from twindb_backup.source.exceptions import MySQLSourceError
 from twindb_backup.status.exceptions import StatusKeyNotFound
@@ -359,20 +359,6 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
                     cursor.execute("SET GLOBAL wsrep_desync=OFF")
         except pymysql.Error as err:
             LOG.error(err)
-
-    @staticmethod
-    def get_my_cnf():
-        """Get generator that spits out my.cnf files
-
-        :return: File name and content of MySQL config file.
-        :rtype: tuple
-        """
-        for cnf_parg in MY_CNF_COMMON_PATHS:
-            try:
-                with open(cnf_parg) as my_cnf:
-                    yield cnf_parg, my_cnf.read()
-            except IOError:
-                continue
 
     @property
     def wsrep_provider_version(self):

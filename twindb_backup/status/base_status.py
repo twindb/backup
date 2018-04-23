@@ -3,7 +3,6 @@ For now status is created/maintained for MySQL copies only.
 """
 import json
 from base64 import b64encode
-from pprint import pformat
 
 from twindb_backup import INTERVALS
 from twindb_backup.status.exceptions import StatusError, StatusKeyNotFound
@@ -34,15 +33,13 @@ class BaseStatus(object):
         )
 
     def __str__(self):
-        return pformat(
-            {
-                "hourly": self._hourly,
-                "daily": self._daily,
-                "weekly": self._weekly,
-                "monthly": self._monthly,
-                "yearly": self._yearly
-            }
-        )
+        status = {}
+        for i in INTERVALS:
+            status[i] = {}
+            period_copies = getattr(self, i)
+            for key, value in period_copies.iteritems():
+                status[i][key] = value.as_dict()
+        return json.dumps(status, indent=4, sort_keys=True)
 
     @property
     def valid(self):
@@ -130,21 +127,8 @@ class BaseStatus(object):
         """
         Return a string that represents current state
         """
-        status = {}
-        for i in INTERVALS:
-            status[i] = {}
-            period_copies = getattr(self, i)
-            for key, value in period_copies.iteritems():
-                status[i][key] = value.as_dict()
-        # status = {
-        #     'hourly': deepcopy(self._hourly),
-        #     'daily': deepcopy(self._daily),
-        #     'weekly': deepcopy(self._weekly),
-        #     'monthly': deepcopy(self._monthly),
-        #     'yearly': deepcopy(self._yearly)
-        # }
-        # status = _encode_mycnf(status)
-        return b64encode(json.dumps(status))
+
+        return b64encode(self.__str__())
 
     def backup_duration(self, run_type, key):
         """
@@ -174,3 +158,10 @@ class BaseStatus(object):
                     latest_backup_time = value.backup_started
 
         return latest_copy
+
+    def __getitem__(self, item):
+        for i in INTERVALS:
+            period_copies = getattr(self, i)
+            if item in period_copies:
+                return period_copies[item]
+        return None

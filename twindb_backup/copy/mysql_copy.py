@@ -43,8 +43,8 @@ class MySQLCopy(BaseCopy):  # pylint: disable=too-many-instance-attributes
         self._parent = kwargs.get('parent', None)
 
         if 'wsrep_provider_version' in kwargs:
-            self._galera = True
             self._wsrep_provider_version = kwargs.get('wsrep_provider_version')
+            self._galera = self._wsrep_provider_version is not None
         else:
             self._galera = False
             self._wsrep_provider_version = None
