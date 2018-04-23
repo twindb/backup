@@ -101,6 +101,46 @@ def status_raw_content():
     tseSI6IHt9DQogICAgICAgICAgICB9
 """
 
+@pytest.fixture
+def invalid_status_raw_content():
+    """
+    Returns a base64 encoded string with a JSON::
+
+        {
+              "monthly": {},
+              "hourly": {
+                "master1/hourly/mysql/mysql-2018-03-28_04_11_16.xbstream.gz": {
+                  "backup_finished": 1522210295,
+                  "binlog": "mysql-bin.000001",
+                  "parent": "master1/daily/mysql/mysql-2018-03-28_04_09_53.xbstream.gz",
+                  "lsn": 19903207,
+                  "galera": false,
+                  "config": [
+                    {
+                      "/etc/my.cnf": "Foo-bar-bah"
+                    }
+                  ],
+            }
+
+    :return: base64 encoded string
+    """
+
+    return """
+    ICAgICAgICB7DQogICAgICAgICAgICAgICJtb250aGx5Ijoge30sDQogICAgIC
+    AgICAgICAgICJob3VybHkiOiB7DQogICAgICAgICAgICAgICAgIm1hc3RlcjEv
+    aG91cmx5L215c3FsL215c3FsLTIwMTgtMDMtMjhfMDRfMTFfMTYueGJzdHJlYW
+    0uZ3oiOiB7DQogICAgICAgICAgICAgICAgICAiYmFja3VwX2ZpbmlzaGVkIjog
+    MTUyMjIxMDI5NSwNCiAgICAgICAgICAgICAgICAgICJiaW5sb2ciOiAibXlzcW
+    wtYmluLjAwMDAwMSIsDQogICAgICAgICAgICAgICAgICAicGFyZW50IjogIm1h
+    c3RlcjEvZGFpbHkvbXlzcWwvbXlzcWwtMjAxOC0wMy0yOF8wNF8wOV81My54Yn
+    N0cmVhbS5neiIsDQogICAgICAgICAgICAgICAgICAibHNuIjogMTk5MDMyMDcs
+    DQogICAgICAgICAgICAgICAgICAiZ2FsZXJhIjogZmFsc2UsDQogICAgICAgIC
+    AgICAgICAgICAiY29uZmlnIjogWw0KICAgICAgICAgICAgICAgICAgICB7DQog
+    ICAgICAgICAgICAgICAgICAgICAgIi9ldGMvbXkuY25mIjogIkZvby1iYXItYm
+    FoIg0KICAgICAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICAgICAgICBd
+    LA0KICAgICAgICAgICAgfQ==
+"""
+
 
 @pytest.fixture
 def status_raw_empty():

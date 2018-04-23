@@ -1,8 +1,11 @@
 import json
 from base64 import b64encode
 
+import pytest
+
 from twindb_backup import INTERVALS
 from twindb_backup.copy.mysql_copy import MySQLCopy
+from twindb_backup.status.exceptions import CorruptedStatus
 from twindb_backup.status.mysql_status import MySQLStatus
 
 
@@ -57,7 +60,6 @@ pid-file=/var/run/mysqld/mysqld.pid
     assert key in status.hourly
     assert status.hourly[key] == copy
 
-
 def test_init_weekly_only():
     status = MySQLStatus(
         content=b64encode(
@@ -78,3 +80,8 @@ def test_init_weekly_only():
     assert not status.monthly
     assert status.weekly
     assert not status.yearly
+
+
+def test_init_invalid_json(invalid_status_raw_content):
+    with pytest.raises(CorruptedStatus):
+        MySQLStatus(invalid_status_raw_content)

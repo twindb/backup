@@ -76,7 +76,7 @@ class MySQLStatus(BaseStatus):
             try:
                 _json = json.loads(b64decode(normalize_b64_data(content)))
                 _json = _decode_mycnf(_json)
-            except TypeError as err:
+            except (TypeError, ValueError) as err:
                 LOG.debug('Corrupted status content: %s', content)
                 raise CorruptedStatus('Corrupted status: %s', err.message)
 
