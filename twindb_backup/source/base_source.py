@@ -19,6 +19,9 @@ class BaseSource(object):
     _media_type = None
     _intervals = INTERVALS
     _name = None
+    _host = None
+    _created_at = None
+    _file_name_prefix = ''
 
     def __init__(self, run_type):
         """
@@ -28,6 +31,8 @@ class BaseSource(object):
         :type run_type: str
         """
         self.run_type = run_type
+        self._host = socket.gethostname()
+        self._created_at = time.strftime('%Y-%m-%d_%H_%M_%S')
 
     def get_stream(self):
         """
@@ -42,17 +47,17 @@ class BaseSource(object):
         """
         return "{hostname}/{run_type}".format(
             run_type=self.run_type,
-            hostname=socket.gethostname()
+            hostname=self._host
         )
 
-    def _get_name(self, filename):
+    def _get_name(self, filename_prefix):
 
         LOG.debug('Suffix = %s', self.suffix)
         self._name = "{prefix}/{media_type}/{file}-{time}.{suffix}".format(
             prefix=self.get_prefix(),
             media_type=self._media_type,
-            file=filename,
-            time=time.strftime('%Y-%m-%d_%H_%M_%S'),
+            file=filename_prefix,
+            time=self._created_at,
             suffix=self._suffix
         )
         return self._name
@@ -81,3 +86,17 @@ class BaseSource(object):
     @suffix.setter
     def suffix(self, suffix):
         self._suffix = suffix
+
+    @property
+    def basename(self):
+        """Return file name (w/o directory part) of the backup."""
+        return "{filename_prefix}-{time}.{suffix}".format(
+            filename_prefix=self._file_name_prefix,
+            time=self._created_at,
+            suffix=self._suffix
+        )
+
+    @property
+    def host(self):
+        """Return host where the backup is being taken from."""
+        return self._host

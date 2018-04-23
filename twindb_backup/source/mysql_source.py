@@ -7,7 +7,6 @@ import os
 import tempfile
 import time
 
-from ConfigParser import NoOptionError
 from contextlib import contextmanager
 from subprocess import Popen, PIPE
 import sys
@@ -15,9 +14,10 @@ import sys
 import pymysql
 
 from twindb_backup import LOG, get_files_to_delete, INTERVALS, \
-    MY_CNF_COMMON_PATHS, XTRABACKUP_BINARY
+    XTRABACKUP_BINARY
 from twindb_backup.source.base_source import BaseSource
 from twindb_backup.source.exceptions import MySQLSourceError
+from twindb_backup.status.exceptions import StatusKeyNotFound
 
 
 class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
@@ -45,20 +45,22 @@ class MySQLMasterInfo(object):  # pylint: disable=too-few-public-methods
         self.port = 3306 if port is None else port
 
 
-class MySQLSource(BaseSource):
+class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
     """MySQLSource class"""
-    def __init__(self, mysql_connect_info, run_type, full_backup, dst=None,
-                 xtrabackup_binary=XTRABACKUP_BINARY):
+    def __init__(self, mysql_connect_info, run_type, backup_type, **kwargs):
         """
         MySQLSource constructor
 
         :param mysql_connect_info: MySQL connection details
         :type mysql_connect_info: MySQLConnectInfo
-        :param run_type:
-        :param full_backup: When to do full backup e.g. daily, weekly
-        :type full_backup: str
+        :param run_type: daily, weekly, etc
+        :param backup_type: full or incremental
+        :type backup_type: str
         :param dst:
         """
+        if run_type not in INTERVALS:
+            raise MySQLSourceError('Incorrect run type %r' % run_type)
+        self._parent_lsn = kwargs.get('parent_lsn', None)
 
         class _BackupInfo(object):  # pylint: disable=too-few-public-methods
             """class to store details about backup copy"""
@@ -75,21 +77,16 @@ class MySQLSource(BaseSource):
         self._connect_info = mysql_connect_info
 
         self._backup_info = _BackupInfo()
-        if full_backup not in INTERVALS:
-            raise MySQLSourceError('full_backup must be one of %r. '
-                                   'Got %r instead.'
-                                   % (INTERVALS, full_backup))
-
-        if run_type not in INTERVALS:
-            raise MySQLSourceError('run_type must be one of %r. '
-                                   'Got %r instead.'
-                                   % (INTERVALS, run_type))
+        if backup_type in ['full', 'incremental']:
+            self._type = backup_type
+        else:
+            raise MySQLSourceError('Unrecognized backup type %s' % backup_type)
 
         self.suffix = 'xbstream'
         self._media_type = 'mysql'
-        self.full_backup = full_backup
-        self.dst = dst
-        self._xtrabackup = xtrabackup_binary
+        self._file_name_prefix = 'mysql'
+        self.dst = kwargs.get('dst', None)
+        self._xtrabackup = kwargs.get('xtrabackup_binary', XTRABACKUP_BINARY)
         super(MySQLSource, self).__init__(run_type)
 
     @property
@@ -128,11 +125,11 @@ class MySQLSource(BaseSource):
         if self.is_galera():
             cmd.append("--galera-info")
             cmd.append("--no-backup-locks")
-        if not self.full:
+        if self.incremental:
             cmd += [
                 "--incremental-basedir",
                 ".",
-                "--incremental-lsn=%d" % self.parent_lsn
+                "--incremental-lsn=%d" % self._parent_lsn
             ]
         # If this is a Galera node then additional step needs to be taken to
         # prevent the backups from locking up the cluster.
@@ -211,9 +208,9 @@ class MySQLSource(BaseSource):
         :param run_type: Run type.
         :type run_type: str
         :param status: Backups status.
-        :type status: dict
+        :type status: Status
         :return: Updated status.
-        :rtype: dict
+        :rtype: Status
         """
 
         prefix = "{remote_path}/{prefix}/mysql/mysql-".format(
@@ -228,9 +225,14 @@ class MySQLSource(BaseSource):
         for backup_copy in get_files_to_delete(backups_list, keep_copies):
             LOG.debug('Deleting remote file %s', backup_copy)
             dst.delete(backup_copy)
-            status = self._delete_from_status(status,
-                                              dst.remote_path,
-                                              backup_copy)
+            try:
+                status.remove(
+                    run_type,
+                    dst.basename(backup_copy)
+                )
+            except StatusKeyNotFound as err:
+                LOG.warning(err)
+                LOG.debug('Status: %r', status)
 
         self._delete_local_files('mysql', config)
 
@@ -281,7 +283,7 @@ class MySQLSource(BaseSource):
         :return: True if it's a full copy.
         :rtype: bool
         """
-        return self._get_backup_type() == 'full'
+        return self.type == 'full'
 
     @property
     def incremental(self):
@@ -293,31 +295,16 @@ class MySQLSource(BaseSource):
         """
         return not self.full
 
-    def _get_backup_type(self):
-        """Return backup type to take. If full_backup=daily then
-        for hourly backups it will be incremental, for all other - full
-
-        :return: "full" or "incremental"
-        """
-        try:
-            if self._intervals.index(self.full_backup) <= \
-                    self._intervals.index(self.run_type):
-                return "full"
-            elif not self._full_copy_exists():
-                return "full"
-            else:
-                return "incremental"
-        except (NoOptionError, ValueError):
-            return 'full'
-
     @property
     def type(self):
         """Get backup copy type - full or incremental
 
-        :return: 'full' or 'incrmental'
+        :return: 'full' or 'incremental'
         :rtype: str
         """
-        return self._get_backup_type()
+        return self._type
+        # status = self.dst.status()
+        # return status.get_backup_type(self.full_backup, self.run_type)
 
     @property
     def status(self):
@@ -327,51 +314,6 @@ class MySQLSource(BaseSource):
         :rtype: dict
         """
         return self.dst.status()
-
-    @property
-    def parent(self):
-        """
-        Get name of the parent copy.
-
-        :return: backup name of the parent copy
-            or its own name if the copy is a full copy.
-        :rtype: str
-        """
-        return sorted(self.status[self.full_backup].keys(), reverse=True)[0]
-
-    @property
-    def parent_lsn(self):
-        """LSN of the parent backup copy.
-
-        :return: LSN of the parent or its own LSN
-            if the backup copy is a full copy.
-        """
-        return self.status[self.full_backup][self.parent]['lsn']
-
-    def _full_copy_exists(self):
-        full_backup_index = self._intervals.index(self.full_backup)
-        for i in xrange(full_backup_index, len(self._intervals)):
-            if self.dst.status()[self._intervals[i]]:
-                return True
-
-        return False
-
-    def _delete_from_status(self, status, prefix, backup_copy):
-        LOG.debug('status = %r', status)
-        LOG.debug('prefix = %s', prefix)
-        LOG.debug('file   = %s', backup_copy)
-        try:
-            ref_filename = backup_copy.key
-        except AttributeError:
-            prefix = prefix.rstrip('/')
-            ref_filename = str(backup_copy).replace(prefix + '/', '', 1)
-
-        result_status = status
-        try:
-            del result_status[self.run_type][ref_filename]
-        except KeyError:
-            pass
-        return result_status
 
     def enable_wsrep_desync(self):
         """
@@ -417,20 +359,6 @@ class MySQLSource(BaseSource):
                     cursor.execute("SET GLOBAL wsrep_desync=OFF")
         except pymysql.Error as err:
             LOG.error(err)
-
-    @staticmethod
-    def get_my_cnf():
-        """Get generator that spits out my.cnf files
-
-        :return: File name and content of MySQL config file.
-        :rtype: tuple
-        """
-        for cnf_parg in MY_CNF_COMMON_PATHS:
-            try:
-                with open(cnf_parg) as my_cnf:
-                    yield cnf_parg, my_cnf.read()
-            except IOError:
-                continue
 
     @property
     def wsrep_provider_version(self):

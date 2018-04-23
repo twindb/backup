@@ -16,10 +16,10 @@ from twindb_backup.ssh.client import SshClient
 @mock.patch.object(RemoteMySQLSource, "_get_root_my_cnf")
 def test__clone_config(mock_get_root, mock_save):
     mock_get_root.return_value = "/etc/my.cnf"
-    dst = Ssh()
+    dst = Ssh('some_remote_dir')
     rmt_sql = RemoteMySQLSource({
         "run_type": INTERVALS[0],
-        "full_backup": INTERVALS[0],
+        'backup_type': 'full',
         "mysql_connect_info": MySQLConnectInfo("/"),
         "ssh_connection_info": None
     })
@@ -126,12 +126,11 @@ def test___find_all_cnf(mock_get_text_content, mock_list, tmpdir,
 
     rmt_sql = RemoteMySQLSource({
         "run_type": INTERVALS[0],
-        "full_backup": INTERVALS[0],
+        "backup_type": 'full',
         "mysql_connect_info": MySQLConnectInfo("/"),
         "ssh_connection_info": None
     })
     assert sorted(rmt_sql._find_all_cnf(root_file)) == sorted(files.keys())
-
 
 
 @pytest.mark.parametrize("root, files, "
@@ -290,7 +289,7 @@ def test__save_cfg(mock_all_cnf, mock_get_config, mock_get_content,
 
     rmt_sql = RemoteMySQLSource({
         "run_type": INTERVALS[0],
-        "full_backup": INTERVALS[0],
+        "backup_type": 'full',
         "mysql_connect_info": MySQLConnectInfo("/"),
         "ssh_connection_info": None
     })
@@ -310,6 +309,7 @@ def test__save_cfg(mock_all_cnf, mock_get_config, mock_get_content,
     assert dst.client.write_config.call_count == writing_config_count
     assert mock_get_content.call_count == writing_text_count
 
+
 def test___mem_available():
 
     mock_client = mock.Mock()
@@ -317,7 +317,7 @@ def test___mem_available():
 
     rmt_sql = RemoteMySQLSource({
         "run_type": INTERVALS[0],
-        "full_backup": INTERVALS[0],
+        "backup_type": 'full',
         "mysql_connect_info": MySQLConnectInfo("/"),
         "ssh_connection_info": None
     })
@@ -332,7 +332,7 @@ def test__mem_available_raise_exception():
 
     rmt_sql = RemoteMySQLSource({
         "run_type": INTERVALS[0],
-        "full_backup": INTERVALS[0],
+        "backup_type": 'full',
         "mysql_connect_info": MySQLConnectInfo("/"),
         "ssh_connection_info": None
     })
@@ -346,7 +346,7 @@ def test__get_binlog_info_parses_file():
     mock_client.execute.return_value = ("mysql-bin.000002\t1054", None)
     rmt_sql = RemoteMySQLSource({
         "run_type": INTERVALS[0],
-        "full_backup": INTERVALS[0],
+        "backup_type": 'full',
         "mysql_connect_info": MySQLConnectInfo("/"),
         "ssh_connection_info": None
     })

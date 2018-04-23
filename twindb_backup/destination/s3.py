@@ -19,8 +19,9 @@ from boto3.s3.transfer import TransferConfig
 
 from twindb_backup import LOG, TwinDBBackupError
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.destination.exceptions import S3DestinationError, \
-    StatusFileError
+from twindb_backup.destination.exceptions import S3DestinationError
+# from twindb_backup.status.status import Status
+from twindb_backup.status.mysql_status import MySQLStatus
 
 S3_CONNECT_TIMEOUT = 60
 S3_READ_TIMEOUT = 600
@@ -69,9 +70,9 @@ class S3(BaseDestination):
     """
     def __init__(self, bucket, aws_options, hostname=socket.gethostname()):
 
-        super(S3, self).__init__()
         self.bucket = bucket
         self.remote_path = 's3://{bucket}'.format(bucket=self.bucket)
+        super(S3, self).__init__(self.remote_path)
 
         self.aws = aws_options
 
@@ -428,15 +429,26 @@ class S3(BaseDestination):
                 raise
         return False
 
-    def _write_status(self, status):
-        for i in range(0, 3):
-            response = self.s3_client.put_object(Body=status,
-                                                 Bucket=self.bucket,
-                                                 Key=self.status_tmp_path)
+    def _read_status(self):
+        if self._status_exists():
+            response = self.s3_client.get_object(
+                Bucket=self.bucket,
+                Key=self.status_path)
             self.validate_client_response(response)
-            if self._move_or_wait(3 * i):
-                return
-        raise StatusFileError("Valid status file not found")
+
+            content = response['Body'].read()
+            return MySQLStatus(content=content)
+        else:
+            return MySQLStatus()
+
+    def _write_status(self, status):
+        response = self.s3_client.put_object(
+            Body=status.serialize(),
+            Bucket=self.bucket,
+            Key=self.status_path
+        )
+        self.validate_client_response(response)
+        return status
 
     @staticmethod
     def validate_client_response(response):

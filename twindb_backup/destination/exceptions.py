@@ -17,8 +17,3 @@ class S3DestinationError(DestinationError):
 class SshDestinationError(DestinationError):
     """SSH destination errors"""
     pass
-
-
-class StatusFileError(DestinationError):
-    """Status file errors"""
-    pass

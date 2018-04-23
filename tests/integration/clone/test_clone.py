@@ -85,7 +85,7 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
             hostname=slave['ip']
         ),
         "run_type": INTERVALS[0],
-        "full_backup": INTERVALS[0],
+        "backup_type": 'full'
     })
 
     timeout = time.time() + 30
