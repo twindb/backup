@@ -2,6 +2,7 @@
 For now status is created/maintained for MySQL copies only.
 """
 import json
+import hashlib
 from base64 import b64encode
 
 from twindb_backup import INTERVALS
@@ -10,7 +11,7 @@ from twindb_backup.status.exceptions import StatusError, StatusKeyNotFound
 
 class BaseStatus(object):
     """Base class for status."""
-    __version__ = None
+    __version__ = 1
     _hourly = {}
     _daily = {}
     _weekly = {}
@@ -127,8 +128,15 @@ class BaseStatus(object):
         """
         Return a string that represents current state
         """
+        encoded_status = b64encode(self.__str__())
+        status_md5 = hashlib.md5(encoded_status.encode())
 
-        return b64encode(self.__str__())
+        return json.dumps(
+            {
+                "status": encoded_status,
+                "version": self.version,
+                "md5": status_md5.hexdigest()
+            }, sort_keys=True)
 
     def backup_duration(self, run_type, key):
         """
