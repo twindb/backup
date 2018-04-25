@@ -92,7 +92,6 @@ class Local(BaseDestination):
     def _write_status(self, status):
         with open(self.status_path, 'w') as fstatus:
             fstatus.write(status.serialize())
-        return status
 
     def _status_exists(self):
         return os.path.exists(self.status_path)

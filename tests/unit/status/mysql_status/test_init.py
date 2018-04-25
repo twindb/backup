@@ -3,7 +3,7 @@ from base64 import b64encode
 
 import pytest
 
-from twindb_backup import INTERVALS
+from twindb_backup import INTERVALS, STATUS_FORMAT_VERSION
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.status.exceptions import CorruptedStatus
 from twindb_backup.status.mysql_status import MySQLStatus
@@ -11,15 +11,15 @@ from twindb_backup.status.mysql_status import MySQLStatus
 
 def test_init_creates_empty():
     status = MySQLStatus()
-    assert status.version == 0
+    assert status.version == STATUS_FORMAT_VERSION
     for i in INTERVALS:
         assert getattr(status, i) == {}
 
     assert status.valid
 
 
-def test_init_creates_instance(status_raw_content):
-    status = MySQLStatus(status_raw_content)
+def test_init_creates_instance(deprecated_status_raw_content):
+    status = MySQLStatus(deprecated_status_raw_content)
     assert status.version == 0
     assert status.valid
     key = 'master1/hourly/mysql/mysql-2018-03-28_04_11_16.xbstream.gz'
@@ -60,6 +60,7 @@ pid-file=/var/run/mysqld/mysqld.pid
     assert key in status.hourly
     assert status.hourly[key] == copy
 
+
 def test_init_weekly_only():
     status = MySQLStatus(
         content=b64encode(
@@ -82,6 +83,16 @@ def test_init_weekly_only():
     assert not status.yearly
 
 
-def test_init_invalid_json(invalid_status_raw_content):
+def test_init_invalid_json(invalid_deprecated_status_raw_content):
     with pytest.raises(CorruptedStatus):
-        MySQLStatus(invalid_status_raw_content)
+        MySQLStatus(invalid_deprecated_status_raw_content)
+
+
+def test_init_with_new_format(status_raw_content):
+    status = MySQLStatus(status_raw_content)
+    assert status.version == 1
+
+
+def test_init_with_new_format_with_wrong_checksum(status_raw_content_with_invalid_hash):
+    with pytest.raises(CorruptedStatus):
+        MySQLStatus(status_raw_content_with_invalid_hash)
