@@ -60,6 +60,7 @@ pid-file=/var/run/mysqld/mysqld.pid
     assert key in status.hourly
     assert status.hourly[key] == copy
 
+
 def test_init_weekly_only():
     status = MySQLStatus(
         content=b64encode(
@@ -85,3 +86,13 @@ def test_init_weekly_only():
 def test_init_invalid_json(invalid_deprecated_status_raw_content):
     with pytest.raises(CorruptedStatus):
         MySQLStatus(invalid_deprecated_status_raw_content)
+
+
+def test_init_with_new_format(status_raw_content):
+    status = MySQLStatus(status_raw_content)
+    assert status.version == 1
+
+
+def test_init_with_new_format_with_wrong_checksum(status_raw_content_with_invalid_hash):
+    with pytest.raises(CorruptedStatus):
+        MySQLStatus(status_raw_content_with_invalid_hash)
