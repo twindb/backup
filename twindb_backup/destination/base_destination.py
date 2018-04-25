@@ -8,6 +8,7 @@ from subprocess import Popen, PIPE
 
 from twindb_backup import LOG
 from twindb_backup.destination.exceptions import DestinationError
+from twindb_backup.status.exceptions import CorruptedStatus
 
 
 class BaseDestination(object):
@@ -106,7 +107,13 @@ class BaseDestination(object):
         :rtype: Status
         """
         if status:
-            return self._write_status(status)
+            for _ in xrange(3):
+                self._write_status(status)
+                try:
+                    return self._read_status()
+                except CorruptedStatus:
+                    pass
+            raise DestinationError("Can't write status")
         else:
             return self._read_status()
 

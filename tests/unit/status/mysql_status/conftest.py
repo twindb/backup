@@ -5,7 +5,7 @@ import pytest
 
 
 @pytest.fixture
-def status_raw_content():
+def deprecated_status_raw_content():
     """
     Returns a base64 encoded string with a JSON::
 
@@ -102,7 +102,7 @@ def status_raw_content():
 """
 
 @pytest.fixture
-def invalid_status_raw_content():
+def invalid_deprecated_status_raw_content():
     """
     Returns a base64 encoded string with a JSON::
 

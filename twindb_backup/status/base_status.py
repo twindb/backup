@@ -5,13 +5,13 @@ import json
 import hashlib
 from base64 import b64encode
 
-from twindb_backup import INTERVALS
+from twindb_backup import INTERVALS, STATUS_FORMAT_VERSION
 from twindb_backup.status.exceptions import StatusError, StatusKeyNotFound
 
 
 class BaseStatus(object):
     """Base class for status."""
-    __version__ = 1
+    __version__ = STATUS_FORMAT_VERSION
     _hourly = {}
     _daily = {}
     _weekly = {}
@@ -134,7 +134,7 @@ class BaseStatus(object):
         return json.dumps(
             {
                 "status": encoded_status,
-                "version": self.version,
+                "version": STATUS_FORMAT_VERSION,
                 "md5": status_md5.hexdigest()
             }, sort_keys=True)
 
