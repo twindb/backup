@@ -39,6 +39,7 @@ def test_serialize(status_raw_content, deprecated_status_raw_content):
 
     assert status_original == status_converted
 
+
 def test_serialize_is_valid(status_raw_content):
     status = MySQLStatus(content=status_raw_content)
     serialized_status = status.serialize()
