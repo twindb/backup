@@ -23,7 +23,10 @@ homepage 'https://twindb.com'
 # and /opt/twindb-backup on all other platforms
 install_dir '/opt/twindb-backup'
 
-build_version '2.15.3'
+build_version do
+    source :git, from_dependency: 'twindb-backup'
+    output_format :semver
+end
 
 build_iteration 1
 
