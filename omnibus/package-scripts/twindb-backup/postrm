@@ -26,13 +26,14 @@ if [ -f "/etc/debian_version" ] || [ "$LINUX_DISTRIBUTION" == "Debian" ] || [ "$
     cleanup_symlinks
   fi
 elif [ -f "/etc/redhat-release" ] || [ "$LINUX_DISTRIBUTION" == "RedHat" ] || [ "$LINUX_DISTRIBUTION" == "CentOS" ] || [ "$LINUX_DISTRIBUTION" == "openSUSE" ] || [ "$LINUX_DISTRIBUTION" == "Amazon" ] || [ "$LINUX_DISTRIBUTION" == "SUSE" ]; then
-  rm -rf /opt/twindb-backup
-  rm -rf /var/log/twindb-backup
-  rm -f /etc/twindb/twindb-backup.cfg
-  rm -f /etc/cron.d/twindb-backup
   case "$*" in
     0)
       # We're uninstalling.
+      rm -rf /opt/twindb-backup
+      rm -rf /var/log/twindb-backup
+      rm -f /etc/twindb/twindb-backup.cfg
+      rm -f /etc/cron.d/twindb-backup
+
       cleanup_symlinks
       ;;
     1)
