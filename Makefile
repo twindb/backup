@@ -27,7 +27,9 @@ PYTHON := python
 PYTHON_LIB := $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; import sys; sys.stdout.write(get_python_lib())" )
 
 
-PLATFORM := $(shell if test -z "${PLATFORM}"; then echo "centos"; else echo ${PLATFORM}; fi)
+PLATFORM ?= centos
+OS_VERSION ?= 7
+
 pwd := $(shell pwd)
 build_dir = ${pwd}/build
 top_dir = ${build_dir}/rpmbuild
@@ -56,9 +58,9 @@ upgrade-requirements: ## Upgrade requirements
 	pip-compile --upgrade --verbose --no-index --output-file requirements_dev.txt requirements_dev.in
 
 .PHONY: bootstrap
-bootstrap: clean ## bootstrap the development environment
+bootstrap: ## bootstrap the development environment
 	pip install -U "setuptools>=32.3.1"
-	pip install -U "pip>=9.0.1"
+	pip install -U "pip==9.0.3"
 	pip install -U "pip-tools>=1.6.0"
 	pip-sync requirements.txt requirements_dev.txt
 	pip install --editable .
@@ -70,6 +72,7 @@ clean-build: ## remove build artifacts
 	rm -fr dist/
 	rm -fr .eggs/
 	rm -rf pkg/
+	rm -rf omnibus/pkg/
 	rm -rf cache/
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
@@ -94,24 +97,16 @@ clean-docs:
 
 lint: ## check style with pylint
 	pylint twindb_backup
-	pep8 twindb_backup
+	pycodestyle twindb_backup
 
 
-test: ## run tests quickly with the default Python
+test: ## Run tests quickly with the default Python
 	pytest -xv --cov-report term-missing --cov=./twindb_backup tests/unit
 	codecov
 
-test-integration-backup-s3: ## run backup (S3) integration tests
-	py.test -xsv tests/integration/backup/s3
 
-test-integration-backup-ssh: ## run backup(ssh) integration tests
-	py.test -xsv tests/integration/backup/ssh
-
-test-integration-clone: ## run clone integration tests
-	py.test -xsv tests/integration/clone
-
-test-all: ## run tests on every Python version with tox
-	tox
+test-integration: ## Run integration tests. Must be run in vagrant
+	py.test -xsv tests/integration/
 
 coverage: ## check code coverage quickly with the default Python
 	py.test --cov-report term-missing  --cov=twindb_backup tests/unit
@@ -177,12 +172,26 @@ docker-start:
 		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
 		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
 		-it \
-		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
+		--name builder_xtrabackup \
+		--rm \
+		--dns 8.8.8.8 \
+		"twindb/omnibus-${PLATFORM}:backup-${OS_VERSION}" \
 		bash -l
 
 
-package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
+package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu". OS_VERSION must be: 6, 7, jessie, trusty, xenial.
 	@docker run \
 		-v ${pwd}:/twindb-backup \
-		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
+		--name builder_xtrabackup \
+		--rm \
+		--dns 8.8.8.8 \
+		"twindb/omnibus-${PLATFORM}:backup-${OS_VERSION}" \
 		bash -l /twindb-backup/omnibus/omnibus_build.sh
+
+install_package:
+	if [ "${PLATFORM}" == "centos" ]
+	then
+		yum install -y $(ls omnibus/pkg/*.rpm)
+	else
+		dpkg -i $(ls omnibus/pkg/*.deb) | apt-get install -f
+	fi

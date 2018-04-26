@@ -2,14 +2,13 @@
 """
 Module defines Local destination.
 """
-import base64
-import json
 import os
 import socket
 from subprocess import Popen
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
+from twindb_backup.status.mysql_status import MySQLStatus
 from twindb_backup.util import run_command
 
 
@@ -18,7 +17,7 @@ class Local(BaseDestination):
     Local destination class.
     """
     def __init__(self, path=None):
-        super(Local, self).__init__()
+        super(Local, self).__init__(path)
         self.path = path
         self.remote_path = self.path
         try:
@@ -32,6 +31,7 @@ class Local(BaseDestination):
             path=self.path,
             hostname=socket.gethostname()
         )
+        self.status_tmp_path = self.status_path + ".tmp"
 
     def save(self, handler, name):
         """
@@ -81,19 +81,17 @@ class Local(BaseDestination):
         cmd = ["cat", path]
         return run_command(cmd)
 
-    def _write_status(self, status):
-        raw_status = base64.b64encode(json.dumps(status))
-        with open(self.status_path, 'w') as fstatus:
-            fstatus.write(raw_status)
-        return status
-
     def _read_status(self):
         if not self._status_exists():
-            return self._empty_status
+            return MySQLStatus()
 
         with open(self.status_path) as status_descriptor:
             cout = status_descriptor.read()
-            return json.loads(base64.b64decode(cout))
+            return MySQLStatus(content=cout)
+
+    def _write_status(self, status):
+        with open(self.status_path, 'w') as fstatus:
+            fstatus.write(status.serialize())
 
     def _status_exists(self):
         return os.path.exists(self.status_path)

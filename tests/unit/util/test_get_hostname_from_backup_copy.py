@@ -1,5 +1,6 @@
 import pytest
-from twindb_backup.util import get_hostname_from_backup_copy, split_host_port
+
+from twindb_backup.util import get_hostname_from_backup_copy
 
 
 @pytest.mark.parametrize('name, host', [
@@ -22,34 +23,3 @@ from twindb_backup.util import get_hostname_from_backup_copy, split_host_port
 ])
 def test_get_hostname_from_backup_copy(name, host):
     assert get_hostname_from_backup_copy(name) == host
-
-
-@pytest.mark.parametrize('pair, host, port', [
-    (
-        "10.20.31.1:3306",
-        "10.20.31.1",
-        3306
-    ),
-    (
-        "10.20.31.1",
-        "10.20.31.1",
-        None
-    ),
-    (
-        "10.20.31.1:",
-        "10.20.31.1",
-        None
-    ),
-    (
-        None,
-        None,
-        None
-    ),
-    (
-        "",
-        None,
-        None
-    )
-])
-def test_split_host_port(pair, host, port):
-    assert split_host_port(pair) == (host, port)

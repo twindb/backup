@@ -37,4 +37,4 @@ while [ ${timeout} -gt 0 ] ; do mysqladmin ping && break; sleep 1; timeout=$((${
 cd /twindb-backup
 pip install --editable .
 
-make bootstrap lint test test-integration-backup-s3
+make bootstrap lint test

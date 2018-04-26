@@ -46,12 +46,14 @@ def get_destination(config, hostname=socket.gethostname()):
                       'Will use default %s', ssh_key)
         user = config.get('ssh', 'ssh_user')
         remote_path = config.get('ssh', 'backup_dir')
-        return Ssh(SshConnectInfo(host=host,
-                                  port=port,
-                                  user=user,
-                                  key=ssh_key),
-                   remote_path=remote_path,
-                   hostname=hostname)
+        return Ssh(
+            remote_path,
+            SshConnectInfo(
+                host=host,
+                port=port,
+                user=user,
+                key=ssh_key),
+            hostname=hostname)
 
     elif destination == "s3":
         bucket = config.get('s3', 'BUCKET').strip('"\'')

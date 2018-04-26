@@ -2,8 +2,6 @@
 """
 Module for SSH destination.
 """
-import base64
-import json
 import socket
 
 import os
@@ -17,6 +15,7 @@ from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.ssh.client import SshClient
 from twindb_backup.ssh.exceptions import SshClientException
+from twindb_backup.status.mysql_status import MySQLStatus
 
 
 class SshConnectInfo(object):  # pylint: disable=too-few-public-methods
@@ -42,12 +41,10 @@ class Ssh(BaseDestination):
     :param remote_path: Path to store backup
     :param hostname: Hostname
     """
-
-    def __init__(self, ssh_connect_info=SshConnectInfo(),
-                 remote_path=None, hostname=socket.gethostname()):
-        super(Ssh, self).__init__()
-        if remote_path:
-            self.remote_path = remote_path.rstrip('/')
+    def __init__(self, remote_path,
+                 ssh_connect_info=SshConnectInfo(),
+                 hostname=socket.gethostname()):
+        super(Ssh, self).__init__(remote_path)
 
         self._ssh_client = SshClient(ssh_connect_info)
 
@@ -55,6 +52,7 @@ class Ssh(BaseDestination):
             remote_path=self.remote_path,
             hostname=hostname
         )
+        self.status_tmp_path = self.status_path + ".tmp"
 
     def save(self, handler, name):
         """
@@ -107,18 +105,7 @@ class Ssh(BaseDestination):
         :return: List of files
         :rtype: list
         """
-        ls_options = ""
-
-        if recursive:
-            ls_options = "-R"
-
-        ls_cmd = "ls {ls_options} {prefix}".format(
-            ls_options=ls_options,
-            prefix=prefix
-        )
-
-        with self._ssh_client.get_remote_handlers(ls_cmd) as (_, cout, _):
-            return sorted(cout.read().split())
+        return sorted(self._ssh_client.list_files(prefix, recursive))
 
     def find_files(self, prefix, run_type):
         """
@@ -131,13 +118,13 @@ class Ssh(BaseDestination):
         :return: List of files
         :rtype: list
         """
-        cmd = "find {prefix}/*/{run_type} -type f".format(
+        cmd = "find {prefix}/ -wholename '*/{run_type}/*' -type f".format(
             prefix=prefix,
             run_type=run_type
         )
 
-        with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
-            return sorted(cout.read().split())
+        cout, _ = self._ssh_client.execute(cmd)
+        return sorted(cout.split())
 
     def delete(self, obj):
         """
@@ -206,30 +193,18 @@ class Ssh(BaseDestination):
             if read_process:
                 read_process.join()
 
-    def _write_status(self, status):
-        """
-        Write status
-
-        :param status: Status fo write
-        :type status: str
-        """
-        raw_status = base64.b64encode(json.dumps(status))
-        cmd = "cat - > %s" % self.status_path
-        with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
-            cin.write(raw_status)
-
     def _read_status(self):
-        """
-        Read status
-
-        :return: Status in JSON format, if it exist
-        """
         if self._status_exists():
             cmd = "cat %s" % self.status_path
             with self._ssh_client.get_remote_handlers(cmd) as (_, stdout, _):
-                return json.loads(base64.b64decode(stdout.read()))
+                return MySQLStatus(content=stdout.read())
         else:
-            return self._empty_status
+            return MySQLStatus()
+
+    def _write_status(self, status):
+        cmd = "cat - > %s" % self.status_path
+        with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
+            cin.write(status.serialize())
 
     def _status_exists(self):
         """
@@ -243,28 +218,39 @@ class Ssh(BaseDestination):
               "then echo exists; " \
               "else echo not_exists; " \
               "fi'" % self.status_path
-        _, cout, _ = self._ssh_client.execute(cmd)
-        status = cout.read()
+        status, cerr = self._ssh_client.execute(cmd)
+
         if status.strip() == 'exists':
             return True
         elif status.strip() == 'not_exists':
             return False
         else:
-            raise SshDestinationError('Unrecognized response: %s'
-                                      % cout.read())
+            LOG.error(cerr)
+            msg = 'Unrecognized response: %s' % status
+            if status:
+                raise SshDestinationError(msg)
+            else:
+                raise SshDestinationError('Empty response from '
+                                          'SSH destination')
 
-    def execute_command(self, cmd, quiet=False):
+    def execute_command(self, cmd, quiet=False, background=False):
         """Execute ssh command
 
 
         :param cmd: Command for execution
         :type cmd: str
         :param quiet: If True don't print errors
+        :param background: Don't wait until the command exits.
+        :type background: bool
         :return: Handlers of stdin, stdout and stderr
         :rtype: tuple
         """
         LOG.debug('Executing: %s', cmd)
-        return self._ssh_client.execute(cmd, quiet=quiet)
+        return self._ssh_client.execute(
+            cmd,
+            quiet=quiet,
+            background=background
+        )
 
     @property
     def client(self):
@@ -292,7 +278,8 @@ class Ssh(BaseDestination):
 
         """
         try:
-            return self.execute_command('nc -l %d | %s' % (port, command))
+            return self.execute_command("ncat -l %d --recv-only | "
+                                        "%s" % (port, command))
         except SshDestinationError as err:
             LOG.error(err)
 
@@ -311,14 +298,24 @@ class Ssh(BaseDestination):
         stop_waiting_at = time.time() + wait_timeout
         while time.time() < stop_waiting_at:
             try:
-                cmd = 'netstat -an | grep -w ^tcp | grep -w LISTEN ' \
-                      '| grep -w 0.0.0.0:%d' % port
-                _, cout, cerr = self.execute_command(cmd)
-                LOG.debug('stdout: %s', cout.read())
-                LOG.debug('stderr: %s', cerr.read())
+
+                cmd = "netstat -ln | grep -w 0.0.0.0:%d 2>&1 " \
+                      "> /dev/null" % port
+                cout, cerr = self.execute_command(cmd)
+                LOG.debug('stdout: %s', cout)
+                LOG.debug('stderr: %s', cerr)
                 return True
             except SshClientException as err:
                 LOG.debug(err)
                 time.sleep(1)
 
         return False
+
+    def _get_file_content(self, path):
+        cmd = "cat %s" % path
+        with self._ssh_client.get_remote_handlers(cmd) as (_, stdout, _):
+            return stdout.read()
+
+    def _move_file(self, source, destination):
+        cmd = 'yes | cp -rf %s %s' % (source, destination)
+        self.execute_command(cmd)

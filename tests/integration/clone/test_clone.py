@@ -1,25 +1,29 @@
 import time
-from click.testing import CliRunner
-
-from twindb_backup import INTERVALS, LOG
-from twindb_backup.cli import main
-from twindb_backup.destination.ssh import SshConnectInfo, Ssh
+from tests.integration.conftest import get_twindb_config_dir, docker_execute
+from twindb_backup import INTERVALS, LOG, MY_CNF_COMMON_PATHS
+from twindb_backup.destination.ssh import SshConnectInfo
 from twindb_backup.source.mysql_source import MySQLConnectInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
-from twindb_backup.util import split_host_port
 
 
-def test_clone(master1, master2, config_content_clone, tmpdir):
+def test_clone(runner, master1, slave, docker_client, config_content_clone):
 
-    my_cnf = tmpdir.join('.my.cnf')
-    my_cnf.write("""
+    twindb_config_dir = get_twindb_config_dir(docker_client, runner['Id'])
+    twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
+    twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
+    my_cnf_path = "%s/my.cnf" % twindb_config_dir
+
+    private_key_host = "%s/private_key" % twindb_config_dir
+    private_key_guest = "/etc/twindb/private_key"
+    contents = """
 [client]
 user=dba
 password=qwerty
-""")
-    config = tmpdir.join('twindb-backup.cfg')
-    id_rsa = tmpdir.join('id_rsa')
-    id_rsa.write("""-----BEGIN RSA PRIVATE KEY-----
+"""
+    with open(my_cnf_path, "w") as my_cnf:
+        my_cnf.write(contents)
+
+    private_key = """-----BEGIN RSA PRIVATE KEY-----
 MIIEoAIBAAKCAQEAyXxAjPShNGAedbaEtltFI6A7RlsyI+4evxTq6uQrgbJ6Hm+p
 HBXshXQYXDyVjvytaM+6GKF+r+6+C+6Wc5Xz4lLO/ZiSCdPbyEgqw1JoHrgPNpc6
 wmCtjJExxjzvpwSVgbZg3xOdqW1y+TyqeUkXEg/Lm4VZhN1Q/KyGCgBlWuAXoOYR
@@ -46,39 +50,42 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
 8knW8+YtEOfl5R053SKQgVsmRjjDfvCirGgqC4kSAN4A6MD+GNVXZVUUjAUBVUbU
 8Wt4BxW6kFA7+Su7n8o4DxCqhZYmK9ZUhNjE+uUhxJCJaGr4
 -----END RSA PRIVATE KEY-----
-""")
+"""
+    with open(private_key_host, "w") as key_fd:
+        key_fd.write(private_key)
 
-    content = config_content_clone.format(
-        PRIVATE_KEY=str(id_rsa),
-        MY_CNF=str(my_cnf)
-    )
+    with open(twindb_config_host, 'w') as fp:
+        content = config_content_clone.format(
+            PRIVATE_KEY=private_key_guest,
+            MY_CNF='/etc/twindb/my.cnf'
+        )
+        fp.write(content)
 
-    config.write(content)
-    runner = CliRunner()
-    result = runner.invoke(main,
-                           ['--config', str(config),
-                            '--debug',
-                            'clone', 'mysql', master1['ip'], master2['ip']]
-                           )
-    if result.exit_code != 0:
-        print('Command output:')
-        print(result.output)
-        print(result.exception)
-        print(result.exc_info)
-    assert result.exit_code == 0
+    cmd = '/usr/sbin/sshd'
+    # Run SSH daemon on master1_1
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    print(cout)
 
+    cmd = ['twindb-backup', '--debug',
+           '--config', twindb_config_guest,
+           'clone', 'mysql',
+           "%s:3306" % master1['ip'], "%s:3306" % slave['ip']
+           ]
+    ret, cout = docker_execute(docker_client, runner['Id'], cmd)
+    print(cout)
+    assert ret == 0
     sql_master_2 = RemoteMySQLSource({
         "ssh_connection_info": SshConnectInfo(
-            host=master2['ip'],
+            host=slave['ip'],
             user='root',
-            key=str(id_rsa)
+            key=private_key_guest
         ),
         "mysql_connect_info": MySQLConnectInfo(
-            str(my_cnf),
-            hostname=master2['ip']
+            my_cnf_path,
+            hostname=slave['ip']
         ),
         "run_type": INTERVALS[0],
-        "full_backup": INTERVALS[0],
+        "backup_type": 'full'
     })
 
     timeout = time.time() + 30
@@ -91,4 +98,4 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
                     LOG.info('Relication is up and running')
                     return
     LOG.error('Replication is not running after 30 seconds timeout')
-    assert 0
+    assert False

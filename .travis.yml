@@ -1,26 +1,36 @@
 sudo: required
-env:
-  matrix:
-    - PLATFORM=centos DISTRO=el OS_VERSION=6 DOCKER_IMAGE=centos:centos6
-    - PLATFORM=centos DISTRO=el OS_VERSION=7 DOCKER_IMAGE=centos:centos7
-    - PLATFORM=debian DISTRO=debian OS_VERSION=jessie DOCKER_IMAGE=debian:jessie
-    - PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=trusty DOCKER_IMAGE=ubuntu:trusty
-    - PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=xenial DOCKER_IMAGE=ubuntu:xenial
+
+matrix:
+  fast_finish: true
+  include:
+    - python: '2.7'
+      env: PLATFORM=centos DISTRO=el OS_VERSION=7 DOCKER_IMAGE=twindb/backup-test:centos-7
+    - python: '2.7'
+      env: PLATFORM=centos DISTRO=el OS_VERSION=6 DOCKER_IMAGE=twindb/backup-test:centos-6
+    - python: '2.7'
+      env: PLATFORM=debian DISTRO=debian OS_VERSION=jessie DOCKER_IMAGE=twindb/backup-test:jessie
+    - python: '2.7'
+      env: PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=trusty DOCKER_IMAGE=twindb/backup-test:trusty
+    - python: '2.7'
+      env: PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=xenial DOCKER_IMAGE=twindb/backup-test:xenial
+
 services:
   - docker
 
 before_install:
+  - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
   - sudo apt-get update -qq
-  - sudo docker pull ${DOCKER_IMAGE}
+
+install:
+  - sudo -H make bootstrap
 
 script:
-  - sudo make bootstrap
-  - sudo make test-integration-clone
-  - sudo make test-integration-backup-ssh
-  - make docker-test
+  - make lint test
 
 before_deploy:
-  - travis_wait 30 make package
+  - sudo docker pull ${DOCKER_IMAGE}
+  - travis_wait 120 make package
+  - make test-integration
 
 deploy:
   provider: packagecloud

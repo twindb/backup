@@ -61,10 +61,10 @@ password=qwerty
   $packages = [ 'vim-enhanced', 'nmap-ncat',
     'Percona-Server-client-56', 'Percona-Server-server-56',
     'Percona-Server-devel-56', 'Percona-Server-shared-56', 'percona-toolkit',
-    'percona-xtrabackup',
+    'percona-xtrabackup-24',
     'python2-pip',
     'gcc', 'python-devel', 'zlib-devel', 'openssl-devel',
-    'rpm-build','docker', 'strace']
+    'rpm-build','docker', 'strace', 'jq']
 
   package { $packages:
     ensure  => installed,
@@ -95,7 +95,11 @@ password=qwerty
   service { 'docker':
     ensure => running,
     enable => true,
-    require => Package['docker'],
+    require => [
+      Package['docker'],
+      Exec['disable_selinux'],
+      File['/etc/sysconfig/docker'],
+    ]
   }
 
   exec { 'net.ipv4.ip_forward':
@@ -116,6 +120,17 @@ password=qwerty
     mode    => "0600",
     source  => 'puppet:///modules/profile/twindb-backup.cfg',
     require => File['/etc/twindb']
+  }
+
+  file { "/etc/sysconfig/docker":
+    ensure  => present,
+    owner   => 'root',
+    mode    => "0644",
+    source  => 'puppet:///modules/profile/sysconfig_docker',
+  }
+
+  exec {'disable_selinux':
+    command => '/usr/sbin/setenforce 0'
   }
 
 }
