@@ -448,7 +448,6 @@ class S3(BaseDestination):
             Key=self.status_path
         )
         self.validate_client_response(response)
-        return status
 
     @staticmethod
     def validate_client_response(response):
