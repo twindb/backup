@@ -29,6 +29,11 @@ elif [ -f "/etc/redhat-release" ] || [ "$LINUX_DISTRIBUTION" == "RedHat" ] || [ 
   case "$*" in
     0)
       # We're uninstalling.
+      rm -rf /opt/twindb-backup
+      rm -rf /var/log/twindb-backup
+      rm -f /etc/twindb/twindb-backup.cfg
+      rm -f /etc/cron.d/twindb-backup
+
       cleanup_symlinks
       ;;
     1)
