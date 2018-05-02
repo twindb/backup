@@ -439,7 +439,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
 
             yield connection
         except OperationalError:
-            LOG.error("Can't connect to MySQL server on %s" %
+            LOG.error("Can't connect to MySQL server on %s",
                       self._connect_info.hostname)
             raise MySQLSourceError("Can't connect to MySQL server on %s" %
                                    self._connect_info.hostname)
