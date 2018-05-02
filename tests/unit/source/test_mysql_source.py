@@ -210,7 +210,7 @@ def test__wsrep_provider_version_returns_correct_version(mock_connect):
 
 
 def test__get_connection_raises_mysql_source_error():
-    source = MySQLSource(MySQLConnectInfo(None), 'daily', 'full')
+    source = MySQLSource(MySQLConnectInfo(None,hostname='foo-bar-bah'), 'daily', 'full')
     with pytest.raises(MySQLSourceError):
         with source.get_connection():
             pass
