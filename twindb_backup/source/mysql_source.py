@@ -12,6 +12,7 @@ from subprocess import Popen, PIPE
 import sys
 
 import pymysql
+from pymysql import OperationalError
 
 from twindb_backup import LOG, get_files_to_delete, INTERVALS, \
     XTRABACKUP_BINARY
@@ -437,7 +438,11 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
             )
 
             yield connection
-
+        except OperationalError:
+            LOG.error("Can't connect to MySQL server on %s" %
+                      self._connect_info.hostname)
+            raise MySQLSourceError("Can't connect to MySQL server on %s" %
+                                   self._connect_info.hostname)
         finally:
             if connection:
                 connection.close()

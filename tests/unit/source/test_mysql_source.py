@@ -207,3 +207,10 @@ def test__wsrep_provider_version_returns_correct_version(mock_connect):
 
     source = MySQLSource(MySQLConnectInfo(None), 'daily', 'full')
     assert source.wsrep_provider_version == '3.19'
+
+
+def test__get_connection_raises_mysql_source_error():
+    source = MySQLSource(MySQLConnectInfo(None), 'daily', 'full')
+    with pytest.raises(MySQLSourceError):
+        with source.get_connection():
+            pass

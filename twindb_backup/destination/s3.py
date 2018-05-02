@@ -20,6 +20,7 @@ from boto3.s3.transfer import TransferConfig
 from twindb_backup import LOG, TwinDBBackupError
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import S3DestinationError
+from twindb_backup.source.exceptions import MySQLSourceError
 
 S3_CONNECT_TIMEOUT = 60
 S3_READ_TIMEOUT = 600
@@ -195,6 +196,8 @@ class S3(BaseDestination):
         except S3DestinationError as err:
             LOG.error('S3 upload failed: %s', err)
             raise err
+        except MySQLSourceError:
+            return False
 
     def _list_files(self, prefix):
         """

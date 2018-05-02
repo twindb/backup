@@ -9,6 +9,7 @@ from subprocess import Popen
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import DestinationError
+from twindb_backup.source.exceptions import MySQLSourceError
 from twindb_backup.util import run_command
 
 
@@ -44,7 +45,10 @@ class Local(BaseDestination):
         """
         local_name = self.path + '/' + name
         cmd = ["cat", "-", local_name]
-        self._save(cmd, handler)
+        try:
+            return self._save(cmd, handler)
+        except MySQLSourceError:
+            return False
 
     def get_files(self, prefix, copy_type=None, interval=None):
         cmd = ["find", "%s*" % prefix, "-type", "f"]
