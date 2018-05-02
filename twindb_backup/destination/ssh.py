@@ -13,6 +13,7 @@ import time
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import SshDestinationError
+from twindb_backup.source.exceptions import MySQLSourceError
 from twindb_backup.ssh.client import SshClient
 from twindb_backup.ssh.exceptions import SshClientException
 from twindb_backup.status.mysql_status import MySQLStatus
@@ -82,6 +83,8 @@ class Ssh(BaseDestination):
                             break
             return True
         except SshClientException:
+            return False
+        except MySQLSourceError:
             return False
 
     def _mkdir_r(self, path):

@@ -21,6 +21,7 @@ from twindb_backup import LOG, TwinDBBackupError
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import S3DestinationError
 # from twindb_backup.status.status import Status
+from twindb_backup.source.exceptions import MySQLSourceError
 from twindb_backup.status.mysql_status import MySQLStatus
 
 S3_CONNECT_TIMEOUT = 60
@@ -196,6 +197,8 @@ class S3(BaseDestination):
         except S3DestinationError as err:
             LOG.error('S3 upload failed: %s', err)
             raise err
+        except MySQLSourceError:
+            return False
 
     def list_files(self, prefix, recursive=False):
         """
