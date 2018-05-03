@@ -195,7 +195,7 @@ class S3(BaseDestination):
                 return ret == 0
         except S3DestinationError as err:
             LOG.error('S3 upload failed: %s', err)
-            raise err
+            return False
         except MySQLSourceError:
             return False
 
