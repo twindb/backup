@@ -1,26 +1,16 @@
 """Base class for a backup copy"""
-from twindb_backup import INTERVALS
-from twindb_backup.copy.exceptions import UnknownSourceType, WrongInputData
+
+from abc import abstractproperty
+
+from twindb_backup.copy.exceptions import UnknownSourceType
 
 
-class BaseCopy(object):
+class BaseCopy(object):  # pylint: disable=too-few-public-methods
     """Base class for a backup copy in status."""
-    def __init__(self, host, run_type, name):
+    def __init__(self, host, name):
         self._host = host
-        if run_type in INTERVALS:
-            self._run_type = run_type
-        else:
-            raise WrongInputData(
-                'Wrong value of run_type: %s. Must be one of %s'
-                % (run_type, ", ".join(INTERVALS))
-            )
         self._name = name
         self._source_type = None
-
-    @property
-    def run_type(self):
-        """What run type was when the backup copy was taken."""
-        return self._run_type
 
     @property
     def key(self):
@@ -28,11 +18,21 @@ class BaseCopy(object):
         It's relative to the remote path as from the twindb config.
         It's also a key in status, hence the name."""
         if self._source_type:
-            return "{host}/{run_type}/{source_type}/{name}".format(
+            if self._extra_path is not None:
+                return "{host}/{extra_path}/{source_type}/{name}".format(
+                    host=self._host,
+                    extra_path=self._extra_path,
+                    name=self._name,
+                    source_type=self._source_type
+                )
+            return "{host}/{source_type}/{name}".format(
                 host=self._host,
-                run_type=self._run_type,
                 name=self._name,
                 source_type=self._source_type
             )
         else:
             raise UnknownSourceType("Source type is not defined")
+
+    @abstractproperty
+    def _extra_path(self):
+        """Property that describes additional path to key"""

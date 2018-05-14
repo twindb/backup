@@ -1,11 +1,11 @@
 """Class to describe MySQL backup copy"""
 from base64 import b64encode
 
-from twindb_backup.copy.base_copy import BaseCopy
+from twindb_backup.copy.interval_copy import IntervalCopy
 from twindb_backup.copy.exceptions import WrongInputData
 
 
-class MySQLCopy(BaseCopy):  # pylint: disable=too-many-instance-attributes
+class MySQLCopy(IntervalCopy):  # pylint: disable=too-many-instance-attributes
     """
     Instantiate a MySQL copy.
 
