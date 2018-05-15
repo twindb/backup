@@ -4,11 +4,11 @@ from twindb_backup.copy.base_copy import BaseCopy
 from twindb_backup.copy.exceptions import WrongInputData
 
 
-class IntervalCopy(BaseCopy):
+class PeriodicCopy(BaseCopy):
     """Interval class for a backup copy in status."""
 
     def __init__(self, host, run_type, name):
-        super(IntervalCopy, self).__init__(host, name)
+        super(PeriodicCopy, self).__init__(host, name)
         if run_type in INTERVALS:
             self._run_type = run_type
         else:
