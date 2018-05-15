@@ -10,8 +10,12 @@ import os
 import click
 
 from twindb_backup import setup_logging, LOG, __version__, \
+<<<<<<< HEAD
     TwinDBBackupError, LOCK_FILE, XTRABACKUP_BINARY, XBSTREAM_BINARY, \
     INTERVALS, TYPE_OF_COPIES
+=======
+    TwinDBBackupError, LOCK_FILE, XTRABACKUP_BINARY, XBSTREAM_BINARY, INTERVALS, TYPE_OF_COPIES
+>>>>>>> Refactored destination + refactored available list
 from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.clone import clone_mysql

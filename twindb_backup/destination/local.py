@@ -51,6 +51,10 @@ class Local(BaseDestination):
         with run_command(cmd) as cout:
             return sorted(str(cout).split())
 
+    def get_files(self, prefix, copy_type=None, interval=None):
+        # TODO: Implement
+        pass
+
     def delete(self, obj):
         cmd = ["rm", obj]
         LOG.debug('Running %s', ' '.join(cmd))
