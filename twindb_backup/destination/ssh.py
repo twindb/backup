@@ -10,7 +10,7 @@ from multiprocessing import Process
 
 import time
 
-from twindb_backup import LOG
+from twindb_backup import LOG, INTERVALS
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.ssh.client import SshClient
@@ -41,6 +41,7 @@ class Ssh(BaseDestination):
     :param remote_path: Path to store backup
     :param hostname: Hostname
     """
+
     def __init__(self, remote_path,
                  ssh_connect_info=SshConnectInfo(),
                  hostname=socket.gethostname()):
@@ -94,37 +95,38 @@ class Ssh(BaseDestination):
         cmd = 'mkdir -p "%s"' % path
         self.execute_command(cmd)
 
-    def list_files(self, prefix, recursive=False):
+    def get_files(self, prefix, copy_type=None, interval=None):
         """
-        Get list of file by prefix
+        Get files by prefix, type of copies and interval
 
         :param prefix: Path
-        :param recursive: Recursive return list of files
-        :type prefix: str
-        :type recursive: bool
+        :param copy_type: Type of backup copies
+        :param interval: Run type for search
         :return: List of files
         :rtype: list
         """
-        return sorted(self._ssh_client.list_files(prefix, recursive))
-
-    def find_files(self, prefix, run_type):
-        """
-        Find files by prefix
-
-        :param prefix: Path
-        :param run_type: Run type for search
-        :type prefix: str
-        :type run_type: str
-        :return: List of files
-        :rtype: list
-        """
-        cmd = "find {prefix}/ -wholename '*/{run_type}/*' -type f".format(
-            prefix=prefix,
-            run_type=run_type
-        )
-
-        cout, _ = self._ssh_client.execute(cmd)
-        return sorted(cout.split())
+        if copy_type is None and interval is None:
+            return sorted(self._ssh_client.list_files(prefix))
+        cmd = "find {prefix}/ -type f -wholename ".format(prefix=prefix)
+        if interval:
+            if copy_type is not None:
+                search_key = "'*/{interval}/{copy_type}/*'".format(
+                    interval=interval,
+                    copy_type=copy_type
+                )
+            else:
+                search_key = "'*/{interval}/*'".format(interval=interval)
+            cmd = cmd + search_key
+            cout, _ = self._ssh_client.execute(cmd)
+            return sorted(cout.split())
+        if copy_type is not None:
+            search_key = "'*/{interval}/*'".format(
+                interval=interval,
+                copy_type=copy_type
+            )
+            cmd = cmd + search_key
+            cout, _ = self._ssh_client.execute(cmd)
+            return sorted(cout.split())
 
     def delete(self, obj):
         """

@@ -16,6 +16,7 @@ class Local(BaseDestination):
     """
     Local destination class.
     """
+
     def __init__(self, path=None):
         super(Local, self).__init__(path)
         self.path = path
@@ -63,6 +64,10 @@ class Local(BaseDestination):
 
         with run_command(cmd) as cout:
             return sorted(str(cout).split())
+
+    def get_files(self, prefix, copy_type=None, interval=None):
+        # TODO: Implement
+        pass
 
     def delete(self, obj):
         cmd = ["rm", obj]
