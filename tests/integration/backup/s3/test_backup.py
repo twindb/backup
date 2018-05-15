@@ -243,7 +243,7 @@ password=qwerty
             hostname=hostname,
             run_type='daily'
         )
-        files = dst.list_files(prefix)
+        files = dst.get_files(prefix)
         assert len(files) == n_runs
         assert files == sorted(files)
 

@@ -83,7 +83,7 @@ def test_apply_retention_policy(mock_get_files_to_delete,
     src.apply_retention_policy(mock_dst, mock_config, 'hourly', mock.Mock())
 
     mock_delete_local_files.assert_called_once_with('mysql', mock_config)
-    mock_dst.list_files.assert_called_once_with('/foo/bar/master.box/hourly/mysql/mysql-')
+    mock_dst.get_files.assert_called_once_with('/foo/bar/master.box/hourly/mysql/mysql-')
 
 
 @mock.patch.object(MySQLSource, 'get_connection')
