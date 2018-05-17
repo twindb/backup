@@ -9,12 +9,12 @@ from os.path import basename
 
 from twindb_backup import INTERVALS, LOG
 from twindb_backup.copy.mysql_copy import MySQLCopy
-from twindb_backup.status.base_status import BaseStatus
 from twindb_backup.status.exceptions import CorruptedStatus, \
     StatusError
 
 
 # For backward compatibility content of my.cnf files is base64 encoded.
+from twindb_backup.status.periodic_status import PeriodicStatus
 from twindb_backup.util import normalize_b64_data
 
 
@@ -75,7 +75,7 @@ def _parse_status(content):
     return raw_json["version"], _json
 
 
-class MySQLStatus(BaseStatus):
+class MySQLStatus(PeriodicStatus):
     """
     Class that stores status file and implements operations on it.
     """

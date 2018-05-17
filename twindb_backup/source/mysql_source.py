@@ -227,8 +227,8 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
             dst.delete(backup_copy)
             try:
                 status.remove(
-                    run_type,
-                    dst.basename(backup_copy)
+                    dst.basename(backup_copy),
+                    run_type
                 )
             except StatusKeyNotFound as err:
                 LOG.warning(err)
