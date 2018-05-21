@@ -141,6 +141,8 @@ def share_backup(cfg, s3_url):
 
 
 @main.command()
+@click.option('--binlog', is_flag=True,
+              help='Show only binary log status', default=False)
 @PASS_CFG
 def status(cfg):
     """Print backups status"""

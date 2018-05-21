@@ -31,7 +31,6 @@ class Local(BaseDestination):
             path=self.path,
             hostname=socket.gethostname()
         )
-        self.status_tmp_path = self.status_path + ".tmp"
 
     def save(self, handler, name):
         """
@@ -81,7 +80,7 @@ class Local(BaseDestination):
         cmd = ["cat", path]
         return run_command(cmd)
 
-    def _read_status(self):
+    def _read_status(self, binary_log=False):
         if not self._status_exists():
             return MySQLStatus()
 

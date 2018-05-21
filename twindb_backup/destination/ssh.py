@@ -52,7 +52,6 @@ class Ssh(BaseDestination):
             remote_path=self.remote_path,
             hostname=hostname
         )
-        self.status_tmp_path = self.status_path + ".tmp"
 
     def save(self, handler, name):
         """
@@ -193,7 +192,7 @@ class Ssh(BaseDestination):
             if read_process:
                 read_process.join()
 
-    def _read_status(self):
+    def _read_status(self, binary_log=False):
         if self._status_exists():
             cmd = "cat %s" % self.status_path
             with self._ssh_client.get_remote_handlers(cmd) as (_, stdout, _):

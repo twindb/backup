@@ -14,7 +14,7 @@ from twindb_backup.status.exceptions import CorruptedStatus
 class BaseDestination(object):
     """Base destination class"""
 
-    def __init__(self, remote_path, status_path=None, status_tmp_path=None):
+    def __init__(self, remote_path, status_path=None):
         if not remote_path:
             raise DestinationError(
                 'remote path must be defined and cannot be %r' % remote_path
@@ -24,10 +24,7 @@ class BaseDestination(object):
             self.status_path = status_path
         else:
             self.status_path = '%s/status' % remote_path
-        if status_tmp_path:
-            self.status_tmp_path = status_tmp_path
-        else:
-            self.status_tmp_path = '%s.tmp' % self.status_path
+        self.binlog_status_path = '%s/binlog_status' % remote_path
 
     @abstractmethod
     def save(self, handler, name):
@@ -94,7 +91,7 @@ class BaseDestination(object):
         :return:
         """
 
-    def status(self, status=None):
+    def status(self, status=None, binary_log=False):
         """
         Read or save backup status. Status is an instance of Status class.
         If status is None the function will read status from
@@ -103,6 +100,8 @@ class BaseDestination(object):
 
         :param status: instance of Status class
         :type status: Status
+        :param binary_log: Show only binary log status
+        :type binary_log: bool
         :return: instance of Status class
         :rtype: Status
         """
@@ -115,14 +114,14 @@ class BaseDestination(object):
                     pass
             raise DestinationError("Can't write status")
         else:
-            return self._read_status()
+            return self._read_status(binary_log)
 
     @abstractmethod
     def _write_status(self, status):
         """Function that actually writes status"""
 
     @abstractmethod
-    def _read_status(self):
+    def _read_status(self, binary_log=False):
         """Function that actually reads status"""
 
     @abstractmethod
