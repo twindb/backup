@@ -25,3 +25,8 @@ class BinlogCopy(BaseCopy):  # pylint: disable=too-few-public-methods
     @property
     def _extra_path(self):
         return None
+
+    @property
+    def time_created(self):
+        """Time of created copy"""
+        return self._time_created
