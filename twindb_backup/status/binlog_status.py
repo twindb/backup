@@ -23,7 +23,7 @@ class BinlogStatus(BaseStatus):
             )
 
     def get_latest_backup(self):
-        # TODO: Need to implement (blocked by PR)
+        # TODO: Need to implement (blocked by PR #118)
         pass
 
     def __getitem__(self, item):
