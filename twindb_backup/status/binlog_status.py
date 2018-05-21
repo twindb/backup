@@ -23,8 +23,13 @@ class BinlogStatus(BaseStatus):
             )
 
     def get_latest_backup(self):
-        # TODO: Need to implement (blocked by PR #118)
-        pass
+        latest_copy = None
+        latest_created_time = 0
+        for key, value in self.copies.iteritems():
+            if value.time_created > latest_created_time:
+                latest_copy = key
+                latest_created_time = value.time_created
+        return latest_copy
 
     def __getitem__(self, item):
         if item in self.copies:
