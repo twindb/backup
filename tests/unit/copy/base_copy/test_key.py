@@ -4,8 +4,7 @@ from twindb_backup.copy.base_copy import BaseCopy
 from twindb_backup.copy.exceptions import UnknownSourceType
 
 
-def test_key_raises():
-    backup_copy = BaseCopy('foo', 'daily', 'some_file.txt')
-
+def test_key_raised_error_in_abstract_class():
+    instance = BaseCopy("host", "fname")
     with pytest.raises(UnknownSourceType):
-        assert backup_copy.key
+        key = instance.key
