@@ -5,7 +5,7 @@ from twindb_backup.copy.base_copy import BaseCopy
 
 class BinlogCopy(BaseCopy):  # pylint: disable=too-few-public-methods
     """
-    Instantiate a Binlog copy.
+    Instantiate a Binlog copy in status
 
     :param host: Hostname where the backup was taken from.
     :type host: str
@@ -14,8 +14,6 @@ class BinlogCopy(BaseCopy):  # pylint: disable=too-few-public-methods
     :type name: str
     :param time_created: Time when copy created
     :type time_created: int
-    :raise WrongInputData: if type is neither full or incremental,
-        if name is not a basename.
     """
     def __init__(self, host, name, time_created):
         super(BinlogCopy, self).__init__(host, name)

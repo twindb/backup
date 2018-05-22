@@ -6,7 +6,14 @@ from twindb_backup.copy.exceptions import UnknownSourceType
 
 
 class BaseCopy(object):  # pylint: disable=too-few-public-methods
-    """Base class for a backup copy in status."""
+    """Base class for a backup copy in status
+
+    :param host: Hostname where the backup was taken from.
+    :type host: str
+    :param name: Base name of the backup copy file as it's stored
+        on the destination.
+    :type name: str
+    """
     def __init__(self, host, name):
         self._host = host
         self._name = name
@@ -35,4 +42,9 @@ class BaseCopy(object):  # pylint: disable=too-few-public-methods
 
     @abstractproperty
     def _extra_path(self):
-        """Property that describes additional path to key"""
+        """
+        Property that describes additional path to key.
+        For example:
+            master1/extra_path/mysql/mysql-2018-03-28_04_09_53.xbstream.gz
+            master1/extra_path/mysql/mysql-2018-03-28_04_09_53.xbstream.gz
+        """
