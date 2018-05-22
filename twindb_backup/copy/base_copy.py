@@ -27,7 +27,7 @@ class BaseCopy(object):  # pylint: disable=too-few-public-methods
 
         :return: Path to file
         :rtype: str
-        :raise UnknownSourceType: If source type is not defines
+        :raise UnknownSourceType: If source type is not defined
 
         """
         if self._source_type:
