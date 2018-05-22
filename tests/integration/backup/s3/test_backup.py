@@ -187,7 +187,7 @@ password=qwerty
     assert len(status['hourly'].keys()) == 2
 
 
-def test__s3_find_files_returns_sorted(master1,
+def test__s3_get_files_returns_sorted(master1,
                                        docker_client,
                                        s3_client,
                                        config_content_mysql_only):
@@ -235,7 +235,7 @@ password=qwerty
              )
 
     for x in xrange(10):
-        result = dst.find_files(dst.remote_path, 'daily')
+        result = dst.get_files(dst.remote_path, 'daily')
         assert len(result) == n_runs
         assert result == sorted(result)
         prefix = "{remote_path}/{hostname}/{run_type}/mysql/mysql-".format(
@@ -243,7 +243,7 @@ password=qwerty
             hostname=hostname,
             run_type='daily'
         )
-        files = dst.list_files(prefix)
+        files = dst.get_files(prefix)
         assert len(files) == n_runs
         assert files == sorted(files)
 

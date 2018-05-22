@@ -14,7 +14,7 @@ def test_share_backup_cli(mock_get_destination, mock_print):
     mock_dst = mock.Mock()
     mock_dst.remote_path = '/foo/bar'
     mock_get_destination.return_value = mock_dst
-    mock_dst.find_files.return_value = ["/foo/bar1", "/foo/bar"]
+    mock_dst.get_files.return_value = ["/foo/bar1", "/foo/bar"]
     share(mock_config, "/foo/bar")
     mock_print.assert_called_once()
     mock_dst.share.assert_called_once_with("/foo/bar")

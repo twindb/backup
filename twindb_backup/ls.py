@@ -10,12 +10,14 @@ from twindb_backup import LOG
 from twindb_backup.backup import get_destination
 
 
-def list_available_backups(config):
+def list_available_backups(config, run_type=None, copy_type=None):
     """
     Print known backup copies on a destination specified in the configuration.
 
     :param config: tool configuration
     :type config: ConfigParser.ConfigParser
+    :param run_type: Interval of backup
+    :param copy_type: Backup copy type
     """
     try:
         keep_local_path = config.get('destination', 'keep_local_path')
@@ -29,7 +31,15 @@ def list_available_backups(config):
     except (NoOptionError, NoSectionError):
         pass
     dst = get_destination(config)
-    for run_type in ['hourly', 'daily', 'weekly', 'monthly', 'yearly']:
-        LOG.info('%s copies:', run_type)
-        for copy in dst.find_files(dst.remote_path, run_type):
+
+    if run_type is None and copy_type is None:
+        for run_type in ['hourly', 'daily', 'weekly', 'monthly', 'yearly']:
+            LOG.info('%s copies:', run_type)
+            for copy in dst.get_files(prefix=dst.remote_path,
+                                      interval=run_type):
+                print(copy)
+    else:
+        for copy in dst.get_files(prefix=dst.remote_path,
+                                  interval=run_type,
+                                  copy_type=copy_type):
             print(copy)
