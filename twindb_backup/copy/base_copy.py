@@ -44,7 +44,7 @@ class BaseCopy(object):  # pylint: disable=too-few-public-methods
     def _extra_path(self):
         """Property that describes additional path to key.
         For example:
-            master1/extra_path/mysql/mysql-2018-03-28_04_09_53.xbstream.gz
-            master1/<none>/binlog/mysql-2018-03-28_04_09_53.xbstream.gz
-            master1/daily/files/foo_bar_bah.tar
+            If _extra_path is ``None``, path would be ``master1/binlog/mysql-2018-03-28_04_09_53.xbstream.gz``
+            If _extra_path is ``daily``, path would be ``master1/daily/binlog/mysql-2018-03-28_04_09_53.xbstream.gz``
+            If _extra_path is ``foo-bar``, path would be ``master1/foo-bar/binlog/mysql-2018-03-28_04_09_53.xbstream.gz``
         """
