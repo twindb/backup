@@ -23,7 +23,13 @@ class BaseCopy(object):  # pylint: disable=too-few-public-methods
     def key(self):
         """It's a relative path backup copy.
         It's relative to the remote path as from the twindb config.
-        It's also a key in status, hence the name."""
+        It's also a key in status, hence the name.
+
+        :return: Path to file
+        :rtype: str
+        :raise UnknownSourceType: If source type is not defines
+
+        """
         if self._source_type:
             if self._extra_path is not None:
                 return "{host}/{extra_path}/{source_type}/{name}".format(
@@ -44,7 +50,10 @@ class BaseCopy(object):  # pylint: disable=too-few-public-methods
     def _extra_path(self):
         """Property that describes additional path to key.
         For example:
-            If _extra_path is ``None``, path would be ``master1/binlog/mysql-2018-03-28_04_09_53.xbstream.gz``
-            If _extra_path is ``daily``, path would be ``master1/daily/binlog/mysql-2018-03-28_04_09_53.xbstream.gz``
-            If _extra_path is ``foo-bar``, path would be ``master1/foo-bar/binlog/mysql-2018-03-28_04_09_53.xbstream.gz``
+            If _extra_path is ``None``, path would be
+            ``master1/binlog/mysql-2018-03-28_04_09_53.xbstream.gz``
+            If _extra_path is ``daily``, path would be
+            ``master1/daily/binlog/mysql-2018-03-28_04_09_53.xbstream.gz``
+            If _extra_path is ``foo-bar``, path would be
+            ``master1/foo-bar/binlog/mysql-2018-03-28_04_09_53.xbstream.gz``
         """
