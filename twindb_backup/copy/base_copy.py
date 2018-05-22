@@ -42,9 +42,9 @@ class BaseCopy(object):  # pylint: disable=too-few-public-methods
 
     @abstractproperty
     def _extra_path(self):
-        """
-        Property that describes additional path to key.
+        """Property that describes additional path to key.
         For example:
             master1/extra_path/mysql/mysql-2018-03-28_04_09_53.xbstream.gz
-            master1/extra_path/mysql/mysql-2018-03-28_04_09_53.xbstream.gz
+            master1/<none>/binlog/mysql-2018-03-28_04_09_53.xbstream.gz
+            master1/daily/files/foo_bar_bah.tar
         """
