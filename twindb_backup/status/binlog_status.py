@@ -17,6 +17,17 @@ class BinlogStatus(BaseStatus):
         self.copies[backup_copy.key] = backup_copy
 
     def remove(self, key, period=None):
+        """
+        Remove key from the status.
+
+        :param key: Backup name in status. It's a relative file name
+            of a backup copy. For example,
+            master1/binlog/mysqlbinlog0001.bin
+        :type key: str
+        :param period: Doesn't matter for BinlogStatus
+        :type period: str
+        :raise StatusKeyNotFound: if there is no such key in the status
+        """
         try:
             del self.copies[key]
         except KeyError:
