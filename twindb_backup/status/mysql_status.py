@@ -4,10 +4,9 @@ from base64 import b64decode, b64encode
 
 from os.path import basename
 
-from twindb_backup import INTERVALS, LOG
+from twindb_backup import INTERVALS
 from twindb_backup.copy.mysql_copy import MySQLCopy
-from twindb_backup.status.exceptions import CorruptedStatus, \
-    StatusError
+from twindb_backup.status.exceptions import StatusError
 
 
 # For backward compatibility content of my.cnf files is base64 encoded.

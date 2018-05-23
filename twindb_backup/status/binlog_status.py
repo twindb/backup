@@ -58,4 +58,3 @@ class BinlogStatus(BaseStatus):
                     name,
                     **value
                 )
-
