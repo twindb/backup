@@ -1,7 +1,9 @@
 """Binlog status is a class for a binlog copies status.
 """
 import json
+from os.path import basename
 
+from twindb_backup.copy.binlog_copy import BinlogCopy
 from twindb_backup.status.base_status import BaseStatus
 from twindb_backup.status.exceptions import StatusKeyNotFound
 
@@ -44,3 +46,16 @@ class BinlogStatus(BaseStatus):
     @property
     def valid(self):
         return self.copies is not None
+
+    def __init__(self, content=None):
+        version, _json = self.valid_content(content)
+        if _json is not None:
+            self.__version__ = version
+            for key, value in _json.iteritems():
+                name = basename(key)
+                self.copies[key] = BinlogCopy(
+                    key.split('/')[0],
+                    name,
+                    **value
+                )
+

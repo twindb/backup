@@ -1,8 +1,5 @@
 """Class to store and work with status file"""
 from __future__ import print_function
-
-import hashlib
-import json
 from base64 import b64decode, b64encode
 
 from os.path import basename
@@ -66,15 +63,6 @@ def _deserialize_config_dict(config):
     return config_deserialized
 
 
-def _parse_status(content):
-    raw_json = json.loads(content)
-    md5_hash = hashlib.md5(raw_json["status"].encode()).hexdigest()
-    if md5_hash != raw_json["md5"]:
-        raise CorruptedStatus('Corrupted status: %s', content)
-    _json = json.loads(b64decode(normalize_b64_data(raw_json["status"])))
-    return raw_json["version"], _json
-
-
 class MySQLStatus(PeriodicStatus):
     """
     Class that stores status file and implements operations on it.
@@ -82,17 +70,9 @@ class MySQLStatus(PeriodicStatus):
     def __init__(self, content=None):
         super(MySQLStatus, self).__init__()
 
-        if content:
-            try:
-                self.__version__, _json = _parse_status(content)
-            except (TypeError, ValueError):
-                try:
-                    _json = json.loads(b64decode(normalize_b64_data(content)))
-                    self.__version__ = 0
-                except (TypeError, ValueError) as err:
-                    LOG.debug('Corrupted status content: %s', content)
-                    raise CorruptedStatus('Corrupted status: %s', err.message)
-
+        version, _json = self.valid_content(content)
+        if _json is not None:
+            self.__version__ = version
             _json = _decode_mycnf(_json)
             for i in INTERVALS:
                 for key, value in _json[i].iteritems():

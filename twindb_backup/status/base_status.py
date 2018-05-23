@@ -3,9 +3,20 @@
 import json
 import hashlib
 from abc import abstractproperty, abstractmethod
-from base64 import b64encode
+from base64 import b64encode, b64decode
 
-from twindb_backup import STATUS_FORMAT_VERSION
+from twindb_backup import STATUS_FORMAT_VERSION, LOG
+from twindb_backup.status.exceptions import CorruptedStatus
+from twindb_backup.util import normalize_b64_data
+
+
+def _parse_status(content):
+    raw_json = json.loads(content)
+    md5_hash = hashlib.md5(raw_json["status"].encode()).hexdigest()
+    if md5_hash != raw_json["md5"]:
+        raise CorruptedStatus('Corrupted status: %s', content)
+    _json = json.loads(b64decode(normalize_b64_data(raw_json["status"])))
+    return raw_json["version"], _json
 
 
 class BaseStatus(object):
@@ -71,3 +82,27 @@ class BaseStatus(object):
 
     def __str__(self):
         raise NotImplementedError
+
+    @staticmethod
+    def valid_content(content):
+        """
+        Validate content on valid JSON.
+
+        :param content: Encoded JSON
+        :return: Tuple of version and decoded status
+        :rtype: tuple
+        :raise CorruptedStatus: If status corrupted
+        """
+        if content:
+            try:
+                version, _json = _parse_status(content)
+            except (TypeError, ValueError):
+                try:
+                    _json = json.loads(b64decode(normalize_b64_data(content)))
+                    version = 0
+                except (TypeError, ValueError) as err:
+                    LOG.debug('Corrupted status content: %s', content)
+                    raise CorruptedStatus('Corrupted status: %s', err.message)
+            return version, _json
+        else:
+            return None, None
