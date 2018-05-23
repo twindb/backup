@@ -79,22 +79,9 @@ class PeriodicStatus(BaseStatus):
         return self._yearly
 
     def add(self, backup_copy):
-        """
-        Add entry to status.
-
-        :param backup_copy: Instance of backup copy
-        :type backup_copy: BaseCopy
-        :return: Nothing
-        """
         getattr(self, backup_copy.run_type)[backup_copy.key] = backup_copy
 
     def get_latest_backup(self):
-        """
-        Find the latest backup copy.
-
-        :return: backup copy
-        :rtype: BaseCopy
-        """
         latest_copy = None
         latest_backup_time = 0
         for i in INTERVALS:
