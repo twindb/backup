@@ -92,7 +92,7 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
         datadir = src.datadir
         LOG.debug('datadir: %s', datadir)
 
-        if dst.list_files(datadir):
+        if dst.get_files(datadir):
             LOG.error("Destination datadir is not empty: %s", datadir)
             exit(1)
 

@@ -72,7 +72,7 @@ class FileSource(BaseSource):
         keep_copies = config.getint('retention',
                                     '%s_copies' % run_type)
 
-        backups_list = dst.list_files(prefix)
+        backups_list = dst.get_files(prefix)
 
         LOG.debug('Remote copies: %r', backups_list)
         for backup_copy in get_files_to_delete(backups_list, keep_copies):

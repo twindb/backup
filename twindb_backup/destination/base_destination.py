@@ -68,21 +68,13 @@ class BaseDestination(object):
                                        % (' '.join(cmd), err))
 
     @abstractmethod
-    def list_files(self, prefix, recursive=False):
+    def get_files(self, prefix, copy_type=None, interval=None):
         """
-        List files
+        Get files by copy type and interval
 
         :param prefix:
-        :param recursive:
-        """
-
-    @abstractmethod
-    def find_files(self, prefix, run_type):
-        """
-        Find files
-
-        :param prefix:
-        :param run_type:
+        :param copy_type:
+        :param interval:
         :return:
         """
 

@@ -66,6 +66,7 @@ class S3(BaseDestination):
     :type aws_options: AWSAuthOptions
     :param hostname: Hostname of a host where a backup is taken from.
     """
+
     def __init__(self, bucket, aws_options, hostname=socket.gethostname()):
 
         self.bucket = bucket
@@ -195,7 +196,7 @@ class S3(BaseDestination):
             LOG.error('S3 upload failed: %s', err)
             raise err
 
-    def list_files(self, prefix, recursive=False):
+    def _list_files(self, prefix):
         """
         List files in the destination that have common prefix.
 
@@ -234,36 +235,31 @@ class S3(BaseDestination):
 
         raise S3DestinationError('Failed to list files.')
 
-    def find_files(self, prefix, run_type):
-        """
-        Find files with common prefix and given run type.
-
-        :param prefix: Common prefix.
-        :type prefix: str
-        :param run_type: daily, hourly, etc
-        :type run_type: str
-        :return: list of file names
-        :rtype: list(str)
-        :raise S3DestinationError: if failed to find files.
-        """
+    def get_files(self, prefix, copy_type=None, interval=None):
+        if copy_type is None and interval is None:
+            return self._list_files(prefix)
         s3client = boto3.resource('s3')
         bucket = s3client.Bucket(self.bucket)
-        LOG.debug('Listing %s in bucket %s', prefix, bucket)
 
-        # Try to list the bucket several times
-        # because of intermittent error NoSuchBucket:
-        # https://travis-ci.org/twindb/backup/jobs/204066704
+        LOG.debug('Listing %s in bucket %s', prefix, self.bucket)
+
         retry_timeout = time.time() + S3_READ_TIMEOUT
         retry_interval = 2
         while time.time() < retry_timeout:
             try:
                 files = []
                 all_objects = bucket.objects.filter(Prefix='')
+                search_key = ""
+                if interval is not None:
+                    search_key = "/%s/" % interval
+                    if copy_type:
+                        search_key = search_key + "%s/" % copy_type
+                elif copy_type is not None:
+                    search_key = "/%s/" % copy_type
                 for file_object in all_objects:
-                    if "/" + run_type + "/" in file_object.key:
+                    if search_key in file_object.key:
                         files.append("s3://%s/%s" % (self.bucket,
                                                      file_object.key))
-
                 return sorted(files)
             except ClientError as err:
                 LOG.warning('%s. Will retry in %d seconds.',
@@ -522,7 +518,7 @@ class S3(BaseDestination):
         :raise S3DestinationError: if failed to share object.
         """
         run_type = s3_url.split('/')[4]
-        backup_urls = self.find_files(self.remote_path, run_type)
+        backup_urls = self.get_files(self.remote_path, interval=run_type)
         if s3_url in backup_urls:
             self._set_file_access(S3FileAccess.public_read, s3_url)
             return self._get_file_url(s3_url)

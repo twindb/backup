@@ -10,7 +10,8 @@ import os
 import click
 
 from twindb_backup import setup_logging, LOG, __version__, \
-    TwinDBBackupError, LOCK_FILE, XTRABACKUP_BINARY, XBSTREAM_BINARY
+    TwinDBBackupError, LOCK_FILE, XTRABACKUP_BINARY, XBSTREAM_BINARY, \
+    INTERVALS, TYPE_OF_COPIES
 from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.clone import clone_mysql
@@ -89,8 +90,7 @@ def main(ctx, cfg, debug,  # pylint: disable=too-many-arguments
 
 @main.command()
 @click.argument('run_type',
-                type=click.Choice(['hourly', 'daily', 'weekly',
-                                   'monthly', 'yearly']))
+                type=click.Choice(INTERVALS))
 @click.option('--lock-file', default=LOCK_FILE,
               help='Lock file to protect against multiple backup tool'
                    ' instances at same time.')
@@ -118,10 +118,16 @@ def backup(cfg, run_type, lock_file):
 
 
 @main.command(name='ls')
+@click.option('--run-type',
+              type=click.Choice(INTERVALS),
+              default=None)
+@click.option('--copy-type',
+              type=click.Choice(TYPE_OF_COPIES),
+              default=None)
 @PASS_CFG
-def list_backups(cfg):
+def list_backups(cfg, run_type, copy_type):
     """List available backup copies"""
-    list_available_backups(cfg)
+    list_available_backups(cfg, run_type, copy_type)
 
 
 @main.command(name='share')
