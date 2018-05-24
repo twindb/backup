@@ -20,8 +20,6 @@ from boto3.s3.transfer import TransferConfig
 from twindb_backup import LOG, TwinDBBackupError
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import S3DestinationError
-# from twindb_backup.status.status import Status
-from twindb_backup.status.mysql_status import MySQLStatus
 
 S3_CONNECT_TIMEOUT = 60
 S3_READ_TIMEOUT = 600
@@ -416,9 +414,9 @@ class S3(BaseDestination):
 
         return 0
 
-    def _status_exists(self):
+    def is_file_exist(self, path):
         s3client = boto3.resource('s3')
-        status_object = s3client.Object(self.bucket, self.status_path)
+        status_object = s3client.Object(self.bucket, path)
         try:
             if status_object.content_length > 0:
                 return True
@@ -429,25 +427,25 @@ class S3(BaseDestination):
                 raise
         return False
 
-    def _read_status(self):
-        if self._status_exists():
+    def write_file(self, content, path):
+        response = self.s3_client.put_object(
+            Body=content,
+            Bucket=self.bucket,
+            Key=path
+        )
+        self.validate_client_response(response)
+
+    def read_file(self, path):
+        if self.is_file_exist(path):
             response = self.s3_client.get_object(
                 Bucket=self.bucket,
-                Key=self.status_path)
+                Key=path)
             self.validate_client_response(response)
 
             content = response['Body'].read()
-            return MySQLStatus(content=content)
+            return content
         else:
-            return MySQLStatus()
-
-    def _write_status(self, status):
-        response = self.s3_client.put_object(
-            Body=status.serialize(),
-            Bucket=self.bucket,
-            Key=self.status_path
-        )
-        self.validate_client_response(response)
+            raise S3DestinationError("File not found")
 
     @staticmethod
     def validate_client_response(response):

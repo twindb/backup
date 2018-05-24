@@ -15,7 +15,6 @@ from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.ssh.client import SshClient
 from twindb_backup.ssh.exceptions import SshClientException
-from twindb_backup.status.mysql_status import MySQLStatus
 
 
 class SshConnectInfo(object):  # pylint: disable=too-few-public-methods
@@ -41,6 +40,7 @@ class Ssh(BaseDestination):
     :param remote_path: Path to store backup
     :param hostname: Hostname
     """
+
     def __init__(self, remote_path,
                  ssh_connect_info=SshConnectInfo(),
                  hostname=socket.gethostname()):
@@ -193,31 +193,20 @@ class Ssh(BaseDestination):
             if read_process:
                 read_process.join()
 
-    def _read_status(self):
-        if self._status_exists():
-            cmd = "cat %s" % self.status_path
-            with self._ssh_client.get_remote_handlers(cmd) as (_, stdout, _):
-                return MySQLStatus(content=stdout.read())
+    def write_file(self, content, path):
+        self._ssh_client.write_content(path, content)
+
+    def read_file(self, path):
+        if self.is_file_exist(path):
+            return self._ssh_client.get_text_content(path)
         else:
-            return MySQLStatus()
+            raise SshDestinationError("File not found")
 
-    def _write_status(self, status):
-        cmd = "cat - > %s" % self.status_path
-        with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
-            cin.write(status.serialize())
-
-    def _status_exists(self):
-        """
-        Check, if status exist
-
-        :return: Exist status
-        :rtype: bool
-        :raise SshDestinationError: if any error.
-        """
+    def is_file_exist(self, path):
         cmd = "bash -c 'if test -s %s; " \
               "then echo exists; " \
               "else echo not_exists; " \
-              "fi'" % self.status_path
+              "fi'" % path
         status, cerr = self._ssh_client.execute(cmd)
 
         if status.strip() == 'exists':

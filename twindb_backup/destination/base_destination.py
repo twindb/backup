@@ -9,6 +9,7 @@ from subprocess import Popen, PIPE
 from twindb_backup import LOG
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.status.exceptions import CorruptedStatus
+from twindb_backup.status.mysql_status import MySQLStatus
 
 
 class BaseDestination(object):
@@ -108,26 +109,50 @@ class BaseDestination(object):
         """
         if status:
             for _ in xrange(3):
-                self._write_status(status)
+                self.write_file(status.serialize(),
+                                self.status_path)
                 try:
-                    return self._read_status()
+                    return MySQLStatus(
+                        content=self.read_file(
+                            self.status_path
+                        )
+                    )
                 except CorruptedStatus:
                     pass
             raise DestinationError("Can't write status")
         else:
-            return self._read_status()
+            try:
+                content = self.read_file(self.status_path)
+                return MySQLStatus(content)
+            except DestinationError:
+                return MySQLStatus()
 
     @abstractmethod
-    def _write_status(self, status):
-        """Function that actually writes status"""
+    def write_file(self, content, path):
+        """
+        Function that actually write content to file
+
+        :param content: Content of file
+        :type content: str
+        :param path: Path to file
+        :type path: str
+        """
 
     @abstractmethod
-    def _read_status(self):
-        """Function that actually reads status"""
+    def read_file(self, path):
+        """
+        Function that actually read content from file
+
+        :param path: Path to file
+        :type path: str
+        :return: File content
+        :rtype: str
+        :raise DestinationError: If file not found
+        """
 
     @abstractmethod
-    def _status_exists(self):
-        """Check if status file exists"""
+    def is_file_exist(self, path):
+        """Check if file exists by path"""
 
     def get_run_type_from_full_path(self, path):
         """

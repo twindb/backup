@@ -8,7 +8,7 @@ from subprocess import Popen
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.status.mysql_status import MySQLStatus
+from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.util import run_command
 
 
@@ -16,6 +16,7 @@ class Local(BaseDestination):
     """
     Local destination class.
     """
+
     def __init__(self, path=None):
         super(Local, self).__init__(path)
         self.path = path
@@ -81,17 +82,17 @@ class Local(BaseDestination):
         cmd = ["cat", path]
         return run_command(cmd)
 
-    def _read_status(self):
-        if not self._status_exists():
-            return MySQLStatus()
+    def write_file(self, content, path):
+        with open(path, 'w') as fstatus:
+            fstatus.write(content)
 
-        with open(self.status_path) as status_descriptor:
-            cout = status_descriptor.read()
-            return MySQLStatus(content=cout)
+    def read_file(self, path):
+        if self.is_file_exist(path):
+            with open(path) as status_descriptor:
+                cout = status_descriptor.read()
+                return cout
+        else:
+            raise DestinationError("File not found")
 
-    def _write_status(self, status):
-        with open(self.status_path, 'w') as fstatus:
-            fstatus.write(status.serialize())
-
-    def _status_exists(self):
-        return os.path.exists(self.status_path)
+    def is_file_exist(self, path):
+        return os.path.exists(path)

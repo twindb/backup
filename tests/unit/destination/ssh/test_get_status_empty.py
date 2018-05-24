@@ -5,7 +5,7 @@ from twindb_backup.destination.ssh import Ssh
 
 
 # noinspection PyUnresolvedReferences
-@mock.patch.object(Ssh, '_status_exists')
+@mock.patch.object(Ssh, 'is_file_exist')
 def test_get_status_empty(mock_status_exists):
     mock_status_exists.return_value = False
 
