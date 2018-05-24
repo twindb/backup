@@ -80,7 +80,7 @@ class Local(BaseDestination):
         cmd = ["cat", path]
         return run_command(cmd)
 
-    def _read_status(self, binary_log=False):
+    def _read_status(self):
         if not self._status_exists():
             return MySQLStatus()
 

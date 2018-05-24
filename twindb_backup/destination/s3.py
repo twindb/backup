@@ -427,7 +427,7 @@ class S3(BaseDestination):
                 raise
         return False
 
-    def _read_status(self, binary_log=False):
+    def _read_status(self):
         if self._status_exists():
             response = self.s3_client.get_object(
                 Bucket=self.bucket,

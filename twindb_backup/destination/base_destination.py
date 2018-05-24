@@ -24,7 +24,6 @@ class BaseDestination(object):
             self.status_path = status_path
         else:
             self.status_path = '%s/status' % remote_path
-        self.binlog_status_path = '%s/binlog_status' % remote_path
 
     @abstractmethod
     def save(self, handler, name):
@@ -91,7 +90,7 @@ class BaseDestination(object):
         :return:
         """
 
-    def status(self, status=None, binary_log=False):
+    def status(self, status=None):
         """
         Read or save backup status. Status is an instance of Status class.
         If status is None the function will read status from
@@ -100,8 +99,6 @@ class BaseDestination(object):
 
         :param status: instance of Status class
         :type status: Status
-        :param binary_log: Show only binary log status
-        :type binary_log: bool
         :return: instance of Status class
         :rtype: Status
         """
@@ -114,14 +111,14 @@ class BaseDestination(object):
                     pass
             raise DestinationError("Can't write status")
         else:
-            return self._read_status(binary_log)
+            return self._read_status()
 
     @abstractmethod
     def _write_status(self, status):
         """Function that actually writes status"""
 
     @abstractmethod
-    def _read_status(self, binary_log=False):
+    def _read_status(self):
         """Function that actually reads status"""
 
     @abstractmethod
