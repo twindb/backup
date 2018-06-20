@@ -59,7 +59,7 @@ upgrade-requirements: ## Upgrade requirements
 
 .PHONY: bootstrap
 bootstrap: ## bootstrap the development environment
-	pip install -U "pip<11.0.0"
+	pip install -U "pip<10.0.0"
 	pip install -U "setuptools>=32.3.1"
 	pip install -U "pip-tools>=1.6.0"
 	pip-sync requirements.txt requirements_dev.txt
