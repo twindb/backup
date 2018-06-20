@@ -1,3 +1,5 @@
+# Moto requires this version of dateutil
+python-dateutil<2.7.0,>=2.1
 Click>=6.0
 PyMySQL
 boto3
