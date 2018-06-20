@@ -427,6 +427,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         Connect to MySQL host and yield a connection.
 
         :return: MySQL connection
+        :raise MySQLSourceError: if can't connect to server
         """
         connection = None
         try:

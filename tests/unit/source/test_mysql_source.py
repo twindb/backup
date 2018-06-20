@@ -2,7 +2,7 @@ import logging
 import mock
 import pytest
 
-from pymysql.err import InternalError
+from pymysql.err import InternalError, OperationalError
 from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo, \
     MySQLSourceError
 
@@ -208,9 +208,10 @@ def test__wsrep_provider_version_returns_correct_version(mock_connect):
     source = MySQLSource(MySQLConnectInfo(None), 'daily', 'full')
     assert source.wsrep_provider_version == '3.19'
 
-
-def test__get_connection_raises_mysql_source_error():
-    source = MySQLSource(MySQLConnectInfo(None,hostname='foo-bar-bah'), 'daily', 'full')
+@mock.patch('twindb_backup.source.mysql_source.pymysql.connect')
+def test__get_connection_raises_mysql_source_error(mock_connect):
+    mock_connect.side_effect = OperationalError
+    source = MySQLSource(MySQLConnectInfo(None,hostname=None), 'daily', 'full')
     with pytest.raises(MySQLSourceError):
         with source.get_connection():
             pass
