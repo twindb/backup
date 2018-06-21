@@ -28,6 +28,7 @@ from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.exceptions import SourceError
 from twindb_backup.source.file_source import FileSource
 from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
+from twindb_backup.ssh.exceptions import SshClientException
 from twindb_backup.util import my_cnfs
 
 
@@ -78,7 +79,6 @@ def backup_files(run_type, config):
     :type config: ConfigParser.ConfigParser
     """
     backup_start = time.time()
-    # TODO: Handle exception here
     try:
         for directory in get_directories_to_backup(config):
             LOG.debug('copying %s', directory)
@@ -86,7 +86,11 @@ def backup_files(run_type, config):
             dst = get_destination(config)
             _backup_stream(config, src, dst)
             src.apply_retention_policy(dst, config, run_type)
-    except (DestinationError, SourceError) as err:
+    except (
+            DestinationError,
+            SourceError,
+            SshClientException
+    ) as err:
         raise OperationError(err)
     export_info(config, data=time.time() - backup_start,
                 category=ExportCategory.files,
@@ -145,7 +149,11 @@ def backup_mysql(run_type, config):
     callbacks = []
     try:
         _backup_stream(config, src, dst, callbacks=callbacks)
-    except (DestinationError, SourceError) as err:
+    except (
+            DestinationError,
+            SourceError,
+            SshClientException
+    ) as err:
         raise OperationError(err)
     LOG.debug('Backup copy name: %s', src.get_name())
 
