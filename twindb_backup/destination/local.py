@@ -9,7 +9,6 @@ from subprocess import Popen
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import DestinationError
-from twindb_backup.source.exceptions import MySQLSourceError
 from twindb_backup.util import run_command
 
 
