@@ -8,7 +8,6 @@ import fcntl
 import os
 import signal
 import time
-import traceback
 from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
@@ -17,7 +16,7 @@ from twindb_backup import (
 from twindb_backup.configuration import get_destination
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.destination.exceptions import DestinationError
-from twindb_backup.exceptions import OperationError
+from twindb_backup.exceptions import OperationError, LockWaitTimeoutError
 from twindb_backup.export import export_info
 from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
@@ -274,8 +273,7 @@ def run_backup_job(cfg, run_type, lock_file=LOCK_FILE):
                 LOG.debug('Not running because run_%s is no', run_type)
         except IOError as err:
             if err.errno != errno.EINTR:
-                LOG.debug(traceback.format_exc())
-                raise err
+                raise LockWaitTimeoutError(err)
             msg = 'Another instance of twindb-backup is running?'
             if run_type == 'hourly':
                 LOG.debug(msg)
