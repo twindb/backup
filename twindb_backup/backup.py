@@ -63,9 +63,7 @@ def _backup_stream(config, src, dst, callbacks=None):
     except ModifierException as err:
         LOG.warning(err)
         LOG.warning('Will skip encryption')
-    if not dst.save(stream, src.get_name()):
-        LOG.error('Failed to save backup copy %s', src.get_name())
-        exit(1)
+    dst.save(stream, src.get_name())
 
 
 def backup_files(run_type, config):
@@ -77,6 +75,7 @@ def backup_files(run_type, config):
     :type config: ConfigParser.ConfigParser
     """
     backup_start = time.time()
+    # TODO: Handle exception here
     for directory in get_directories_to_backup(config):
         LOG.debug('copying %s', directory)
         src = FileSource(directory, run_type)

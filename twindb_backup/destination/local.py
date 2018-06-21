@@ -45,10 +45,7 @@ class Local(BaseDestination):
         """
         local_name = self.path + '/' + name
         cmd = ["cat", "-", local_name]
-        try:
-            return self._save(cmd, handler)
-        except MySQLSourceError:
-            return False
+        return self._save(cmd, handler)
 
     def get_files(self, prefix, copy_type=None, interval=None):
         cmd = ["find", "%s*" % prefix, "-type", "f"]
