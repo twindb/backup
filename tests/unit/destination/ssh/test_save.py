@@ -1,5 +1,6 @@
 # noinspection PyPackageRequirements
 import mock
+import pytest
 
 from twindb_backup.destination.ssh import Ssh
 from twindb_backup.ssh.client import SshClient
@@ -27,7 +28,7 @@ def test_save(mock_mkdirname_r, mock_execute):
     mock_file_obj.read.return_value = None
     mock_handler.__enter__.return_value = mock_file_obj
     mock_cin.read.return_value = 'foo'
-    assert dst.save(mock_handler, 'aaa/bbb/ccc/bar')
+    dst.save(mock_handler, 'aaa/bbb/ccc/bar')
     mock_execute.assert_called_once_with('cat - > /path/to/backups/aaa/bbb/ccc/bar')
     mock_handler.read_assert_called_once()
     mock_mkdirname_r.assert_called_once_with('/path/to/backups/aaa/bbb/ccc/bar')
@@ -36,11 +37,12 @@ def test_save(mock_mkdirname_r, mock_execute):
 # noinspection PyUnresolvedReferences
 @mock.patch.object(SshClient, "get_remote_handlers")
 @mock.patch.object(Ssh, '_mkdirname_r')
-def test_save_exception_return_false(mock_mkdirname_r, mock_execute):
+def test_save_exception_not_handled(mock_mkdirname_r, mock_execute):
 
     mock_cin = mock.Mock()
     mock_cin.channel.recv_exit_status.return_value = 0
     dst = Ssh(remote_path='/path/to/backups')
     mock_execute.side_effect = SshClientException
-    assert not dst.save(mock.MagicMock(), 'aaa/bbb/ccc/bar')
+    with pytest.raises(SshClientException):
+        dst.save(mock.MagicMock(), 'aaa/bbb/ccc/bar')
     mock_mkdirname_r.assert_called_once_with('/path/to/backups/aaa/bbb/ccc/bar')

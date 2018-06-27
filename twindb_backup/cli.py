@@ -15,6 +15,7 @@ from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.clone import clone_mysql
 from twindb_backup.configuration import get_destination
+from twindb_backup.exceptions import LockWaitTimeoutError, OperationError
 from twindb_backup.ls import list_available_backups
 from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.restore import restore_from_mysql, restore_from_file
@@ -100,12 +101,10 @@ def backup(cfg, run_type, lock_file):
     try:
 
         run_backup_job(cfg, run_type, lock_file=lock_file)
-
-    except IOError as err:
+    except (LockWaitTimeoutError, OperationError) as err:
         LOG.error(err)
         LOG.debug(traceback.format_exc())
         exit(1)
-
     except ModifierException as err:
         LOG.error('Error in modifier class')
         LOG.error(err)

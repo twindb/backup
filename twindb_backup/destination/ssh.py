@@ -61,27 +61,18 @@ class Ssh(BaseDestination):
         :param handler: stream with content of the backup.
         """
         remote_name = self.remote_path + '/' + name
-        try:
-            self._mkdirname_r(remote_name)
-        except SshClientException as err:
-            LOG.error('Failed to create directory for %s: %s',
-                      remote_name, err)
-            return False
+        self._mkdirname_r(remote_name)
 
-        try:
-            cmd = "cat - > %s" % remote_name
-            with self._ssh_client.get_remote_handlers(cmd) \
-                    as (cin, _, _):
-                with handler as file_obj:
-                    while True:
-                        chunk = file_obj.read(1024)
-                        if chunk:
-                            cin.write(chunk)
-                        else:
-                            break
-            return True
-        except SshClientException:
-            return False
+        cmd = "cat - > %s" % remote_name
+        with self._ssh_client.get_remote_handlers(cmd) \
+                as (cin, _, _):
+            with handler as file_obj:
+                while True:
+                    chunk = file_obj.read(1024)
+                    if chunk:
+                        cin.write(chunk)
+                    else:
+                        break
 
     def _mkdir_r(self, path):
         """

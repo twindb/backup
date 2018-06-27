@@ -8,7 +8,6 @@ import fcntl
 import os
 import signal
 import time
-import traceback
 from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
@@ -16,6 +15,8 @@ from twindb_backup import (
     TwinDBBackupError, save_measures, XTRABACKUP_BINARY, MY_CNF_COMMON_PATHS)
 from twindb_backup.configuration import get_destination
 from twindb_backup.copy.mysql_copy import MySQLCopy
+from twindb_backup.destination.exceptions import DestinationError
+from twindb_backup.exceptions import OperationError, LockWaitTimeoutError
 from twindb_backup.export import export_info
 from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
@@ -23,8 +24,10 @@ from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.modifiers.keeplocal import KeepLocal
+from twindb_backup.source.exceptions import SourceError
 from twindb_backup.source.file_source import FileSource
 from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
+from twindb_backup.ssh.exceptions import SshClientException
 from twindb_backup.util import my_cnfs
 
 
@@ -63,9 +66,7 @@ def _backup_stream(config, src, dst, callbacks=None):
     except ModifierException as err:
         LOG.warning(err)
         LOG.warning('Will skip encryption')
-    if not dst.save(stream, src.get_name()):
-        LOG.error('Failed to save backup copy %s', src.get_name())
-        exit(1)
+    dst.save(stream, src.get_name())
 
 
 def backup_files(run_type, config):
@@ -77,12 +78,19 @@ def backup_files(run_type, config):
     :type config: ConfigParser.ConfigParser
     """
     backup_start = time.time()
-    for directory in get_directories_to_backup(config):
-        LOG.debug('copying %s', directory)
-        src = FileSource(directory, run_type)
-        dst = get_destination(config)
-        _backup_stream(config, src, dst)
-        src.apply_retention_policy(dst, config, run_type)
+    try:
+        for directory in get_directories_to_backup(config):
+            LOG.debug('copying %s', directory)
+            src = FileSource(directory, run_type)
+            dst = get_destination(config)
+            _backup_stream(config, src, dst)
+            src.apply_retention_policy(dst, config, run_type)
+    except (
+            DestinationError,
+            SourceError,
+            SshClientException
+    ) as err:
+        raise OperationError(err)
     export_info(config, data=time.time() - backup_start,
                 category=ExportCategory.files,
                 measure_type=ExportMeasureType.backup)
@@ -138,7 +146,14 @@ def backup_mysql(run_type, config):
     )
 
     callbacks = []
-    _backup_stream(config, src, dst, callbacks=callbacks)
+    try:
+        _backup_stream(config, src, dst, callbacks=callbacks)
+    except (
+            DestinationError,
+            SourceError,
+            SshClientException
+    ) as err:
+        raise OperationError(err)
     LOG.debug('Backup copy name: %s', src.get_name())
 
     kwargs = {
@@ -258,8 +273,7 @@ def run_backup_job(cfg, run_type, lock_file=LOCK_FILE):
                 LOG.debug('Not running because run_%s is no', run_type)
         except IOError as err:
             if err.errno != errno.EINTR:
-                LOG.debug(traceback.format_exc())
-                raise err
+                raise LockWaitTimeoutError(err)
             msg = 'Another instance of twindb-backup is running?'
             if run_type == 'hourly':
                 LOG.debug(msg)
