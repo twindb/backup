@@ -50,6 +50,14 @@ twindb\_backup.configuration module
     :undoc-members:
     :show-inheritance:
 
+twindb\_backup.exceptions module
+--------------------------------
+
+.. automodule:: twindb_backup.exceptions
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 twindb\_backup.export module
 ----------------------------
 

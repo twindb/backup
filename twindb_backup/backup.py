@@ -133,7 +133,7 @@ def backup_mysql(run_type, config):
         'dst': dst,
         'xtrabackup_binary': xtrabackup_binary
     }
-    parent = status.eligble_parent(run_type)
+    parent = status.candidate_parent(run_type)
 
     if kwargs['backup_type'] == 'incremental':
         kwargs['parent_lsn'] = parent.lsn

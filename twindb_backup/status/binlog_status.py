@@ -1,6 +1,7 @@
 """Binlog status is a class for a binlog copies status.
 """
 import json
+from base64 import b64encode
 from os.path import basename
 
 from twindb_backup.copy.binlog_copy import BinlogCopy
@@ -10,11 +11,49 @@ from twindb_backup.status.exceptions import StatusKeyNotFound
 
 class BinlogStatus(BaseStatus):
     """Binlog class for status"""
+    def __init__(self, content=None):
+        super(BinlogStatus, self).__init__(content=content)
 
-    copies = {}
+    def __eq__(self, other):
+        for copy in self:
+            if copy not in other:
+                return False
+        for copy in other:
+            if copy not in self:
+                return False
+        return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def _status_serialize(self):
+        return b64encode(
+            json.dumps(
+                self._as_dict()
+            )
+        )
+
+    def _load(self, status_as_json):
+
+        self._status = []
+        for key, value in json.loads(status_as_json).iteritems():
+            host = key.split('/')[0]
+            name = key.split('/')[2]
+            try:
+                created_at = value['created_at']
+            except KeyError:
+                created_at = value['time_created']
+            copy = BinlogCopy(
+                host=host,
+                name=name,
+                created_at=created_at
+            )
+            self._status.append(copy)
+
+        return self._status
 
     def add(self, backup_copy):
-        self.copies[backup_copy.key] = backup_copy
+        self._status.append(backup_copy)
 
     def remove(self, key, period=None):
         """
@@ -28,44 +67,18 @@ class BinlogStatus(BaseStatus):
         :type period: str
         :raise StatusKeyNotFound: if there is no such key in the status
         """
-        try:
-            del self.copies[key]
-        except KeyError:
-            raise StatusKeyNotFound(
-                "There is no %s in backups" % key
-            )
+        for copy in self._status:
+            if copy.key == key:
+                self._status.remove(copy)
+                return
+        raise StatusKeyNotFound("There is no %s in backups" % key)
 
-    def get_latest_backup(self):
-        latest_copy = None
-        latest_created_time = 0
-        for key, value in self.copies.iteritems():
-            if value.time_created > latest_created_time:
-                latest_copy = key
-                latest_created_time = value.time_created
-        return latest_copy
+    def _as_dict(self):
+        status = {}
+        for c in self:
+            status[c.key] = {
+                'time_created': c.created_at
+            }
+        return status
 
-    def __getitem__(self, item):
-        if item in self.copies:
-            return self.copies[item]
-        return None
 
-    def __str__(self):
-        return json.dumps(self.copies,
-                          indent=4,
-                          sort_keys=True)
-
-    @property
-    def valid(self):
-        return self.copies is not None
-
-    def __init__(self, content=None):
-        version, _json = self.valid_content(content)
-        if _json is not None:
-            self.__version__ = version
-            for key, value in _json.iteritems():
-                name = basename(key)
-                self.copies[key] = BinlogCopy(
-                    key.split('/')[0],
-                    name,
-                    **value
-                )

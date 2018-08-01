@@ -2,32 +2,67 @@
 """
 import json
 import hashlib
-from abc import abstractproperty, abstractmethod
-from base64 import b64encode, b64decode
+from abc import abstractmethod
+from base64 import b64decode
 
-from twindb_backup import STATUS_FORMAT_VERSION, LOG
-from twindb_backup.status.exceptions import CorruptedStatus
-from twindb_backup.util import normalize_b64_data
+from twindb_backup import STATUS_FORMAT_VERSION
+from twindb_backup.status.exceptions import CorruptedStatus, StatusKeyNotFound
 
 
-def _parse_status(content):
-    raw_json = json.loads(content)
-    md5_hash = hashlib.md5(raw_json["status"].encode()).hexdigest()
-    if md5_hash != raw_json["md5"]:
-        raise CorruptedStatus('Corrupted status: %s', content)
-    _json = json.loads(b64decode(normalize_b64_data(raw_json["status"])))
-    return raw_json["version"], _json
+# def _parse_status(content):
+#     raw_json = json.loads(content)
+#     md5_hash = hashlib.md5(raw_json["status"].encode()).hexdigest()
+#     if md5_hash != raw_json["md5"]:
+#         raise CorruptedStatus('Corrupted status: %s', content)
+#     _json = json.loads(b64decode(normalize_b64_data(raw_json["status"])))
+#     return raw_json["version"], _json
 
 
 class BaseStatus(object):
-    """Base class for status."""
+    """Base class for status.
+
+    :param content: if passed it will initialize a status from this string.
+    :type content: str
+    :raise CorruptedStatus: If the content string is not a valid status
+        or empty string.
+    """
     __version__ = STATUS_FORMAT_VERSION
 
-    @abstractproperty
-    def valid(self):
-        """
-        Returns True if status is valid.
-        """
+    @property
+    def md5(self):
+        return hashlib.md5(
+            self._status_serialize()
+        ).hexdigest()
+
+    def __init__(self, content=None):
+        if content == '':
+            raise CorruptedStatus('Status content cannot be an empty string')
+        try:
+            status = json.loads(content)
+            md5_stored = status['md5']
+            md5_calculated = hashlib.md5(
+                status['status']
+            ).hexdigest()
+            if md5_calculated != md5_stored:
+                raise CorruptedStatus('Checksum mismatch')
+
+            self._status = self._load(
+                b64decode(
+                    status['status']
+                )
+            )
+            self._status.sort(
+                key=lambda cp: cp.created_at
+            )
+        except TypeError:  # Init from None
+            self._status = []
+        except ValueError:  # Old format
+            self._status = self._load(
+                b64decode(content)
+            )
+            self._status.sort(
+                key=lambda cp: cp.created_at
+            )
 
     @property
     def version(self):
@@ -38,37 +73,38 @@ class BaseStatus(object):
         """
         return self.__version__
 
-    @abstractmethod
     def add(self, backup_copy):
         """
         Add entry to status.
 
         :param backup_copy: Instance of backup copy
         :type backup_copy: BaseCopy
-        :return: Nothing
         """
+        self._status.append(backup_copy)
 
-    @abstractmethod
-    def remove(self, key, period=None):
+    def remove(self, key):
         """
         Remove key from the status.
         """
+        copy = self[key]
+        self._status.remove(copy)
 
     def serialize(self):
         """
         Return a string that represents current state
         """
-        encoded_status = b64encode(self.__str__())
-        status_md5 = hashlib.md5(encoded_status.encode())
-
         return json.dumps(
             {
-                "status": encoded_status,
-                "version": STATUS_FORMAT_VERSION,
-                "md5": status_md5.hexdigest()
-            }, sort_keys=True)
+                "status": self._status_serialize(),
+                "version": self.version,
+                "md5": self.md5
+            },
+            sort_keys=True
+        )
 
-    @abstractmethod
+    def _status_serialize(self):
+        raise NotImplementedError
+
     def get_latest_backup(self):
         """
         Find the latest backup copy.
@@ -76,33 +112,33 @@ class BaseStatus(object):
         :return: backup copy
         :rtype: BaseCopy
         """
+        return self._status[len(self._status) - 1]
 
     def __getitem__(self, item):
-        raise NotImplementedError
+        if type(item) == int:
+            return self._status[item]
+        elif type(item) == str:
+            for copy in self._status:
+                if copy.key == item:
+                    return copy
+            raise StatusKeyNotFound('Copy %s not found' % item)
+        else:
+            raise NotImplemented('Type %s not supported' % type(item))
 
     def __str__(self):
+        return self.serialize()
+
+    def __len__(self):
+        return len(self._status)
+
+    @abstractmethod
+    def _load(self, status_as_json):
+        """
+        Parse status_as_json string and construct a status.
+
+        :param status_as_json: A JSON string with status
+        :type status_as_json: str
+        :return: status object - list of BackupCopies
+        :rtype: list
+        """
         raise NotImplementedError
-
-    @staticmethod
-    def valid_content(content):
-        """
-        Validate content on valid JSON.
-
-        :param content: Encoded JSON
-        :return: Tuple of version and decoded status
-        :rtype: tuple
-        :raise CorruptedStatus: If status corrupted
-        """
-        if content:
-            try:
-                version, _json = _parse_status(content)
-            except (TypeError, ValueError):
-                try:
-                    _json = json.loads(b64decode(normalize_b64_data(content)))
-                    version = 0
-                except (TypeError, ValueError) as err:
-                    LOG.debug('Corrupted status content: %s', content)
-                    raise CorruptedStatus('Corrupted status: %s', err.message)
-            return version, _json
-        else:
-            return None, None

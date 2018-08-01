@@ -23,11 +23,10 @@ def raw_binlog_status():
           }
         }
     """
-    return """ew0KICAibWFzdGVyMS9iaW5sb2cvbXlzcWxiaW4wMDEuYmluIjogew0KIC
-    AgICJ0aW1lX2NyZWF0ZWQiOiAiMTAwNTAwIg0KICB9LA0KICAibWFzdGVyMS9iaW5sb2
-    cvbXlzcWxiaW4wMDIuYmluIjogew0KICAgICJ0aW1lX2NyZWF0ZWQiOiAiMTAwNTAxIg
-    0KICB9LA0KICAibWFzdGVyMS9iaW5sb2cvbXlzcWxiaW4wMDMuYmluIjogew0KICAgIC
-    J0aW1lX2NyZWF0ZWQiOiAiMTAwNTAyIg0KICB9LA0KICAibWFzdGVyMS9iaW5sb2cvbX
-    lzcWxiaW4wMDQuYmluIjogew0KICAgICJ0aW1lX2NyZWF0ZWQiOiAiMTAwNTAzIg0KIC
-    B9LA0KICAibWFzdGVyMS9iaW5sb2cvbXlzcWxiaW4wMDUuYmluIjogew0KICAgICJ0aW
-    1lX2NyZWF0ZWQiOiAiMTAwNTA0Ig0KICB9DQp9"""
+    return """
+        {
+            "status": "ew0KICAibWFzdGVyMS9iaW5sb2cvbXlzcWxiaW4wMDEuYmluIjogew0KICAgICJ0aW1lX2NyZWF0ZWQiOiAiMTAwNTAwIg0KICB9LA0KICAibWFzdGVyMS9iaW5sb2cvbXlzcWxiaW4wMDIuYmluIjogew0KICAgICJ0aW1lX2NyZWF0ZWQiOiAiMTAwNTAxIg0KICB9LA0KICAibWFzdGVyMS9iaW5sb2cvbXlzcWxiaW4wMDMuYmluIjogew0KICAgICJ0aW1lX2NyZWF0ZWQiOiAiMTAwNTAyIg0KICB9LA0KICAibWFzdGVyMS9iaW5sb2cvbXlzcWxiaW4wMDQuYmluIjogew0KICAgICJ0aW1lX2NyZWF0ZWQiOiAiMTAwNTAzIg0KICB9LA0KICAibWFzdGVyMS9iaW5sb2cvbXlzcWxiaW4wMDUuYmluIjogew0KICAgICJ0aW1lX2NyZWF0ZWQiOiAiMTAwNTA0Ig0KICB9DQp9",
+            "version": 1,
+            "md5": "2cf1662594b5d873d94d3eacf8a1bcdf"
+        }
+        """

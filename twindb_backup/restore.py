@@ -357,7 +357,7 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
                                     xbstream_binary=xbstream_binary)
 
     else:
-        full_copy = status.eligble_parent(
+        full_copy = status.candidate_parent(
             dst.get_run_type_from_full_path(backup_copy)
         )
         full_stream = dst.get_stream(full_copy.key)
