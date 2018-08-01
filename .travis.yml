@@ -25,7 +25,9 @@ install:
   - sudo -H make bootstrap
 
 script:
-  - make lint test test-integration
+  - make lint test
+  - travis_wait 120 make package
+  - make test-integration
 
 before_deploy:
   - sudo docker pull ${DOCKER_IMAGE}
