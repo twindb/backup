@@ -25,7 +25,7 @@ install:
   - sudo -H make bootstrap
 
 script:
-  - make lint test
+  - make lint test test-integration
 
 before_deploy:
   - sudo docker pull ${DOCKER_IMAGE}
