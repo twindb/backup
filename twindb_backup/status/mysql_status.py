@@ -12,55 +12,6 @@ from twindb_backup.copy.mysql_copy import MySQLCopy
 # For backward compatibility content of my.cnf files is base64 encoded.
 from twindb_backup.status.exceptions import CorruptedStatus
 from twindb_backup.status.periodic_status import PeriodicStatus
-from twindb_backup.util import normalize_b64_data
-
-
-# def _decode_mycnf(_json):
-#     for interval in INTERVALS:
-#         for bcopy in _json[interval]:
-#             if "config" in _json[interval][bcopy]:
-#                 _json[interval][bcopy]["config"] = \
-#                     _deserialize_config_dict(
-#                         _json[interval][bcopy]["config"]
-#                     )
-#     return _json
-#
-#
-# def _encode_mycnf(status):
-#     for interval in INTERVALS:
-#         for bcopy in status[interval]:
-#             if "config" in status[interval][bcopy]:
-#                 status[interval][bcopy]["config"] = \
-#                     _serialize_config_dict(
-#                         status[interval][bcopy]["config"]
-#                     )
-#     return status
-#
-#
-# def _serialize_config_dict(config):
-#     config_serialized = []
-#     for cnf in config:
-#         for name, cnf_content in cnf.iteritems():
-#             config_serialized.append(
-#                 {
-#                     name: b64encode(cnf_content)
-#                 }
-#             )
-#     return config_serialized
-#
-#
-# def _deserialize_config_dict(config):
-#     config_deserialized = []
-#     for cnf in config:
-#         for name, cnf_content in cnf.iteritems():
-#             config_deserialized.append(
-#                 {
-#                     name: b64decode(
-#                         normalize_b64_data(cnf_content)
-#                     )
-#                 }
-#             )
-#     return config_deserialized
 
 
 class MySQLStatus(PeriodicStatus):
@@ -84,7 +35,7 @@ class MySQLStatus(PeriodicStatus):
         for interval in INTERVALS:
             status[interval] = {}
             copies = getattr(self, interval)
-            for copy_key, copy in copies.iteritems():
+            for _, copy in copies.iteritems():
 
                 status[interval][copy.key] = copy.as_dict()
                 status[interval][copy.key]['config'] = _serialize_config_dict(
@@ -108,20 +59,12 @@ class MySQLStatus(PeriodicStatus):
         for run_type in INTERVALS:
             for key, value in status_as_obj[run_type].iteritems():
 
-                config = {}
-                try:
-                    for cfg in value['config']:
-                        for cfg_key, cfg_value in cfg.iteritems():
-                            config[cfg_key] = b64decode(cfg_value)
-                except KeyError:
-                    config = {}
-
                 try:
                     host = key.split('/')[0]
                     file_name = key.split('/')[3]
                     kwargs = {
                         'type': value['type'],
-                        'config': config
+                        'config': self.__serialize_config(value)
                     }
                     keys = [
                         'backup_started',
@@ -209,3 +152,15 @@ class MySQLStatus(PeriodicStatus):
         :rtype: bool
         """
         return self.candidate_parent(run_type) is not None
+
+    @staticmethod
+    def __serialize_config(copy):
+        config = {}
+        try:
+            for cfg in copy['config']:
+                for cfg_key, cfg_value in cfg.iteritems():
+                    config[cfg_key] = b64decode(cfg_value)
+        except KeyError:
+            config = {}
+
+        return config

@@ -6,6 +6,19 @@ from twindb_backup.copy.exceptions import WrongInputData
 
 
 class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
+    """
+    Instantiate a MySQL copy.
+
+    :param host: Hostname where the backup was taken from.
+    :type host: str
+    :param run_type: Run type when the backup was taken: daily, weekly, etc.
+    :type run_type: str
+    :param name: Base name of the backup copy file as it's stored
+        on the destination.
+    :type name: str
+    :raise WrongInputData: if type is neither full or incremental,
+        if name is not a basename.
+    """
     __attr = [
         'host',
         'run_type',
@@ -21,19 +34,7 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
         'backup_finished',
         'type'
     ]
-    """
-    Instantiate a MySQL copy.
 
-    :param host: Hostname where the backup was taken from.
-    :type host: str
-    :param run_type: Run type when the backup was taken: daily, weekly, etc.
-    :type run_type: str
-    :param name: Base name of the backup copy file as it's stored
-        on the destination.
-    :type name: str
-    :raise WrongInputData: if type is neither full or incremental,
-        if name is not a basename.
-    """
     def __init__(self, host, run_type, name, **kwargs):
         super(MySQLCopy, self).__init__(host, run_type, name)
 
@@ -185,4 +186,5 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
         return result
 
     def serialize(self):
+        """Prepare the status for storing as a string."""
         return json.dumps(self.as_dict())

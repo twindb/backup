@@ -179,7 +179,7 @@ def backup_mysql(run_type, config):
     status = src.apply_retention_policy(dst, config, run_type, status)
     LOG.debug('status after apply_retention_policy():\n%s', status)
 
-    backup_duration = status.backup_duration(run_type, src.get_name())
+    backup_duration = backup_copy.duration
     export_info(
         config,
         data=backup_duration,

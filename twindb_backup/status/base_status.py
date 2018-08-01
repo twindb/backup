@@ -30,6 +30,10 @@ class BaseStatus(object):
 
     @property
     def md5(self):
+        """
+        MD5 checksum of the status. It is calculated as a md5 of output of
+        ``self._status_serialize()``.
+        """
         return hashlib.md5(
             self._status_serialize()
         ).hexdigest()
@@ -115,15 +119,15 @@ class BaseStatus(object):
         return self._status[len(self._status) - 1]
 
     def __getitem__(self, item):
-        if type(item) == int:
+        if isinstance(item, int):
             return self._status[item]
-        elif type(item) == str:
+        elif isinstance(item, str):
             for copy in self._status:
                 if copy.key == item:
                     return copy
             raise StatusKeyNotFound('Copy %s not found' % item)
         else:
-            raise NotImplemented('Type %s not supported' % type(item))
+            raise NotImplementedError('Type %s not supported' % type(item))
 
     def __str__(self):
         return self.serialize()

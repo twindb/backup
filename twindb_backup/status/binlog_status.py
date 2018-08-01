@@ -2,7 +2,6 @@
 """
 import json
 from base64 import b64encode
-from os.path import basename
 
 from twindb_backup.copy.binlog_copy import BinlogCopy
 from twindb_backup.status.base_status import BaseStatus
@@ -55,7 +54,7 @@ class BinlogStatus(BaseStatus):
     def add(self, backup_copy):
         self._status.append(backup_copy)
 
-    def remove(self, key, period=None):
+    def remove(self, key):
         """
         Remove key from the status.
 
@@ -63,8 +62,6 @@ class BinlogStatus(BaseStatus):
             of a backup copy. For example,
             master1/binlog/mysqlbinlog0001.bin
         :type key: str
-        :param period: Doesn't matter for BinlogStatus
-        :type period: str
         :raise StatusKeyNotFound: if there is no such key in the status
         """
         for copy in self._status:
@@ -75,10 +72,8 @@ class BinlogStatus(BaseStatus):
 
     def _as_dict(self):
         status = {}
-        for c in self:
-            status[c.key] = {
-                'time_created': c.created_at
+        for copy in self:
+            status[copy.key] = {
+                'time_created': copy.created_at
             }
         return status
-
-
