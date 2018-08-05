@@ -10,7 +10,7 @@ from multiprocessing import Process
 
 import time
 
-from twindb_backup import LOG, INTERVALS
+from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.ssh.client import SshClient
@@ -109,13 +109,8 @@ class Ssh(BaseDestination):
             cout, _ = self._ssh_client.execute(cmd)
             return sorted(cout.split())
         if copy_type is not None:
-<<<<<<< HEAD
-            search_key = "'{copy_type}/*'".format(
-=======
             search_key = "'*/{interval}/*'".format(
                 interval=interval,
->>>>>>> Refactored destination + refactored available list
-                copy_type=copy_type
             )
             cmd = cmd + search_key
             cout, _ = self._ssh_client.execute(cmd)
