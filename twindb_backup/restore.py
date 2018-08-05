@@ -383,9 +383,11 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
     config_dir = os.path.join(dst_dir, "_config")
 
     for path, content in get_my_cnf(status, key):
-        config_sub_dir = os.path.join(config_dir,
-                                      os.path.dirname(path).lstrip('/'))
-        os.makedirs(config_sub_dir)
+        config_sub_dir = os.path.join(
+            config_dir,
+            os.path.dirname(path).lstrip('/')
+        )
+        mkdir_p(config_sub_dir, mode=0755)
 
         with open(os.path.join(config_sub_dir,
                                os.path.basename(path)), 'w') as mysql_config:

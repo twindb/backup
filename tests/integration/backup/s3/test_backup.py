@@ -613,13 +613,13 @@ password=qwerty
 
 
 def test_take_mysql_backup_aenc_restores_inc(
-    master1,
-    docker_client,
-    s3_client,
-    config_content_mysql_aenc,
-    gpg_public_key,
-    gpg_private_key,
-    tmpdir):
+        master1,
+        docker_client,
+        s3_client,
+        config_content_mysql_aenc,
+        gpg_public_key,
+        gpg_private_key,
+        tmpdir):
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
 
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir

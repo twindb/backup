@@ -33,7 +33,10 @@ ensure_aws_creds()
 def docker_client():
     for _ in xrange(5):
         try:
-            return docker.DockerClient(version="auto")
+            return docker.DockerClient(
+                version="auto",
+                timeout=600,
+            )
         except DockerException as err:
             LOG.error(err)
             time.sleep(5)
@@ -348,6 +351,7 @@ def docker_execute(client, container_id, cmd, tty=False):
     :type tty: bool
     :rtype: tuple(int, str)
     """
+    LOG.debug('Running %s', ' '.join(cmd))
     api = client.api
     executor = api.exec_create(container_id, cmd, tty=tty)
     exec_id = executor['Id']
