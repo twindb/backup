@@ -13,5 +13,5 @@ def test_init(host, fname):
     instance = BaseCopy(host, fname)
     assert instance._host == host
     assert instance._name == fname
-    assert instance._source_type == None
+    assert instance._source_type is None
 

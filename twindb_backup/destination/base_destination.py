@@ -15,7 +15,7 @@ from twindb_backup.status.mysql_status import MySQLStatus
 class BaseDestination(object):
     """Base destination class"""
 
-    def __init__(self, remote_path, status_path=None, status_tmp_path=None):
+    def __init__(self, remote_path, status_path=None):
         if not remote_path:
             raise DestinationError(
                 'remote path must be defined and cannot be %r' % remote_path
@@ -25,10 +25,6 @@ class BaseDestination(object):
             self.status_path = status_path
         else:
             self.status_path = '%s/status' % remote_path
-        if status_tmp_path:
-            self.status_tmp_path = status_tmp_path
-        else:
-            self.status_tmp_path = '%s.tmp' % self.status_path
 
     @abstractmethod
     def save(self, handler, name):

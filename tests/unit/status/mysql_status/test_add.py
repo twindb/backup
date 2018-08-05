@@ -5,7 +5,6 @@ from twindb_backup.status.mysql_status import MySQLStatus
 
 def test_add(status_raw_empty, tmpdir):
     status = MySQLStatus(status_raw_empty)
-    assert status.valid
     mycnf_1 = tmpdir.join('my-1.cnf')
     mycnf_1.write('some_content_1')
     mycnf_2 = tmpdir.join('my-2.cnf')
@@ -30,9 +29,9 @@ def test_add(status_raw_empty, tmpdir):
     assert status.daily[backup_copy.key].backup_started == 123
     assert status.daily[backup_copy.key].backup_finished == 456
     assert status.daily[backup_copy.key].duration == 333
-    assert {
-        str(mycnf_1): 'some_content_1'
-    } in status.daily[backup_copy.key].config
-    assert {
-               str(mycnf_2): 'some_content_2'
-           } in status.daily[backup_copy.key].config
+
+    config_content = status.daily[backup_copy.key].config[str(mycnf_1)]
+    assert config_content == 'some_content_1'
+
+    config_content = status.daily[backup_copy.key].config[str(mycnf_2)]
+    assert config_content == 'some_content_2'

@@ -82,8 +82,6 @@ class S3(BaseDestination):
         self.status_path = "{hostname}/status".format(
             hostname=hostname
         )
-        self.status_tmp_path = self.status_path + ".tmp"
-
         # Setup an authenticated S3 client that we will use throughout
         self.s3_client = self.setup_s3_client()
 

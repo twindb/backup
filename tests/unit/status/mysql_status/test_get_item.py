@@ -1,13 +1,24 @@
-import json
-from base64 import b64decode
-
+from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.status.mysql_status import MySQLStatus
 
 
 def test_get_item_returns_copy_by_basename(deprecated_status_raw_content):
     status = MySQLStatus(deprecated_status_raw_content)
     key = "master1/hourly/mysql/mysql-2018-03-28_04_11_16.xbstream.gz"
-    backup_copy = status[key]
-    decoded_status = json.loads(b64decode(deprecated_status_raw_content))["hourly"][key]
-    backup_copy_dict = backup_copy.as_dict()
-    assert cmp(backup_copy_dict, decoded_status) == 0
+    copy = status[key]
+    assert type(copy) == MySQLCopy
+    assert copy.run_type == 'hourly'
+    assert copy.host == 'master1'
+    assert copy.name == 'mysql-2018-03-28_04_11_16.xbstream.gz'
+
+
+def test_get_item_returns_copy_by_basename_unicode(
+        deprecated_status_raw_content):
+
+    status = MySQLStatus(deprecated_status_raw_content)
+    key = u"master1/hourly/mysql/mysql-2018-03-28_04_11_16.xbstream.gz"
+    copy = status[key]
+    assert type(copy) == MySQLCopy
+    assert copy.run_type == 'hourly'
+    assert copy.host == 'master1'
+    assert copy.name == 'mysql-2018-03-28_04_11_16.xbstream.gz'

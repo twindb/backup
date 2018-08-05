@@ -52,7 +52,6 @@ class Ssh(BaseDestination):
             remote_path=self.remote_path,
             hostname=hostname
         )
-        self.status_tmp_path = self.status_path + ".tmp"
 
     def save(self, handler, name):
         """
