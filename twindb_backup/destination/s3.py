@@ -188,7 +188,7 @@ class S3(BaseDestination):
             ret = self._upload_object(file_obj, name)
             LOG.debug('Returning code %d', ret)
 
-    def _list_files(self, prefix):
+    def list_files(self, prefix, recursive=False):
         """
         List files in the destination that have common prefix.
 
