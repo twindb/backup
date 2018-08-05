@@ -19,6 +19,13 @@ class BaseCopy(object):  # pylint: disable=too-few-public-methods
         self._name = name
         self._source_type = None
 
+    def __repr__(self):
+        return "%s(%s)" \
+               % (
+                   self.__class__.__name__,
+                   self.key
+               )
+
     @property
     def key(self):
         """It's a relative path backup copy.

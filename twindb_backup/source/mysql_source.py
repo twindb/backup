@@ -227,10 +227,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
             LOG.debug('Deleting remote file %s', backup_copy)
             dst.delete(backup_copy)
             try:
-                status.remove(
-                    run_type,
-                    dst.basename(backup_copy)
-                )
+                status.remove(dst.basename(backup_copy))
             except StatusKeyNotFound as err:
                 LOG.warning(err)
                 LOG.debug('Status: %r', status)

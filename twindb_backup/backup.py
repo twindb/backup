@@ -133,7 +133,7 @@ def backup_mysql(run_type, config):
         'dst': dst,
         'xtrabackup_binary': xtrabackup_binary
     }
-    parent = status.eligble_parent(run_type)
+    parent = status.candidate_parent(run_type)
 
     if kwargs['backup_type'] == 'incremental':
         kwargs['parent_lsn'] = parent.lsn
@@ -179,7 +179,7 @@ def backup_mysql(run_type, config):
     status = src.apply_retention_policy(dst, config, run_type, status)
     LOG.debug('status after apply_retention_policy():\n%s', status)
 
-    backup_duration = status.backup_duration(run_type, src.get_name())
+    backup_duration = backup_copy.duration
     export_info(
         config,
         data=backup_duration,

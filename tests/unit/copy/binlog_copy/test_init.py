@@ -17,7 +17,8 @@ from twindb_backup.copy.binlog_copy import BinlogCopy
 ])
 def test_init(host, fname, time_created):
     instance = BinlogCopy(host, fname, time_created)
-    assert instance._time_created == time_created
-    assert instance._name == fname
-    assert instance._source_type == 'binlog'
-    assert instance._extra_path == None
+    assert instance.created_at == time_created
+    assert instance.key == '{host}/binlog/{name}'.format(
+        host=host,
+        name=fname
+    )

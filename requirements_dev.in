@@ -12,5 +12,6 @@ unittest2
 moto
 pylint==1.6.5
 pycodestyle
-docker
+# Pinning due to a bug https://github.com/rtfd/readthedocs.org/issues/3999
+docker<3.4.0
 python-magic

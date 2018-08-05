@@ -31,7 +31,6 @@ class Local(BaseDestination):
             path=self.path,
             hostname=socket.gethostname()
         )
-        self.status_tmp_path = self.status_path + ".tmp"
 
     def save(self, handler, name):
         """

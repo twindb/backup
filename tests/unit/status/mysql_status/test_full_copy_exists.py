@@ -23,7 +23,11 @@ from twindb_backup.status.mysql_status import MySQLStatus
         'daily',
         'weekly',
         {
-            'hourly': {'foo/hourly/some_file.txt': {'type': 'full'}},
+            'hourly': {
+                'foo/hourly/mysql/some_file.txt': {
+                    'type': 'full'
+                }
+            },
             'daily': {},
             'weekly': {},
             'monthly': {},
@@ -38,7 +42,7 @@ from twindb_backup.status.mysql_status import MySQLStatus
             'hourly': {},
             'daily': {},
             'weekly': {
-                'foo/weekly/some_file.txt': {
+                'foo/weekly/mysql/some_file.txt': {
                     "type": "full"
                 }
             },
@@ -54,7 +58,7 @@ from twindb_backup.status.mysql_status import MySQLStatus
             'hourly': {},
             'daily': {},
             'weekly': {
-                'foo/weekly/some_file.txt': {
+                'foo/weekly/mysql/some_file.txt': {
                     "type": "incremental"
                 }
             },
@@ -69,11 +73,15 @@ from twindb_backup.status.mysql_status import MySQLStatus
         {
             'hourly': {},
             'daily': {
-                'foo/daily/some_file.txt': {
+                'foo/daily/mysql/some_file.txt': {
                     'type': "full"
                 }
             },
-            'weekly': {'foo/weekly/some_file.txt': {'type': 'incremental'}},
+            'weekly': {
+                'foo/weekly/mysql/some_file.txt': {
+                    'type': 'incremental'
+                }
+            },
             'monthly': {},
             'yearly': {}
         },
@@ -85,12 +93,12 @@ from twindb_backup.status.mysql_status import MySQLStatus
         {
             'hourly': {},
             'daily': {
-                'foo/daily/some_file.txt': {
+                'foo/daily/mysql/some_file.txt': {
                     'type': "incremental"
                 }
             },
             'weekly': {
-                'foo/weekly/some_file.txt': {
+                'foo/weekly/mysql/some_file.txt': {
                     'type': 'incremental'
                 }
             },
@@ -106,11 +114,11 @@ from twindb_backup.status.mysql_status import MySQLStatus
         {
             'hourly': {},
             'daily': {
-                'foo/daily/some_file.txt': {
+                'foo/daily/mysql/some_file.txt': {
                     'type': "incremental"
                 }
             },
-            'weekly': {'foo/weekly/some_file.txt': {'type': "full"}},
+            'weekly': {'foo/weekly/mysql/some_file.txt': {'type': "full"}},
             'monthly': {},
             'yearly': {}
         },
@@ -123,7 +131,7 @@ from twindb_backup.status.mysql_status import MySQLStatus
         {
             'hourly': {},
             'daily': {},
-            'weekly': {'foo/weekly/some_file.txt': {'type': "full"}},
+            'weekly': {'foo/weekly/mysql/some_file.txt': {'type': "full"}},
             'monthly': {},
             'yearly': {}
         },
@@ -135,7 +143,7 @@ from twindb_backup.status.mysql_status import MySQLStatus
         {
             'hourly': {},
             'daily': {},
-            'weekly': {'foo/weekly/some_file.txt': {'type': "incremental"}},
+            'weekly': {'foo/weekly/mysql/some_file.txt': {'type': "incremental"}},
             'monthly': {},
             'yearly': {}
         },
@@ -196,10 +204,3 @@ def test_full_copy_exists(run_type, full_backup, status, expected):
         )
     )
     assert istatus.full_copy_exists(run_type) == expected
-
-    # mock_dst = mock.Mock()
-    # mock_dst.status.return_value = status
-    #
-    # src = MySQLSource(MySQLConnectInfo('/foo/bar'),
-    #                   run_type, full_backup, mock_dst)
-    # assert src._full_copy_exists() == expected
