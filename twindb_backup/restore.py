@@ -4,7 +4,6 @@ Module that restores backup copies.
 """
 from __future__ import print_function
 import ConfigParser
-import base64
 from subprocess import Popen, PIPE
 import os
 import tempfile
@@ -23,7 +22,7 @@ from twindb_backup.exporter.base_exporter import ExportCategory, \
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, \
-    get_hostname_from_backup_copy, empty_dir, normalize_b64_data
+    get_hostname_from_backup_copy, empty_dir
 
 
 def get_my_cnf(status, key):
@@ -31,17 +30,14 @@ def get_my_cnf(status, key):
     Get MySQL config from the status.
 
     :param status: Backup status.
-    :type status: dict
+    :type status: MySQLStatus
     :param key: Backup name.
     :type key: str
     :return: Content of my.cnf or None if not found
     :rtype: str
     """
-    for cnf in status[key].config:
-        k = cnf.keys()[0]
-        cnf[k] = normalize_b64_data(cnf[k])
-        value = base64.b64decode(cnf[k])
-        yield k, value
+    for path in status[key].config:
+        yield path, status[key].config[path]
 
 
 def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,

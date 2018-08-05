@@ -121,16 +121,18 @@ class BaseStatus(object):
     def __getitem__(self, item):
         if isinstance(item, int):
             return self._status[item]
-        elif isinstance(item, str):
+        elif isinstance(item, str) or isinstance(item, unicode):
             for copy in self._status:
-                if copy.key == item:
+                if copy.key == str(item):
                     return copy
             raise StatusKeyNotFound('Copy %s not found' % item)
         else:
             raise NotImplementedError('Type %s not supported' % type(item))
 
     def __str__(self):
-        return self.serialize()
+        return b64decode(
+            self._status_serialize()
+        )
 
     def __len__(self):
         return len(self._status)

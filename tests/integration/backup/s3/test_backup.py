@@ -2,7 +2,6 @@ import StringIO
 import json
 import os
 import magic
-import time
 
 from tests.integration.conftest import docker_execute, get_twindb_config_dir
 from twindb_backup.destination.s3 import S3, AWSAuthOptions
@@ -595,8 +594,6 @@ password=qwerty
         cmd
     )
     print(cout)
-    # print('Test paused')
-    # time.sleep(360000)
     assert ret == 0
 
     cmd = [
@@ -759,8 +756,6 @@ password=qwerty
         cmd
     )
     print(cout)
-    # print('Test paused')
-    # time.sleep(360000)
     assert ret == 0
 
     cmd = [

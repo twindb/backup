@@ -10,3 +10,15 @@ def test_get_item_returns_copy_by_basename(deprecated_status_raw_content):
     assert copy.run_type == 'hourly'
     assert copy.host == 'master1'
     assert copy.name == 'mysql-2018-03-28_04_11_16.xbstream.gz'
+
+
+def test_get_item_returns_copy_by_basename_unicode(
+        deprecated_status_raw_content):
+
+    status = MySQLStatus(deprecated_status_raw_content)
+    key = u"master1/hourly/mysql/mysql-2018-03-28_04_11_16.xbstream.gz"
+    copy = status[key]
+    assert type(copy) == MySQLCopy
+    assert copy.run_type == 'hourly'
+    assert copy.host == 'master1'
+    assert copy.name == 'mysql-2018-03-28_04_11_16.xbstream.gz'
