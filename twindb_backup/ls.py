@@ -6,7 +6,7 @@ from __future__ import print_function
 from ConfigParser import NoOptionError, NoSectionError
 import os
 from subprocess import Popen
-from twindb_backup import LOG
+from twindb_backup import LOG, INTERVALS
 from twindb_backup.backup import get_destination
 
 
@@ -29,7 +29,9 @@ def list_available_backups(config):
     except (NoOptionError, NoSectionError):
         pass
     dst = get_destination(config)
-    for run_type in ['hourly', 'daily', 'weekly', 'monthly', 'yearly']:
+    for run_type in INTERVALS:
         LOG.info('%s copies:', run_type)
-        for copy in dst.find_files(dst.remote_path, run_type):
+        for copy in dst.list_files(
+                dst.remote_path,
+                pattern="/%s/" % run_type):
             print(copy)

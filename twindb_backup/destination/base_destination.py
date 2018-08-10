@@ -2,6 +2,7 @@
 """
 Module defines Base destination class and destination exception(s).
 """
+import re
 from abc import abstractmethod
 
 from subprocess import Popen, PIPE
@@ -62,22 +63,13 @@ class BaseDestination(object):
                                        % (' '.join(cmd), err))
 
     @abstractmethod
-    def list_files(self, prefix, recursive=False):
+    def list_files(self, prefix, recursive=False, pattern=None):
         """
         List files
 
         :param prefix:
         :param recursive:
-        """
-
-    @abstractmethod
-    def find_files(self, prefix, run_type):
-        """
-        Find files
-
-        :param prefix:
-        :param run_type:
-        :return:
+        :param pattern: files must match with this regexp if specified
         """
 
     @abstractmethod
@@ -166,3 +158,14 @@ class BaseDestination(object):
             filename=latest
         )
         return url
+
+    @staticmethod
+    def _match_files(files, pattern=None):
+        result = []
+        for fil in files:
+            if pattern:
+                if re.search(pattern, fil):
+                    result.append(fil)
+            else:
+                result.append(fil)
+        return result

@@ -84,7 +84,7 @@ class Ssh(BaseDestination):
         cmd = 'mkdir -p "%s"' % path
         self.execute_command(cmd)
 
-    def list_files(self, prefix, recursive=False):
+    def list_files(self, prefix, recursive=False, pattern=None):
         """
         Get list of file by prefix
 
@@ -92,29 +92,17 @@ class Ssh(BaseDestination):
         :param recursive: Recursive return list of files
         :type prefix: str
         :type recursive: bool
+        :param pattern: files must match with this regexp if specified
+        :type pattern: str
         :return: List of files
         :rtype: list
         """
-        return sorted(self._ssh_client.list_files(prefix, recursive))
-
-    def find_files(self, prefix, run_type):
-        """
-        Find files by prefix
-
-        :param prefix: Path
-        :param run_type: Run type for search
-        :type prefix: str
-        :type run_type: str
-        :return: List of files
-        :rtype: list
-        """
-        cmd = "find {prefix}/ -wholename '*/{run_type}/*' -type f".format(
-            prefix=prefix,
-            run_type=run_type
+        return sorted(
+            self._match_files(
+                self._ssh_client.list_files(prefix, recursive),
+                pattern=pattern
+            )
         )
-
-        cout, _ = self._ssh_client.execute(cmd)
-        return sorted(cout.split())
 
     def delete(self, obj):
         """

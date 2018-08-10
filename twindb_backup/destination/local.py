@@ -44,7 +44,7 @@ class Local(BaseDestination):
         cmd = ["cat", "-", local_name]
         self._save(cmd, handler)
 
-    def list_files(self, prefix, recursive=False):
+    def list_files(self, prefix, recursive=False, pattern=None):
 
         if recursive:
             ls_cmd = ["ls", "-R", "%s*" % prefix]
@@ -54,14 +54,12 @@ class Local(BaseDestination):
         cmd = ls_cmd
 
         with run_command(cmd) as cout:
-            return sorted(str(cout).split())
-
-    def find_files(self, prefix, run_type):
-
-        cmd = ["find", "%s*" % prefix, "-type", "f"]
-
-        with run_command(cmd) as cout:
-            return sorted(str(cout).split())
+            return sorted(
+                self._match_files(
+                    str(cout).split(),
+                    pattern=pattern
+                )
+            )
 
     def delete(self, obj):
         cmd = ["rm", obj]
