@@ -44,7 +44,8 @@ class Local(BaseDestination):
         cmd = ["cat", "-", local_name]
         self._save(cmd, handler)
 
-    def list_files(self, prefix, recursive=False, pattern=None):
+    def list_files(self, prefix, recursive=False, pattern=None,
+                   files_only=False):
 
         if recursive:
             ls_cmd = ["ls", "-R", "%s*" % prefix]

@@ -7,7 +7,8 @@ import socket
 
 from twindb_backup import LOG
 from twindb_backup.destination.s3 import S3, AWSAuthOptions
-from twindb_backup.destination.ssh import Ssh, SshConnectInfo
+from twindb_backup.destination.ssh import Ssh
+from twindb_backup.exceptions import OperationError
 from twindb_backup.exporter.datadog_exporter import DataDogExporter
 
 
@@ -48,12 +49,12 @@ def get_destination(config, hostname=socket.gethostname()):
         remote_path = config.get('ssh', 'backup_dir')
         return Ssh(
             remote_path,
-            SshConnectInfo(
-                host=host,
-                port=port,
-                user=user,
-                key=ssh_key),
-            hostname=hostname)
+            hostname=hostname,
+            ssh_host=host,
+            ssh_port=port,
+            ssh_user=user,
+            ssh_key=ssh_key,
+        )
 
     elif destination == "s3":
         bucket = config.get('s3', 'BUCKET').strip('"\'')
@@ -69,7 +70,7 @@ def get_destination(config, hostname=socket.gethostname()):
 
     else:
         LOG.critical('Destination %s is not supported', destination)
-        exit(-1)
+        raise OperationError('Unsupported destination')
 
 
 def get_export_transport(config):

@@ -63,13 +63,15 @@ class BaseDestination(object):
                                        % (' '.join(cmd), err))
 
     @abstractmethod
-    def list_files(self, prefix, recursive=False, pattern=None):
+    def list_files(self, prefix, recursive=False, pattern=None,
+                   files_only=False):
         """
         List files
 
         :param prefix:
         :param recursive:
         :param pattern: files must match with this regexp if specified
+        :param files_only:
         """
 
     @abstractmethod
@@ -93,14 +95,16 @@ class BaseDestination(object):
         :return: instance of Status class
         :rtype: Status
         """
-        if status:
-            for _ in xrange(3):
-                self._write_status(status)
+        def _write_retry(status_content, attempts=3):
+            for _ in xrange(attempts):
+                self._write_status(status_content)
                 try:
                     return self._read_status()
                 except CorruptedStatus:
                     pass
             raise DestinationError("Can't write status")
+        if status:
+            return _write_retry(status, attempts=3)
         else:
             return self._read_status()
 
@@ -161,6 +165,8 @@ class BaseDestination(object):
 
     @staticmethod
     def _match_files(files, pattern=None):
+        LOG.debug('Pattern: %s', pattern)
+        LOG.debug('Unfiltered files: %r', files)
         result = []
         for fil in files:
             if pattern:
@@ -168,4 +174,5 @@ class BaseDestination(object):
                     result.append(fil)
             else:
                 result.append(fil)
+        LOG.debug('Filtered files: %r', result)
         return result

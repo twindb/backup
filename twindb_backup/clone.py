@@ -9,7 +9,7 @@ import time
 from pymysql import OperationalError
 
 from twindb_backup import INTERVALS, LOG, TwinDBBackupError
-from twindb_backup.destination.ssh import Ssh, SshConnectInfo
+from twindb_backup.destination.ssh import Ssh
 from twindb_backup.source.mysql_source import MySQLConnectInfo, MySQLMasterInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
 from twindb_backup.ssh.exceptions import SshClientException
@@ -65,11 +65,10 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
         LOG.debug('SSH username: %s', cfg.get('ssh', 'ssh_user'))
         LOG.debug('SSH key: %s', cfg.get('ssh', 'ssh_key'))
         src = RemoteMySQLSource({
-            "ssh_connection_info": SshConnectInfo(
-                host=split_host_port(source)[0],
-                user=cfg.get('ssh', 'ssh_user'),
-                key=cfg.get('ssh', 'ssh_key')
-            ),
+            "ssh_host": split_host_port(source)[0],
+            "ssh_user": cfg.get('ssh', 'ssh_user'),
+            "ssh_key": cfg.get('ssh', 'ssh_key'),
+
             "mysql_connect_info": MySQLConnectInfo(
                 cfg.get('mysql', 'mysql_defaults_file'),
                 hostname=split_host_port(source)[0]
@@ -83,11 +82,9 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
         LOG.debug('SSH key: %s', cfg.get('ssh', 'ssh_key'))
         dst = Ssh(
             '/tmp',
-            ssh_connect_info=SshConnectInfo(
-                host=split_host_port(destination)[0],
-                user=cfg.get('ssh', 'ssh_user'),
-                key=cfg.get('ssh', 'ssh_key')
-            ),
+            ssh_host=split_host_port(destination)[0],
+            ssh_user=cfg.get('ssh', 'ssh_user'),
+            ssh_key=cfg.get('ssh', 'ssh_key')
         )
         datadir = src.datadir
         LOG.debug('datadir: %s', datadir)
@@ -109,11 +106,9 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
         LOG.debug('SSH key: %s', cfg.get('ssh', 'ssh_key'))
 
         dst_mysql = RemoteMySQLSource({
-            "ssh_connection_info": SshConnectInfo(
-                host=split_host_port(destination)[0],
-                user=cfg.get('ssh', 'ssh_user'),
-                key=cfg.get('ssh', 'ssh_key')
-            ),
+            "ssh_host": split_host_port(destination)[0],
+            "ssh_user": cfg.get('ssh', 'ssh_user'),
+            "ssh_key": cfg.get('ssh', 'ssh_key'),
             "mysql_connect_info": MySQLConnectInfo(
                 cfg.get('mysql', 'mysql_defaults_file'),
                 hostname=split_host_port(destination)[0]

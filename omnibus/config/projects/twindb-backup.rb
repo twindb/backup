@@ -63,9 +63,6 @@ dependency 'preparation'
 
 # twindb-backup dependencies/components
 
-dependency 'python'
-dependency 'pip'
-dependency 'libffi'
 runtime_dependency 'libtool'
 runtime_dependency 'nmap'
 dependency 'xtrabackup'

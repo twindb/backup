@@ -121,7 +121,7 @@ class BaseStatus(object):
     def __getitem__(self, item):
         if isinstance(item, int):
             return self._status[item]
-        elif isinstance(item, str) or isinstance(item, unicode):
+        elif isinstance(item, (str, unicode)):
             for copy in self._status:
                 if copy.key == str(item):
                     return copy

@@ -2,6 +2,7 @@ name "xtrabackup"
 default_version "2.4.9"
 
 skip_transitive_dependency_licensing true
+dependency 'libffi'
 
 source url: "https://s3.amazonaws.com/twindb-release/percona-xtrabackup-2.4.9.tar.gz",
        md5: "fca658cb3b004d2a2df342a136125f84"

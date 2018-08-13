@@ -31,7 +31,11 @@ def list_available_backups(config):
     dst = get_destination(config)
     for run_type in INTERVALS:
         LOG.info('%s copies:', run_type)
-        for copy in dst.list_files(
-                dst.remote_path,
-                pattern="/%s/" % run_type):
+        dst_files = dst.list_files(
+            dst.remote_path,
+            pattern="/%s/" % run_type,
+            recursive=True,
+            files_only=True
+        )
+        for copy in dst_files:
             print(copy)

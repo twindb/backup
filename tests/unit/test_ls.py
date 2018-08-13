@@ -22,10 +22,20 @@ def test_list_available_backups_ssh(mock_popen, mock_get_destination, mock_os):
     mock_popen.assert_called_once_with(["find", '/foo/bar', '-type', 'f'])
 
     calls = [
-        mock.call('/foo/bar', pattern='/hourly/'),
-        mock.call('/foo/bar', pattern='/daily/'),
-        mock.call('/foo/bar', pattern='/weekly/'),
-        mock.call('/foo/bar', pattern='/monthly/'),
-        mock.call('/foo/bar', pattern='/yearly/'),
+        mock.call(
+            '/foo/bar', pattern='/hourly/', recursive=True, files_only=True
+        ),
+        mock.call(
+            '/foo/bar', pattern='/daily/', recursive=True, files_only=True
+        ),
+        mock.call(
+            '/foo/bar', pattern='/weekly/', recursive=True, files_only=True
+        ),
+        mock.call(
+            '/foo/bar', pattern='/monthly/', recursive=True, files_only=True
+        ),
+        mock.call(
+            '/foo/bar', pattern='/yearly/', recursive=True, files_only=True
+        ),
     ]
     mock_dst.list_files.assert_has_calls(calls)
