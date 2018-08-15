@@ -18,39 +18,35 @@ from twindb_backup.ssh.exceptions import SshClientException
 from twindb_backup.status.mysql_status import MySQLStatus
 
 
-class SshConnectInfo(object):  # pylint: disable=too-few-public-methods
-    """Options for SSH connection"""
-
-    def __init__(self, host='127.0.0.1', port=22, key='/root/.id_rsa',
-                 user='root'):
-        self.host = host
-        if isinstance(port, int):
-            self.port = port
-        else:
-            raise ValueError("Port is not integer")
-        self.key = key
-        self.user = user
-
-
 class Ssh(BaseDestination):
     """
     SSH destination class
 
-    :param ssh_connect_info: SSH connection info
-    :type ssh_connect_info: SshConnectInfo
     :param remote_path: Path to store backup
-    :param hostname: Hostname
+    :param kwargs: Keyword arguments. See below
+    :param kwargs: dict
+
+    :**hostname**(str): Hostname of the host where backup is taken from.
+    :**ssh_host**(str): Hostname for SSH connection. Default '127.0.0.1'.
+    :**ssh_user**(str): Username for SSH connection. Default 'root'.
+    :**ssh_port**(int): TCP port for SSH connection. Default 22.
+    :**ssh_key**(str): File with an rsa/dsa key for SSH authentication.
+        Default '/root/.ssh/id_rsa'.
     """
-    def __init__(self, remote_path,
-                 ssh_connect_info=SshConnectInfo(),
-                 hostname=socket.gethostname()):
+    def __init__(self, remote_path, **kwargs):
+
         super(Ssh, self).__init__(remote_path)
 
-        self._ssh_client = SshClient(ssh_connect_info)
+        self._ssh_client = SshClient(
+            host=kwargs.get('ssh_host', '127.0.0.1'),
+            port=kwargs.get('ssh_port', 22),
+            user=kwargs.get('ssh_user', 'root'),
+            key=kwargs.get('ssh_key', '/root/.ssh/id_rsa')
+        )
 
         self.status_path = "{remote_path}/{hostname}/status".format(
             remote_path=self.remote_path,
-            hostname=hostname
+            hostname=kwargs.get('hostname', socket.gethostname())
         )
 
     def save(self, handler, name):
@@ -84,7 +80,12 @@ class Ssh(BaseDestination):
         cmd = 'mkdir -p "%s"' % path
         self.execute_command(cmd)
 
-    def list_files(self, prefix, recursive=False):
+    def list_files(
+            self,
+            prefix,
+            recursive=False,
+            pattern=None,
+            files_only=False):
         """
         Get list of file by prefix
 
@@ -92,29 +93,23 @@ class Ssh(BaseDestination):
         :param recursive: Recursive return list of files
         :type prefix: str
         :type recursive: bool
+        :param pattern: files must match with this regexp if specified
+        :type pattern: str
+        :param files_only: If True don't list directories
+        :type files_only: bool
         :return: List of files
         :rtype: list
         """
-        return sorted(self._ssh_client.list_files(prefix, recursive))
-
-    def find_files(self, prefix, run_type):
-        """
-        Find files by prefix
-
-        :param prefix: Path
-        :param run_type: Run type for search
-        :type prefix: str
-        :type run_type: str
-        :return: List of files
-        :rtype: list
-        """
-        cmd = "find {prefix}/ -wholename '*/{run_type}/*' -type f".format(
-            prefix=prefix,
-            run_type=run_type
+        return sorted(
+            self._match_files(
+                self._ssh_client.list_files(
+                    prefix,
+                    recursive=recursive,
+                    files_only=files_only
+                ),
+                pattern=pattern
+            )
         )
-
-        cout, _ = self._ssh_client.execute(cmd)
-        return sorted(cout.split())
 
     def delete(self, obj):
         """
@@ -250,7 +245,7 @@ class Ssh(BaseDestination):
     @property
     def host(self):
         """IP address of the destination."""
-        return self._ssh_client.ssh_connect_info.host
+        return self._ssh_client.host
 
     def _mkdirname_r(self, remote_name):
         """Create directory for a given file on the destination.

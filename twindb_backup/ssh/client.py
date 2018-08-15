@@ -16,10 +16,26 @@ class SshClient(object):
     SSH client class. Allows to connect to a remote SSH server and execute
     commands on it.
 
+    :param host: Destination host to connect to. Detaults to '127.0.0.1'.
+    :type host: str
+    :param port: Destination port to connect to. Default is 22.
+    :type port: int
+    :param key: SSH client key for passwordless authentication.
+        Default is '/root/.id_rsa'.
+    :type key: str
+    :param user: SSH client username. Default is 'root'.
+    :type user: str
     """
-    def __init__(self, ssh_connect_info):
+    def __init__(self,
+                 host='127.0.0.1',
+                 port=22,
+                 key='/root/.id_rsa',
+                 user='root'):
 
-        self.ssh_connect_info = ssh_connect_info
+        self._host = host
+        self._port = port
+        self._key = key
+        self._user = user
 
     @contextmanager
     def session(self):
@@ -46,15 +62,27 @@ class SshClient(object):
         shell = SSHClient()
         shell.set_missing_host_key_policy(AutoAddPolicy())
         try:
-            shell.connect(hostname=self.ssh_connect_info.host,
-                          key_filename=self.ssh_connect_info.key,
-                          port=self.ssh_connect_info.port,
-                          username=self.ssh_connect_info.user)
+            shell.connect(
+                hostname=self._host,
+                key_filename=self._key,
+                port=self._port,
+                username=self._user
+            )
             yield shell
         except (AuthenticationException, SSHException, socket.error) as err:
             raise SshClientException(err)
         finally:
             shell.close()
+
+    @property
+    def host(self):
+        """Remote SSH host"""
+        return self._host
+
+    @property
+    def port(self):
+        """TCP port for SSH connection"""
+        return self._port
 
     def execute(self, cmd, quiet=False, background=False):
         """Execute a command on a remote SSH server.
@@ -135,7 +163,7 @@ class SshClient(object):
             LOG.error('Failed to execute %s', cmd)
             raise SshClientException(err)
 
-    def list_files(self, path, recursive=False):
+    def list_files(self, path, recursive=False, files_only=False):
         """
         Get list of file by prefix
 
@@ -143,22 +171,29 @@ class SshClient(object):
         :param recursive: Recursive return list of files
         :type path: str
         :type recursive: bool
+        :param files_only: Don't list directories if True. Default is False.
+        :type files_only: bool
         :return: List of files
         :rtype: list
         """
+        rec_cond = "" if recursive else " -maxdepth 1"
+        fil_cond = " -type f" if files_only else ""
 
-        ls_options = ""
-
-        if recursive:
-            ls_options = "-R"
-        ls_cmd = "ls {ls_options} {prefix}".format(
-            ls_options=ls_options,
-            prefix=path
+        cmd = "bash -c 'if test -d {path} ; " \
+              "then find {path}{recursive}{files_only}; fi'"
+        cmd = cmd.format(
+            path=path,
+            recursive=rec_cond,
+            files_only=fil_cond
         )
-        if not path.endswith('/'):
-            ls_cmd += '*'
-        cout, _ = self.execute(ls_cmd)
-        return cout.split()
+        cout, cerr = self.execute(cmd)
+        LOG.debug("COUT:\n%s", cout)
+        LOG.debug("CERR:\n%s", cerr)
+
+        if files_only:
+            return cout.split()
+        else:
+            return cout.split()[1:]
 
     def get_text_content(self, path):
         """

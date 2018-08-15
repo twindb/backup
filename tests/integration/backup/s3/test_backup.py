@@ -50,6 +50,10 @@ def test__take_file_backup(master1,
     print(cout)
     assert ret == 0
 
+    # print('Test paused')
+    # import time
+    # time.sleep(36000)
+
     assert s3_backup_path in cout
 
     backup_to_restore = None
@@ -234,7 +238,7 @@ password=qwerty
              )
 
     for x in xrange(10):
-        result = dst.find_files(dst.remote_path, 'daily')
+        result = dst.list_files(dst.remote_path, pattern='/daily/')
         assert len(result) == n_runs
         assert result == sorted(result)
         prefix = "{remote_path}/{hostname}/{run_type}/mysql/mysql-".format(

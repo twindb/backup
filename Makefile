@@ -59,6 +59,8 @@ upgrade-requirements: ## Upgrade requirements
 
 .PHONY: bootstrap
 bootstrap: ## bootstrap the development environment
+	# pin pip version because of weird errors
+	# https://travis-ci.org/twindb/backup/jobs/415246056
 	pip install -U "pip<10.0.0"
 	pip install -U "setuptools>=32.3.1"
 	pip install -U "pip-tools>=1.6.0"

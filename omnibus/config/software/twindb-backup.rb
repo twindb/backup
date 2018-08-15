@@ -21,6 +21,9 @@ license 'Apache-2.0'
 license_file 'LICENSE'
 skip_transitive_dependency_licensing true
 
+dependency 'python'
+dependency 'setuptools'
+
 source path: '/twindb-backup'
 
 relative_path 'twindb-backup'
