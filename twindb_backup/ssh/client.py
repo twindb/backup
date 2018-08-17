@@ -84,6 +84,11 @@ class SshClient(object):
         """TCP port for SSH connection"""
         return self._port
 
+    @property
+    def user(self):
+        """User for SSH connection"""
+        return self._user
+
     def execute(self, cmd, quiet=False, background=False):
         """Execute a command on a remote SSH server.
 

@@ -10,7 +10,8 @@ import os
 import click
 
 from twindb_backup import setup_logging, LOG, __version__, \
-    TwinDBBackupError, LOCK_FILE, XTRABACKUP_BINARY, XBSTREAM_BINARY, INTERVALS
+    TwinDBBackupError, LOCK_FILE, XTRABACKUP_BINARY, XBSTREAM_BINARY, \
+    INTERVALS, MEDIA_TYPES
 from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.clone import clone_mysql
@@ -122,10 +123,18 @@ def backup(cfg, run_type, lock_file):
 
 
 @main.command(name='ls')
+@click.option(
+    '--type', 'copy_type',
+    type=click.Choice(MEDIA_TYPES),
+    default=None
+)
 @PASS_CFG
-def list_backups(cfg):
+def list_backups(cfg, copy_type):
     """List available backup copies"""
-    list_available_backups(cfg)
+    list_available_backups(
+        cfg,
+        copy_type=copy_type
+    )
 
 
 @main.command(name='share')

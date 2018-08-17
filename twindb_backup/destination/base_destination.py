@@ -62,17 +62,39 @@ class BaseDestination(object):
                 raise DestinationError('Failed to run %s: %s'
                                        % (' '.join(cmd), err))
 
-    @abstractmethod
-    def list_files(self, prefix, recursive=False, pattern=None,
+    def list_files(self,
+                   prefix,
+                   recursive=False,
+                   pattern=None,
                    files_only=False):
         """
-        List files
+        Get list of file by prefix
 
-        :param prefix:
-        :param recursive:
+        :param prefix: Path
+        :param recursive: Recursive return list of files
+        :type prefix: str
+        :type recursive: bool
         :param pattern: files must match with this regexp if specified
-        :param files_only:
+        :type pattern: str
+        :param files_only: If True don't list directories
+        :type files_only: bool
+        :return: List of files
+        :rtype: list
         """
+        return sorted(
+            self._match_files(
+                self._list_files(
+                    prefix,
+                    recursive=recursive,
+                    files_only=files_only
+                ),
+                pattern=pattern
+            )
+        )
+
+    @abstractmethod
+    def _list_files(self, path, recursive=False, files_only=False):
+        raise NotImplementedError
 
     @abstractmethod
     def delete(self, obj):

@@ -49,6 +49,14 @@ class Ssh(BaseDestination):
             hostname=kwargs.get('hostname', socket.gethostname())
         )
 
+    def __str__(self):
+        return "Ssh(ssh://%s@%s:%d%s)" % (
+            self.user,
+            self.host,
+            self.port,
+            self.remote_path,
+        )
+
     def save(self, handler, name):
         """
         Read from handler and save it on remote ssh server
@@ -80,35 +88,11 @@ class Ssh(BaseDestination):
         cmd = 'mkdir -p "%s"' % path
         self.execute_command(cmd)
 
-    def list_files(
-            self,
-            prefix,
-            recursive=False,
-            pattern=None,
-            files_only=False):
-        """
-        Get list of file by prefix
-
-        :param prefix: Path
-        :param recursive: Recursive return list of files
-        :type prefix: str
-        :type recursive: bool
-        :param pattern: files must match with this regexp if specified
-        :type pattern: str
-        :param files_only: If True don't list directories
-        :type files_only: bool
-        :return: List of files
-        :rtype: list
-        """
-        return sorted(
-            self._match_files(
-                self._ssh_client.list_files(
-                    prefix,
-                    recursive=recursive,
-                    files_only=files_only
-                ),
-                pattern=pattern
-            )
+    def _list_files(self, path, recursive=False, files_only=False):
+        return self._ssh_client.list_files(
+            path,
+            recursive=recursive,
+            files_only=files_only
         )
 
     def delete(self, obj):
@@ -246,6 +230,16 @@ class Ssh(BaseDestination):
     def host(self):
         """IP address of the destination."""
         return self._ssh_client.host
+
+    @property
+    def port(self):
+        """TCP port of the destination."""
+        return self._ssh_client.port
+
+    @property
+    def user(self):
+        """SSH user."""
+        return self._ssh_client.user
 
     def _mkdirname_r(self, remote_name):
         """Create directory for a given file on the destination.
