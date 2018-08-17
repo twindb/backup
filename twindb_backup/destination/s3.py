@@ -21,7 +21,6 @@ from boto3.s3.transfer import TransferConfig
 from twindb_backup import LOG, TwinDBBackupError
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import S3DestinationError
-# from twindb_backup.status.status import Status
 from twindb_backup.status.mysql_status import MySQLStatus
 
 S3_CONNECT_TIMEOUT = 60
@@ -254,6 +253,9 @@ class S3(BaseDestination):
                 retry_interval *= 2
 
         raise S3DestinationError('Failed to list files.')
+
+    def _list_files(self, path, recursive=False, files_only=False):
+        raise NotImplementedError
 
     def delete(self, obj):
         """Deletes an S3 object.
