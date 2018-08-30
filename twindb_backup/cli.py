@@ -4,6 +4,7 @@ Entry points for twindb-backup tool
 """
 from __future__ import print_function
 
+import socket
 import traceback
 from ConfigParser import ConfigParser, NoSectionError
 import os
@@ -141,10 +142,12 @@ def share_backup(cfg, s3_url):
 
 
 @main.command()
+@click.option('--hostname', help='Hostname', show_default=True,
+              default=socket.gethostname())
 @PASS_CFG
-def status(cfg):
+def status(cfg, hostname):
     """Print backups status"""
-    dst = get_destination(cfg)
+    dst = get_destination(cfg, hostname)
     print(dst.status())
 
 
