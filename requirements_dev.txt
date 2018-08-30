@@ -15,9 +15,9 @@ backports.functools-lru-cache==1.5  # via pylint
 backports.ssl-match-hostname==3.5.0.1  # via docker
 backports.tempfile==1.0   # via moto
 backports.weakref==1.0.post1  # via backports.tempfile
-boto3==1.6.3              # via moto
+boto3==1.8.4              # via moto
 boto==2.48.0              # via moto
-botocore==1.9.3           # via boto3, moto, s3transfer
+botocore==1.11.4          # via boto3, moto, s3transfer
 bumpversion==0.5.3
 certifi==2018.1.18        # via requests
 cffi==1.11.5              # via cryptography
@@ -77,7 +77,7 @@ tox==2.9.1
 traceback2==1.4.0         # via unittest2
 typing==3.6.4             # via sphinx
 unittest2==1.1.0
-urllib3==1.22             # via requests
+urllib3==1.22             # via botocore, requests
 virtualenv==15.1.0        # via tox
 websocket-client==0.47.0  # via docker
 werkzeug==0.14.1          # via moto
