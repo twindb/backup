@@ -2,7 +2,6 @@ import StringIO
 import json
 import os
 import magic
-import time
 
 from tests.integration.conftest import docker_execute, get_twindb_config_dir
 from twindb_backup.destination.s3 import S3, AWSAuthOptions
@@ -50,6 +49,10 @@ def test__take_file_backup(master1,
 
     print(cout)
     assert ret == 0
+
+    # print('Test paused')
+    # import time
+    # time.sleep(36000)
 
     assert s3_backup_path in cout
 
@@ -235,7 +238,7 @@ password=qwerty
              )
 
     for x in xrange(10):
-        result = dst.find_files(dst.remote_path, 'daily')
+        result = dst.list_files(dst.remote_path, pattern='/daily/')
         assert len(result) == n_runs
         assert result == sorted(result)
         prefix = "{remote_path}/{hostname}/{run_type}/mysql/mysql-".format(
@@ -595,8 +598,6 @@ password=qwerty
         cmd
     )
     print(cout)
-    # print('Test paused')
-    # time.sleep(360000)
     assert ret == 0
 
     cmd = [
@@ -616,13 +617,13 @@ password=qwerty
 
 
 def test_take_mysql_backup_aenc_restores_inc(
-    master1,
-    docker_client,
-    s3_client,
-    config_content_mysql_aenc,
-    gpg_public_key,
-    gpg_private_key,
-    tmpdir):
+        master1,
+        docker_client,
+        s3_client,
+        config_content_mysql_aenc,
+        gpg_public_key,
+        gpg_private_key,
+        tmpdir):
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
 
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
@@ -759,8 +760,6 @@ password=qwerty
         cmd
     )
     print(cout)
-    # print('Test paused')
-    # time.sleep(360000)
     assert ret == 0
 
     cmd = [

@@ -1,11 +1,11 @@
 """Class to describe MySQL backup copy"""
-from base64 import b64encode
+import json
 
-from twindb_backup.copy.base_copy import BaseCopy
+from twindb_backup.copy.periodic_copy import PeriodicCopy
 from twindb_backup.copy.exceptions import WrongInputData
 
 
-class MySQLCopy(BaseCopy):  # pylint: disable=too-many-instance-attributes
+class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
     """
     Instantiate a MySQL copy.
 
@@ -19,6 +19,22 @@ class MySQLCopy(BaseCopy):  # pylint: disable=too-many-instance-attributes
     :raise WrongInputData: if type is neither full or incremental,
         if name is not a basename.
     """
+    __attr = [
+        'host',
+        'run_type',
+        'name',
+        'binlog',
+        'position',
+        'lsn',
+        'parent',
+        'galera',
+        'wsrep_provider_version',
+        'config',
+        'backup_started',
+        'backup_finished',
+        'type'
+    ]
+
     def __init__(self, host, run_type, name, **kwargs):
         super(MySQLCopy, self).__init__(host, run_type, name)
 
@@ -27,19 +43,23 @@ class MySQLCopy(BaseCopy):  # pylint: disable=too-many-instance-attributes
         if 'type' in kwargs and kwargs.get('type') in ['full', 'incremental']:
             self._type = kwargs.get('type')
         else:
-            raise WrongInputData('Type of MySQL backup copy is mandatory.'
-                                 ' Can be either full or incremental')
+            raise WrongInputData(
+                'Type of MySQL backup copy is mandatory.'
+                ' Can be either full or incremental'
+            )
 
         if '/' in name:
             raise WrongInputData(
                 'name must be relative, without any slashes.'
-                ' Got %s instead.' % name)
+                ' Got %s instead.'
+                % name
+            )
 
-        self._backup_started = int(kwargs.get('backup_started', 0))
-        self._backup_finished = int(kwargs.get('backup_finished', 0))
+        self._backup_started = int(kwargs.get('backup_started', 0)) or None
+        self._backup_finished = int(kwargs.get('backup_finished', 0)) or None
         self._binlog = kwargs.get('binlog', None)
-        self._position = kwargs.get('position', 0)
-        self._lsn = kwargs.get('lsn', 0)
+        self._position = kwargs.get('position', None)
+        self._lsn = kwargs.get('lsn', None)
         self._parent = kwargs.get('parent', None)
 
         if 'wsrep_provider_version' in kwargs:
@@ -55,45 +75,38 @@ class MySQLCopy(BaseCopy):  # pylint: disable=too-many-instance-attributes
                 'to initialize config attribute')
 
         if 'config_files' in kwargs:
-            self._config = []
+            self._config = {}
             config_files = kwargs.get('config_files', [])
             for config_file in config_files:
                 with open(config_file) as config_descr:
-                    self._config.append(
-                        {
-                            config_file: config_descr.read()
-                        }
-                    )
+                    self._config[config_file] = config_descr.read()
+
         else:
-            self._config = kwargs.get('config', [])
+            self._config = kwargs.get('config', {})
 
     def __eq__(self, other):
         comparison = ()
-        for attr in ['host', 'run_type', 'name',
-                     'binlog', 'position',
-                     'lsn',
-                     'parent', 'wsrep_provider_version',
-                     'config']:
+        for attr in self.__attr:
             comparison += (getattr(self, attr) == getattr(other, attr), )
-            if getattr(self, attr) != getattr(other, attr):
-                print(
-                    '%s differs: %s != %s'
-                    % (
-                        attr,
-                        getattr(self, attr),
-                        getattr(other, attr)
-                    )
-                )
 
-        # Compare float type time values as integers
-        for attr in ['backup_started', 'backup_finished']:
-            comparison += (
-                int(getattr(self, attr)) == int(getattr(other, attr)),
-            )
         return all(comparison)
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __str__(self):
+
+        # There is a bug https://bugs.python.org/issue16333
+        # dumps() leaves trailing whitespaces
+        return "%s(%s) = %s" % (
+            self.__class__.__name__,
+            self.key,
+            json.dumps(
+                self.as_dict(),
+                sort_keys=True,
+                indent=4
+            ).replace(' \n', '\n')
+        )
 
     @property
     def host(self):
@@ -104,6 +117,11 @@ class MySQLCopy(BaseCopy):  # pylint: disable=too-many-instance-attributes
     def name(self):
         """Name of the backup. It's basename w/o directory part."""
         return self._name
+
+    @property
+    def created_at(self):
+        """Timestamp when the backup job started."""
+        return self._backup_started
 
     @property
     def backup_started(self):
@@ -147,7 +165,7 @@ class MySQLCopy(BaseCopy):  # pylint: disable=too-many-instance-attributes
 
     @property
     def config(self):
-        """List of configs and their content."""
+        """Dictionary of configs and their content."""
         return self._config
 
     @property
@@ -163,18 +181,10 @@ class MySQLCopy(BaseCopy):  # pylint: disable=too-many-instance-attributes
     def as_dict(self):
         """Return representation of the class instance for output purposes."""
         result = {}
-        for attr in ['type',
-                     'binlog', 'position',
-                     'backup_started', 'backup_finished',
-                     'lsn',
-                     'parent',
-                     'galera', 'wsrep_provider_version']:
+        for attr in self.__attr:
             result[attr] = getattr(self, attr)
-            encoded_configs = []
-            for config in self.config:
-                config_dict = {}
-                for name, content in config.iteritems():
-                    config_dict[name] = b64encode(content)
-                encoded_configs.append(config_dict)
-            result['config'] = encoded_configs
         return result
+
+    def serialize(self):
+        """Prepare the status for storing as a string."""
+        return json.dumps(self.as_dict())

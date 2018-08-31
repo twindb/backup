@@ -1,7 +1,4 @@
-import time
-
 from tests.integration.conftest import get_twindb_config_dir, docker_execute
-from twindb_backup.cli import main
 
 
 def test_restore(master1, storage_server,
@@ -70,8 +67,12 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
     print(cout)
     assert ret == 0
 
-    cmd = ["bash", "-c", "twindb-backup --config %s ls | grep /tmp/backup "
-                          "| grep mysql | sort | tail -1" % twindb_config_guest]
+    cmd = [
+        "bash",
+        "-c",
+        "twindb-backup --config %s ls | grep /tmp/backup "
+        "| grep mysql | sort | tail -1" % twindb_config_guest
+    ]
     print('CMD : %s' % cmd)
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     url = cout.strip()
@@ -87,6 +88,11 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
     print('CMD : %s' % cmd)
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
+
+    # print('Test paused')
+    # import time
+    # time.sleep(36000)
+
     assert ret == 0
     cmd = ['find', dst_dir]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)

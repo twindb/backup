@@ -3,33 +3,46 @@
 Module that works with list of backup copies
 """
 from __future__ import print_function
-from ConfigParser import NoOptionError, NoSectionError
-import os
-from subprocess import Popen
-from twindb_backup import LOG
+from twindb_backup import LOG, INTERVALS
 from twindb_backup.backup import get_destination
+from twindb_backup.destination.local import Local
 
 
-def list_available_backups(config):
+def list_available_backups(config, copy_type=None):
     """
     Print known backup copies on a destination specified in the configuration.
 
     :param config: tool configuration
     :type config: ConfigParser.ConfigParser
+    :param copy_type: Limit list to specific type of backups.
+    :type copy_type: files|mysql
     """
-    try:
-        keep_local_path = config.get('destination', 'keep_local_path')
+    dsts = [
+        get_destination(config)
+    ]
+    if config.has_option('destination', 'keep_local_path'):
         LOG.info('Local copies:')
+        dsts.insert(
+            0,
+            Local(
+                config.get('destination', 'keep_local_path')
+            )
+        )
 
-        if os.path.exists(keep_local_path):
-            cmd = ["find", keep_local_path, '-type', 'f']
-            LOG.debug('Running %s', ' '.join(cmd))
-            proc = Popen(cmd)
-            proc.communicate()
-    except (NoOptionError, NoSectionError):
-        pass
-    dst = get_destination(config)
-    for run_type in ['hourly', 'daily', 'weekly', 'monthly', 'yearly']:
-        LOG.info('%s copies:', run_type)
-        for copy in dst.find_files(dst.remote_path, run_type):
-            print(copy)
+    for dst in dsts:
+        LOG.info('Files on %s', dst)
+        for run_type in INTERVALS:
+            pattern = "/%s/" % run_type
+            if copy_type:
+                pattern += copy_type + '/'
+
+            dst_files = dst.list_files(
+                dst.remote_path,
+                pattern=pattern,
+                recursive=True,
+                files_only=True
+            )
+            if dst_files:
+                LOG.info('%s copies:', run_type)
+                for copy in dst_files:
+                    print(copy)

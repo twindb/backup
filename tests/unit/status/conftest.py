@@ -3,6 +3,10 @@ from base64 import b64encode
 
 import pytest
 
+from twindb_backup import setup_logging, LOG
+
+setup_logging(LOG, debug=True)
+
 
 @pytest.fixture
 def deprecated_status_raw_content():
@@ -100,6 +104,7 @@ def deprecated_status_raw_content():
     ICAgIH0sDQogICAgICAgICAgICAgICJ5ZWFybHkiOiB7fSwNCiAgICAgICAgICAgICAgIndlZW
     tseSI6IHt9DQogICAgICAgICAgICB9
 """
+
 
 @pytest.fixture
 def invalid_deprecated_status_raw_content():

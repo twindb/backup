@@ -11,11 +11,13 @@ import os
 import click
 
 from twindb_backup import setup_logging, LOG, __version__, \
-    TwinDBBackupError, LOCK_FILE, XTRABACKUP_BINARY, XBSTREAM_BINARY
+    TwinDBBackupError, LOCK_FILE, XTRABACKUP_BINARY, XBSTREAM_BINARY, \
+    INTERVALS, MEDIA_TYPES
 from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.clone import clone_mysql
 from twindb_backup.configuration import get_destination
+from twindb_backup.exceptions import LockWaitTimeoutError, OperationError
 from twindb_backup.ls import list_available_backups
 from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.restore import restore_from_mysql, restore_from_file
@@ -89,24 +91,27 @@ def main(ctx, cfg, debug,  # pylint: disable=too-many-arguments
 
 
 @main.command()
-@click.argument('run_type',
-                type=click.Choice(['hourly', 'daily', 'weekly',
-                                   'monthly', 'yearly']))
-@click.option('--lock-file', default=LOCK_FILE,
-              help='Lock file to protect against multiple backup tool'
-                   ' instances at same time.')
+@click.argument(
+    'run_type',
+    type=click.Choice(INTERVALS)
+)
+@click.option(
+    '--lock-file',
+    default=LOCK_FILE,
+    show_default=True,
+    help='Lock file to protect against multiple backup tool'
+         ' instances at same time.'
+)
 @PASS_CFG
 def backup(cfg, run_type, lock_file):
     """Run backup job"""
     try:
 
         run_backup_job(cfg, run_type, lock_file=lock_file)
-
-    except IOError as err:
+    except (LockWaitTimeoutError, OperationError) as err:
         LOG.error(err)
         LOG.debug(traceback.format_exc())
         exit(1)
-
     except ModifierException as err:
         LOG.error('Error in modifier class')
         LOG.error(err)
@@ -119,10 +124,18 @@ def backup(cfg, run_type, lock_file):
 
 
 @main.command(name='ls')
+@click.option(
+    '--type', 'copy_type',
+    type=click.Choice(MEDIA_TYPES),
+    default=None
+)
 @PASS_CFG
-def list_backups(cfg):
+def list_backups(cfg, copy_type):
     """List available backup copies"""
-    list_available_backups(cfg)
+    list_available_backups(
+        cfg,
+        copy_type=copy_type
+    )
 
 
 @main.command(name='share')
@@ -229,6 +242,7 @@ def verify(cfg):
 @click.option('--hostname', help='If backup_copy is '
                                  'latest this option specifies hostname '
                                  'where the backup copy was taken.',
+              default=socket.gethostname(),
               show_default=True)
 @PASS_CFG
 def verify_mysql(cfg, hostname, dst, backup_copy):

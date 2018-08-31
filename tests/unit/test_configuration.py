@@ -14,7 +14,7 @@ def test__get_destination_ssh_valid_port(config_content):
     config.readfp(buf)
     dst = get_destination(config)
     assert isinstance(dst, Ssh)
-    assert dst._ssh_client.ssh_connect_info.port == 4321
+    assert dst.client.port == 4321
 
 
 def test__get_destination_ssh_valid_port_as_str(config_content):
@@ -24,7 +24,7 @@ def test__get_destination_ssh_valid_port_as_str(config_content):
     config.readfp(buf)
     dst = get_destination(config)
     assert isinstance(dst, Ssh)
-    assert dst._ssh_client.ssh_connect_info.port == 1234
+    assert dst.client.port == 1234
 
 
 def test__get_destination_ssh_invalid_port(config_content):

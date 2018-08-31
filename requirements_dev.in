@@ -1,6 +1,4 @@
 bumpversion
-flake8
-tox
 pytest
 mock
 coverage
@@ -10,7 +8,9 @@ pytest-timeout
 Sphinx
 unittest2
 moto
-pylint==1.6.5
+pylint<2.0.0
 pycodestyle
 docker
 python-magic
+# Moto requires this version of dateutil
+python-dateutil<2.7.0,>=2.1

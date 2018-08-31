@@ -22,7 +22,14 @@ class RemoteMySQLSource(MySQLSource):
     """Remote MySQLSource class"""
 
     def __init__(self, kwargs):
-        self._ssh_client = SshClient(kwargs.pop('ssh_connection_info'))
+
+        ssh_kwargs = {}
+        for arg in ['ssh_host', 'ssh_port', 'ssh_user', 'ssh_key']:
+            if arg in kwargs:
+                ssh_kwargs[arg.replace('ssh_', '')] = kwargs.pop(arg)
+
+        self._ssh_client = SshClient(**ssh_kwargs)
+
         super(RemoteMySQLSource, self).__init__(**kwargs)
 
     @contextmanager
@@ -44,8 +51,8 @@ class RemoteMySQLSource(MySQLSource):
         retry = 1
         retry_time = 2
         error_log = "/tmp/{src}_{src_port}-{dst}_{dst_port}.log".format(
-            src=self._ssh_client.ssh_connect_info.host,
-            src_port=self._ssh_client.ssh_connect_info.port,
+            src=self._ssh_client.host,
+            src_port=self._ssh_client.port,
             dst=dest_host,
             dst_port=port
         )
@@ -89,12 +96,23 @@ class RemoteMySQLSource(MySQLSource):
         for line in cfg_content.splitlines():
             if '!includedir' in line:
                 path = line.split()[1]
-                file_list = sorted(self._ssh_client.list_files(path))
+                file_list = self._ssh_client.list_files(
+                    path,
+                    recursive=False,
+                    files_only=True
+                )
                 for sub_file in file_list:
-                    file_path = path + sub_file
-                    files.extend(self._find_all_cnf(file_path))
+                    files.extend(
+                        self._find_all_cnf(
+                            sub_file
+                        )
+                    )
             elif '!include' in line:
-                files.extend(self._find_all_cnf(line.split()[1]))
+                files.extend(
+                    self._find_all_cnf(
+                        line.split()[1]
+                    )
+                )
         return files
 
     @staticmethod

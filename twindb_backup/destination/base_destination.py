@@ -2,6 +2,7 @@
 """
 Module defines Base destination class and destination exception(s).
 """
+import re
 from abc import abstractmethod
 
 from subprocess import Popen, PIPE
@@ -14,7 +15,7 @@ from twindb_backup.status.exceptions import CorruptedStatus
 class BaseDestination(object):
     """Base destination class"""
 
-    def __init__(self, remote_path, status_path=None, status_tmp_path=None):
+    def __init__(self, remote_path, status_path=None):
         if not remote_path:
             raise DestinationError(
                 'remote path must be defined and cannot be %r' % remote_path
@@ -24,10 +25,6 @@ class BaseDestination(object):
             self.status_path = status_path
         else:
             self.status_path = '%s/status' % remote_path
-        if status_tmp_path:
-            self.status_tmp_path = status_tmp_path
-        else:
-            self.status_tmp_path = '%s.tmp' % self.status_path
 
     @abstractmethod
     def save(self, handler, name):
@@ -61,29 +58,43 @@ class BaseDestination(object):
                     raise DestinationError('%s exited with error code %d'
                                            % (' '.join(cmd), ret))
                 LOG.debug('Exited with code %d', ret)
-                return ret == 0
             except OSError as err:
                 raise DestinationError('Failed to run %s: %s'
                                        % (' '.join(cmd), err))
 
+    def list_files(self,
+                   prefix,
+                   recursive=False,
+                   pattern=None,
+                   files_only=False):
+        """
+        Get list of file by prefix
+
+        :param prefix: Path
+        :param recursive: Recursive return list of files
+        :type prefix: str
+        :type recursive: bool
+        :param pattern: files must match with this regexp if specified
+        :type pattern: str
+        :param files_only: If True don't list directories
+        :type files_only: bool
+        :return: List of files
+        :rtype: list
+        """
+        return sorted(
+            self._match_files(
+                self._list_files(
+                    prefix,
+                    recursive=recursive,
+                    files_only=files_only
+                ),
+                pattern=pattern
+            )
+        )
+
     @abstractmethod
-    def list_files(self, prefix, recursive=False):
-        """
-        List files
-
-        :param prefix:
-        :param recursive:
-        """
-
-    @abstractmethod
-    def find_files(self, prefix, run_type):
-        """
-        Find files
-
-        :param prefix:
-        :param run_type:
-        :return:
-        """
+    def _list_files(self, path, recursive=False, files_only=False):
+        raise NotImplementedError
 
     @abstractmethod
     def delete(self, obj):
@@ -106,14 +117,16 @@ class BaseDestination(object):
         :return: instance of Status class
         :rtype: Status
         """
-        if status:
-            for _ in xrange(3):
-                self._write_status(status)
+        def _write_retry(status_content, attempts=3):
+            for _ in xrange(attempts):
+                self._write_status(status_content)
                 try:
                     return self._read_status()
                 except CorruptedStatus:
                     pass
             raise DestinationError("Can't write status")
+        if status:
+            return _write_retry(status, attempts=3)
         else:
             return self._read_status()
 
@@ -171,3 +184,17 @@ class BaseDestination(object):
             filename=latest
         )
         return url
+
+    @staticmethod
+    def _match_files(files, pattern=None):
+        LOG.debug('Pattern: %s', pattern)
+        LOG.debug('Unfiltered files: %r', files)
+        result = []
+        for fil in files:
+            if pattern:
+                if re.search(pattern, fil):
+                    result.append(fil)
+            else:
+                result.append(fil)
+        LOG.debug('Filtered files: %r', result)
+        return result

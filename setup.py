@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
-from pip.req import parse_requirements
 from setuptools import setup, find_packages
 
 del os.link
@@ -12,15 +11,15 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = [str(ir.req) for ir in
-                parse_requirements('requirements.txt', session=False)]
+with open('requirements.txt') as f:
+    requirements = f.read().strip().split('\n')
 
-test_requirements = [str(ir.req) for ir in
-                     parse_requirements('requirements_dev.txt', session=False)]
+with open('requirements_dev.txt') as f:
+    test_requirements = f.read().strip().split('\n')
 
 setup(
     name='twindb-backup',
-    version='2.15.8',
+    version='2.15.9',
     description="TwinDB Backup tool for files, MySQL et al.",
     long_description=readme + '\n\n' + history,
     author="TwinDB Development Team",

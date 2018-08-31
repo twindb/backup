@@ -23,7 +23,7 @@ homepage 'https://twindb.com'
 # and /opt/twindb-backup on all other platforms
 install_dir '/opt/twindb-backup'
 
-build_version '2.15.8'
+build_version '2.15.9'
 
 build_iteration 1
 
@@ -63,9 +63,6 @@ dependency 'preparation'
 
 # twindb-backup dependencies/components
 
-dependency 'python'
-dependency 'pip'
-dependency 'libffi'
 runtime_dependency 'libtool'
 runtime_dependency 'nmap'
 dependency 'xtrabackup'
