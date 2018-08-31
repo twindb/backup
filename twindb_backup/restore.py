@@ -287,7 +287,10 @@ def update_grastate(dst_dir, status, key):
 
 
 # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
+def restore_from_mysql(config, backup_copy, dst_dir,
+                       tmp_dir=None,
+                       cache=None,
+                       hostname=None):
     """
     Restore MySQL datadir in a given directory
 
@@ -301,6 +304,9 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
     :type tmp_dir: str
     :param cache: Local cache object.
     :type cache: Cache
+    :param hostname: Hostname
+    :type hostname: str
+
     """
     LOG.info('Restoring %s in %s', backup_copy, dst_dir)
     mkdir_p(dst_dir)
@@ -326,10 +332,11 @@ def restore_from_mysql(config, backup_copy, dst_dir, tmp_dir=None, cache=None):
         pass
 
     if not dst:
-        hostname = get_hostname_from_backup_copy(backup_copy)
         if not hostname:
-            raise DestinationError('Failed to get hostname from %s'
-                                   % backup_copy)
+            hostname = get_hostname_from_backup_copy(backup_copy)
+            if not hostname:
+                raise DestinationError('Failed to get hostname from %s'
+                                       % backup_copy)
         dst = get_destination(config, hostname=hostname)
 
     key = dst.basename(backup_copy)

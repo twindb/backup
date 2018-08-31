@@ -28,7 +28,7 @@ def edit_backup_my_cnf(dst_path):
         backup_cfg.write(backup_fp)
 
 
-def verify_mysql_backup(config, dst_path, backup_copy, hostname):
+def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
     """Restore mysql backup and measure time"""
     if backup_copy == "latest":
         dst = get_destination(config, hostname)
