@@ -4,7 +4,6 @@ Module that restores backup copies.
 """
 from __future__ import print_function
 import ConfigParser
-import base64
 from subprocess import Popen, PIPE
 import os
 import tempfile
@@ -23,7 +22,7 @@ from twindb_backup.exporter.base_exporter import ExportCategory, \
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, \
-    get_hostname_from_backup_copy, empty_dir, normalize_b64_data
+    get_hostname_from_backup_copy, empty_dir
 
 
 def get_my_cnf(status, key):
@@ -31,17 +30,14 @@ def get_my_cnf(status, key):
     Get MySQL config from the status.
 
     :param status: Backup status.
-    :type status: dict
+    :type status: MySQLStatus
     :param key: Backup name.
     :type key: str
     :return: Content of my.cnf or None if not found
     :rtype: str
     """
-    for cnf in status[key].config:
-        k = cnf.keys()[0]
-        cnf[k] = normalize_b64_data(cnf[k])
-        value = base64.b64decode(cnf[k])
-        yield k, value
+    for path in status[key].config:
+        yield path, status[key].config[path]
 
 
 def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
@@ -364,7 +360,7 @@ def restore_from_mysql(config, backup_copy, dst_dir,
                                     xbstream_binary=xbstream_binary)
 
     else:
-        full_copy = status.eligble_parent(
+        full_copy = status.candidate_parent(
             dst.get_run_type_from_full_path(backup_copy)
         )
         full_stream = dst.get_stream(full_copy.key)
@@ -394,9 +390,11 @@ def restore_from_mysql(config, backup_copy, dst_dir,
     config_dir = os.path.join(dst_dir, "_config")
 
     for path, content in get_my_cnf(status, key):
-        config_sub_dir = os.path.join(config_dir,
-                                      os.path.dirname(path).lstrip('/'))
-        os.makedirs(config_sub_dir)
+        config_sub_dir = os.path.join(
+            config_dir,
+            os.path.dirname(path).lstrip('/')
+        )
+        mkdir_p(config_sub_dir, mode=0755)
 
         with open(os.path.join(config_sub_dir,
                                os.path.basename(path)), 'w') as mysql_config:

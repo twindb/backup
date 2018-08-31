@@ -3,6 +3,7 @@
 Module for S3 destination.
 """
 import os
+import re
 import socket
 
 from contextlib import contextmanager
@@ -20,7 +21,6 @@ from boto3.s3.transfer import TransferConfig
 from twindb_backup import LOG, TwinDBBackupError
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import S3DestinationError
-# from twindb_backup.status.status import Status
 from twindb_backup.status.mysql_status import MySQLStatus
 
 S3_CONNECT_TIMEOUT = 60
@@ -83,8 +83,6 @@ class S3(BaseDestination):
         self.status_path = "{hostname}/status".format(
             hostname=hostname
         )
-        self.status_tmp_path = self.status_path + ".tmp"
-
         # Setup an authenticated S3 client that we will use throughout
         self.s3_client = self.setup_s3_client()
 
@@ -186,99 +184,78 @@ class S3(BaseDestination):
 
         :param name: save backup copy in a file with this name
         :param handler: stdout handler from backup source
-        :raise S3DestinationError: if failed to save the backup.
         """
-        try:
-            with handler as file_obj:
-                ret = self._upload_object(file_obj, name)
-                LOG.debug('Returning code %d', ret)
-                return ret == 0
-        except S3DestinationError as err:
-            LOG.error('S3 upload failed: %s', err)
-            raise err
+        with handler as file_obj:
+            ret = self._upload_object(file_obj, name)
+            LOG.debug('Returning code %d', ret)
 
-    def list_files(self, prefix, recursive=False):
+    def list_files(self, prefix, recursive=False, pattern=None,
+                   files_only=False):
         """
         List files in the destination that have common prefix.
 
-        :param prefix: Common prefix.
+        :param prefix: Common prefix. May include the bucket name.
+            (e.g. ``s3://my_bucket/foo/``) or simply a prefix in the bucket
+            (e.g. ``foo/``).
         :type prefix: str
         :param recursive: Does nothing for this class.
-        :return: sorted list of file names
+        :return: sorted list of file names.
+        :param pattern: files must match with this regexp if specified.
+        :type pattern: str
+        :param files_only: Does nothing for this class.
         :rtype: list(str)
         :raise S3DestinationError: if failed to list files.
         """
         s3client = boto3.resource('s3')
         bucket = s3client.Bucket(self.bucket)
 
-        LOG.debug('Listing %s in bucket %s', prefix, self.bucket)
+        LOG.debug('Listing bucket %s', self.bucket)
+        LOG.debug('prefix = %s', prefix)
 
-        norm_prefix = prefix.replace('s3://%s/' % bucket.name, '')
-        LOG.debug('norm_prefix = %s', norm_prefix)
+        norm_prefix = prefix.replace('s3://%s' % bucket.name, '')
+        norm_prefix = norm_prefix.lstrip('/')
+        LOG.debug('normal prefix = %s', norm_prefix)
 
         # Try to list the bucket several times
         # because of intermittent error NoSuchBucket:
         # https://travis-ci.org/twindb/backup/jobs/204053690
-        retry_timeout = time.time() + S3_READ_TIMEOUT
+        expire = time.time() + S3_READ_TIMEOUT
         retry_interval = 2
-        while time.time() < retry_timeout:
+        while time.time() < expire:
             try:
                 files = []
                 all_objects = bucket.objects.filter(Prefix=norm_prefix)
                 for file_object in all_objects:
-                    files.append(file_object.key)
+                    if pattern:
+                        if re.search(pattern, file_object.key):
+                            files.append(
+                                's3://{bucket}/{key}'.format(
+                                    bucket=self.bucket,
+                                    key=file_object.key
+                                )
+                            )
+                    else:
+                        files.append(
+                            's3://{bucket}/{key}'.format(
+                                bucket=self.bucket,
+                                key=file_object.key
+                            )
+                        )
+
                 return sorted(files)
             except ClientError as err:
-                LOG.warning('%s. Will retry in %d seconds.',
-                            err, retry_interval)
+                LOG.warning(
+                    '%s. Will retry in %d seconds.',
+                    err,
+                    retry_interval
+                )
                 time.sleep(retry_interval)
                 retry_interval *= 2
 
         raise S3DestinationError('Failed to list files.')
 
-    def find_files(self, prefix, run_type):
-        """
-        Find files with common prefix and given run type.
-
-        :param prefix: Common prefix.
-        :type prefix: str
-        :param run_type: daily, hourly, etc
-        :type run_type: str
-        :return: list of file names
-        :rtype: list(str)
-        :raise S3DestinationError: if failed to find files.
-        """
-        s3client = boto3.resource('s3')
-        bucket = s3client.Bucket(self.bucket)
-        LOG.debug('Listing %s in bucket %s', prefix, bucket)
-
-        # Try to list the bucket several times
-        # because of intermittent error NoSuchBucket:
-        # https://travis-ci.org/twindb/backup/jobs/204066704
-        retry_timeout = time.time() + S3_READ_TIMEOUT
-        retry_interval = 2
-        while time.time() < retry_timeout:
-            try:
-                files = []
-                all_objects = bucket.objects.filter(Prefix='')
-                for file_object in all_objects:
-                    if "/" + run_type + "/" in file_object.key:
-                        files.append("s3://%s/%s" % (self.bucket,
-                                                     file_object.key))
-
-                return sorted(files)
-            except ClientError as err:
-                LOG.warning('%s. Will retry in %d seconds.',
-                            err, retry_interval)
-                time.sleep(retry_interval)
-                retry_interval *= 2
-
-            except Exception as err:
-                LOG.error('Failed to list objects in bucket %s: %s',
-                          self.bucket, err)
-                raise
-
-        raise S3DestinationError('Failed to find files.')
+    def _list_files(self, path, recursive=False, files_only=False):
+        raise NotImplementedError
 
     def delete(self, obj):
         """Deletes an S3 object.
@@ -524,12 +501,15 @@ class S3(BaseDestination):
         :raise S3DestinationError: if failed to share object.
         """
         run_type = s3_url.split('/')[4]
-        backup_urls = self.find_files(self.remote_path, run_type)
+        backup_urls = self.list_files(
+            self.remote_path,
+            pattern="/%s/" % run_type
+        )
         if s3_url in backup_urls:
             self._set_file_access(S3FileAccess.public_read, s3_url)
             return self._get_file_url(s3_url)
         else:
-            raise TwinDBBackupError("File not found via url: %s", s3_url)
+            raise TwinDBBackupError("File not found via url: %s" % s3_url)
 
     def _get_file_content(self, path):
         attempts = 10  # up to 1024 seconds

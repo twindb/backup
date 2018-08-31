@@ -1,61 +1,72 @@
 """Base status is a class for a general purpose status.
-For now status is created/maintained for MySQL copies only.
 """
 import json
 import hashlib
-from base64 import b64encode
+from abc import abstractmethod
+from base64 import b64decode
 
-from twindb_backup import INTERVALS, STATUS_FORMAT_VERSION
-from twindb_backup.status.exceptions import StatusError, StatusKeyNotFound
+from twindb_backup import STATUS_FORMAT_VERSION
+from twindb_backup.status.exceptions import CorruptedStatus, StatusKeyNotFound
+
+
+# def _parse_status(content):
+#     raw_json = json.loads(content)
+#     md5_hash = hashlib.md5(raw_json["status"].encode()).hexdigest()
+#     if md5_hash != raw_json["md5"]:
+#         raise CorruptedStatus('Corrupted status: %s', content)
+#     _json = json.loads(b64decode(normalize_b64_data(raw_json["status"])))
+#     return raw_json["version"], _json
 
 
 class BaseStatus(object):
-    """Base class for status."""
+    """Base class for status.
+
+    :param content: if passed it will initialize a status from this string.
+    :type content: str
+    :raise CorruptedStatus: If the content string is not a valid status
+        or empty string.
+    """
     __version__ = STATUS_FORMAT_VERSION
-    _hourly = {}
-    _daily = {}
-    _weekly = {}
-    _monthly = {}
-    _yearly = {}
-
-    def __init__(self):
-        for i in INTERVALS:
-            setattr(self, '_%s' % i, {})
-
-    def __eq__(self, other):
-        return all(
-            (
-                self._hourly == other.hourly,
-                self._daily == other.daily,
-                self._weekly == other.weekly,
-                self._monthly == other.monthly,
-                self._yearly == other.yearly,
-            )
-        )
-
-    def __str__(self):
-        status = {}
-        for i in INTERVALS:
-            status[i] = {}
-            period_copies = getattr(self, i)
-            for key, value in period_copies.iteritems():
-                status[i][key] = value.as_dict()
-        return json.dumps(status, indent=4, sort_keys=True)
 
     @property
-    def valid(self):
+    def md5(self):
         """
-        Returns True if status is valid.
+        MD5 checksum of the status. It is calculated as a md5 of output of
+        ``self._status_serialize()``.
         """
-        return all(
-            (
-                self._hourly is not None,
-                self._daily is not None,
-                self._weekly is not None,
-                self._monthly is not None,
-                self._yearly is not None
+        return hashlib.md5(
+            self._status_serialize()
+        ).hexdigest()
+
+    def __init__(self, content=None):
+        if content == '':
+            raise CorruptedStatus('Status content cannot be an empty string')
+        try:
+            status = json.loads(content)
+            md5_stored = status['md5']
+            md5_calculated = hashlib.md5(
+                status['status']
+            ).hexdigest()
+            if md5_calculated != md5_stored:
+                raise CorruptedStatus('Checksum mismatch')
+
+            self._status = self._load(
+                b64decode(
+                    status['status']
+                )
             )
-        )
+            self._status.sort(
+                key=lambda cp: cp.created_at
+            )
+        except TypeError:  # Init from None
+            self._status = []
+        except ValueError:  # Old format
+            self._status = self._load(
+                b64decode(content)
+            )
+            self._status.sort(
+                key=lambda cp: cp.created_at
+            )
 
     @property
     def version(self):
@@ -66,88 +77,37 @@ class BaseStatus(object):
         """
         return self.__version__
 
-    @property
-    def hourly(self):
-        """Dictionary with hourly backups"""
-        return self._hourly
-
-    @property
-    def daily(self):
-        """Dictionary with daily backups"""
-        return self._daily
-
-    @property
-    def weekly(self):
-        """Dictionary with weekly backups"""
-        return self._weekly
-
-    @property
-    def monthly(self):
-        """Dictionary with monthly backups"""
-        return self._monthly
-
-    @property
-    def yearly(self):
-        """Dictionary with yearly backups"""
-        return self._yearly
-
     def add(self, backup_copy):
         """
         Add entry to status.
 
         :param backup_copy: Instance of backup copy
         :type backup_copy: BaseCopy
-        :return: Nothing
         """
-        getattr(self, backup_copy.run_type)[backup_copy.key] = backup_copy
+        self._status.append(backup_copy)
 
-    def remove(self, period, key):
+    def remove(self, key):
         """
         Remove key from the status.
-
-        :param period: one of 'hourly', 'daily', 'weekly', 'monthly', 'yearly'
-        :type period: str
-        :param key: Backup name in status. It's a relative file name
-            of a backup copy. For example,
-            master1/daily/mysql/mysql-2018-03-28_04_09_53.xbstream.gz
-        :type key: str
-        :raise StatusKeyNotFound: if there is no such key in the status
         """
-        if period not in INTERVALS:
-            raise StatusError('Wrong period %s. Valid values are %s'
-                              % (period, ", ".join(INTERVALS)))
-        try:
-            del getattr(self, "_%s" % period)[key]
-        except KeyError:
-            raise StatusKeyNotFound(
-                "There is no %s in %s backups"
-                % (key, period)
-            )
+        copy = self[key]
+        self._status.remove(copy)
 
     def serialize(self):
         """
         Return a string that represents current state
         """
-        encoded_status = b64encode(self.__str__())
-        status_md5 = hashlib.md5(encoded_status.encode())
-
         return json.dumps(
             {
-                "status": encoded_status,
-                "version": STATUS_FORMAT_VERSION,
-                "md5": status_md5.hexdigest()
-            }, sort_keys=True)
+                "status": self._status_serialize(),
+                "version": self.version,
+                "md5": self.md5
+            },
+            sort_keys=True
+        )
 
-    def backup_duration(self, run_type, key):
-        """
-        By given backup identifier (run_type, key) return its duration.
-
-        :param run_type:
-        :param key:
-        :return: backup duration in seconds
-        :rtype: int
-        """
-        return getattr(self, run_type)[key].duration
+    def _status_serialize(self):
+        raise NotImplementedError
 
     def get_latest_backup(self):
         """
@@ -156,20 +116,35 @@ class BaseStatus(object):
         :return: backup copy
         :rtype: BaseCopy
         """
-        latest_copy = None
-        latest_backup_time = 0
-        for i in INTERVALS:
-            period_copies = getattr(self, i)
-            for key, value in period_copies.iteritems():
-                if value.backup_started > latest_backup_time:
-                    latest_copy = key
-                    latest_backup_time = value.backup_started
-
-        return latest_copy
+        return self._status[len(self._status) - 1]
 
     def __getitem__(self, item):
-        for i in INTERVALS:
-            period_copies = getattr(self, i)
-            if item in period_copies:
-                return period_copies[item]
-        return None
+        if isinstance(item, int):
+            return self._status[item]
+        elif isinstance(item, (str, unicode)):
+            for copy in self._status:
+                if copy.key == str(item):
+                    return copy
+            raise StatusKeyNotFound('Copy %s not found' % item)
+        else:
+            raise NotImplementedError('Type %s not supported' % type(item))
+
+    def __str__(self):
+        return b64decode(
+            self._status_serialize()
+        )
+
+    def __len__(self):
+        return len(self._status)
+
+    @abstractmethod
+    def _load(self, status_as_json):
+        """
+        Parse status_as_json string and construct a status.
+
+        :param status_as_json: A JSON string with status
+        :type status_as_json: str
+        :return: status object - list of BackupCopies
+        :rtype: list
+        """
+        raise NotImplementedError

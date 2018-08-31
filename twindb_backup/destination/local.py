@@ -31,7 +31,9 @@ class Local(BaseDestination):
             path=self.path,
             hostname=socket.gethostname()
         )
-        self.status_tmp_path = self.status_path + ".tmp"
+
+    def __str__(self):
+        return "Local(%s)" % self.path
 
     def save(self, handler, name):
         """
@@ -45,24 +47,26 @@ class Local(BaseDestination):
         cmd = ["cat", "-", local_name]
         self._save(cmd, handler)
 
-    def list_files(self, prefix, recursive=False):
+    def _list_files(self, path, recursive=False, files_only=False):
+        rec_cond = "" if recursive else " -maxdepth 1"
+        fil_cond = " -type f" if files_only else ""
 
-        if recursive:
-            ls_cmd = ["ls", "-R", "%s*" % prefix]
-        else:
-            ls_cmd = ["ls", "%s*" % prefix]
-
-        cmd = ls_cmd
-
+        cmd_str = "bash -c 'if test -d {path} ; " \
+                  "then find {path}{recursive}{files_only}; fi'"
+        cmd_str = cmd_str.format(
+            path=path,
+            recursive=rec_cond,
+            files_only=fil_cond
+        )
+        cmd = [
+            'bash', '-c', cmd_str
+        ]
         with run_command(cmd) as cout:
-            return sorted(str(cout).split())
 
-    def find_files(self, prefix, run_type):
-
-        cmd = ["find", "%s*" % prefix, "-type", "f"]
-
-        with run_command(cmd) as cout:
-            return sorted(str(cout).split())
+            if files_only:
+                return cout.read().split()
+            else:
+                return cout.read().split()[1:]
 
     def delete(self, obj):
         cmd = ["rm", obj]
