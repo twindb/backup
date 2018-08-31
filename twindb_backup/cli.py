@@ -242,6 +242,7 @@ def verify(cfg):
 @click.option('--hostname', help='If backup_copy is '
                                  'latest this option specifies hostname '
                                  'where the backup copy was taken.',
+              default=socket.gethostname(),
               show_default=True)
 @PASS_CFG
 def verify_mysql(cfg, hostname, dst, backup_copy):
