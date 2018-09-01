@@ -181,7 +181,7 @@ class BaseDestination(object):
             return None
         url = "{remote_path}/{filename}".format(
             remote_path=self.remote_path,
-            filename=latest
+            filename=latest.key
         )
         return url
 
