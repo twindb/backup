@@ -74,15 +74,14 @@ class Local(BaseDestination):
         proc = Popen(cmd)
         proc.communicate()
 
-    @staticmethod
-    def get_stream(path):
+    def get_stream(self, path):
         """
         Get a PIPE handler with content of the backup copy streamed from
         the destination
 
         :return:
         """
-        cmd = ["cat", path]
+        cmd = ["cat", "%s/%s" % (self.remote_path, path)]
         return run_command(cmd)
 
     def _read_status(self):
