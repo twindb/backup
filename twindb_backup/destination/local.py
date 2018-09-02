@@ -81,7 +81,9 @@ class Local(BaseDestination):
 
         :return:
         """
-        cmd = ["cat", "%s/%s" % (self.remote_path, path)]
+        if self.remote_path not in path:
+            path = "%s/%s" % (self.remote_path, path)
+        cmd = ["cat", path]
         return run_command(cmd)
 
     def _read_status(self):

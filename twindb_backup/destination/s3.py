@@ -282,6 +282,10 @@ class S3(BaseDestination):
         :rtype: generator
         :raise S3DestinationError: if failed to stream a backup copy.
         """
+
+        if self.remote_path not in path:
+            path = "%s/%s" % (self.remote_path, path)
+
         object_key = urlparse(path).path.lstrip('/')
 
         def _download_object(s3_client, bucket_name, key, read_fd, write_fd):
