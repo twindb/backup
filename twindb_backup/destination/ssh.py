@@ -105,19 +105,17 @@ class Ssh(BaseDestination):
         self.execute_command(cmd)
 
     @contextmanager
-    def get_stream(self, path):
+    def get_stream(self, copy):
         """
         Get a PIPE handler with content of the backup copy streamed from
         the destination
 
-        :param path: Path to file
-        :type path: str
+        :param copy: Backup copy
+        :type copy: BaseCopy
         :return: Standard output.
         """
 
-        if self.remote_path not in path:
-            path = "%s/%s" % (self.remote_path, path)
-
+        path = "%s/%s" % (self.remote_path, copy.key)
         cmd = "cat %s" % path
 
         def _read_write_chunk(channel, write_fd, size=1024):

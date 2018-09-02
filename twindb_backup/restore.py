@@ -363,7 +363,7 @@ def restore_from_mysql(config, backup_copy, dst_dir,
         full_copy = status.candidate_parent(
             dst.get_run_type_from_full_path(backup_copy)
         )
-        full_stream = dst.get_stream(full_copy.key)
+        full_stream = dst.get_stream(full_copy)
         LOG.debug("Full parent copy is %s", full_copy.key)
         cache_key = os.path.basename(full_copy.key)
 
