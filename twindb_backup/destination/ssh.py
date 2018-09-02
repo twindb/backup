@@ -114,7 +114,11 @@ class Ssh(BaseDestination):
         :type path: str
         :return: Standard output.
         """
-        cmd = "cat %s/%s" % (self.remote_path, path)
+
+        if self.remote_path not in path:
+            path = "%s/%s" % (self.remote_path, path)
+
+        cmd = "cat %s" % path
 
         def _read_write_chunk(channel, write_fd, size=1024):
             while channel.recv_ready():
