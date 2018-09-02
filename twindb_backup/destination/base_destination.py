@@ -4,6 +4,7 @@ Module defines Base destination class and destination exception(s).
 """
 import re
 from abc import abstractmethod
+from os.path import sep, join
 
 from subprocess import Popen, PIPE
 
@@ -20,7 +21,8 @@ class BaseDestination(object):
             raise DestinationError(
                 'remote path must be defined and cannot be %r' % remote_path
             )
-        self.remote_path = remote_path.rstrip('/')
+        # self.remote_path = remote_path.rstrip('/')
+        self.remote_path = remote_path
         if status_path:
             self.status_path = status_path
         else:
@@ -171,7 +173,7 @@ class BaseDestination(object):
         :param filename:
         :return:
         """
-        return filename.replace(self.remote_path + '/', '', 1)
+        return filename.replace(self.remote_path, '', 1).lstrip(sep)
 
     def get_latest_backup(self):
         """Get latest backup path"""
@@ -179,11 +181,7 @@ class BaseDestination(object):
         latest = cur_status.get_latest_backup()
         if latest is None:
             return None
-        url = "{remote_path}/{filename}".format(
-            remote_path=self.remote_path,
-            filename=latest.key
-        )
-        return url
+        return join(self.remote_path, latest.key)
 
     @staticmethod
     def _match_files(files, pattern=None):
