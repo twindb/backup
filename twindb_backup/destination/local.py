@@ -74,15 +74,16 @@ class Local(BaseDestination):
         proc = Popen(cmd)
         proc.communicate()
 
-    def get_stream(self, path):
+    def get_stream(self, copy):
         """
         Get a PIPE handler with content of the backup copy streamed from
         the destination
 
+        :param copy: Backup copy
+        :type copy: BaseCopy
         :return:
         """
-        if self.remote_path not in path:
-            path = "%s/%s" % (self.remote_path, path)
+        path = "%s/%s" % (self.remote_path, copy.key)
         cmd = ["cat", path]
         return run_command(cmd)
 
