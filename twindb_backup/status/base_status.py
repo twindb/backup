@@ -113,10 +113,13 @@ class BaseStatus(object):
         """
         Find the latest backup copy.
 
-        :return: backup copy
+        :return: backup copy or None if status is empty.
         :rtype: BaseCopy
         """
-        return self._status[len(self._status) - 1]
+        try:
+            return self._status[len(self._status) - 1]
+        except IndexError:
+            return None
 
     def __getitem__(self, item):
         if isinstance(item, int):
