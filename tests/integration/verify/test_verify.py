@@ -127,7 +127,7 @@ def test_verify_on_master(
         '--config', twindb_config_guest,
         'verify',
         'mysql',
-        '--hostname', 'master1_1'
+        '--hostname', 'master1_1',
         'latest',
     ]
 
