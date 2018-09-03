@@ -85,6 +85,20 @@ def get_hostname_from_backup_copy(backup_copy):
     return None
 
 
+def get_run_type_from_backup_copy(backup_copy):
+    """
+    Backup copy includes hostname where the backup was taken from.
+    The function extracts the run type from the backup name.
+
+    :param backup_copy: Backup copy name.
+    :type backup_copy: str
+    :return: Run type.
+    :rtype: str
+    """
+    chunks = backup_copy.split('/')
+    return chunks[-3]
+
+
 @contextmanager
 def run_command(command, ok_non_zero=False):
     """
