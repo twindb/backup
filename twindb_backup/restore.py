@@ -6,6 +6,7 @@ from __future__ import print_function
 import ConfigParser
 from subprocess import Popen, PIPE
 import os
+from os import path as osp
 import tempfile
 import errno
 import time
@@ -21,8 +22,7 @@ from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
-from twindb_backup.util import mkdir_p, \
-    get_hostname_from_backup_copy, empty_dir
+from twindb_backup.util import mkdir_p, empty_dir
 
 
 def get_my_cnf(status, key):
@@ -283,7 +283,7 @@ def update_grastate(dst_dir, status, key):
 
 
 # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-def restore_from_mysql(config, backup_copy, dst_dir,
+def restore_from_mysql(config, copy, dst_dir,
                        tmp_dir=None,
                        cache=None,
                        hostname=None):
@@ -292,8 +292,8 @@ def restore_from_mysql(config, backup_copy, dst_dir,
 
     :param config: Tool configuration.
     :type config: ConfigParser.ConfigParser
-    :param backup_copy: Backup copy name.
-    :type backup_copy: str
+    :param copy: Backup copy instance.
+    :type copy: MySQLCopy
     :param dst_dir: Destination directory. Must exist and be empty.
     :type dst_dir: str
     :param tmp_dir: Path to temp directory
@@ -304,7 +304,7 @@ def restore_from_mysql(config, backup_copy, dst_dir,
     :type hostname: str
 
     """
-    LOG.info('Restoring %s in %s', backup_copy, dst_dir)
+    LOG.info('Restoring %s in %s', copy, dst_dir)
     mkdir_p(dst_dir)
 
     dst = None
@@ -321,24 +321,25 @@ def restore_from_mysql(config, backup_copy, dst_dir,
 
     try:
         keep_local_path = config.get('destination', 'keep_local_path')
-        if os.path.exists(backup_copy) and \
-                backup_copy.startswith(keep_local_path):
+        if osp.exists(osp.join(keep_local_path, copy.key)):
             dst = Local(keep_local_path)
     except ConfigParser.NoOptionError:
         pass
 
     if not dst:
         if not hostname:
-            hostname = get_hostname_from_backup_copy(backup_copy)
+            hostname = copy.host
             if not hostname:
-                raise DestinationError('Failed to get hostname from %s'
-                                       % backup_copy)
+                raise DestinationError(
+                    'Failed to get hostname from %s'
+                    % copy
+                )
         dst = get_destination(config, hostname=hostname)
 
-    key = dst.basename(backup_copy)
+    key = copy.key
     status = dst.status()
 
-    stream = dst.get_stream(backup_copy)
+    stream = dst.get_stream(copy)
 
     if status[key].type == "full":
 
@@ -348,20 +349,28 @@ def restore_from_mysql(config, backup_copy, dst_dir,
                 # restore from cache
                 cache.restore_in(cache_key, dst_dir)
             else:
-                restore_from_mysql_full(stream, dst_dir, config,
-                                        redo_only=False,
-                                        xtrabackup_binary=xtrabackup_binary,
-                                        xbstream_binary=xbstream_binary)
+                restore_from_mysql_full(
+                    stream,
+                    dst_dir,
+                    config,
+                    redo_only=False,
+                    xtrabackup_binary=xtrabackup_binary,
+                    xbstream_binary=xbstream_binary
+                )
                 cache.add(dst_dir, cache_key)
         else:
-            restore_from_mysql_full(stream, dst_dir, config,
-                                    redo_only=False,
-                                    xtrabackup_binary=xtrabackup_binary,
-                                    xbstream_binary=xbstream_binary)
+            restore_from_mysql_full(
+                stream,
+                dst_dir,
+                config,
+                redo_only=False,
+                xtrabackup_binary=xtrabackup_binary,
+                xbstream_binary=xbstream_binary
+            )
 
     else:
         full_copy = status.candidate_parent(
-            dst.get_run_type_from_full_path(backup_copy)
+            copy.run_type
         )
         full_stream = dst.get_stream(full_copy)
         LOG.debug("Full parent copy is %s", full_copy.key)
@@ -404,39 +413,44 @@ def restore_from_mysql(config, backup_copy, dst_dir,
     export_info(config, data=time.time() - restore_start,
                 category=ExportCategory.mysql,
                 measure_type=ExportMeasureType.restore)
-    LOG.info('Successfully restored %s in %s.', backup_copy, dst_dir)
+    LOG.info('Successfully restored %s in %s.', copy.key, dst_dir)
     LOG.info('Now copy content of %s to MySQL datadir: '
-             'cp -R %s/* /var/lib/mysql/', dst_dir, dst_dir)
+             'cp -R %s /var/lib/mysql/', dst_dir, osp.join(dst_dir, '*'))
     LOG.info('Fix permissions: chown -R mysql:mysql /var/lib/mysql/')
     LOG.info('Make sure innodb_log_file_size and innodb_log_files_in_group '
              'in %s/backup-my.cnf and in /etc/my.cnf are same.', dst_dir)
 
-    if os.path.exists(config_dir):
+    if osp.exists(config_dir):
         LOG.info('Original my.cnf is restored in %s.', config_dir)
 
     LOG.info('Then you can start MySQL normally.')
 
 
-def restore_from_file(config, backup_copy, dst_dir):
+def restore_from_file(config, copy, dst_dir):
     """
     Restore a directory from a backup copy in the directory
 
     :param config: Tool configuration.
     :type config: ConfigParser.ConfigParser
-    :param backup_copy: Backup name.
-    :type backup_copy: str
+    :param copy: Instance of BaseCopy or and inheriting classes.
+    :type copy: BaseCopy
     :param dst_dir: Path to destination directory. Must exist and be empty.
     :type dst_dir: str
     """
-    LOG.info('Restoring %s in %s', backup_copy, dst_dir)
+    LOG.info('Restoring %s in %s', copy.key, dst_dir)
     mkdir_p(dst_dir)
     restore_start = time.time()
-    if os.path.exists(backup_copy):
-        dst = Local(backup_copy)
-        stream = dst.get_stream(backup_copy)
+    try:
+        keep_local_path = config.get('destination', 'keep_local_path')
+    except ConfigParser.NoOptionError:
+        keep_local_path = None
+
+    if keep_local_path and os.path.exists(osp.join(keep_local_path, copy.key)):
+        dst = Local(osp.join(keep_local_path, copy.key))
+        stream = dst.get_stream(copy)
     else:
         dst = get_destination(config)
-        stream = dst.get_stream(backup_copy)
+        stream = dst.get_stream(copy)
         # GPG modifier
         try:
             gpg = Gpg(stream,
@@ -464,9 +478,9 @@ def restore_from_file(config, backup_copy, dst_dir):
                 if cerr:
                     LOG.error('STDERR: %s', cerr)
                 return
-            LOG.info('Successfully restored %s in %s', backup_copy, dst_dir)
+            LOG.info('Successfully restored %s in %s', copy.key, dst_dir)
         except (OSError, DestinationError) as err:
-            LOG.error('Failed to decompress %s: %s', backup_copy, err)
+            LOG.error('Failed to decompress %s: %s', copy.key, err)
             exit(1)
 
     export_info(config, data=time.time() - restore_start,

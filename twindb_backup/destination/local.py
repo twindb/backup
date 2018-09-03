@@ -3,13 +3,14 @@
 Module defines Local destination.
 """
 import os
+from os import path as osp
 import socket
 from subprocess import Popen
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.status.mysql_status import MySQLStatus
-from twindb_backup.util import run_command
+from twindb_backup.util import run_command, mkdir_p
 
 
 class Local(BaseDestination):
@@ -18,22 +19,24 @@ class Local(BaseDestination):
     """
     def __init__(self, path=None):
         super(Local, self).__init__(path)
-        self.path = path
+        self._path = path
         self.remote_path = self.path
-        try:
-            os.mkdir(self.path)
-        except OSError as err:
-            if err.errno == 17:  # OSError: [Errno 17] File exists
-                pass
-            else:
-                raise
-        self.status_path = "{path}/{hostname}/status".format(
-            path=self.path,
-            hostname=socket.gethostname()
+        self.status_path = osp.join(
+            self.path,
+            socket.gethostname(),
+            'status'
         )
 
     def __str__(self):
         return "Local(%s)" % self.path
+
+    @property
+    def path(self):
+        """
+        Root path on local file system where local backup copies are stored.
+        """
+        mkdir_p(self._path)
+        return self._path
 
     def save(self, handler, name):
         """
