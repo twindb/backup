@@ -287,15 +287,19 @@ class S3(BaseDestination):
         return s3obj.delete()
 
     @contextmanager
-    def get_stream(self, path):
+    def get_stream(self, copy):
         """
         Get a PIPE handler with content of the backup copy streamed from
         the destination.
 
+        :param copy: Backup copy
+        :type copy: BaseCopy
         :return: Stream with backup copy
         :rtype: generator
         :raise S3DestinationError: if failed to stream a backup copy.
         """
+
+        path = "%s/%s" % (self.remote_path, copy.key)
         object_key = urlparse(path).path.lstrip('/')
 
         def _download_object(s3_client, bucket_name, key, read_fd, write_fd):

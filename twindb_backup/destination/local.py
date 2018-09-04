@@ -2,6 +2,8 @@
 """
 Module defines Local destination.
 """
+import os
+from os import path as osp
 import socket
 from subprocess import Popen
 
@@ -19,7 +21,7 @@ class Local(BaseDestination):
     """
     def __init__(self, path=None):
         super(Local, self).__init__(path)
-        self.path = path
+        self._path = path
         self.remote_path = self.path
         mkdir_p(self.path)
 
@@ -32,6 +34,13 @@ class Local(BaseDestination):
             hostname=socket.gethostname(),
             filename=cls().basename
         )
+    @property
+    def path(self):
+        """
+        Root path on local file system where local backup copies are stored.
+        """
+        mkdir_p(self._path)
+        return self._path
 
     def save(self, handler, name):
         """
@@ -72,14 +81,16 @@ class Local(BaseDestination):
         proc = Popen(cmd)
         proc.communicate()
 
-    @staticmethod
-    def get_stream(path):
+    def get_stream(self, copy):
         """
         Get a PIPE handler with content of the backup copy streamed from
         the destination
 
+        :param copy: Backup copy
+        :type copy: BaseCopy
         :return:
         """
+        path = "%s/%s" % (self.remote_path, copy.key)
         cmd = ["cat", path]
         return run_command(cmd)
 

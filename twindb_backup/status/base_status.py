@@ -104,7 +104,7 @@ class BaseStatus(object):
         """
         Find the latest backup copy.
 
-        :return: backup copy
+        :return: backup copy or None if status is empty.
         :rtype: BaseCopy
         """
         try:

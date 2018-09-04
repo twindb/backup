@@ -4,6 +4,7 @@ import os
 import magic
 
 from tests.integration.conftest import docker_execute, get_twindb_config_dir
+from twindb_backup import LOG
 from twindb_backup.destination.s3 import S3, AWSAuthOptions
 
 
@@ -50,10 +51,6 @@ def test__take_file_backup(master1,
     print(cout)
     assert ret == 0
 
-    # print('Test paused')
-    # import time
-    # time.sleep(36000)
-
     assert s3_backup_path in cout
 
     backup_to_restore = None
@@ -65,6 +62,11 @@ def test__take_file_backup(master1,
     cmd = ['twindb-backup', '--debug',
            '--config', twindb_config_guest,
            'restore', 'file', '--dst', '/tmp/restore', backup_to_restore]
+
+    # LOG.debug('Test paused')
+    # LOG.debug(cmd)
+    # import time
+    # time.sleep(36000)
 
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
@@ -560,6 +562,12 @@ password=qwerty
         backup_copy,
         '--dst', dst_dir
     ]
+
+    # LOG.debug('Test paused')
+    # LOG.debug(' '.join(cmd))
+    # import time
+    # time.sleep(36000)
+
     ret, cout = docker_execute(
         docker_client,
         master1['Id'],
@@ -722,6 +730,12 @@ password=qwerty
         backup_copy,
         '--dst', dst_dir
     ]
+
+    # LOG.debug('Test paused')
+    # LOG.debug(' '.join(cmd))
+    # import time
+    # time.sleep(36000)
+
     ret, cout = docker_execute(
         docker_client,
         master1['Id'],

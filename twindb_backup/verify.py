@@ -7,6 +7,7 @@ import shutil
 import time
 import ConfigParser
 import tempfile
+import traceback
 
 from twindb_backup import LOG, TwinDBBackupError
 from twindb_backup.configuration import get_destination
@@ -30,31 +31,44 @@ def edit_backup_my_cnf(dst_path):
 
 def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
     """Restore mysql backup and measure time"""
+    dst = get_destination(config, hostname)
+    status = dst.status()
     if backup_copy == "latest":
-        dst = get_destination(config, hostname)
-        url = dst.get_latest_backup()
+        copy = status.get_latest_backup()
     else:
-        url = backup_copy
-    if url is None:
+        key = dst.basename(backup_copy)
+        copy = status[key]
+
+    if copy is None:
         return json.dumps({
-            'backup_copy': url,
+            'backup_copy': backup_copy,
             'restore_time': 0,
             'success': False
         }, indent=4, sort_keys=True)
     start_restore_time = time.time()
     success = True
+    tmp_dir = tempfile.mkdtemp()
+
     try:
-        tmp_dir = tempfile.mkdtemp()
-        restore_from_mysql(config, url, dst_path, tmp_dir)
+
+        LOG.debug('Verifying backup copy in %s', tmp_dir)
+        restore_from_mysql(config, copy, dst_path, tmp_dir)
         edit_backup_my_cnf(dst_path)
-        shutil.rmtree(tmp_dir)
+
     except (TwinDBBackupError, OSError, IOError) as err:
+
         LOG.error(err)
+        LOG.debug(traceback.format_exc())
         success = False
+
+    finally:
+
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
     end_restore_time = time.time()
     restore_time = end_restore_time - start_restore_time
     return json.dumps({
-        'backup_copy': url,
+        'backup_copy': copy.key,
         'restore_time': restore_time,
         'success': success
     }, indent=4, sort_keys=True)

@@ -4,9 +4,14 @@ Entry points for twindb-backup tool
 """
 from __future__ import print_function
 
+import shutil
+import socket
+import tempfile
 import traceback
 from ConfigParser import ConfigParser, NoSectionError
 import os
+from os.path import basename
+
 import click
 
 from twindb_backup import setup_logging, LOG, __version__, \
@@ -16,6 +21,7 @@ from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.clone import clone_mysql
 from twindb_backup.configuration import get_destination
+from twindb_backup.copy.file_copy import FileCopy
 from twindb_backup.exceptions import LockWaitTimeoutError, OperationError
 from twindb_backup.ls import list_available_backups
 from twindb_backup.modifiers.base import ModifierException
@@ -24,7 +30,8 @@ from twindb_backup.share import share
 from twindb_backup.source.exceptions import SourceError
 from twindb_backup.status.binlog_status import BinlogStatus
 from twindb_backup.status.mysql_status import MySQLStatus
-from twindb_backup.util import ensure_empty, kill_children
+from twindb_backup.util import ensure_empty, kill_children, \
+    get_hostname_from_backup_copy, get_run_type_from_backup_copy
 from twindb_backup.verify import verify_mysql_backup
 
 PASS_CFG = click.make_pass_decorator(ConfigParser, ensure=True)
@@ -171,10 +178,12 @@ def share_backup(cfg, s3_url):
     type=click.Choice(MEDIA_TYPES),
     default='mysql'
 )
+@click.option('--hostname', help='Hostname', show_default=True,
+              default=socket.gethostname())
 @PASS_CFG
-def status(cfg, copy_type):
+def status(cfg, copy_type, hostname):
     """Print backups status"""
-    dst = get_destination(cfg)
+    dst = get_destination(cfg, hostname)
     print(
         dst.status(
             cls=MEDIA_STATUS_MAP[copy_type]
@@ -207,10 +216,16 @@ def restore_mysql(cfg, dst, backup_copy, cache):
 
     try:
         ensure_empty(dst)
+        dst_storage = get_destination(
+            cfg,
+            get_hostname_from_backup_copy(backup_copy)
+        )
+        key = dst_storage.basename(backup_copy)
+        copy = dst_storage.status()[key]
         if cache:
-            restore_from_mysql(cfg, backup_copy, dst, cache=Cache(cache))
+            restore_from_mysql(cfg, copy, dst, cache=Cache(cache))
         else:
-            restore_from_mysql(cfg, backup_copy, dst)
+            restore_from_mysql(cfg, copy, dst)
 
     except (TwinDBBackupError, CacheException) as err:
         LOG.error(err)
@@ -236,7 +251,12 @@ def restore_file(cfg, dst, backup_copy):
 
     try:
         ensure_empty(dst)
-        restore_from_file(cfg, backup_copy, dst)
+        copy = FileCopy(
+            get_hostname_from_backup_copy(backup_copy),
+            basename(backup_copy),
+            get_run_type_from_backup_copy(backup_copy)
+        )
+        restore_from_file(cfg, copy, dst)
     except TwinDBBackupError as err:
         LOG.error(err)
         exit(1)
@@ -255,22 +275,34 @@ def verify(cfg):
 
 @verify.command('mysql')
 @click.argument('backup_copy', required=False)
-@click.option('--dst', help='Directory where to restore the backup copy',
-              default='/tmp/', show_default=True)
-@click.option('--hostname', help='If backup_copy is '
-                                 'latest this option specifies hostname '
-                                 'where the backup copy was taken.',
-              show_default=True)
+@click.option(
+    '--dst',
+    help='Directory where to restore the backup copy',
+    default=tempfile.mkdtemp(),
+    show_default=True
+)
+@click.option(
+    '--hostname',
+    help='If backup_copy is latest this option '
+         'specifies hostname where the backup copy was taken.',
+    default=socket.gethostname(),
+    show_default=True
+)
 @PASS_CFG
 def verify_mysql(cfg, hostname, dst, backup_copy):
     """Verify backup"""
     LOG.debug('mysql: %r', cfg)
 
-    if not backup_copy:
-        list_available_backups(cfg)
-        exit(1)
+    try:
+        if not backup_copy:
+            list_available_backups(cfg)
+            exit(1)
 
-    print(verify_mysql_backup(cfg, dst, backup_copy, hostname))
+        print(verify_mysql_backup(cfg, dst, backup_copy, hostname))
+
+    finally:
+
+        shutil.rmtree(dst, ignore_errors=True)
 
 
 @main.group('clone')
