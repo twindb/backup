@@ -21,10 +21,18 @@ from twindb_backup.ls import list_available_backups
 from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.restore import restore_from_mysql, restore_from_file
 from twindb_backup.share import share
+from twindb_backup.source.exceptions import SourceError
+from twindb_backup.status.binlog_status import BinlogStatus
+from twindb_backup.status.mysql_status import MySQLStatus
 from twindb_backup.util import ensure_empty, kill_children
 from twindb_backup.verify import verify_mysql_backup
 
 PASS_CFG = click.make_pass_decorator(ConfigParser, ensure=True)
+MEDIA_STATUS_MAP = {
+    'files': NotImplementedError,
+    'mysql': MySQLStatus,
+    'binlog': BinlogStatus
+}
 
 
 @click.group(invoke_without_command=True)
@@ -116,6 +124,10 @@ def backup(cfg, run_type, lock_file):
         LOG.error(err)
         LOG.debug(traceback.format_exc())
         exit(1)
+    except SourceError as err:
+        LOG.error(err)
+        LOG.debug(traceback.format_exc())
+        exit(1)
     except KeyboardInterrupt:
         LOG.info('Exiting...')
         kill_children()
@@ -154,11 +166,20 @@ def share_backup(cfg, s3_url):
 
 
 @main.command()
+@click.option(
+    '--type', 'copy_type',
+    type=click.Choice(MEDIA_TYPES),
+    default='mysql'
+)
 @PASS_CFG
-def status(cfg):
+def status(cfg, copy_type):
     """Print backups status"""
     dst = get_destination(cfg)
-    print(dst.status())
+    print(
+        dst.status(
+            cls=MEDIA_STATUS_MAP[copy_type]
+        )
+    )
 
 
 @main.group('restore')

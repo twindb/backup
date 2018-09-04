@@ -50,3 +50,7 @@ class BinlogCopy(BaseCopy):  # pylint: disable=too-few-public-methods
     def created_at(self):
         """Time of created copy"""
         return self._created_at
+
+    @property
+    def name(self):
+        return self._name

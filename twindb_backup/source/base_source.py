@@ -6,6 +6,7 @@ import ConfigParser
 import socket
 
 import time
+from abc import abstractmethod, abstractproperty
 
 from twindb_backup import delete_local_files, INTERVALS, LOG
 
@@ -34,6 +35,7 @@ class BaseSource(object):
         self._host = socket.gethostname()
         self._created_at = time.strftime('%Y-%m-%d_%H_%M_%S')
 
+    @abstractmethod
     def get_stream(self):
         """
         Get backup stream in a handler
@@ -49,6 +51,10 @@ class BaseSource(object):
             run_type=self.run_type,
             hostname=self._host
         )
+
+    @abstractmethod
+    def get_name(self):
+        pass
 
     def _get_name(self, filename_prefix):
 
@@ -78,7 +84,7 @@ class BaseSource(object):
         except ConfigParser.NoOptionError:
             pass
 
-    @property
+    @abstractproperty
     def suffix(self):
         """Backup file name suffix"""
         return self._suffix

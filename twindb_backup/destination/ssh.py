@@ -44,10 +44,7 @@ class Ssh(BaseDestination):
             key=kwargs.get('ssh_key', '/root/.ssh/id_rsa')
         )
 
-        self.status_path = "{remote_path}/{hostname}/status".format(
-            remote_path=self.remote_path,
-            hostname=kwargs.get('hostname', socket.gethostname())
-        )
+        self._hostname = kwargs.get('hostname', socket.gethostname())
 
     def __str__(self):
         return "Ssh(ssh://%s@%s:%d%s)" % (
@@ -55,6 +52,13 @@ class Ssh(BaseDestination):
             self.host,
             self.port,
             self.remote_path,
+        )
+
+    def status_path(self, cls=MySQLStatus):
+        return "{remote_path}/{hostname}/{basename}".format(
+            remote_path=self.remote_path,
+            hostname=self._hostname,
+            basename=cls().basename
         )
 
     def save(self, handler, name):
@@ -65,7 +69,7 @@ class Ssh(BaseDestination):
         :param handler: stream with content of the backup.
         """
         remote_name = self.remote_path + '/' + name
-        self._mkdirname_r(remote_name)
+        self._mkdir_r(os.path.dirname(remote_name))
 
         cmd = "cat - > %s" % remote_name
         with self._ssh_client.get_remote_handlers(cmd) \
@@ -162,20 +166,20 @@ class Ssh(BaseDestination):
             if read_process:
                 read_process.join()
 
-    def _read_status(self):
-        if self._status_exists():
-            cmd = "cat %s" % self.status_path
+    def _read_status(self, cls=MySQLStatus):
+        if self._status_exists(cls=cls):
+            cmd = "cat %s" % self.status_path(cls=cls)
             with self._ssh_client.get_remote_handlers(cmd) as (_, stdout, _):
-                return MySQLStatus(content=stdout.read())
+                return cls(content=stdout.read())
         else:
-            return MySQLStatus()
+            return cls()
 
-    def _write_status(self, status):
-        cmd = "cat - > %s" % self.status_path
+    def _write_status(self, status, cls=MySQLStatus):
+        cmd = "cat - > %s" % self.status_path(cls=cls)
         with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
             cin.write(status.serialize())
 
-    def _status_exists(self):
+    def _status_exists(self, cls=MySQLStatus):
         """
         Check, if status exist
 
@@ -186,7 +190,7 @@ class Ssh(BaseDestination):
         cmd = "bash -c 'if test -s %s; " \
               "then echo exists; " \
               "else echo not_exists; " \
-              "fi'" % self.status_path
+              "fi'" % self.status_path(cls=cls)
         status, cerr = self._ssh_client.execute(cmd)
 
         if status.strip() == 'exists':
@@ -199,8 +203,9 @@ class Ssh(BaseDestination):
             if status:
                 raise SshDestinationError(msg)
             else:
-                raise SshDestinationError('Empty response from '
-                                          'SSH destination')
+                raise SshDestinationError(
+                    'Empty response from SSH destination'
+                )
 
     def execute_command(self, cmd, quiet=False, background=False):
         """Execute ssh command
@@ -215,6 +220,9 @@ class Ssh(BaseDestination):
         :rtype: tuple
         """
         LOG.debug('Executing: %s', cmd)
+        if cmd == 'mkdir -p "/path/to/twindb-server-backups//var/lib/mysql"':
+            1/0
+
         return self._ssh_client.execute(
             cmd,
             quiet=quiet,
@@ -240,16 +248,6 @@ class Ssh(BaseDestination):
     def user(self):
         """SSH user."""
         return self._ssh_client.user
-
-    def _mkdirname_r(self, remote_name):
-        """Create directory for a given file on the destination.
-        For example, for a given file '/foo/bar/xyz' it would create
-        directory '/foo/bar/'.
-
-        :param remote_name: Full path to a file
-        :type remote_name: str
-        """
-        return self._mkdir_r(os.path.dirname(remote_name))
 
     def netcat(self, command, port=9990):
         """

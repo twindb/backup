@@ -2,20 +2,11 @@
 """
 import json
 import hashlib
-from abc import abstractmethod
+from abc import abstractmethod, abstractproperty
 from base64 import b64decode
 
 from twindb_backup import STATUS_FORMAT_VERSION
 from twindb_backup.status.exceptions import CorruptedStatus, StatusKeyNotFound
-
-
-# def _parse_status(content):
-#     raw_json = json.loads(content)
-#     md5_hash = hashlib.md5(raw_json["status"].encode()).hexdigest()
-#     if md5_hash != raw_json["md5"]:
-#         raise CorruptedStatus('Corrupted status: %s', content)
-#     _json = json.loads(b64decode(normalize_b64_data(raw_json["status"])))
-#     return raw_json["version"], _json
 
 
 class BaseStatus(object):
@@ -116,7 +107,10 @@ class BaseStatus(object):
         :return: backup copy
         :rtype: BaseCopy
         """
-        return self._status[len(self._status) - 1]
+        try:
+            return self._status[len(self._status) - 1]
+        except IndexError:
+            return None
 
     def __getitem__(self, item):
         if isinstance(item, int):
@@ -148,3 +142,9 @@ class BaseStatus(object):
         :rtype: list
         """
         raise NotImplementedError
+
+    @abstractproperty
+    def basename(self):
+        """
+        Returns file name where the status is store in the destination.
+        """

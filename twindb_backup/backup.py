@@ -6,6 +6,7 @@ import ConfigParser
 import errno
 import fcntl
 import os
+from os import path as osp
 import signal
 import time
 from contextlib import contextmanager
@@ -14,6 +15,7 @@ from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
     TwinDBBackupError, save_measures, XTRABACKUP_BINARY, MY_CNF_COMMON_PATHS)
 from twindb_backup.configuration import get_destination
+from twindb_backup.copy.binlog_copy import BinlogCopy
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.exceptions import OperationError, LockWaitTimeoutError
@@ -24,10 +26,14 @@ from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.modifiers.keeplocal import KeepLocal
+from twindb_backup.source.binlog_source import BinlogSource, BinlogParser
 from twindb_backup.source.exceptions import SourceError
 from twindb_backup.source.file_source import FileSource
-from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
+from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo, \
+    MySQLClient
 from twindb_backup.ssh.exceptions import SshClientException
+from twindb_backup.status.binlog_status import BinlogStatus
+from twindb_backup.status.mysql_status import MySQLStatus
 from twindb_backup.util import my_cnfs
 
 
@@ -126,7 +132,7 @@ def backup_mysql(run_type, config):
     except ConfigParser.NoOptionError:
         xtrabackup_binary = XTRABACKUP_BINARY
 
-    status = dst.status()
+    status = dst.status(cls=MySQLStatus)
 
     kwargs = {
         'backup_type': status.next_backup_type(full_backup, run_type),
@@ -186,11 +192,61 @@ def backup_mysql(run_type, config):
         category=ExportCategory.mysql,
         measure_type=ExportMeasureType.backup
     )
-    dst.status(status)
+    dst.status(status, cls=MySQLStatus)
 
     LOG.debug('Callbacks are %r', callbacks)
     for callback in callbacks:
         callback[0].callback(**callback[1])
+
+
+def backup_binlogs(run_type, config):
+    """Copy MySQL binlog files to the backup destination.
+
+    :param run_type: Run type
+    :type run_type: str
+    :param config: Tool configuration
+    :type config: ConfigParser.ConfigParser
+    """
+    dst = get_destination(config)
+    status = dst.status(cls=BinlogStatus)
+    mysql_client = MySQLClient(
+        defaults_file=config.get('mysql', 'mysql_defaults_file')
+    )
+    last = status.get_latest_backup()
+    with mysql_client.cursor() as cur:
+        cur.execute("SELECT @@log_bin_basename")
+        row = cur.fetchone()
+        binlog_dir = osp.dirname(row['@@log_bin_basename'])
+        backup_set = binlogs_to_backup(
+            cur,
+            binlog_dir,
+            last_binlog=last
+        )
+
+    for binlog_name in backup_set:
+        src = BinlogSource(run_type, mysql_client, binlog_name)
+        binlog_copy = BinlogCopy(
+            src.host,
+            src.basename,
+            BinlogParser(binlog_name).created_at
+        )
+        _backup_stream(config, src, dst)
+        status.add(binlog_copy)
+
+    dst.status(status, cls=BinlogStatus)
+
+
+def binlogs_to_backup(cursor, binlog_dir, last_binlog=None):
+    binlogs = []
+    cursor.execute("SHOW BINARY LOGS")
+    for row in cursor.fetchall():
+        binlog = row['Log_name']
+        if not last_binlog or binlog > last_binlog:
+            binlogs.append(
+                osp.join(binlog_dir, binlog)
+            )
+
+    return binlogs
 
 
 def set_open_files_limit():
@@ -218,8 +274,9 @@ def backup_everything(run_type, config):
 
     try:
         backup_start = time.time()
-        backup_files(run_type, config)
-        backup_mysql(run_type, config)
+        # backup_files(run_type, config)
+        # backup_mysql(run_type, config)
+        backup_binlogs(run_type, config)
         end = time.time()
         save_measures(backup_start, end)
     except ConfigParser.NoSectionError as err:

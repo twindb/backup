@@ -8,6 +8,13 @@ from twindb_backup.status.base_status import BaseStatus
 class PeriodicStatus(BaseStatus):
     """Periodic class for status"""
 
+    def _status_serialize(self):
+        raise NotImplementedError
+
+    @property
+    def basename(self):
+        raise NotImplementedError
+
     def _load(self, status_as_json):
         raise NotImplementedError
 

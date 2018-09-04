@@ -46,6 +46,58 @@ class MySQLMasterInfo(object):  # pylint: disable=too-few-public-methods
         self.port = 3306 if port is None else port
 
 
+class MySQLClient(object):
+    """Class to send queries to MySQL"""
+    def __init__(self, defaults_file,
+                 connect_timeout=10,
+                 hostname="127.0.0.1"):
+        self.connect_timeout = connect_timeout
+        self.defaults_file = defaults_file
+        self.hostname = hostname
+
+    @contextmanager
+    def get_connection(self):
+        """
+        Connect to MySQL host and yield a connection.
+
+        :return: MySQL connection
+        :raise MySQLSourceError: if can't connect to server
+        """
+        connection = None
+        try:
+            connection = pymysql.connect(
+                host=self.hostname,
+                read_default_file=self.defaults_file,
+                connect_timeout=self.connect_timeout,
+                cursorclass=pymysql.cursors.DictCursor
+            )
+
+            yield connection
+        except OperationalError:
+            LOG.error(
+                "Can't connect to MySQL server on %s",
+                self.hostname)
+            raise MySQLSourceError(
+                "Can't connect to MySQL server on %s"
+                % self.hostname)
+        finally:
+            if connection:
+                connection.close()
+
+    @contextmanager
+    def cursor(self):
+        with self.get_connection() as connection:
+            with connection.cursor() as cursor:
+                yield cursor
+
+    def variable(self, varname):
+        """Read MySQL variable and return its value"""
+        with self.cursor() as cursor:
+            cursor.execute("SELECT @@%s AS varname" % varname)
+            row = cursor.fetchone()
+            return row['varname']
+
+
 class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
     """MySQLSource class"""
     def __init__(self, mysql_connect_info, run_type, backup_type, **kwargs):
