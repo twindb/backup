@@ -4,6 +4,7 @@ Module defines MySQL source class for backing up local MySQL.
 """
 from __future__ import print_function
 import os
+from os import path as osp
 import tempfile
 import time
 
@@ -214,14 +215,18 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         :rtype: Status
         """
 
-        prefix = "{remote_path}/{prefix}/mysql/mysql-".format(
-            remote_path=dst.remote_path,
-            prefix=self.get_prefix()
+        prefix = osp.join(
+            dst.remote_path,
+            self.get_prefix(),
+            'mysql'
         )
         keep_copies = config.getint('retention',
                                     '%s_copies' % run_type)
 
-        backups_list = dst.list_files(prefix)
+        backups_list = dst.list_files(
+            prefix,
+            files_only=True
+        )
         LOG.debug('Remote copies: %r', backups_list)
         for backup_copy in get_files_to_delete(backups_list, keep_copies):
             LOG.debug('Deleting remote file %s', backup_copy)
