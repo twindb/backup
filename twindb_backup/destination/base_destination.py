@@ -23,11 +23,6 @@ class BaseDestination(object):
                 'remote path must be defined and cannot be %r' % remote_path
             )
         self.remote_path = remote_path.rstrip('/')
-        self.remote_path = remote_path
-        if status_path:
-            self.status_path = status_path
-        else:
-            self.status_path = '%s/status' % remote_path
 
     @abstractmethod
     def save(self, handler, name):

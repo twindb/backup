@@ -3,6 +3,7 @@
 Module defines base source class.
 """
 import ConfigParser
+from os import path as osp
 import socket
 
 import time
@@ -47,9 +48,9 @@ class BaseSource(object):
 
         :return: Backup name prefix like 'db-10/daily'
         """
-        return "{hostname}/{run_type}".format(
-            run_type=self.run_type,
-            hostname=self._host
+        return osp.join(
+            self._host,
+            self.run_type
         )
 
     @abstractmethod
@@ -59,12 +60,15 @@ class BaseSource(object):
     def _get_name(self, filename_prefix):
 
         LOG.debug('Suffix = %s', self.suffix)
-        self._name = "{prefix}/{media_type}/{file}-{time}.{suffix}".format(
-            prefix=self.get_prefix(),
-            media_type=self._media_type,
-            file=filename_prefix,
-            time=self._created_at,
-            suffix=self._suffix
+        self._name = osp.join(
+            self.get_prefix(),
+            self._media_type,
+            "{file}-{time}.{suffix}".format(
+                file=filename_prefix,
+                time=self._created_at,
+                suffix=self._suffix
+            )
+
         )
         return self._name
 

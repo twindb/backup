@@ -1,7 +1,8 @@
 """
 Module defines MySQL binlog source class for backing them up.
 """
-from os.path import dirname, join, basename
+from contextlib import contextmanager
+from os import path as osp
 
 from subprocess import Popen, PIPE
 
@@ -36,7 +37,7 @@ class BinlogParser(object):
     @property
     def name(self):
         """Binlog base name"""
-        return basename(self._binlog)
+        return osp.basename(self._binlog)
 
     @property
     def created_at(self):
@@ -126,9 +127,9 @@ class BinlogSource(BaseSource):
     def __init__(self, run_type, mysql_client, binlog_file=None):
         super(BinlogSource, self).__init__(run_type)
         self._mysql_client = mysql_client
-        self._media_type = 'binlog',
+        self._media_type = 'binlog'
         self._binlog_file = binlog_file
-        self._suffix = ''
+        self.suffix = ''
 
     @property
     def suffix(self):
@@ -138,6 +139,7 @@ class BinlogSource(BaseSource):
     def suffix(self, value):
         self._suffix = value
 
+    @contextmanager
     def get_stream(self):
         """
         Stream content of one binary file.
@@ -149,13 +151,11 @@ class BinlogSource(BaseSource):
             row = cursor.fetchone()
             log_bin_basename = row['log_bin_basename']
 
-        log_bin_dirname = dirname(log_bin_basename)
-        log_bin_file = join(log_bin_dirname, self._binlog_file)
+        log_bin_dirname = osp.dirname(log_bin_basename)
+        log_bin_file = osp.join(log_bin_dirname, self._binlog_file)
 
         cmd = [
-            "tar",
-            "cf",
-            "-",
+            "cat",
             log_bin_file,
         ]
         try:
@@ -177,4 +177,12 @@ class BinlogSource(BaseSource):
             exit(1)
 
     def get_name(self):
-        return self._binlog_file
+
+        return osp.join(
+            self.host,
+            self._media_type,
+            "{name}{suffix}".format(
+                name=self._binlog_file,
+                suffix=self.suffix
+            )
+        )

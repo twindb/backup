@@ -5,6 +5,7 @@ Module for SSH destination.
 import socket
 
 import os
+from os import path as osp
 from contextlib import contextmanager
 from multiprocessing import Process
 
@@ -68,8 +69,11 @@ class Ssh(BaseDestination):
         :param name: relative path to a file to store the backup copy.
         :param handler: stream with content of the backup.
         """
-        remote_name = self.remote_path + '/' + name
-        self._mkdir_r(os.path.dirname(remote_name))
+        remote_name = osp.join(
+            self.remote_path,
+            name
+        )
+        self._mkdir_r(osp.dirname(remote_name))
 
         cmd = "cat - > %s" % remote_name
         with self._ssh_client.get_remote_handlers(cmd) \
@@ -89,6 +93,9 @@ class Ssh(BaseDestination):
         :param path: remote directory
         :type path: str
         """
+        if path == "/var/lib/mysql":
+            1/0
+
         cmd = 'mkdir -p "%s"' % path
         self.execute_command(cmd)
 
@@ -222,8 +229,6 @@ class Ssh(BaseDestination):
         :rtype: tuple
         """
         LOG.debug('Executing: %s', cmd)
-        if cmd == 'mkdir -p "/path/to/twindb-server-backups//var/lib/mysql"':
-            1/0
 
         return self._ssh_client.execute(
             cmd,

@@ -20,7 +20,7 @@ from twindb_backup.backup import binlogs_to_backup
         ],
         'mysql-bin.000002',
         [
-            '/foo/bar/mysql-bin.000003'
+            'mysql-bin.000003'
         ]
     ),
     (
@@ -38,9 +38,9 @@ from twindb_backup.backup import binlogs_to_backup
         ],
         None,
         [
-            '/foo/bar/mysql-bin.000001',
-            '/foo/bar/mysql-bin.000002',
-            '/foo/bar/mysql-bin.000003',
+            'mysql-bin.000001',
+            'mysql-bin.000002',
+            'mysql-bin.000003',
         ]
     ),
     (
@@ -54,6 +54,5 @@ def test_binlogs_to_backup(binlog_names, last_binlog, to_backup):
     mock_cursor.fetchall.return_value = binlog_names
     assert to_backup == binlogs_to_backup(
         mock_cursor,
-        '/foo/bar',
         last_binlog=last_binlog
     )

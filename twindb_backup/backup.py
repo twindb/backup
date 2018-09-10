@@ -208,27 +208,33 @@ def backup_binlogs(run_type, config):
     :type config: ConfigParser.ConfigParser
     """
     dst = get_destination(config)
+    # print(dst.remote_path)
+    # 1/0
     status = dst.status(cls=BinlogStatus)
     mysql_client = MySQLClient(
         defaults_file=config.get('mysql', 'mysql_defaults_file')
     )
     last = status.get_latest_backup()
     with mysql_client.cursor() as cur:
+        backup_set = binlogs_to_backup(
+            cur,
+            last_binlog=last
+        )
         cur.execute("SELECT @@log_bin_basename")
         row = cur.fetchone()
         binlog_dir = osp.dirname(row['@@log_bin_basename'])
-        backup_set = binlogs_to_backup(
-            cur,
-            binlog_dir,
-            last_binlog=last
-        )
 
     for binlog_name in backup_set:
         src = BinlogSource(run_type, mysql_client, binlog_name)
         binlog_copy = BinlogCopy(
             src.host,
             src.basename,
-            BinlogParser(binlog_name).created_at
+            BinlogParser(
+                osp.join(
+                    binlog_dir,
+                    binlog_name
+                )
+            ).created_at
         )
         _backup_stream(config, src, dst)
         status.add(binlog_copy)
@@ -236,15 +242,13 @@ def backup_binlogs(run_type, config):
     dst.status(status, cls=BinlogStatus)
 
 
-def binlogs_to_backup(cursor, binlog_dir, last_binlog=None):
+def binlogs_to_backup(cursor, last_binlog=None):
     binlogs = []
     cursor.execute("SHOW BINARY LOGS")
     for row in cursor.fetchall():
         binlog = row['Log_name']
         if not last_binlog or binlog > last_binlog:
-            binlogs.append(
-                osp.join(binlog_dir, binlog)
-            )
+            binlogs.append(binlog)
 
     return binlogs
 
