@@ -217,6 +217,7 @@ class S3(BaseDestination):
         :param pattern: files must match with this regexp if specified.
         :type pattern: str
         :param files_only: Does nothing for this class.
+        :return: Full S3 url in form ``s3://bucket/path/to/file``.
         :rtype: list(str)
         :raise S3DestinationError: if failed to list files.
         """
@@ -278,11 +279,16 @@ class S3(BaseDestination):
         :type obj: str
         :raise S3DestinationError: if failed to delete object.
         """
+        key = obj.replace(
+            's3://%s/' % self.bucket,
+            ''
+        ) if obj.startswith('s3://') else obj
+
         s3client = boto3.resource('s3')
         bucket = s3client.Bucket(self.bucket)
 
-        s3obj = s3client.Object(bucket.name, obj)
-        LOG.debug('deleting s3://%s/%s', bucket.name, obj)
+        s3obj = s3client.Object(bucket.name, key)
+        LOG.debug('deleting s3://%s/%s', bucket.name, key)
 
         return s3obj.delete()
 
