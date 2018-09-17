@@ -11,3 +11,8 @@ def test_init_empty():
     instance = BinlogStatus()
     assert len(instance) == 0
 
+
+def test_init_restores_name(raw_binlog_status):
+    status = BinlogStatus(raw_binlog_status)
+    copy = status['master1/binlog/mysqlbin001.bin']
+    assert copy.name == 'mysqlbin001.bin'

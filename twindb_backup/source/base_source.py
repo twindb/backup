@@ -55,6 +55,7 @@ class BaseSource(object):
 
     @abstractmethod
     def get_name(self):
+        """Name that will be used to store backup copy from this source."""
         pass
 
     def _get_name(self, filename_prefix):

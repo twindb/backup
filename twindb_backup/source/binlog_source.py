@@ -13,7 +13,10 @@ from twindb_backup.source.base_source import BaseSource
 from twindb_backup.source.exceptions import BinlogSourceError
 
 
-class BinlogV4Event(object):
+class BinlogV4Event(object):  # pylint: disable=too-few-public-methods
+    """
+    MySQL Binary log event.
+    """
     def __init__(self, **kwargs):
         self.timestamp = kwargs.get('timestamp')
         self.type_code = kwargs.get('type_code')
@@ -43,9 +46,9 @@ class BinlogParser(object):
     def created_at(self):
         """Timestamp when the binlog was created"""
         try:
-            with open(self._binlog) as fp:
-                self.__read_magic_number(fp)
-                return self.__read_int(fp, 4)
+            with open(self._binlog) as binlog_descriptor:
+                self.__read_magic_number(binlog_descriptor)
+                return self.__read_int(binlog_descriptor, 4)
         except IOError as err:
             raise BinlogSourceError(
                 "Failed to read the 'created_at' attribute: %s" % err
@@ -60,10 +63,10 @@ class BinlogParser(object):
     def end_position(self):
         """Last position in the binlog"""
         last_position = self.start_position
-        with open(self._binlog) as fp:
-            self.__read_magic_number(fp)
+        with open(self._binlog) as binlog_descriptor:
+            self.__read_magic_number(binlog_descriptor)
             while True:
-                event = self.__read_binlog_event(fp)
+                event = self.__read_binlog_event(binlog_descriptor)
                 if event:
                     last_position = event.curr_position
                 else:
@@ -75,38 +78,38 @@ class BinlogParser(object):
         return fdesc.read(4)
 
     @staticmethod
-    def __read_int(fdesc, n):
-        if n == 4:
-            return struct.unpack('i', fdesc.read(n))[0]
-        elif n == 2:
-            return struct.unpack('h', fdesc.read(n))[0]
-        elif n == 1:
-            return struct.unpack('b', fdesc.read(n))[0]
+    def __read_int(fdesc, n_bytes):
+        if n_bytes == 4:
+            return struct.unpack('i', fdesc.read(n_bytes))[0]
+        elif n_bytes == 2:
+            return struct.unpack('h', fdesc.read(n_bytes))[0]
+        elif n_bytes == 1:
+            return struct.unpack('b', fdesc.read(n_bytes))[0]
         else:
             raise NotImplementedError(
                 'Reading %d bytes integer is unsupported'
-                % n
+                % n_bytes
             )
 
-    def __read_binlog_event(self, fp):
+    def __read_binlog_event(self, binlog_descriptor):
         """
         Read binlog event from file descriptor
-        :param fp: File descriptor
+        :param binlog_descriptor: File descriptor
         :return: Binlog event
         :rtype: BinlogV4Event
         """
-        position = fp.tell()
+        position = binlog_descriptor.tell()
         try:
             event = BinlogV4Event(
-                timestamp=self.__read_int(fp, 4),
-                type_code=self.__read_int(fp, 1),
-                server_id=self.__read_int(fp, 4),
-                event_length=self.__read_int(fp, 4),
+                timestamp=self.__read_int(binlog_descriptor, 4),
+                type_code=self.__read_int(binlog_descriptor, 1),
+                server_id=self.__read_int(binlog_descriptor, 4),
+                event_length=self.__read_int(binlog_descriptor, 4),
                 curr_position=position,
-                next_position=self.__read_int(fp, 4),
-                flags=self.__read_int(fp, 2)
+                next_position=self.__read_int(binlog_descriptor, 4),
+                flags=self.__read_int(binlog_descriptor, 2)
             )
-            fp.read(event.event_length - 19)
+            binlog_descriptor.read(event.event_length - 19)
             return event
         except struct.error:
             return None

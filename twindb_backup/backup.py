@@ -199,7 +199,7 @@ def backup_mysql(run_type, config):
         callback[0].callback(**callback[1])
 
 
-def backup_binlogs(run_type, config):
+def backup_binlogs(run_type, config):  # pylint: disable=too-many-locals
     """Copy MySQL binlog files to the backup destination.
 
     :param run_type: Run type
@@ -208,17 +208,17 @@ def backup_binlogs(run_type, config):
     :type config: ConfigParser.ConfigParser
     """
     dst = get_destination(config)
-    # print(dst.remote_path)
-    # 1/0
     status = dst.status(cls=BinlogStatus)
     mysql_client = MySQLClient(
         defaults_file=config.get('mysql', 'mysql_defaults_file')
     )
-    last = status.get_latest_backup()
+    last_copy = status.get_latest_backup()
+    LOG.debug('Latest copied binlog %s', last_copy)
     with mysql_client.cursor() as cur:
+        cur.execute("FLUSH BINARY LOGS")
         backup_set = binlogs_to_backup(
             cur,
-            last_binlog=last
+            last_binlog=last_copy.name if last_copy else None
         )
         cur.execute("SELECT @@log_bin_basename")
         row = cur.fetchone()
@@ -228,7 +228,7 @@ def backup_binlogs(run_type, config):
         src = BinlogSource(run_type, mysql_client, binlog_name)
         binlog_copy = BinlogCopy(
             src.host,
-            src.basename,
+            binlog_name,
             BinlogParser(
                 osp.join(
                     binlog_dir,
@@ -239,10 +239,36 @@ def backup_binlogs(run_type, config):
         _backup_stream(config, src, dst)
         status.add(binlog_copy)
 
+    try:
+        expire_log_days = config.get('mysql', 'expire_log_days')
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        expire_log_days = 7
+
+    for copy in status:
+        now = int(time.time())
+        LOG.debug('Reviewing copy %s. Now: %d', copy, now)
+
+        if copy.created_at < now - expire_log_days * 24 * 3600:
+            LOG.debug(
+                'Deleting copy that was taken %d seconds ago',
+                now - copy.created_at
+            )
+            dst.delete(copy.key + ".gz")
+            status.remove(copy.key)
+
     dst.status(status, cls=BinlogStatus)
 
 
 def binlogs_to_backup(cursor, last_binlog=None):
+    """
+    Finds list of binlogs to copy. It will return the binlogs
+    from the last to the current one (excluding it).
+
+    :param cursor: MySQL cursor
+    :param last_binlog: Name of the last copied binlog.
+    :return: list of binlogs to backup.
+    :rtype: list
+    """
     binlogs = []
     cursor.execute("SHOW BINARY LOGS")
     for row in cursor.fetchall():
@@ -250,7 +276,7 @@ def binlogs_to_backup(cursor, last_binlog=None):
         if not last_binlog or binlog > last_binlog:
             binlogs.append(binlog)
 
-    return binlogs
+    return binlogs[:-1]
 
 
 def set_open_files_limit():
@@ -265,7 +291,7 @@ def set_open_files_limit():
     LOG.debug('Setting max files limit to %d', max_files)
 
 
-def backup_everything(run_type, config):
+def backup_everything(run_type, config, binlogs_only=False):
     """
     Run backup job
 
@@ -273,16 +299,21 @@ def backup_everything(run_type, config):
     :type run_type: str
     :param config: ConfigParser instance
     :type config: ConfigParser.ConfigParser
+    :param binlogs_only: If True copy only MySQL binary logs.
+    :type binlogs_only: bool
     """
     set_open_files_limit()
 
     try:
-        backup_start = time.time()
-        # backup_files(run_type, config)
-        # backup_mysql(run_type, config)
-        backup_binlogs(run_type, config)
-        end = time.time()
-        save_measures(backup_start, end)
+        if not binlogs_only:
+            backup_start = time.time()
+            backup_files(run_type, config)
+            backup_mysql(run_type, config)
+            backup_binlogs(run_type, config)
+            end = time.time()
+            save_measures(backup_start, end)
+        else:
+            backup_binlogs(run_type, config)
     except ConfigParser.NoSectionError as err:
         LOG.error(err)
         exit(1)
@@ -312,7 +343,7 @@ def timeout(seconds):
         signal.signal(signal.SIGALRM, original_handler)
 
 
-def run_backup_job(cfg, run_type, lock_file=LOCK_FILE):
+def run_backup_job(cfg, run_type, lock_file=LOCK_FILE, binlogs_only=False):
     """
     Grab a lock waiting up to allowed timeout and start backup jobs
 
@@ -322,6 +353,8 @@ def run_backup_job(cfg, run_type, lock_file=LOCK_FILE):
     :type run_type: str
     :param lock_file: File used as a lock
     :type lock_file: str
+    :param binlogs_only: If True copy only binlogs.
+    :type binlogs_only: bool
     """
     with timeout(get_timeout(run_type)):
         try:
@@ -329,7 +362,7 @@ def run_backup_job(cfg, run_type, lock_file=LOCK_FILE):
             fcntl.flock(file_desriptor, fcntl.LOCK_EX)
             LOG.debug(run_type)
             if cfg.getboolean('intervals', "run_%s" % run_type):
-                backup_everything(run_type, cfg)
+                backup_everything(run_type, cfg, binlogs_only=binlogs_only)
             else:
                 LOG.debug('Not running because run_%s is no', run_type)
         except IOError as err:

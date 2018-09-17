@@ -37,12 +37,6 @@ class PeriodicStatus(BaseStatus):
                 result[copy.key] = copy
         return result
 
-    def _status_serialize(self):
-        raise NotImplementedError
-
-    def _load(self, status_as_json):
-        raise NotImplementedError
-
     @property
     def hourly(self):
         """Dictionary with hourly backups"""

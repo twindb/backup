@@ -19,8 +19,24 @@ from twindb_backup.backup import binlogs_to_backup
 
         ],
         'mysql-bin.000002',
+        []
+    ),
+    (
         [
-            'mysql-bin.000003'
+            {
+                'Log_name': 'mysql-bin.000001'
+            },
+            {
+                'Log_name': 'mysql-bin.000002'
+            },
+            {
+                'Log_name': 'mysql-bin.000003'
+            },
+
+        ],
+        'mysql-bin.000001',
+        [
+            'mysql-bin.000002'
         ]
     ),
     (
@@ -39,8 +55,7 @@ from twindb_backup.backup import binlogs_to_backup
         None,
         [
             'mysql-bin.000001',
-            'mysql-bin.000002',
-            'mysql-bin.000003',
+            'mysql-bin.000002'
         ]
     ),
     (
