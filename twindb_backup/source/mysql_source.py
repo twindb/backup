@@ -87,6 +87,7 @@ class MySQLClient(object):
 
     @contextmanager
     def cursor(self):
+        """MySQL cursor for connection to local MySQL instance."""
         with self.get_connection() as connection:
             with connection.cursor() as cursor:
                 yield cursor
@@ -101,6 +102,11 @@ class MySQLClient(object):
 
 class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
     """MySQLSource class"""
+
+    @property
+    def suffix(self):
+        return self._suffix
+
     def __init__(self, mysql_connect_info, run_type, backup_type, **kwargs):
         """
         MySQLSource constructor
@@ -136,7 +142,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         else:
             raise MySQLSourceError('Unrecognized backup type %s' % backup_type)
 
-        self.suffix = 'xbstream'
+        self._suffix = 'xbstream'
         self._media_type = 'mysql'
         self._file_name_prefix = 'mysql'
         self.dst = kwargs.get('dst', None)

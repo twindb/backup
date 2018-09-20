@@ -56,6 +56,7 @@ class Ssh(BaseDestination):
         )
 
     def status_path(self, cls=MySQLStatus):
+        """Path on the destination where status file will be stored."""
         return "{remote_path}/{hostname}/{basename}".format(
             remote_path=self.remote_path,
             hostname=self._hostname,
@@ -93,9 +94,6 @@ class Ssh(BaseDestination):
         :param path: remote directory
         :type path: str
         """
-        if path == "/var/lib/mysql":
-            1/0
-
         cmd = 'mkdir -p "%s"' % path
         self.execute_command(cmd)
 

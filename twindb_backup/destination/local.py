@@ -2,8 +2,6 @@
 """
 Module defines Local destination.
 """
-import os
-from os import path as osp
 import socket
 from subprocess import Popen
 
@@ -29,11 +27,13 @@ class Local(BaseDestination):
         return "Local(%s)" % self.path
 
     def status_path(self, cls=MySQLStatus):
+        """Path on the destination where status file will be stored."""
         return "{path}/{hostname}/{filename}".format(
             path=self.path,
             hostname=socket.gethostname(),
             filename=cls().basename
         )
+
     @property
     def path(self):
         """

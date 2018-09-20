@@ -27,14 +27,14 @@ def test_repr(host, fname, time_created, copy_repr):
         "test_host",
         "test_file",
         100500,
-        'BinlogCopy: file name: test_host/binlog/test_file, created at: 100500'
+        'BinlogCopy: file name: test_file, created at: 100500'
     ),
     (
         "test_host2",
         "test_file2",
         1005002,
         'BinlogCopy: '
-        'file name: test_host2/binlog/test_file2, created at: 1005002'
+        'file name: test_file2, created at: 1005002'
     ),
 ])
 def test_str(host, fname, time_created, copy_as_str):

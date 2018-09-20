@@ -116,12 +116,24 @@ def main(ctx, cfg, debug,  # pylint: disable=too-many-arguments
     help='Lock file to protect against multiple backup tool'
          ' instances at same time.'
 )
+@click.option(
+    '--binlogs-only',
+    default=False,
+    show_default=True,
+    is_flag=True,
+    help='If specified the tool will copy only MySQL binary logs.'
+)
 @PASS_CFG
-def backup(cfg, run_type, lock_file):
+def backup(cfg, run_type, lock_file, binlogs_only):
     """Run backup job"""
     try:
 
-        run_backup_job(cfg, run_type, lock_file=lock_file)
+        run_backup_job(
+            cfg,
+            run_type,
+            lock_file=lock_file,
+            binlogs_only=binlogs_only
+        )
     except (LockWaitTimeoutError, OperationError) as err:
         LOG.error(err)
         LOG.debug(traceback.format_exc())

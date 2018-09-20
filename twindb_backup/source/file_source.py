@@ -11,6 +11,7 @@ from twindb_backup.source.base_source import BaseSource
 
 class FileSource(BaseSource):
     """FileSource class"""
+
     def __init__(self, path, run_type):
         self.path = path
         self._suffix = 'tar'
@@ -25,6 +26,14 @@ class FileSource(BaseSource):
         :return: 'file'
         """
         return self._media_type
+
+    @property
+    def suffix(self):
+        return self._suffix
+
+    @suffix.setter
+    def suffix(self, suffix):
+        self._suffix = suffix
 
     @contextmanager
     def get_stream(self):
