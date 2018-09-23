@@ -38,7 +38,7 @@ class BinlogCopy(BaseCopy):  # pylint: disable=too-few-public-methods
     def __str__(self):
         return "%s: file name: %s, created at: %d" % (
             self.__class__.__name__,
-            self.key,
+            self.name,
             self.created_at
         )
 
@@ -50,3 +50,8 @@ class BinlogCopy(BaseCopy):  # pylint: disable=too-few-public-methods
     def created_at(self):
         """Time of created copy"""
         return self._created_at
+
+    @property
+    def name(self):
+        """Binlog copy name as in SHOW BINARY LOGS."""
+        return self._name

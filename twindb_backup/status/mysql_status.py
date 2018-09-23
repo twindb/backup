@@ -19,6 +19,10 @@ class MySQLStatus(PeriodicStatus):
     Class that stores status file and implements operations on it.
     """
 
+    @property
+    def basename(self):
+        return 'status'
+
     def _status_serialize(self):
 
         def _serialize_config_dict(cfg):

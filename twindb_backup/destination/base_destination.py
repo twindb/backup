@@ -11,22 +11,18 @@ from subprocess import Popen, PIPE
 from twindb_backup import LOG
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.status.exceptions import CorruptedStatus
+from twindb_backup.status.mysql_status import MySQLStatus
 
 
 class BaseDestination(object):
     """Base destination class"""
 
-    def __init__(self, remote_path, status_path=None):
+    def __init__(self, remote_path):
         if not remote_path:
             raise DestinationError(
                 'remote path must be defined and cannot be %r' % remote_path
             )
-        # self.remote_path = remote_path.rstrip('/')
-        self.remote_path = remote_path
-        if status_path:
-            self.status_path = status_path
-        else:
-            self.status_path = '%s/status' % remote_path
+        self.remote_path = remote_path.rstrip('/')
 
     @abstractmethod
     def save(self, handler, name):
@@ -107,7 +103,7 @@ class BaseDestination(object):
         :return:
         """
 
-    def status(self, status=None):
+    def status(self, status=None, cls=MySQLStatus):
         """
         Read or save backup status. Status is an instance of Status class.
         If status is None the function will read status from
@@ -116,32 +112,33 @@ class BaseDestination(object):
 
         :param status: instance of Status class
         :type status: Status
+        :param cls: class of status. By default, MySQLStatus
         :return: instance of Status class
         :rtype: Status
         """
         def _write_retry(status_content, attempts=3):
             for _ in xrange(attempts):
-                self._write_status(status_content)
+                self._write_status(status_content, cls=cls)
                 try:
-                    return self._read_status()
+                    return self._read_status(cls=cls)
                 except CorruptedStatus:
                     pass
             raise DestinationError("Can't write status")
         if status:
             return _write_retry(status, attempts=3)
         else:
-            return self._read_status()
+            return self._read_status(cls=cls)
 
     @abstractmethod
-    def _write_status(self, status):
+    def _write_status(self, status, cls=MySQLStatus):
         """Function that actually writes status"""
 
     @abstractmethod
-    def _read_status(self):
+    def _read_status(self, cls=MySQLStatus):
         """Function that actually reads status"""
 
     @abstractmethod
-    def _status_exists(self):
+    def _status_exists(self, cls=MySQLStatus):
         """Check if status file exists"""
 
     def get_run_type_from_full_path(self, path):
