@@ -7,7 +7,7 @@ from os import path as osp
 import socket
 
 import time
-from abc import abstractmethod, abstractproperty
+from abc import abstractmethod
 
 from twindb_backup import delete_local_files, INTERVALS, LOG
 
@@ -89,7 +89,7 @@ class BaseSource(object):
         except ConfigParser.NoOptionError:
             pass
 
-    @abstractproperty
+    @property
     def suffix(self):
         """Backup file name suffix"""
         return self._suffix

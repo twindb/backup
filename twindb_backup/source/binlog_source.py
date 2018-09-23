@@ -134,14 +134,6 @@ class BinlogSource(BaseSource):
         self._binlog_file = binlog_file
         self.suffix = ''
 
-    @property
-    def suffix(self):
-        return self._suffix
-
-    @suffix.setter
-    def suffix(self, value):
-        self._suffix = value
-
     @contextmanager
     def get_stream(self):
         """

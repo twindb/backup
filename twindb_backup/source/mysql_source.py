@@ -146,14 +146,6 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         super(MySQLSource, self).__init__(run_type)
 
     @property
-    def suffix(self):
-        return self._suffix
-
-    @suffix.setter
-    def suffix(self, suffix):
-        self._suffix = suffix
-
-    @property
     def binlog_coordinate(self):
         """
         Binary log coordinate up to that backup is taken

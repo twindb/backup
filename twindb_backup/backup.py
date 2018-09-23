@@ -5,9 +5,8 @@ backup jobs.
 import ConfigParser
 import errno
 import fcntl
-import os
-import traceback
 from os import path as osp
+import traceback
 import signal
 import time
 from contextlib import contextmanager
@@ -48,7 +47,7 @@ def _backup_stream(config, src, dst, callbacks=None):
         keep_local_path = config.get('destination', 'keep_local_path')
         kl_modifier = KeepLocal(
             stream,
-            os.path.join(
+            osp.join(
                 keep_local_path,
                 src.get_name()
             )

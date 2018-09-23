@@ -27,14 +27,6 @@ class FileSource(BaseSource):
         """
         return self._media_type
 
-    @property
-    def suffix(self):
-        return self._suffix
-
-    @suffix.setter
-    def suffix(self, suffix):
-        self._suffix = suffix
-
     @contextmanager
     def get_stream(self):
         """
