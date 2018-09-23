@@ -103,10 +103,6 @@ class MySQLClient(object):
 class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
     """MySQLSource class"""
 
-    @property
-    def suffix(self):
-        return self._suffix
-
     def __init__(self, mysql_connect_info, run_type, backup_type, **kwargs):
         """
         MySQLSource constructor
@@ -148,6 +144,14 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         self.dst = kwargs.get('dst', None)
         self._xtrabackup = kwargs.get('xtrabackup_binary', XTRABACKUP_BINARY)
         super(MySQLSource, self).__init__(run_type)
+
+    @property
+    def suffix(self):
+        return self._suffix
+
+    @suffix.setter
+    def suffix(self, suffix):
+        self._suffix = suffix
 
     @property
     def binlog_coordinate(self):

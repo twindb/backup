@@ -6,6 +6,7 @@ import ConfigParser
 import errno
 import fcntl
 import os
+import traceback
 from os import path as osp
 import signal
 import time
@@ -209,9 +210,14 @@ def backup_binlogs(run_type, config):  # pylint: disable=too-many-locals
     """
     dst = get_destination(config)
     status = dst.status(cls=BinlogStatus)
-    mysql_client = MySQLClient(
-        defaults_file=config.get('mysql', 'mysql_defaults_file')
-    )
+    try:
+        mysql_client = MySQLClient(
+            defaults_file=config.get('mysql', 'mysql_defaults_file')
+        )
+    except ConfigParser.NoSectionError:
+        LOG.debug('No mysql section in the config. Not backing up binlogs')
+        return
+
     last_copy = status.get_latest_backup()
     LOG.debug('Latest copied binlog %s', last_copy)
     with mysql_client.cursor() as cur:
@@ -315,6 +321,7 @@ def backup_everything(run_type, config, binlogs_only=False):
         else:
             backup_binlogs(run_type, config)
     except ConfigParser.NoSectionError as err:
+        LOG.debug(traceback.format_exc())
         LOG.error(err)
         exit(1)
 

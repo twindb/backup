@@ -107,4 +107,4 @@ class Local(BaseDestination):
             fstatus.write(status.serialize())
 
     def _status_exists(self, cls=MySQLStatus):
-        return exists(self.status_path)
+        return exists(self.status_path())
