@@ -11,6 +11,7 @@ from twindb_backup.source.base_source import BaseSource
 
 class FileSource(BaseSource):
     """FileSource class"""
+
     def __init__(self, path, run_type):
         self.path = path
         self._suffix = 'tar'

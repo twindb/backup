@@ -80,11 +80,25 @@ class S3(BaseDestination):
         os.environ["AWS_SECRET_ACCESS_KEY"] = self.aws.secret_access_key
         os.environ["AWS_DEFAULT_REGION"] = self.aws.default_region
 
-        self.status_path = "{hostname}/status".format(
-            hostname=hostname
-        )
+        self._hostname = hostname
+        # self.status_path = "{hostname}/status".format(
+        #     hostname=hostname
+        # )
         # Setup an authenticated S3 client that we will use throughout
         self.s3_client = self.setup_s3_client()
+
+    def status_path(self, cls=MySQLStatus):
+        """
+        Return key path where status is stored for a given type of status.
+
+        :param cls: status class. By default MySQLStatus
+        :return: key name in S3 bucket where status is stored.
+        :rtype: str
+        """
+        return "{hostname}/{basename}".format(
+            hostname=self._hostname,
+            basename=cls().basename
+        )
 
     def setup_s3_client(self):
         """Creates an authenticated s3 client.
@@ -403,9 +417,12 @@ class S3(BaseDestination):
 
         return 0
 
-    def _status_exists(self):
+    def _status_exists(self, cls=MySQLStatus):
         s3client = boto3.resource('s3')
-        status_object = s3client.Object(self.bucket, self.status_path)
+        status_object = s3client.Object(
+            self.bucket,
+            self.status_path(cls=cls)
+        )
         try:
             if status_object.content_length > 0:
                 return True
@@ -416,23 +433,23 @@ class S3(BaseDestination):
                 raise
         return False
 
-    def _read_status(self):
-        if self._status_exists():
+    def _read_status(self, cls=MySQLStatus):
+        if self._status_exists(cls=cls):
             response = self.s3_client.get_object(
                 Bucket=self.bucket,
-                Key=self.status_path)
+                Key=self.status_path(cls=cls))
             self.validate_client_response(response)
 
             content = response['Body'].read()
-            return MySQLStatus(content=content)
+            return cls(content=content)
         else:
-            return MySQLStatus()
+            return cls()
 
-    def _write_status(self, status):
+    def _write_status(self, status, cls=MySQLStatus):
         response = self.s3_client.put_object(
             Body=status.serialize(),
             Bucket=self.bucket,
-            Key=self.status_path
+            Key=self.status_path(cls=cls)
         )
         self.validate_client_response(response)
 

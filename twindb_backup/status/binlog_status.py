@@ -10,6 +10,11 @@ from twindb_backup.status.exceptions import StatusKeyNotFound
 
 class BinlogStatus(BaseStatus):
     """Binlog class for status"""
+
+    @property
+    def basename(self):
+        return 'binlog-status'
+
     def __init__(self, content=None):
         super(BinlogStatus, self).__init__(content=content)
 

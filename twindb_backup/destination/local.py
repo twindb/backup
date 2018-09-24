@@ -2,10 +2,10 @@
 """
 Module defines Local destination.
 """
-import os
-from os import path as osp
 import socket
 from subprocess import Popen
+
+from os.path import exists
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
@@ -21,14 +21,18 @@ class Local(BaseDestination):
         super(Local, self).__init__(path)
         self._path = path
         self.remote_path = self.path
-        self.status_path = osp.join(
-            self.path,
-            socket.gethostname(),
-            'status'
-        )
+        mkdir_p(self.path)
 
     def __str__(self):
         return "Local(%s)" % self.path
+
+    def status_path(self, cls=MySQLStatus):
+        """Path on the destination where status file will be stored."""
+        return "{path}/{hostname}/{filename}".format(
+            path=self.path,
+            hostname=socket.gethostname(),
+            filename=cls().basename
+        )
 
     @property
     def path(self):
@@ -90,17 +94,17 @@ class Local(BaseDestination):
         cmd = ["cat", path]
         return run_command(cmd)
 
-    def _read_status(self):
-        if not self._status_exists():
+    def _read_status(self, cls=MySQLStatus):
+        if not self._status_exists(cls=cls):
             return MySQLStatus()
 
-        with open(self.status_path) as status_descriptor:
+        with open(self.status_path(cls=cls)) as status_descriptor:
             cout = status_descriptor.read()
             return MySQLStatus(content=cout)
 
-    def _write_status(self, status):
-        with open(self.status_path, 'w') as fstatus:
+    def _write_status(self, status, cls=MySQLStatus):
+        with open(self.status_path(), 'w') as fstatus:
             fstatus.write(status.serialize())
 
-    def _status_exists(self):
-        return os.path.exists(self.status_path)
+    def _status_exists(self, cls=MySQLStatus):
+        return exists(self.status_path())

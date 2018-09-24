@@ -41,12 +41,12 @@ import sys
 
 __author__ = 'TwinDB Development Team'
 __email__ = 'dev@twindb.com'
-__version__ = '2.15.12'
+__version__ = '2.16.0'
 STATUS_FORMAT_VERSION = 1
 LOCK_FILE = '/var/run/twindb-backup.lock'
 LOG_FILE = '/var/log/twindb-backup-measures.log'
 INTERVALS = ['hourly', 'daily', 'weekly', 'monthly', 'yearly']
-MEDIA_TYPES = ['files', 'mysql']
+MEDIA_TYPES = ['files', 'mysql', 'binlog']
 XTRABACKUP_BINARY = '/opt/twindb-backup/embedded/bin/xtrabackup'
 XBSTREAM_BINARY = '/opt/twindb-backup/embedded/bin/xbstream'
 MY_CNF_COMMON_PATHS = [

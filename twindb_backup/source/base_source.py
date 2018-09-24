@@ -3,9 +3,11 @@
 Module defines base source class.
 """
 import ConfigParser
+from os import path as osp
 import socket
 
 import time
+from abc import abstractmethod
 
 from twindb_backup import delete_local_files, INTERVALS, LOG
 
@@ -34,6 +36,7 @@ class BaseSource(object):
         self._host = socket.gethostname()
         self._created_at = time.strftime('%Y-%m-%d_%H_%M_%S')
 
+    @abstractmethod
     def get_stream(self):
         """
         Get backup stream in a handler
@@ -45,20 +48,28 @@ class BaseSource(object):
 
         :return: Backup name prefix like 'db-10/daily'
         """
-        return "{hostname}/{run_type}".format(
-            run_type=self.run_type,
-            hostname=self._host
+        return osp.join(
+            self._host,
+            self.run_type
         )
+
+    @abstractmethod
+    def get_name(self):
+        """Name that will be used to store backup copy from this source."""
+        pass
 
     def _get_name(self, filename_prefix):
 
         LOG.debug('Suffix = %s', self.suffix)
-        self._name = "{prefix}/{media_type}/{file}-{time}.{suffix}".format(
-            prefix=self.get_prefix(),
-            media_type=self._media_type,
-            file=filename_prefix,
-            time=self._created_at,
-            suffix=self._suffix
+        self._name = osp.join(
+            self.get_prefix(),
+            self._media_type,
+            "{file}-{time}.{suffix}".format(
+                file=filename_prefix,
+                time=self._created_at,
+                suffix=self._suffix
+            )
+
         )
         return self._name
 

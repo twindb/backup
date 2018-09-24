@@ -84,11 +84,15 @@ MySQL
 XtraBackup needs to connect to MySQL. In ``[mysql]`` section you specify a defaults file with user and password.
 Besides this, You can specify period for MySQL full backup.
 
+The ``expire_log_days`` optionsspecifies for how many days the binlog should be kept.
+By default it's seven days.
+
 ::
 
     [mysql]
     mysql_defaults_file=/etc/twindb/my.cnf
     full_backup=daily
+    expire_log_days=7
 
 Encryption
 ~~~~~~~~~~

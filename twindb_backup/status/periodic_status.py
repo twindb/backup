@@ -7,6 +7,17 @@ from twindb_backup.status.base_status import BaseStatus
 
 class PeriodicStatus(BaseStatus):
     """Periodic class for status"""
+
+    def _status_serialize(self):
+        raise NotImplementedError
+
+    @property
+    def basename(self):
+        raise NotImplementedError
+
+    def _load(self, status_as_json):
+        raise NotImplementedError
+
     def __init__(self, content=None):
         super(PeriodicStatus, self).__init__(content=content)
 
@@ -25,12 +36,6 @@ class PeriodicStatus(BaseStatus):
             if copy.run_type == run_type:
                 result[copy.key] = copy
         return result
-
-    def _status_serialize(self):
-        raise NotImplementedError
-
-    def _load(self, status_as_json):
-        raise NotImplementedError
 
     @property
     def hourly(self):

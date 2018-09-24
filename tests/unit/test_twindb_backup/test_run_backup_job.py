@@ -30,4 +30,8 @@ run_yearly=yes
     mock_get_timeout.return_value = 1
 
     run_backup_job(cparser, 'hourly', lock_file=lock_file)
-    mock_backup_everything.assert_called_once_with('hourly', cparser)
+    mock_backup_everything.assert_called_once_with(
+        'hourly',
+        cparser,
+        binlogs_only=False
+    )
