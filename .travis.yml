@@ -29,11 +29,6 @@ before_deploy:
 - make test-integration
 deploy:
   provider: packagecloud
-  edge:
-    source: computology/dpl
-    branch: pcloud_timeouts
-  read_timeout: 600
-  write_timeout: 600
   repository: main
   username: twindb
   token:
