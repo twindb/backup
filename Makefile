@@ -181,7 +181,7 @@ docker-start:
 		bash -l
 
 
-package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu". OS_VERSION must be: 6, 7, jessie, trusty, xenial.
+package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu". OS_VERSION must be: 6, 7, jessie, trusty, xenial, bionic.
 	@docker run \
 		-v ${pwd}:/twindb-backup \
 		--name builder_xtrabackup \

@@ -1,13 +1,13 @@
 name "xtrabackup"
-default_version "2.4.9"
+default_version "2.4.12"
 
 skip_transitive_dependency_licensing true
 dependency 'libffi'
 
-source url: "https://s3.amazonaws.com/twindb-release/percona-xtrabackup-2.4.9.tar.gz",
-       md5: "fca658cb3b004d2a2df342a136125f84"
+source url: "https://s3.amazonaws.com/twindb-release/percona-xtrabackup-2.4.12.tar.gz",
+       md5: "c086206421a77f7c1ad28771a75cf396"
 
-relative_path "percona-xtrabackup-2.4.9"
+relative_path "percona-xtrabackup-2.4.12"
 whitelist_file /.*/
 
 workers = 2
