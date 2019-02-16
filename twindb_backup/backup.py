@@ -245,7 +245,7 @@ def backup_binlogs(run_type, config):  # pylint: disable=too-many-locals
         status.add(binlog_copy)
 
     try:
-        expire_log_days = config.get('mysql', 'expire_log_days')
+        expire_log_days = config.getint('mysql', 'expire_log_days')
     except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
         expire_log_days = 7
 
