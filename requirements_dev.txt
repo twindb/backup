@@ -7,18 +7,18 @@
 alabaster==0.7.12         # via sphinx
 argparse==1.4.0           # via unittest2
 asn1crypto==0.24.0        # via cryptography
-astroid==1.6.5            # via pylint
+astroid==1.4.9            # via pylint
 atomicwrites==1.3.0       # via pytest
 attrs==19.1.0             # via pytest
 aws-xray-sdk==0.95        # via moto
 babel==2.6.0              # via sphinx
-backports.functools-lru-cache==1.5  # via astroid, isort, pylint
+backports.functools-lru-cache==1.5  # via isort, pylint
 backports.ssl-match-hostname==3.7.0.1  # via docker
 backports.tempfile==1.0   # via moto
 backports.weakref==1.0.post1  # via backports.tempfile
-boto3==1.9.106            # via moto
+boto3==1.9.107            # via moto
 boto==2.49.0              # via moto
-botocore==1.12.106        # via boto3, moto, s3transfer
+botocore==1.12.107        # via boto3, moto, s3transfer
 bumpversion==0.5.3
 certifi==2018.11.29       # via requests
 cffi==1.12.2              # via cryptography
@@ -29,10 +29,10 @@ cookies==2.2.1            # via responses
 coverage==4.5.2
 cryptography==2.6.1       # via moto
 docker-pycreds==0.4.0     # via docker
-docker==3.7.0
+docker==3.5.1
 docutils==0.14            # via botocore, sphinx
 ecdsa==0.13               # via python-jose
-enum34==1.1.6             # via astroid, cryptography
+enum34==1.1.6             # via cryptography
 funcsigs==1.0.2           # via mock, pytest
 future==0.17.1            # via python-jose
 futures==3.2.0            # via isort, s3transfer
@@ -57,15 +57,15 @@ pbr==5.1.3                # via mock
 pluggy==0.9.0             # via pytest
 py==1.8.0                 # via pytest
 pyaml==18.11.0            # via moto
-pycodestyle==2.5.0
+pycodestyle==2.3.1
 pycparser==2.19           # via cffi
 pycryptodome==3.7.3       # via python-jose
 pygments==2.3.1           # via sphinx
-pylint==1.9.4
+pylint==1.6.5
 pyparsing==2.3.1          # via packaging
-pytest-cov==2.6.1
+pytest-cov==2.5.1
 pytest-timeout==1.3.3
-pytest==3.10.1
+pytest==3.7.4
 python-dateutil==2.6.1
 python-jose==2.0.2        # via moto
 python-magic==0.4.15
@@ -75,10 +75,9 @@ requests==2.21.0          # via aws-xray-sdk, codecov, docker, moto, responses, 
 responses==0.10.5         # via moto
 s3transfer==0.2.0         # via boto3
 scandir==1.9.0            # via pathlib2
-singledispatch==3.4.0.3   # via astroid, pylint
-six==1.12.0               # via astroid, cryptography, docker, docker-pycreds, mock, more-itertools, moto, packaging, pathlib2, pylint, pytest, python-dateutil, python-jose, responses, singledispatch, sphinx, unittest2, websocket-client
+six==1.12.0               # via astroid, cryptography, docker, docker-pycreds, mock, more-itertools, moto, packaging, pathlib2, pylint, pytest, python-dateutil, python-jose, responses, sphinx, unittest2, websocket-client
 snowballstemmer==1.2.1    # via sphinx
-sphinx==1.8.4
+sphinx==1.7.9
 sphinxcontrib-websupport==1.1.0  # via sphinx
 traceback2==1.4.0         # via unittest2
 typing==3.6.6             # via sphinx
