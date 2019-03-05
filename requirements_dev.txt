@@ -27,7 +27,7 @@ codecov==2.0.15
 configparser==3.7.3       # via pylint
 cookies==2.2.1            # via responses
 coverage==4.5.2
-cryptography==2.6.1       # via moto
+cryptography==2.4.2
 docker-pycreds==0.4.0     # via docker
 docker==3.7.0
 docutils==0.14            # via botocore, sphinx
@@ -36,7 +36,7 @@ enum34==1.1.6             # via astroid, cryptography
 funcsigs==1.0.2           # via mock, pytest
 future==0.17.1            # via python-jose
 futures==3.2.0            # via isort, s3transfer
-idna==2.8                 # via requests
+idna==2.8                 # via cryptography, requests
 imagesize==1.1.0          # via sphinx
 ipaddress==1.0.22         # via cryptography, docker
 isort==4.3.10             # via pylint
