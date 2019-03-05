@@ -8,6 +8,7 @@ gem 'omnibus', '~> 5.5'
 gem 'omnibus-software', github: 'twindb/omnibus-software'
 
 gem 'ohai', '~> 8.22.1'
+gem 'artifactory', '~>2.8.2'
 
 # This development group is installed by default when you run `bundle install`,
 # but if you are using Omnibus in a CI-based infrastructure, you do not need

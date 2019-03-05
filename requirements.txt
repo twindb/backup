@@ -5,32 +5,31 @@
 #    pip-compile --no-index --output-file requirements.txt requirements.in
 #
 asn1crypto==0.24.0        # via cryptography
-bcrypt==3.1.4             # via paramiko
-boto3==1.7.75
-botocore==1.10.75         # via boto3, s3transfer
-certifi==2018.4.16        # via requests
-cffi==1.11.5              # via bcrypt, cryptography, pynacl
+bcrypt==3.1.6             # via paramiko
+boto3==1.9.107
+botocore==1.12.107        # via boto3, s3transfer
+certifi==2018.11.29       # via requests
+cffi==1.12.2              # via bcrypt, cryptography, pynacl
 chardet==3.0.4            # via requests
 click==6.7
 contextlib2==0.5.5
-cryptography==2.3         # via paramiko, pymysql
-datadog==0.22.0
-decorator==4.3.0          # via datadog
+cryptography==2.4.2
+datadog==0.26.0
+decorator==4.3.2          # via datadog
 docutils==0.14            # via botocore
 enum34==1.1.6             # via cryptography
 futures==3.2.0            # via s3transfer
-idna==2.7                 # via cryptography, requests
+idna==2.8                 # via cryptography, requests
 ipaddress==1.0.22         # via cryptography
-jmespath==0.9.3           # via boto3, botocore
-paramiko==2.4.1
-psutil==5.4.6
-pyasn1==0.4.4
-pycparser==2.18           # via cffi
-pymysql==0.9.2
-pynacl==1.2.1             # via paramiko
-python-dateutil==2.6.1    # via botocore
-requests==2.19.1          # via datadog
-s3transfer==0.1.13        # via boto3
-simplejson==3.16.0        # via datadog
-six==1.11.0               # via bcrypt, cryptography, pynacl, python-dateutil
-urllib3==1.23             # via requests
+jmespath==0.9.4           # via boto3, botocore
+paramiko==2.4.2
+psutil==5.5.1
+pyasn1==0.4.5
+pycparser==2.19           # via cffi
+pymysql==0.9.3
+pynacl==1.3.0             # via paramiko
+python-dateutil==2.6.1
+requests==2.21.0          # via datadog
+s3transfer==0.2.0         # via boto3
+six==1.12.0               # via bcrypt, cryptography, pynacl, python-dateutil
+urllib3==1.24.1           # via botocore, requests

@@ -89,6 +89,8 @@ if redhat?
     runtime_dependency 'libcurl-devel'
 end
 
+override :python, version: '2.7.14'
+
 # twindb-backup
 dependency 'twindb-backup'
 
