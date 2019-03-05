@@ -177,16 +177,18 @@ docker-start:
 		--name builder_xtrabackup \
 		--rm \
 		--dns 8.8.8.8 \
+		--dns 208.67.222.222 \
 		"twindb/omnibus-${PLATFORM}:backup-${OS_VERSION}" \
 		bash -l
 
 
-package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu". OS_VERSION must be: 6, 7, jessie, trusty, xenial.
+package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu". OS_VERSION must be: 6, 7, jessie, trusty, xenial, bionic.
 	@docker run \
 		-v ${pwd}:/twindb-backup \
 		--name builder_xtrabackup \
 		--rm \
 		--dns 8.8.8.8 \
+		--dns 208.67.222.222 \
 		"twindb/omnibus-${PLATFORM}:backup-${OS_VERSION}" \
 		bash -l /twindb-backup/omnibus/omnibus_build.sh
 
