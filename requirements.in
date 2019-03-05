@@ -6,7 +6,9 @@ boto3~=1.7
 psutil~=5.4
 contextlib2~=0.5
 pyasn1~=0.4
-# Paramiko version 2.4.2 is buggy
-# https://github.com/paramiko/paramiko/issues/1386
-paramiko~=2.4,!=2.4.2
 datadog~=0.22
+# Paramiko version 2.4.2 is buggy. See
+# https://github.com/paramiko/paramiko/issues/1386
+# https://github.com/paramiko/paramiko/issues/1369
+paramiko ~= 2.4
+cryptography ~= 2.4.2
