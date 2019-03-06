@@ -11,7 +11,7 @@ def cache_dir(tmpdir):
 def config_content():
     return """
 [source]
-backup_dirs=/
+backup_dirs=/ /root/ /etc "/dir with space/" '/dir foo'
 backup_mysql=yes
 
 [destination]

@@ -4,7 +4,7 @@ import os
 import magic
 
 from tests.integration.conftest import docker_execute, get_twindb_config_dir
-from twindb_backup.destination.s3 import S3, AWSAuthOptions
+from twindb_backup.destination.s3 import S3
 
 
 def test__take_file_backup(master1,
@@ -228,10 +228,11 @@ password=qwerty
         print(cout)
         assert ret == 0
     hostname = 'master1_1'
-    dst = S3(s3_client.bucket,
-             AWSAuthOptions(os.environ['AWS_ACCESS_KEY_ID'],
-                            os.environ['AWS_SECRET_ACCESS_KEY'])
-             )
+    dst = S3(
+        bucket=s3_client.bucket,
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+    )
 
     for x in xrange(10):
         result = dst.list_files(dst.remote_path, pattern='/daily/')

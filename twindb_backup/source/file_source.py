@@ -64,14 +64,14 @@ class FileSource(BaseSource):
         return self.path.rstrip('/').replace('/', '_')
 
     def apply_retention_policy(self, dst, config, run_type):
-        """Apply retention policy"""
+        """Apply retention policy
+        """
         prefix = "{remote_path}/{prefix}/files/{file}".format(
             remote_path=dst.remote_path,
             prefix=self.get_prefix(),
             file=self._sanitize_filename()
         )
-        keep_copies = config.getint('retention',
-                                    '%s_copies' % run_type)
+        keep_copies = getattr(config.retention, run_type)
 
         backups_list = dst.list_files(prefix)
 

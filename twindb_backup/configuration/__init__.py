@@ -4,6 +4,7 @@ Module to process configuration file.
 """
 import socket
 from ConfigParser import ConfigParser, NoOptionError, NoSectionError
+from shlex import split
 
 from twindb_backup import LOG, INTERVALS
 from twindb_backup.configuration.destinations.s3 import S3Config
@@ -59,7 +60,7 @@ class TwinDBBackupConfig(object):
             try:
                 kwargs[i] = self.__cfg.getboolean('intervals', option)
             except (NoOptionError, NoSectionError):
-                LOG.warning(
+                LOG.debug(
                     'Option %s is not defined in section intervals',
                     option
                 )
@@ -78,7 +79,7 @@ class TwinDBBackupConfig(object):
                 try:
                     kwargs[opt] = self.__cfg.get('mysql', opt).strip('"\'')
                 except NoOptionError:
-                    LOG.warning(
+                    LOG.debug(
                         'Option %s is not defined in section mysql',
                         opt
                     )
@@ -106,7 +107,7 @@ class TwinDBBackupConfig(object):
                 try:
                     kwargs[opt] = self.__cfg.get('ssh', opt).strip('"\'')
                 except NoOptionError:
-                    LOG.warning('Option %s is not defined in section ssh', opt)
+                    LOG.debug('Option %s is not defined in section ssh', opt)
             return SSHConfig(**kwargs)
 
         except NoSectionError:
@@ -127,7 +128,7 @@ class TwinDBBackupConfig(object):
                 try:
                     kwargs[opt] = self.__cfg.get('s3', opt).strip('"\'')
                 except NoOptionError:
-                    LOG.warning('Option %s is not defined in section s3', opt)
+                    LOG.debug('Option %s is not defined in section s3', opt)
             return S3Config(**kwargs)
 
         except NoSectionError:
@@ -179,7 +180,7 @@ class TwinDBBackupConfig(object):
                 try:
                     kwargs[opt] = self.__cfg.get('gpg', opt).strip('"\'')
                 except NoOptionError:
-                    LOG.warning('Option %s is not defined in section s3', opt)
+                    LOG.debug('Option %s is not defined in section s3', opt)
             return GPGConfig(
                 self.__cfg.get('gpg', 'recipient').strip('"\''),
                 self.__cfg.get('gpg', 'keyring').strip('"\''),
@@ -188,6 +189,27 @@ class TwinDBBackupConfig(object):
 
         except NoSectionError:
             return None
+
+    @property
+    def backup_dirs(self):
+        """Directories to backup"""
+        try:
+            dirs = self.__cfg.get('source', 'backup_dirs')
+            return split(dirs)
+        except NoOptionError:
+            return []
+        except NoSectionError as err:
+            raise ConfigurationError(err)
+
+    @property
+    def backup_mysql(self):
+        """FLag to backup MySQL or not"""
+        try:
+            return self.__cfg.getboolean('source', 'backup_mysql')
+        except NoOptionError:
+            return False
+        except NoSectionError as err:
+            raise ConfigurationError(err)
 
     def destination(self, backup_source=socket.gethostname()):
         """

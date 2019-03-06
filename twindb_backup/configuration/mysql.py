@@ -37,3 +37,15 @@ class MySQLConfig(object):
         """For how many days keep binlog copies"""
 
         return self._expire_log_days
+
+    @property
+    def xtrabackup_binary(self):
+        """Path to xtrabackup binary"""
+
+        return self._xtrabackup_binary
+
+    @property
+    def xbstream_binary(self):
+        """Path to xbstream binary"""
+
+        return self._xbstream_binary

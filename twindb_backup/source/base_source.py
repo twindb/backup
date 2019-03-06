@@ -75,11 +75,10 @@ class BaseSource(object):
 
     def _delete_local_files(self, filename, config):
         try:
-            keep_copies = config.getint('retention_local',
-                                        '%s_copies' % self.run_type)
-            keep_local_path = config.get('destination', 'keep_local_path')
+            keep_copies = getattr(config.retention_local, self.run_type)
+
             dir_backups = "{local_path}/{prefix}/{media_type}/{file}*".format(
-                local_path=keep_local_path,
+                local_path=config.keep_local_path,
                 prefix=self.get_prefix(),
                 media_type=self._media_type,
                 file=filename
