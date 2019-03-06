@@ -75,7 +75,7 @@ It is assumed you configured `SSH keys authentication`_. It will not work if you
     backup_dir=/tmp/backup
     ssh_user=root
     ssh_key=/root/.ssh/id_rsa
-
+    ssh_port=22
 
 
 MySQL
