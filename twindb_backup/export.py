@@ -2,7 +2,7 @@
 """
 Module to process export
 """
-from twindb_backup.configuration import get_export_transport
+from twindb_backup.configuration import TwinDBBackupConfig
 
 
 def export_info(cfg, data, category, measure_type):
@@ -15,11 +15,12 @@ def export_info(cfg, data, category, measure_type):
     :param measure_type: Type of measure
     :param category: Category
     """
-    try:
-        transport = get_export_transport(cfg)
-        if transport:
-            transport.export(category=category,
-                             measure_type=measure_type,
-                             data=data)
-    except NotImplementedError:
-        pass
+
+    transport = TwinDBBackupConfig(config_file=cfg).exporter
+
+    if transport:
+        transport.export(
+            category=category,
+            measure_type=measure_type,
+            data=data
+        )

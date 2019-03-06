@@ -18,14 +18,21 @@ backup_mysql=yes
 backup_destination={destination}
 keep_local_path=/var/backup/local
 
+[s3]
+AWS_ACCESS_KEY_ID="XXXXX"
+AWS_SECRET_ACCESS_KEY="YYYYY"
+AWS_DEFAULT_REGION="us-east-1"
+BUCKET="twindb-backups"
+
 [mysql]
 mysql_defaults_file=/etc/twindb/my.cnf
+expire_log_days = 8
 
 [ssh]
-ssh_user=root
+ssh_user="root"
 ssh_key=/root/.ssh/id_rsa
 port={port}
-backup_host=127.0.0.1
+backup_host='127.0.0.1'
 backup_dir=/tmp/backup
 
 [retention]

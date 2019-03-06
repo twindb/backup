@@ -4,28 +4,25 @@ Module that works with list of backup copies
 """
 from __future__ import print_function
 from twindb_backup import LOG, INTERVALS, MEDIA_TYPES
-from twindb_backup.backup import get_destination
 from twindb_backup.destination.local import Local
 
 
-def list_available_backups(config, copy_type=None):
+def list_available_backups(twindb_config, copy_type=None):
     """
     Print known backup copies on a destination specified in the configuration.
 
-    :param config: tool configuration
-    :type config: ConfigParser.ConfigParser
+    :param twindb_config: tool configuration
+    :type twindb_config: TwinDBBackupConfig
     :param copy_type: Limit list to specific type of backups.
     :type copy_type: files|mysql
     """
     dsts = [
-        get_destination(config)
+        twindb_config.destination()
     ]
-    if config.has_option('destination', 'keep_local_path'):
+    if twindb_config.keep_local_path:
         dsts.insert(
             0,
-            Local(
-                config.get('destination', 'keep_local_path')
-            )
+            Local(twindb_config.keep_local_path)
         )
 
     for dst in dsts:

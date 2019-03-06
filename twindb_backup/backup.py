@@ -14,7 +14,7 @@ from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
     LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
     TwinDBBackupError, save_measures, XTRABACKUP_BINARY, MY_CNF_COMMON_PATHS)
-from twindb_backup.configuration import get_destination
+from twindb_backup.configuration import TwinDBBackupConfig
 from twindb_backup.copy.binlog_copy import BinlogCopy
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.destination.exceptions import DestinationError
@@ -88,7 +88,7 @@ def backup_files(run_type, config):
         for directory in get_directories_to_backup(config):
             LOG.debug('copying %s', directory)
             src = FileSource(directory, run_type)
-            dst = get_destination(config)
+            dst = TwinDBBackupConfig(config_file=config).destination()
             _backup_stream(config, src, dst)
             src.apply_retention_policy(dst, config, run_type)
     except (
@@ -120,7 +120,7 @@ def backup_mysql(run_type, config):
         LOG.debug('Not backing up MySQL')
         return
 
-    dst = get_destination(config)
+    dst = TwinDBBackupConfig(config_file=config).destination()
 
     try:
         full_backup = config.get('mysql', 'full_backup')
@@ -207,7 +207,7 @@ def backup_binlogs(run_type, config):  # pylint: disable=too-many-locals
     :param config: Tool configuration
     :type config: ConfigParser.ConfigParser
     """
-    dst = get_destination(config)
+    dst = TwinDBBackupConfig(config_file=config).destination()
     status = dst.status(cls=BinlogStatus)
     try:
         mysql_client = MySQLClient(
