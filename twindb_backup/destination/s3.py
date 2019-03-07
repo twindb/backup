@@ -85,6 +85,11 @@ class S3(BaseDestination):
         # Setup an authenticated S3 client that we will use throughout
         self.s3_client = self.setup_s3_client()
 
+    @property
+    def bucket(self):
+        """S3 bucket name."""
+        return self._bucket
+
     def status_path(self, cls=MySQLStatus):
         """
         Return key path where status is stored for a given type of status.
