@@ -70,6 +70,11 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
            'clone', 'mysql',
            "%s:3306" % master1['ip'], "%s:3306" % slave['ip']
            ]
+    # LOG.debug('Test paused')
+    # LOG.debug(' '.join(cmd))
+    # import time
+    # time.sleep(36000)
+
     ret, cout = docker_execute(docker_client, runner['Id'], cmd)
     print(cout)
 

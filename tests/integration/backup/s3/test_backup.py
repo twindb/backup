@@ -62,6 +62,10 @@ def test__take_file_backup(master1,
            '--config', twindb_config_guest,
            'restore', 'file', '--dst', '/tmp/restore', backup_to_restore]
 
+    # print('test paused')
+    # print(' '.join(cmd))
+    # from time import sleep
+    # sleep(36000)
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0

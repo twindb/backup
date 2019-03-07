@@ -3,7 +3,6 @@
 Module that restores backup copies.
 """
 from __future__ import print_function
-import ConfigParser
 from subprocess import Popen, PIPE
 import os
 from os import path as osp
@@ -49,7 +48,7 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
     :param dst_dir: Path to destination directory. Must exist and be empty.
     :type dst_dir: str
     :param config: Tool configuration.
-    :type config: ConfigParser.ConfigParser
+    :type config: TwinDBBackupConfig
     :param redo_only: True if the function has to do final apply of
         the redo log. For example, if you restore backup from a full copy
         it should be False. If you restore from incremental copy and
@@ -61,14 +60,16 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
     :rtype: bool
     """
     # GPG modifier
-    try:
-        gpg = Gpg(stream,
-                  config.get('gpg', 'recipient'),
-                  config.get('gpg', 'keyring'),
-                  secret_keyring=config.get('gpg', 'secret_keyring'))
+    if config.gpg:
+        gpg = Gpg(
+            stream,
+            config.gpg.recipient,
+            config.gpg.keyring,
+            secret_keyring=config.gpg.secret_keyring
+        )
         LOG.debug('Decrypting stream')
         stream = gpg.revert_stream()
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+    else:
         LOG.debug('Not decrypting the stream')
 
     stream = Gzip(stream).revert_stream()
@@ -147,7 +148,7 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
     :param dst_dir: Path to destination directory. Must exist and be empty.
     :type dst_dir: str
     :param config: Tool configuration.
-    :type config: ConfigParser.ConfigParser
+    :type config: TwinDBBackupConfig
     :param tmp_dir: Path to temp dir
     :type tmp_dir: str
     :param xtrabackup_binary: Path to xtrabackup binary.
@@ -167,14 +168,16 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
     else:
         inc_dir = tmp_dir
     # GPG modifier
-    try:
-        gpg = Gpg(stream,
-                  config.get('gpg', 'recipient'),
-                  config.get('gpg', 'keyring'),
-                  secret_keyring=config.get('gpg', 'secret_keyring'))
+    if config.gpg:
+        gpg = Gpg(
+            stream,
+            config.gpg.recipient,
+            config.gpg.keyring,
+            secret_keyring=config.gpg.secret_keyring
+        )
         LOG.debug('Decrypting stream')
         stream = gpg.revert_stream()
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+    else:
         LOG.debug('Not decrypting the stream')
 
     stream = Gzip(stream).revert_stream()
@@ -434,7 +437,7 @@ def restore_from_file(twindb_config, copy, dst_dir):
         dst = Local(osp.join(keep_local_path, copy.key))
         stream = dst.get_stream(copy)
     else:
-        dst = twindb_config.destination
+        dst = twindb_config.destination()
         stream = dst.get_stream(copy)
 
         # GPG modifier

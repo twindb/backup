@@ -197,6 +197,10 @@ def backup_binlogs(run_type, config):  # pylint: disable=too-many-locals
     :param config: Tool configuration
     :type config: TwinDBBackupConfig
     """
+    if config.mysql is None:
+        LOG.debug('No MySQL config, not copying binlogs')
+        return
+
     dst = config.destination()
     status = dst.status(cls=BinlogStatus)
     mysql_client = MySQLClient(

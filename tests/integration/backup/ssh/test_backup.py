@@ -1,5 +1,4 @@
 from tests.integration.conftest import get_twindb_config_dir, docker_execute
-from twindb_backup import LOG
 
 
 def test_backup(master1, storage_server,

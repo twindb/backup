@@ -342,7 +342,12 @@ def clone_mysql_backup(ctx, netcat_port,  # pylint: disable=too-many-arguments
 
      If port isn't specified 3306 will be assumed.
     """
-    clone_mysql(ctx.obj['twindb_config'], source, destination,
-                replication_user, replication_password,
-                netcat_port=netcat_port,
-                compress=compress)
+    clone_mysql(
+        ctx.obj['twindb_config'],
+        source,
+        destination,
+        replication_user,
+        replication_password,
+        netcat_port=netcat_port,
+        compress=compress
+    )
