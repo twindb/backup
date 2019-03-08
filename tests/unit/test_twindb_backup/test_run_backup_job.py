@@ -3,6 +3,7 @@ from ConfigParser import ConfigParser
 import mock
 
 from twindb_backup.backup import run_backup_job
+from twindb_backup.configuration import TwinDBBackupConfig
 
 
 @mock.patch('twindb_backup.backup.backup_everything')
@@ -24,14 +25,15 @@ run_yearly=yes
     config_file = tmpdir.join('foo.cfg')
     config_file.write(config_content)
 
-    cparser = ConfigParser()
-    cparser.read(str(config_file))
+    cfg = TwinDBBackupConfig(
+        config_file=str(config_file)
+    )
 
     mock_get_timeout.return_value = 1
 
-    run_backup_job(cparser, 'hourly', lock_file=lock_file)
+    run_backup_job(cfg, 'hourly', lock_file=lock_file)
     mock_backup_everything.assert_called_once_with(
         'hourly',
-        cparser,
+        cfg,
         binlogs_only=False
     )
