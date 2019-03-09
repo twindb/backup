@@ -10,6 +10,5 @@ cache/
 bin/*
 files/**/cache/
 vendor/cookbooks
-Gemfile.lock
 *.iml
 .idea/
