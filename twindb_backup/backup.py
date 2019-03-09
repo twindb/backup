@@ -12,9 +12,7 @@ import time
 from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
 from twindb_backup import (
-    LOG, get_directories_to_backup, get_timeout, LOCK_FILE,
-    TwinDBBackupError, save_measures, XTRABACKUP_BINARY, MY_CNF_COMMON_PATHS)
-from twindb_backup.configuration import get_destination
+    LOG, get_timeout, LOCK_FILE, save_measures, MY_CNF_COMMON_PATHS)
 from twindb_backup.copy.binlog_copy import BinlogCopy
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.destination.exceptions import DestinationError
@@ -22,9 +20,8 @@ from twindb_backup.exceptions import OperationError, LockWaitTimeoutError
 from twindb_backup.export import export_info
 from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
-from twindb_backup.modifiers.base import ModifierException
-from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
+from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.binlog_source import BinlogSource, BinlogParser
 from twindb_backup.source.exceptions import SourceError
@@ -38,13 +35,22 @@ from twindb_backup.util import my_cnfs
 
 
 def _backup_stream(config, src, dst, callbacks=None):
+    """
+
+    :param config: Tool config
+    :type config: TwinDBBackupConfig
+    :param src:
+    :param dst:
+    :param callbacks:
+    :return:
+    """
     stream = src.get_stream()
     # Gzip modifier
     stream = Gzip(stream).get_stream()
     src.suffix += '.gz'
     # KeepLocal modifier
-    try:
-        keep_local_path = config.get('destination', 'keep_local_path')
+    if config.keep_local_path:
+        keep_local_path = config.keep_local_path
         kl_modifier = KeepLocal(
             stream,
             osp.join(
@@ -58,20 +64,18 @@ def _backup_stream(config, src, dst, callbacks=None):
                 'keep_local_path': keep_local_path,
                 'dst': dst
             }))
-    except ConfigParser.NoOptionError:
+    else:
         LOG.debug('keep_local_path is not present in the config file')
     # GPG modifier
-    try:
-        stream = Gpg(
+    if config.gpg:
+        gpg_modifier = Gpg(
             stream,
-            config.get('gpg', 'recipient'),
-            config.get('gpg', 'keyring')).get_stream()
+            config.gpg.recipient,
+            config.gpg.keyring
+        )
+
+        stream = gpg_modifier.get_stream()
         src.suffix += '.gpg'
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-        pass
-    except ModifierException as err:
-        LOG.warning(err)
-        LOG.warning('Will skip encryption')
     dst.save(stream, src.get_name())
 
 
@@ -81,14 +85,14 @@ def backup_files(run_type, config):
     :param run_type: Run type
     :type run_type: str
     :param config: Configuration
-    :type config: ConfigParser.ConfigParser
+    :type config: TwinDBBackupConfig
     """
     backup_start = time.time()
     try:
-        for directory in get_directories_to_backup(config):
+        for directory in config.backup_dirs:
             LOG.debug('copying %s', directory)
             src = FileSource(directory, run_type)
-            dst = get_destination(config)
+            dst = config.destination()
             _backup_stream(config, src, dst)
             src.apply_retention_policy(dst, config, run_type)
     except (
@@ -108,36 +112,26 @@ def backup_mysql(run_type, config):
     :param run_type: Run type
     :type run_type: str
     :param config: Tool configuration
-    :type config: ConfigParser.ConfigParser
-    :return: None
+    :type config: TwinDBBackupConfig
     """
-    try:
-        if not config.getboolean('source', 'backup_mysql'):
-            raise TwinDBBackupError('MySQL backups are not enabled in config')
-
-    except (ConfigParser.NoOptionError, TwinDBBackupError) as err:
-        LOG.debug(err)
+    if config.backup_mysql is False:
         LOG.debug('Not backing up MySQL')
         return
 
-    dst = get_destination(config)
+    dst = config.destination()
 
     try:
-        full_backup = config.get('mysql', 'full_backup')
+        full_backup = config.mysql.full_backup
     except ConfigParser.NoOptionError:
         full_backup = 'daily'
     backup_start = time.time()
-    try:
-        xtrabackup_binary = config.get('mysql', 'xtrabackup_binary')
-    except ConfigParser.NoOptionError:
-        xtrabackup_binary = XTRABACKUP_BINARY
 
     status = dst.status(cls=MySQLStatus)
 
     kwargs = {
         'backup_type': status.next_backup_type(full_backup, run_type),
         'dst': dst,
-        'xtrabackup_binary': xtrabackup_binary
+        'xtrabackup_binary': config.mysql.xtrabackup_binary
     }
     parent = status.candidate_parent(run_type)
 
@@ -146,7 +140,7 @@ def backup_mysql(run_type, config):
 
     LOG.debug('Creating source %r', kwargs)
     src = MySQLSource(
-        MySQLConnectInfo(config.get('mysql', 'mysql_defaults_file')),
+        MySQLConnectInfo(config.mysql.defaults_file),
         run_type,
         **kwargs
     )
@@ -154,11 +148,7 @@ def backup_mysql(run_type, config):
     callbacks = []
     try:
         _backup_stream(config, src, dst, callbacks=callbacks)
-    except (
-            DestinationError,
-            SourceError,
-            SshClientException
-    ) as err:
+    except (DestinationError, SourceError, SshClientException) as err:
         raise OperationError(err)
     LOG.debug('Backup copy name: %s', src.get_name())
 
@@ -205,17 +195,17 @@ def backup_binlogs(run_type, config):  # pylint: disable=too-many-locals
     :param run_type: Run type
     :type run_type: str
     :param config: Tool configuration
-    :type config: ConfigParser.ConfigParser
+    :type config: TwinDBBackupConfig
     """
-    dst = get_destination(config)
-    status = dst.status(cls=BinlogStatus)
-    try:
-        mysql_client = MySQLClient(
-            defaults_file=config.get('mysql', 'mysql_defaults_file')
-        )
-    except ConfigParser.NoSectionError:
-        LOG.debug('No mysql section in the config. Not backing up binlogs')
+    if config.mysql is None:
+        LOG.debug('No MySQL config, not copying binlogs')
         return
+
+    dst = config.destination()
+    status = dst.status(cls=BinlogStatus)
+    mysql_client = MySQLClient(
+        defaults_file=config.mysql.defaults_file
+    )
 
     last_copy = status.get_latest_backup()
     LOG.debug('Latest copied binlog %s', last_copy)
@@ -245,7 +235,7 @@ def backup_binlogs(run_type, config):  # pylint: disable=too-many-locals
         status.add(binlog_copy)
 
     try:
-        expire_log_days = config.get('mysql', 'expire_log_days')
+        expire_log_days = config.mysql.expire_log_days
     except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
         expire_log_days = 7
 
@@ -296,14 +286,14 @@ def set_open_files_limit():
     LOG.debug('Setting max files limit to %d', max_files)
 
 
-def backup_everything(run_type, config, binlogs_only=False):
+def backup_everything(run_type, twindb_config, binlogs_only=False):
     """
     Run backup job
 
     :param run_type: hourly, daily, etc
     :type run_type: str
-    :param config: ConfigParser instance
-    :type config: ConfigParser.ConfigParser
+    :param twindb_config: ConfigParser instance
+    :type twindb_config: TwinDBBackupConfig
     :param binlogs_only: If True copy only MySQL binary logs.
     :type binlogs_only: bool
     """
@@ -312,13 +302,13 @@ def backup_everything(run_type, config, binlogs_only=False):
     try:
         if not binlogs_only:
             backup_start = time.time()
-            backup_files(run_type, config)
-            backup_mysql(run_type, config)
-            backup_binlogs(run_type, config)
+            backup_files(run_type, twindb_config)
+            backup_mysql(run_type, twindb_config)
+            backup_binlogs(run_type, twindb_config)
             end = time.time()
             save_measures(backup_start, end)
         else:
-            backup_binlogs(run_type, config)
+            backup_binlogs(run_type, twindb_config)
     except ConfigParser.NoSectionError as err:
         LOG.debug(traceback.format_exc())
         LOG.error(err)
@@ -349,12 +339,15 @@ def timeout(seconds):
         signal.signal(signal.SIGALRM, original_handler)
 
 
-def run_backup_job(cfg, run_type, lock_file=LOCK_FILE, binlogs_only=False):
+def run_backup_job(twindb_config,
+                   run_type,
+                   lock_file=LOCK_FILE,
+                   binlogs_only=False):
     """
     Grab a lock waiting up to allowed timeout and start backup jobs
 
-    :param cfg: Tool configuration
-    :type cfg: ConfigParser.ConfigParser
+    :param twindb_config: Tool configuration
+    :type twindb_config: TwinDBBackupConfig
     :param run_type: Run type
     :type run_type: str
     :param lock_file: File used as a lock
@@ -367,8 +360,12 @@ def run_backup_job(cfg, run_type, lock_file=LOCK_FILE, binlogs_only=False):
             file_desriptor = open(lock_file, 'w')
             fcntl.flock(file_desriptor, fcntl.LOCK_EX)
             LOG.debug(run_type)
-            if cfg.getboolean('intervals', "run_%s" % run_type):
-                backup_everything(run_type, cfg, binlogs_only=binlogs_only)
+            if getattr(twindb_config.run_intervals, run_type):
+                backup_everything(
+                    run_type,
+                    twindb_config,
+                    binlogs_only=binlogs_only
+                )
             else:
                 LOG.debug('Not running because run_%s is no', run_type)
         except IOError as err:

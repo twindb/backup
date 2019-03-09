@@ -3,7 +3,6 @@
 Module that restores backup copies.
 """
 from __future__ import print_function
-import ConfigParser
 from subprocess import Popen, PIPE
 import os
 from os import path as osp
@@ -14,7 +13,6 @@ import time
 import psutil
 
 from twindb_backup import LOG, XBSTREAM_BINARY, XTRABACKUP_BINARY
-from twindb_backup.configuration import get_destination
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
 from twindb_backup.export import export_info
@@ -50,7 +48,7 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
     :param dst_dir: Path to destination directory. Must exist and be empty.
     :type dst_dir: str
     :param config: Tool configuration.
-    :type config: ConfigParser.ConfigParser
+    :type config: TwinDBBackupConfig
     :param redo_only: True if the function has to do final apply of
         the redo log. For example, if you restore backup from a full copy
         it should be False. If you restore from incremental copy and
@@ -62,14 +60,16 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
     :rtype: bool
     """
     # GPG modifier
-    try:
-        gpg = Gpg(stream,
-                  config.get('gpg', 'recipient'),
-                  config.get('gpg', 'keyring'),
-                  secret_keyring=config.get('gpg', 'secret_keyring'))
+    if config.gpg:
+        gpg = Gpg(
+            stream,
+            config.gpg.recipient,
+            config.gpg.keyring,
+            secret_keyring=config.gpg.secret_keyring
+        )
         LOG.debug('Decrypting stream')
         stream = gpg.revert_stream()
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+    else:
         LOG.debug('Not decrypting the stream')
 
     stream = Gzip(stream).revert_stream()
@@ -148,7 +148,7 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
     :param dst_dir: Path to destination directory. Must exist and be empty.
     :type dst_dir: str
     :param config: Tool configuration.
-    :type config: ConfigParser.ConfigParser
+    :type config: TwinDBBackupConfig
     :param tmp_dir: Path to temp dir
     :type tmp_dir: str
     :param xtrabackup_binary: Path to xtrabackup binary.
@@ -168,14 +168,16 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
     else:
         inc_dir = tmp_dir
     # GPG modifier
-    try:
-        gpg = Gpg(stream,
-                  config.get('gpg', 'recipient'),
-                  config.get('gpg', 'keyring'),
-                  secret_keyring=config.get('gpg', 'secret_keyring'))
+    if config.gpg:
+        gpg = Gpg(
+            stream,
+            config.gpg.recipient,
+            config.gpg.keyring,
+            secret_keyring=config.gpg.secret_keyring
+        )
         LOG.debug('Decrypting stream')
         stream = gpg.revert_stream()
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+    else:
         LOG.debug('Not decrypting the stream')
 
     stream = Gzip(stream).revert_stream()
@@ -283,15 +285,15 @@ def update_grastate(dst_dir, status, key):
 
 
 # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-def restore_from_mysql(config, copy, dst_dir,
+def restore_from_mysql(twindb_config, copy, dst_dir,
                        tmp_dir=None,
                        cache=None,
                        hostname=None):
     """
     Restore MySQL datadir in a given directory
 
-    :param config: Tool configuration.
-    :type config: ConfigParser.ConfigParser
+    :param twindb_config: tool configuration
+    :type twindb_config: TwinDBBackupConfig
     :param copy: Backup copy instance.
     :type copy: MySQLCopy
     :param dst_dir: Destination directory. Must exist and be empty.
@@ -309,22 +311,9 @@ def restore_from_mysql(config, copy, dst_dir,
 
     dst = None
     restore_start = time.time()
-
-    try:
-        xtrabackup_binary = config.get('mysql', 'xtrabackup_binary')
-    except ConfigParser.NoOptionError:
-        xtrabackup_binary = XTRABACKUP_BINARY
-    try:
-        xbstream_binary = config.get('mysql', 'xbstream_binary')
-    except ConfigParser.NoOptionError:
-        xbstream_binary = XBSTREAM_BINARY
-
-    try:
-        keep_local_path = config.get('destination', 'keep_local_path')
-        if osp.exists(osp.join(keep_local_path, copy.key)):
-            dst = Local(keep_local_path)
-    except ConfigParser.NoOptionError:
-        pass
+    keep_local_path = twindb_config.keep_local_path
+    if keep_local_path and osp.exists(osp.join(keep_local_path, copy.key)):
+        dst = Local(twindb_config.keep_local_path)
 
     if not dst:
         if not hostname:
@@ -334,7 +323,7 @@ def restore_from_mysql(config, copy, dst_dir,
                     'Failed to get hostname from %s'
                     % copy
                 )
-        dst = get_destination(config, hostname=hostname)
+        dst = twindb_config.destination(backup_source=hostname)
 
     key = copy.key
     status = dst.status()
@@ -352,21 +341,16 @@ def restore_from_mysql(config, copy, dst_dir,
                 restore_from_mysql_full(
                     stream,
                     dst_dir,
-                    config,
-                    redo_only=False,
-                    xtrabackup_binary=xtrabackup_binary,
-                    xbstream_binary=xbstream_binary
+                    twindb_config,
+                    redo_only=False
                 )
                 cache.add(dst_dir, cache_key)
         else:
             restore_from_mysql_full(
                 stream,
                 dst_dir,
-                config,
-                redo_only=False,
-                xtrabackup_binary=xtrabackup_binary,
-                xbstream_binary=xbstream_binary
-            )
+                twindb_config,
+                redo_only=False)
 
     else:
         full_copy = status.candidate_parent(
@@ -381,20 +365,27 @@ def restore_from_mysql(config, copy, dst_dir,
                 # restore from cache
                 cache.restore_in(cache_key, dst_dir)
             else:
-                restore_from_mysql_full(full_stream, dst_dir,
-                                        config, redo_only=True,
-                                        xtrabackup_binary=xtrabackup_binary,
-                                        xbstream_binary=xbstream_binary)
+                restore_from_mysql_full(
+                    full_stream,
+                    dst_dir,
+                    twindb_config,
+                    redo_only=True
+                )
                 cache.add(dst_dir, cache_key)
         else:
-            restore_from_mysql_full(full_stream, dst_dir,
-                                    config, redo_only=True,
-                                    xtrabackup_binary=xtrabackup_binary,
-                                    xbstream_binary=xbstream_binary)
+            restore_from_mysql_full(
+                full_stream,
+                dst_dir,
+                twindb_config,
+                redo_only=True
+            )
 
-        restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir,
-                                       xtrabackup_binary=xtrabackup_binary,
-                                       xbstream_binary=xbstream_binary)
+        restore_from_mysql_incremental(
+            stream,
+            dst_dir,
+            twindb_config,
+            tmp_dir
+        )
 
     config_dir = os.path.join(dst_dir, "_config")
 
@@ -410,7 +401,7 @@ def restore_from_mysql(config, copy, dst_dir,
             mysql_config.write(content)
 
     update_grastate(dst_dir, status, key)
-    export_info(config, data=time.time() - restore_start,
+    export_info(twindb_config, data=time.time() - restore_start,
                 category=ExportCategory.mysql,
                 measure_type=ExportMeasureType.restore)
     LOG.info('Successfully restored %s in %s.', copy.key, dst_dir)
@@ -426,12 +417,12 @@ def restore_from_mysql(config, copy, dst_dir,
     LOG.info('Then you can start MySQL normally.')
 
 
-def restore_from_file(config, copy, dst_dir):
+def restore_from_file(twindb_config, copy, dst_dir):
     """
     Restore a directory from a backup copy in the directory
 
-    :param config: Tool configuration.
-    :type config: ConfigParser.ConfigParser
+    :param twindb_config: tool configuration
+    :type twindb_config: TwinDBBackupConfig
     :param copy: Instance of BaseCopy or and inheriting classes.
     :type copy: BaseCopy
     :param dst_dir: Path to destination directory. Must exist and be empty.
@@ -440,26 +431,26 @@ def restore_from_file(config, copy, dst_dir):
     LOG.info('Restoring %s in %s', copy.key, dst_dir)
     mkdir_p(dst_dir)
     restore_start = time.time()
-    try:
-        keep_local_path = config.get('destination', 'keep_local_path')
-    except ConfigParser.NoOptionError:
-        keep_local_path = None
+    keep_local_path = twindb_config.keep_local_path
 
     if keep_local_path and os.path.exists(osp.join(keep_local_path, copy.key)):
         dst = Local(osp.join(keep_local_path, copy.key))
         stream = dst.get_stream(copy)
     else:
-        dst = get_destination(config)
+        dst = twindb_config.destination()
         stream = dst.get_stream(copy)
+
         # GPG modifier
-        try:
-            gpg = Gpg(stream,
-                      config.get('gpg', 'recipient'),
-                      config.get('gpg', 'keyring'),
-                      secret_keyring=config.get('gpg', 'secret_keyring'))
+        if twindb_config.gpg:
+            gpg = Gpg(
+                stream,
+                twindb_config.gpg.recipient,
+                twindb_config.gpg.keyring,
+                secret_keyring=twindb_config.gpg.secret_keyring
+            )
             LOG.debug('Decrypting stream')
             stream = gpg.revert_stream()
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        else:
             LOG.debug('Not decrypting the stream')
 
     with stream as handler:
@@ -483,6 +474,9 @@ def restore_from_file(config, copy, dst_dir):
             LOG.error('Failed to decompress %s: %s', copy.key, err)
             exit(1)
 
-    export_info(config, data=time.time() - restore_start,
-                category=ExportCategory.files,
-                measure_type=ExportMeasureType.restore)
+    export_info(
+        twindb_config,
+        data=time.time() - restore_start,
+        category=ExportCategory.files,
+        measure_type=ExportMeasureType.restore
+    )

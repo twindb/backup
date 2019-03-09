@@ -1,15 +1,9 @@
 import pytest
 from moto import mock_s3
 
-from twindb_backup.destination.s3 import S3, AWSAuthOptions
-
 
 @mock_s3
-def test__list_files_returns_sorted_list_empty_prefix():
-    s3 = S3(
-        'test-bucket',
-        AWSAuthOptions('access_key', 'secret_key')
-    )
+def test__list_files_returns_sorted_list_empty_prefix(s3):
     s3.create_bucket()
 
     s3.s3_client.put_object(
@@ -81,11 +75,7 @@ def test__list_files_returns_sorted_list_empty_prefix():
     )
 ])
 @mock_s3
-def test__list_files(prefix, keys, result):
-    s3 = S3(
-        'test-bucket',
-        AWSAuthOptions('access_key', 'secret_key')
-    )
+def test__list_files(prefix, keys, result, s3):
     s3.create_bucket()
 
     for key in keys:
@@ -100,11 +90,7 @@ def test__list_files(prefix, keys, result):
 
 
 @mock_s3
-def test__list_files_with_pattern():
-    s3 = S3(
-        'test-bucket',
-        AWSAuthOptions('access_key', 'secret_key')
-    )
+def test__list_files_with_pattern(s3):
     s3.create_bucket()
 
     s3.s3_client.put_object(

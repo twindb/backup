@@ -260,7 +260,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         :param dst: Destination where the backups are stored.
         :type dst: BaseDestination
         :param config: Tool configuration
-        :type config: ConfigParser.ConfigParser
+        :type config: TwinDBBackupConfig
         :param run_type: Run type.
         :type run_type: str
         :param status: Backups status.
@@ -274,8 +274,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
             self.get_prefix(),
             'mysql'
         )
-        keep_copies = config.getint('retention',
-                                    '%s_copies' % run_type)
+        keep_copies = getattr(config.retention, run_type)
 
         backups_list = dst.list_files(
             prefix,

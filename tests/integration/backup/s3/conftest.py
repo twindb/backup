@@ -2,13 +2,12 @@ import pytest
 import os
 import random
 
-from subprocess import call, Popen, PIPE
+from subprocess import call
 
 import time
 
 from twindb_backup import LOG, setup_logging
-from twindb_backup.destination.s3 import S3, AWSAuthOptions
-
+from twindb_backup.destination.s3 import S3
 setup_logging(LOG, debug=True)
 
 
@@ -31,10 +30,11 @@ def bucket_name():
 @pytest.fixture()
 def s3_client(bucket_name):
     LOG.debug('Bucket: %s' % bucket_name)
-    client = S3(bucket_name,
-                AWSAuthOptions(os.environ['AWS_ACCESS_KEY_ID'],
-                               os.environ['AWS_SECRET_ACCESS_KEY'])
-                )
+    client = S3(
+        bucket=bucket_name,
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+    )
     assert client.create_bucket()
 
     yield client

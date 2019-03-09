@@ -136,7 +136,11 @@ def get_container(name, client, network,
         }
     host_config = api.create_host_config(
         binds=binds,
-        dns=['8.8.8.8']
+        dns=[
+            '8.8.8.8',
+            '208.67.222.222',
+            '208.67.220.220'
+        ]
     )
 
     ip = '172.%d.3.%d' % (network['second_octet'], last_n)
@@ -178,7 +182,7 @@ def master1(docker_client, container_network, tmpdir_factory):
     try:
         platform = os.environ['PLATFORM']
     except KeyError:
-        raise EnvironmentError("""The environment variable PLATFORM 
+        raise EnvironmentError("""The environment variable PLATFORM
         must be defined. Allowed values are:
         * centos
         * debian
@@ -298,25 +302,28 @@ def runner(docker_client, container_network, tmpdir_factory):
     try:
         platform = os.environ['PLATFORM']
     except KeyError:
-        raise EnvironmentError("""The environment variable PLATFORM 
-        must be defined. Allowed values are:
-        * centos
-        * debian
-        * ubuntu
-        """)
+        raise EnvironmentError(
+            """The environment variable PLATFORM
+            must be defined. Allowed values are:
+            * centos
+            * debian
+            * ubuntu
+            """
+        )
     bootstrap_script = '/twindb-backup/support/bootstrap/master/' \
                        '%s/master1.sh' % platform
 
     datadir = tmpdir_factory.mktemp('mysql')
     twindb_config_dir = tmpdir_factory.mktemp('twindb')
-    container = get_container(name="runner",
-                              client=docker_client,
-                              network=container_network,
-                              bootstrap_script=bootstrap_script,
-                              last_n=3,
-                              twindb_config_dir=str(twindb_config_dir),
-                              datadir=datadir
-                              )
+    container = get_container(
+        name="runner",
+        client=docker_client,
+        network=container_network,
+        bootstrap_script=bootstrap_script,
+        last_n=3,
+        twindb_config_dir=str(twindb_config_dir),
+        datadir=datadir
+    )
     ret, _ = docker_execute(docker_client, container['Id'], ['ls'])
     assert ret == 0
 
@@ -332,8 +339,10 @@ def runner(docker_client, container_network, tmpdir_factory):
 
     if container:
         LOG.info('Removing container %s', container['Id'])
-        docker_client.api.remove_container(container=container['Id'],
-                                           force=True)
+        docker_client.api.remove_container(
+            container=container['Id'],
+            force=True
+        )
 
 
 def docker_execute(client, container_id, cmd, tty=False):
