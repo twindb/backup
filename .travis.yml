@@ -9,6 +9,8 @@ matrix:
   - python: '2.7'
     env: PLATFORM=debian DISTRO=debian OS_VERSION=jessie DOCKER_IMAGE=twindb/backup-test:jessie
   - python: '2.7'
+    env: PLATFORM=debian DISTRO=debian OS_VERSION=stretch DOCKER_IMAGE=twindb/backup-test:stretch
+  - python: '2.7'
     env: PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=trusty DOCKER_IMAGE=twindb/backup-test:trusty
   - python: '2.7'
     env: PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=xenial DOCKER_IMAGE=twindb/backup-test:xenial
