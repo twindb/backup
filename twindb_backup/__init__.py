@@ -106,25 +106,6 @@ def setup_logging(logger, debug=False):  # pragma: no cover
     logger.setLevel(logging.DEBUG)
 
 
-def get_directories_to_backup(config):
-    """Get directories to backup from a config file
-
-    :param config: instance of ConfigParser()
-    :type config: ConfigParser.ConfigParser
-    :return: list of strings
-    """
-    backup_dirs = []
-    try:
-        backup_dirs_value = config.get('source', 'backup_dirs')
-        backup_dirs = backup_dirs_value.strip('"\'').split()
-        LOG.debug('Directories to backup %r', backup_dirs)
-
-    except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-        LOG.debug('Not backing up files')
-
-    return backup_dirs
-
-
 def get_files_to_delete(all_files, keep_copies):
     """If you give it a list of files and number of how many
     you'd like to keep the function will return files that need

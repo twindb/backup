@@ -1,17 +1,8 @@
 import mock
 from botocore.exceptions import ClientError
 
-from twindb_backup.destination.s3 import S3, AWSAuthOptions
 
-
-def test_get_file_content():
-    s3 = S3(
-        'test-bucket',
-        AWSAuthOptions(
-            'access_key',
-            'secret_key'
-        )
-    )
+def test_get_file_content(s3):
     mock_body = mock.Mock()
     s3.s3_client = mock.Mock()
     s3.s3_client.get_object.return_value = {
@@ -32,15 +23,8 @@ def test_get_file_content():
 
 
 @mock.patch('twindb_backup.destination.s3.time.sleep')
-def test_get_file_content_retry(mock_sleep):
+def test_get_file_content_retry(mock_sleep, s3):
 
-    s3 = S3(
-        'test-bucket',
-        AWSAuthOptions(
-            'access_key',
-            'secret_key'
-        )
-    )
     mock_body = mock.Mock()
     s3.s3_client = mock.Mock()
 

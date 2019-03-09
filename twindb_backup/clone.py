@@ -2,11 +2,9 @@
 """
 Module defines clone feature
 """
-import ConfigParser
 from multiprocessing import Process
 
 import time
-from pymysql import OperationalError
 
 from twindb_backup import INTERVALS, LOG, TwinDBBackupError
 from twindb_backup.destination.ssh import Ssh
@@ -57,95 +55,112 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
                 replication_user, replication_password,
                 netcat_port=9990,
                 compress=False):
-    """Clone mysql backup of remote machine and stream it to slave"""
-    try:
-        LOG.debug('Remote MySQL Source: %s', split_host_port(source)[0])
-        LOG.debug('MySQL defaults: %s',
-                  cfg.get('mysql', 'mysql_defaults_file'))
-        LOG.debug('SSH username: %s', cfg.get('ssh', 'ssh_user'))
-        LOG.debug('SSH key: %s', cfg.get('ssh', 'ssh_key'))
-        src = RemoteMySQLSource({
+    """Clone mysql backup of remote machine and stream it to slave
+
+    :param cfg: TwinDB Backup tool config
+    :type cfg: TwinDBBackupConfig
+    """
+    LOG.debug('Remote MySQL Source: %s', split_host_port(source)[0])
+    LOG.debug(
+        'MySQL defaults: %s',
+        cfg.mysql.defaults_file
+    )
+    LOG.debug(
+        'SSH username: %s',
+        cfg.ssh.user
+    )
+    LOG.debug(
+        'SSH key: %s',
+        cfg.ssh.key
+    )
+    src = RemoteMySQLSource(
+        {
             "ssh_host": split_host_port(source)[0],
-            "ssh_user": cfg.get('ssh', 'ssh_user'),
-            "ssh_key": cfg.get('ssh', 'ssh_key'),
-
+            "ssh_user": cfg.ssh.user,
+            "ssh_key": cfg.ssh.key,
             "mysql_connect_info": MySQLConnectInfo(
-                cfg.get('mysql', 'mysql_defaults_file'),
-                hostname=split_host_port(source)[0]
-            ),
+                cfg.mysql.defaults_file,
+                hostname=split_host_port(source)[0]),
             "run_type": INTERVALS[0],
             "backup_type": 'full'
-        })
-        xbstream_binary = cfg.get('mysql', 'xbstream_binary')
-        LOG.debug('SSH destination: %s', split_host_port(destination)[0])
-        LOG.debug('SSH username: %s', cfg.get('ssh', 'ssh_user'))
-        LOG.debug('SSH key: %s', cfg.get('ssh', 'ssh_key'))
-        dst = Ssh(
-            '/tmp',
-            ssh_host=split_host_port(destination)[0],
-            ssh_user=cfg.get('ssh', 'ssh_user'),
-            ssh_key=cfg.get('ssh', 'ssh_key')
-        )
-        datadir = src.datadir
-        LOG.debug('datadir: %s', datadir)
+        }
+    )
+    xbstream_binary = cfg.mysql.xbstream_binary
+    LOG.debug('SSH destination: %s', split_host_port(destination)[0])
+    LOG.debug('SSH username: %s', cfg.ssh.user)
+    LOG.debug('SSH key: %s', cfg.ssh.key)
+    dst = Ssh(
+        '/tmp',
+        ssh_host=split_host_port(destination)[0],
+        ssh_user=cfg.ssh.user,
+        ssh_key=cfg.ssh.key
+    )
+    datadir = src.datadir
+    LOG.debug('datadir: %s', datadir)
 
-        if dst.list_files(datadir):
-            LOG.error("Destination datadir is not empty: %s", datadir)
-            exit(1)
+    if dst.list_files(datadir):
+        LOG.error("Destination datadir is not empty: %s", datadir)
+        exit(1)
 
-        _run_remote_netcat(compress, datadir, destination,
-                           dst, netcat_port, src, xbstream_binary)
-        LOG.debug('Copying MySQL config to the destination')
-        src.clone_config(dst)
+    _run_remote_netcat(
+        compress,
+        datadir,
+        destination,
+        dst,
+        netcat_port,
+        src,
+        xbstream_binary
+    )
+    LOG.debug('Copying MySQL config to the destination')
+    src.clone_config(dst)
 
-        LOG.debug('Remote MySQL destination: %s',
-                  split_host_port(destination)[0])
-        LOG.debug('MySQL defaults: %s',
-                  cfg.get('mysql', 'mysql_defaults_file'))
-        LOG.debug('SSH username: %s', cfg.get('ssh', 'ssh_user'))
-        LOG.debug('SSH key: %s', cfg.get('ssh', 'ssh_key'))
+    LOG.debug('Remote MySQL destination: %s',
+              split_host_port(destination)[0])
+    LOG.debug(
+        'MySQL defaults: %s',
+        cfg.mysql.defaults_file
+    )
+    LOG.debug('SSH username: %s', cfg.ssh.user)
+    LOG.debug('SSH key: %s', cfg.ssh.key)
 
-        dst_mysql = RemoteMySQLSource({
-            "ssh_host": split_host_port(destination)[0],
-            "ssh_user": cfg.get('ssh', 'ssh_user'),
-            "ssh_key": cfg.get('ssh', 'ssh_key'),
-            "mysql_connect_info": MySQLConnectInfo(
-                cfg.get('mysql', 'mysql_defaults_file'),
-                hostname=split_host_port(destination)[0]
-            ),
-            "run_type": INTERVALS[0],
-            "backup_type": 'full'
-        })
+    dst_mysql = RemoteMySQLSource({
+        "ssh_host": split_host_port(destination)[0],
+        "ssh_user": cfg.ssh.user,
+        "ssh_key": cfg.ssh.key,
+        "mysql_connect_info": MySQLConnectInfo(
+            cfg.mysql.defaults_file,
+            hostname=split_host_port(destination)[0]
+        ),
+        "run_type": INTERVALS[0],
+        "backup_type": 'full'
+    })
 
-        binlog, position = dst_mysql.apply_backup(datadir)
+    binlog, position = dst_mysql.apply_backup(datadir)
 
-        LOG.debug('Binlog coordinates: (%s, %d)', binlog, position)
+    LOG.debug('Binlog coordinates: (%s, %d)', binlog, position)
 
-        try:
-            LOG.debug('Starting MySQL on the destination')
-            _mysql_service(dst, action='start')
-            LOG.debug('MySQL started')
-        except TwinDBBackupError as err:
-            LOG.error(err)
-            exit(1)
-
-        LOG.debug('Setting up replication.')
-        LOG.debug('Master host: %s', source)
-        LOG.debug('Replication user: %s', replication_user)
-        LOG.debug('Replication password: %s', replication_password)
-        dst_mysql.setup_slave(
-            MySQLMasterInfo(
-                host=split_host_port(source)[0],
-                port=split_host_port(source)[1],
-                user=replication_user,
-                password=replication_password,
-                binlog=binlog,
-                binlog_pos=position
-            )
-        )
-    except (ConfigParser.NoOptionError, OperationalError) as err:
+    try:
+        LOG.debug('Starting MySQL on the destination')
+        _mysql_service(dst, action='start')
+        LOG.debug('MySQL started')
+    except TwinDBBackupError as err:
         LOG.error(err)
         exit(1)
+
+    LOG.debug('Setting up replication.')
+    LOG.debug('Master host: %s', source)
+    LOG.debug('Replication user: %s', replication_user)
+    LOG.debug('Replication password: %s', replication_password)
+    dst_mysql.setup_slave(
+        MySQLMasterInfo(
+            host=split_host_port(source)[0],
+            port=split_host_port(source)[1],
+            user=replication_user,
+            password=replication_password,
+            binlog=binlog,
+            binlog_pos=position
+        )
+    )
 
 
 def _run_remote_netcat(compress, datadir,  # pylint: disable=too-many-arguments

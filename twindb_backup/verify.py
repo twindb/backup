@@ -10,7 +10,6 @@ import tempfile
 import traceback
 
 from twindb_backup import LOG, TwinDBBackupError
-from twindb_backup.configuration import get_destination
 from twindb_backup.restore import restore_from_mysql
 
 
@@ -29,9 +28,18 @@ def edit_backup_my_cnf(dst_path):
         backup_cfg.write(backup_fp)
 
 
-def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
-    """Restore mysql backup and measure time"""
-    dst = get_destination(config, hostname)
+def verify_mysql_backup(twindb_config, dst_path, backup_copy, hostname=None):
+    """
+    Restore mysql backup and measure time
+
+    :param hostname:
+    :param backup_copy:
+    :param dst_path:
+    :param twindb_config: tool configuration
+    :type twindb_config: TwinDBBackupConfig
+
+    """
+    dst = twindb_config.destination(backup_source=hostname)
     status = dst.status()
     if backup_copy == "latest":
         copy = status.get_latest_backup()
@@ -52,7 +60,7 @@ def verify_mysql_backup(config, dst_path, backup_copy, hostname=None):
     try:
 
         LOG.debug('Verifying backup copy in %s', tmp_dir)
-        restore_from_mysql(config, copy, dst_path, tmp_dir)
+        restore_from_mysql(twindb_config, copy, dst_path, tmp_dir)
         edit_backup_my_cnf(dst_path)
 
     except (TwinDBBackupError, OSError, IOError) as err:
