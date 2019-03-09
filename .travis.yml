@@ -14,6 +14,8 @@ matrix:
     env: PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=xenial DOCKER_IMAGE=twindb/backup-test:xenial
   - python: '2.7'
     env: PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=bionic DOCKER_IMAGE=twindb/backup-test:bionic
+  - python: '2.7'
+    env: PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=cosmic DOCKER_IMAGE=twindb/backup-test:cosmic
 services:
 - docker
 before_install:
