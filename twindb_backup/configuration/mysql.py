@@ -44,8 +44,19 @@ class MySQLConfig(object):
 
         return self._xtrabackup_binary
 
+    @xtrabackup_binary.setter
+    def xtrabackup_binary(self, path):
+        """Set path to Xtrabackup"""
+        self._xtrabackup_binary = path
+
     @property
     def xbstream_binary(self):
         """Path to xbstream binary"""
 
         return self._xbstream_binary
+
+    @xbstream_binary.setter
+    def xbstream_binary(self, path):
+        """Set path to xbstream"""
+
+        self._xbstream_binary = path
