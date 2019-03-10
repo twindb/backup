@@ -47,9 +47,18 @@ MEDIA_STATUS_MAP = {
               show_default=True)
 @click.option('--version', help='Show tool version and exit.', is_flag=True,
               default=False)
+@click.option('--xtrabackup-binary',
+              help='Path to xtrabackup binary.',
+              default=None,
+              show_default=True)
+@click.option('--xbstream-binary',
+              help='Path to xbstream binary.',
+              default=None,
+              show_default=True)
 @click.pass_context
 def main(ctx, debug,  # pylint: disable=too-many-arguments
-         config, version):
+         config, version,
+         xtrabackup_binary, xbstream_binary):
     """
     Main entry point
 
@@ -61,6 +70,10 @@ def main(ctx, debug,  # pylint: disable=too-many-arguments
     :type config: str
     :param version: If True print version string
     :type version: bool
+    :param xtrabackup_binary: Path to xtrabackup binary.
+    :type xtrabackup_binary: str
+    :param xbstream_binary: Path to xbstream binary.
+    :type xbstream_binary: str
     """
     if not ctx.invoked_subcommand:
         if version:
@@ -76,6 +89,12 @@ def main(ctx, debug,  # pylint: disable=too-many-arguments
         ctx.obj = {
             'twindb_config': TwinDBBackupConfig(config_file=config)
         }
+        if xtrabackup_binary is not None:
+            ctx.obj['twindb_config'].mysql.xtrabackup_binary = \
+                xtrabackup_binary
+        if xbstream_binary is not None:
+            ctx.obj['twindb_config'].mysql.xbstream_binary = \
+                xbstream_binary
     else:
         LOG.warning("Config file %s doesn't exist", config)
 
