@@ -29,6 +29,7 @@ class TwinDBBackupConfig(object):
         self._config_file = config_file
         self.__cfg = ConfigParser()
         self.__cfg.read(self._config_file)
+        self.__mysql = None
 
     @property
     def retention(self):
@@ -72,21 +73,30 @@ class TwinDBBackupConfig(object):
         :return: Local MySQL source configuration.
         :rtype: MySQLConfig
         """
-        kwargs = {}
-        try:
-            options = ['mysql_defaults_file', 'full_backup', 'expire_log_days']
-            for opt in options:
-                try:
-                    kwargs[opt] = self.__cfg.get('mysql', opt).strip('"\'')
-                except NoOptionError:
-                    LOG.debug(
-                        'Option %s is not defined in section mysql',
-                        opt
-                    )
-            return MySQLConfig(**kwargs)
+        if self.__mysql is None:
+            kwargs = {}
+            try:
+                options = [
+                    'mysql_defaults_file',
+                    'full_backup',
+                    'expire_log_days',
+                    'xtrabackup_binary',
+                    'xbstream_binary'
+                ]
+                for opt in options:
+                    try:
+                        kwargs[opt] = self.__cfg.get('mysql', opt).strip('"\'')
+                    except NoOptionError:
+                        LOG.debug(
+                            'Option %s is not defined in section mysql',
+                            opt
+                        )
+                self.__mysql = MySQLConfig(**kwargs)
 
-        except NoSectionError:
-            return None
+            except NoSectionError:
+                return None
+
+        return self.__mysql
 
     @property
     def ssh(self):
