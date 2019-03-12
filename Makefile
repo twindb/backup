@@ -199,3 +199,6 @@ install_package:
 	else
 		dpkg -i $(ls omnibus/pkg/*.deb) | apt-get install -f
 	fi
+
+safety: ## check for known security vulnerabilities
+	safety check
