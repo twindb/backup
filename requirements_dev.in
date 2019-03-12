@@ -19,3 +19,10 @@ python-dateutil>=2.1,<2.7.0
 # https://github.com/paramiko/paramiko/issues/1386
 # https://github.com/paramiko/paramiko/issues/1369
 cryptography ~= 2.4.2
+
+# PyUP
+Click~=6.7
+safety ~= 1.8
+
+# https://nvd.nist.gov/vuln/detail/CVE-2017-18342
+pyyaml~=4.2b1
