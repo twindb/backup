@@ -22,7 +22,7 @@ before_install:
 install:
 - sudo -H make bootstrap
 script:
-- make lint test
+- make safety lint test
 - travis_wait 120 make package
 - make test-integration
 before_deploy:
