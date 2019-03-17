@@ -503,15 +503,17 @@ password=qwerty
     print(cout)
     assert ret == 0
 
-    cmd = ['gpg',
-           '--no-default-keyring',
-           '--keyring', gpg_keyring,
-           '--secret-keyring', gpg_secret_keyring,
-           '--yes',
-           '--no-tty',
-           '--batch',
-           '--import',
-           gpg_private_key_path_guest]
+    cmd = [
+        'gpg',
+        '--no-default-keyring',
+        '--keyring', gpg_keyring,
+        '--secret-keyring', gpg_secret_keyring,
+        '--yes',
+        '--no-tty',
+        '--batch',
+        '--import',
+        gpg_private_key_path_guest
+    ]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -528,16 +530,24 @@ password=qwerty
             MY_CNF='/etc/twindb/my.cnf'
         )
         fp.write(content)
-    cmd = ['twindb-backup', '--debug',
-           '--config', twindb_config_guest,
-           'backup', 'daily']
+    cmd = [
+        'twindb-backup',
+        '--debug',
+        '--config',
+        twindb_config_guest,
+        'backup',
+        'daily'
+    ]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
 
-    cmd = ['twindb-backup',
-           '--config', twindb_config_guest,
-           'status']
+    cmd = [
+        'twindb-backup',
+        '--config',
+        twindb_config_guest,
+        'status'
+    ]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -555,11 +565,15 @@ password=qwerty
     assert ret == 0
 
     cmd = [
-        'twindb-backup', '--debug',
-        '--config', str(twindb_config_guest),
-        'restore', 'mysql',
+        'twindb-backup',
+        '--debug',
+        '--config',
+        str(twindb_config_guest),
+        'restore',
+        'mysql',
         backup_copy,
-        '--dst', dst_dir
+        '--dst',
+        dst_dir
     ]
 
     # LOG.debug('Test paused')
@@ -585,10 +599,15 @@ password=qwerty
     assert ret == 0
 
     files_to_test = []
-    for datadir_file in ['ibdata1', 'ib_logfile0', 'ib_logfile1',
-                         'mysql/user.MYD',
-                         'backup-my.cnf',
-                         'xtrabackup_logfile']:
+    mysql_files = [
+        'ibdata1',
+        'ib_logfile0',
+        'ib_logfile1',
+        'mysql/user.MYD',
+        'backup-my.cnf',
+        'xtrabackup_logfile'
+    ]
+    for datadir_file in mysql_files:
         files_to_test += [
             "test -f %s/%s" % (dst_dir, datadir_file)
         ]
@@ -621,6 +640,7 @@ password=qwerty
     )
     print(cout)
     assert ret == 0
+    s3_client.keep_bucket = False
 
 
 def test_take_mysql_backup_aenc_restores_inc(

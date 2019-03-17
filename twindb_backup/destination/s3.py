@@ -85,6 +85,9 @@ class S3(BaseDestination):
         # Setup an authenticated S3 client that we will use throughout
         self.s3_client = self.setup_s3_client()
 
+        # for troubleshooting
+        self.keep_bucket = True
+
     @property
     def bucket(self):
         """S3 bucket name."""
