@@ -1,4 +1,4 @@
-"""Google Cloud Storage destrination configuration"""
+"""Google Cloud Storage destination configuration"""
 
 
 class GCSConfig(object):
@@ -14,15 +14,15 @@ class GCSConfig(object):
 
     @property
     def gc_credentials_file(self):
-        """AWS_ACCESS_KEY_ID"""
+        """GC_CREDENTIALS_FILE"""
         return self._gc_credentials_file
 
     @property
     def gc_encryption_key(self):
-        """AWS_SECRET_ACCESS_KEY"""
+        """GC_ENCRYPTION_KEY"""
         return self._gc_encryption_key
 
     @property
     def bucket(self):
-        """S3 bucket"""
+        """GCS bucket"""
         return self._bucket
