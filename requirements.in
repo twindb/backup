@@ -12,6 +12,5 @@ datadog ~= 0.22
 # https://github.com/paramiko/paramiko/issues/1369
 paramiko ~= 2.4
 cryptography ~= 2.4.2
-datadog
 google
 google-cloud-storage
