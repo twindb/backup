@@ -14,6 +14,11 @@ class S3DestinationError(DestinationError):
     pass
 
 
+class GCSDestinationError(DestinationError):
+    """GCS destination errors"""
+    pass
+
+
 class SshDestinationError(DestinationError):
     """SSH destination errors"""
     pass
