@@ -76,6 +76,20 @@ In ``[s3]`` section you specify Amazon credentials as well as an S3 bucket where
     AWS_DEFAULT_REGION=us-east-1
     BUCKET=twindb-backups
 
+Google Cloud Storage
+~~~~~~~~~~~~~~~~~~~~
+
+In ``[gcs]`` section you specify Google credentials as well as cloud storage bucket where to store backups.
+
+::
+
+    [gcs]
+
+    # GCS destination settings
+
+    GC_CREDENTIALS_FILE=XXXXX
+    BUCKET=twindb-backups
+
 SSH Settings
 ~~~~~~~~~~~~
 
