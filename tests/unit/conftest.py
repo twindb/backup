@@ -24,6 +24,11 @@ AWS_SECRET_ACCESS_KEY="YYYYY"
 AWS_DEFAULT_REGION="us-east-1"
 BUCKET="twindb-backups"
 
+[gcs]
+GC_CREDENTIALS_FILE="XXXXX"
+GC_ENCRYPTION_KEY=
+BUCKET="twindb-backups"
+
 [mysql]
 mysql_defaults_file=/etc/twindb/my.cnf
 expire_log_days = 8

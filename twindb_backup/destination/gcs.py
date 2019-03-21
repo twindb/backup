@@ -23,15 +23,6 @@ GCS_CONNECT_TIMEOUT = 60
 GCS_READ_TIMEOUT = 600
 
 
-class GCAuthOptions(object):  # pylint: disable=too-few-public-methods
-    """Class to store GC credentials"""
-
-    def __init__(self, credentials_file=None, encryption_key=None):
-        # allow None for credentials_file to prevent file-not-found error on unit tests
-        self.credentials_file = credentials_file
-        self.encryption_key = encryption_key
-
-
 class GCSFileAccess(object):  # pylint: disable=too-few-public-methods
     """Access modes for GCS files"""
     public_read = 'public-read'
@@ -42,33 +33,46 @@ class GCS(BaseDestination):
     """
     GCS destination class.
 
-    :param bucket: Bucket name.
-    :type bucket: str
-    :param gc_options: GC credentials.
-    :type gc_options: GCAuthOptions
-    :param hostname: Hostname of a host where a backup is taken from.
+    :param kwargs: Keyword arguments.
+
+    * **bucket** - GCS bucket name.
+    * **gc_credentials_file** - GC credentials json filepath.
+    * **gc_encryption_key** - GC encryption key if used.
+    * **hostname** - Hostname of a host where a backup is taken from.
     """
+    def __init__(self, **kwargs):
+        self._bucket = kwargs.get('bucket')
+        self._hostname = kwargs.get('hostname', socket.gethostname())
 
-    def __init__(self, bucket, gc_options, hostname=socket.gethostname()):
-
-        self.bucket = bucket
-        self.remote_path = 'gs://{bucket}'.format(bucket=self.bucket)
+        self.remote_path = 'gs://{bucket}'.format(
+            bucket=self._bucket
+        )
         super(GCS, self).__init__(self.remote_path)
 
-        self.gc = gc_options
+        credentials_file = kwargs.get('gc_credentials_file')
+        if credentials_file is not None:
+            os.environ["GC_CREDENTIALS_FILE"] = credentials_file
 
-        if self.gc.credentials_file is not None:
-            os.environ["GC_CREDENTIALS_FILE"] = self.gc.credentials_file
+        encryption_key = kwargs.get('gc_encryption_key')
+        if encryption_key is not None:
+            os.environ["GC_ENCRYPTION_KEY"] = encryption_key
 
-        if self.gc.encryption_key is not None:
-            os.environ["GC_ENCRYPTION_KEY"] = self.gc.encryption_key
-
-        self._hostname = hostname
-        # self.status_path = "{hostname}/status".format(
-        #     hostname=hostname
-        # )
         # Setup an authenticated GCS client that we will use throughout
         self.gcs_client = self.setup_gcs_client()
+
+    @property
+    def bucket(self):
+        """GCS bucket name."""
+        return self.bucket
+
+    @property
+    def encryption_key(self):
+        """GCS encryption key"""
+        """
+        If no key is given, it must be set to None
+        """
+        return None if "GC_ENCRYPTION_KEY" not in os.environ or os.environ["GC_ENCRYPTION_KEY"] == "" \
+            else os.environ["GC_ENCRYPTION_KEY"]
 
     def status_path(self, cls=MySQLStatus):
         """
@@ -89,8 +93,8 @@ class GCS(BaseDestination):
         :return: GCS client instance.
         :rtype: google.cloud.storage.Client
         """
-        if self.gc.credentials_file is not None:
-            client = storage.Client.from_service_account_json(self.gc.credentials_file)
+        if "GC_CREDENTIALS_FILE" in os.environ and os.environ["GC_CREDENTIALS_FILE"] is not None:
+            client = storage.Client.from_service_account_json(os.environ["GC_CREDENTIALS_FILE"])
         else:
             client = storage.Client.create_anonymous_client()
 
@@ -256,7 +260,7 @@ class GCS(BaseDestination):
         ) if obj.startswith('gs://') else obj
 
         bucket = self.get_bucket()
-        gcsobj = bucket.blob(obj, encryption_key=self.gc.encryption_key)
+        gcsobj = bucket.blob(obj, encryption_key=self.encryption_key)
 
         LOG.debug('deleting gs://%s/%s', bucket.name, key)
         gcsobj.delete()
@@ -325,7 +329,7 @@ class GCS(BaseDestination):
 
             download_proc = Process(target=_download_object,
                                     args=(self.gcs_client, self.bucket,
-                                          self.gc.encryption_key, object_key, read_pipe, write_pipe),
+                                          self.encryption_key, object_key, read_pipe, write_pipe),
                                     name='_download_object')
             download_proc.start()
 
@@ -363,7 +367,7 @@ class GCS(BaseDestination):
 
         LOG.debug("Starting to stream to %s", remote_name)
         try:
-            blob = self.get_bucket().blob(object_key, encryption_key=self.gc.encryption_key)
+            blob = self.get_bucket().blob(object_key, encryption_key=self.encryption_key)
             blob.upload_from_file(file_obj)
 
             LOG.debug("Successfully streamed to %s", remote_name)
@@ -387,7 +391,7 @@ class GCS(BaseDestination):
 
         LOG.debug("Validating upload to %s", remote_name)
 
-        if not self.get_bucket().blob(object_key, encryption_key=self.gc.encryption_key).exists():
+        if not self.get_bucket().blob(object_key, encryption_key=self.encryption_key).exists():
             raise GCSDestinationError(exceptions.NotFound("Object %s not found" % remote_name))
 
         LOG.debug("Upload successfully validated")
@@ -396,7 +400,7 @@ class GCS(BaseDestination):
 
     def _status_exists(self, cls=MySQLStatus):
         try:
-            status_object = self.get_bucket().get_blob(self.status_path(cls=cls), encryption_key=self.gc.encryption_key)
+            status_object = self.get_bucket().get_blob(self.status_path(cls=cls), encryption_key=self.encryption_key)
 
             if status_object is None:
                 return False
@@ -409,7 +413,7 @@ class GCS(BaseDestination):
     def _read_status(self, cls=MySQLStatus):
         if self._status_exists(cls=cls):
             try:
-                obj = self.get_bucket().blob(self.status_path(), encryption_key=self.gc.encryption_key)
+                obj = self.get_bucket().blob(self.status_path(), encryption_key=self.encryption_key)
             except exceptions.GoogleCloudError as err:
                 raise GCSDestinationError(err)
 
@@ -419,7 +423,7 @@ class GCS(BaseDestination):
             return cls()
 
     def _write_status(self, status, cls=MySQLStatus):
-        obj = self.get_bucket().blob(self.status_path(cls=cls), encryption_key=self.gc.encryption_key)
+        obj = self.get_bucket().blob(self.status_path(cls=cls), encryption_key=self.encryption_key)
         obj.upload_from_string(status.serialize())
 
     @staticmethod
@@ -444,7 +448,7 @@ class GCS(BaseDestination):
         :type url: str
         """
         object_key = urlparse(url).path.lstrip('/')
-        obj = self.get_bucket().blob(object_key, encryption_key=self.gc.encryption_key)
+        obj = self.get_bucket().blob(object_key, encryption_key=self.encryption_key)
         if access_mode == GCSFileAccess.public_read:
             obj.make_public()
         else:
@@ -459,7 +463,7 @@ class GCS(BaseDestination):
         :rtype: str
         """
         object_key = urlparse(gcs_url).path.lstrip('/')
-        obj = self.get_bucket().blob(object_key, encryption_key=self.gc.encryption_key)
+        obj = self.get_bucket().blob(object_key, encryption_key=self.encryption_key)
         return obj.public_url
 
     def share(self, gcs_url):
@@ -477,7 +481,7 @@ class GCS(BaseDestination):
         norm_prefix = norm_prefix.lstrip('/')
         LOG.debug('normal prefix = %s', norm_prefix)
 
-        obj = self.get_bucket().get_blob(norm_prefix, encryption_key=self.gc.encryption_key)
+        obj = self.get_bucket().get_blob(norm_prefix, encryption_key=self.encryption_key)
         if obj is None:
             raise TwinDBBackupError("File not found via url: %s" % gcs_url)
         else:
@@ -489,7 +493,7 @@ class GCS(BaseDestination):
         sleep_time = 2
         while sleep_time <= 2 ** attempts:
             try:
-                obj = self.get_bucket().get_blob(path, encryption_key=self.gc.encryption_key)
+                obj = self.get_bucket().get_blob(path, encryption_key=self.encryption_key)
                 content = obj.download_as_string()
                 return content
             except exceptions.GoogleCloudError as err:
@@ -504,5 +508,5 @@ class GCS(BaseDestination):
         raise TwinDBBackupError(msg)
 
     def _move_file(self, source, destination):
-        obj = self.get_bucket().blob(source, encryption_key=self.gc.encryption_key)
+        obj = self.get_bucket().blob(source, encryption_key=self.encryption_key)
         self.get_bucket().rename_blob(obj, destination)

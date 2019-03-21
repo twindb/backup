@@ -88,6 +88,7 @@ In ``[gcs]`` section you specify Google credentials as well as cloud storage buc
     # GCS destination settings
 
     GC_CREDENTIALS_FILE=XXXXX
+    GC_ENCRYPTION_KEY=
     BUCKET=twindb-backups
 
 SSH Settings
