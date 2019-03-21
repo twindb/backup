@@ -8,6 +8,7 @@ from shlex import split
 
 from twindb_backup import LOG, INTERVALS
 from twindb_backup.configuration.destinations.s3 import S3Config
+from twindb_backup.configuration.destinations.gcs import GCSConfig
 from twindb_backup.configuration.destinations.ssh import SSHConfig
 from twindb_backup.configuration.exceptions import ConfigurationError
 from twindb_backup.configuration.gpg import GPGConfig
@@ -16,6 +17,7 @@ from twindb_backup.configuration.retention import RetentionPolicy
 from twindb_backup.configuration.compression import CompressionConfig
 from twindb_backup.configuration.run_intervals import RunIntervals
 from twindb_backup.destination.s3 import S3
+from twindb_backup.destination.gcs import GCS
 from twindb_backup.destination.ssh import Ssh
 from twindb_backup.exporter.datadog_exporter import DataDogExporter
 
@@ -141,6 +143,26 @@ class TwinDBBackupConfig(object):
                 except NoOptionError:
                     LOG.debug('Option %s is not defined in section s3', opt)
             return S3Config(**kwargs)
+
+        except NoSectionError:
+            return None
+
+    @property
+    def gcs(self):  # pylint: disable=invalid-name
+        """Google Cloud Storage configuration"""
+        kwargs = {}
+        try:
+            options = [
+                'gc_credentials_file',
+                'gc_encryption_key',
+                'bucket'
+            ]
+            for opt in options:
+                try:
+                    kwargs[opt] = self.__cfg.get('gcs', opt).strip('"\'')
+                except NoOptionError:
+                    LOG.debug('Option %s is not defined in section gcs', opt)
+            return GCSConfig(**kwargs)
 
         except NoSectionError:
             return None
@@ -278,6 +300,13 @@ class TwinDBBackupConfig(object):
                     aws_access_key_id=self.s3.aws_access_key_id,
                     aws_secret_access_key=self.s3.aws_secret_access_key,
                     aws_default_region=self.s3.aws_default_region,
+                    hostname=backup_source
+                )
+            elif backup_destination == 'gcs':
+                return GCS(
+                    bucket=self.gcs.bucket,
+                    gc_credentials_file=self.gcs.gc_credentials_file,
+                    gc_encryption_key=self.gcs.gc_encryption_key,
                     hostname=backup_source
                 )
 
