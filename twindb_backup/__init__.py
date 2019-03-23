@@ -41,7 +41,7 @@ import sys
 
 __author__ = 'TwinDB Development Team'
 __email__ = 'dev@twindb.com'
-__version__ = '2.16.1'
+__version__ = '2.17.0'
 STATUS_FORMAT_VERSION = 1
 LOCK_FILE = '/var/run/twindb-backup.lock'
 LOG_FILE = '/var/log/twindb-backup-measures.log'
@@ -104,25 +104,6 @@ def setup_logging(logger, debug=False):  # pragma: no cover
         logger.debug_enabled = True
 
     logger.setLevel(logging.DEBUG)
-
-
-def get_directories_to_backup(config):
-    """Get directories to backup from a config file
-
-    :param config: instance of ConfigParser()
-    :type config: ConfigParser.ConfigParser
-    :return: list of strings
-    """
-    backup_dirs = []
-    try:
-        backup_dirs_value = config.get('source', 'backup_dirs')
-        backup_dirs = backup_dirs_value.strip('"\'').split()
-        LOG.debug('Directories to backup %r', backup_dirs)
-
-    except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-        LOG.debug('Not backing up files')
-
-    return backup_dirs
 
 
 def get_files_to_delete(all_files, keep_copies):

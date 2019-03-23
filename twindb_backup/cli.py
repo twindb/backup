@@ -8,19 +8,17 @@ import shutil
 import socket
 import tempfile
 import traceback
-from ConfigParser import ConfigParser, NoSectionError
 import os
 from os.path import basename
 
 import click
 
 from twindb_backup import setup_logging, LOG, __version__, \
-    TwinDBBackupError, LOCK_FILE, XTRABACKUP_BINARY, XBSTREAM_BINARY, \
-    INTERVALS, MEDIA_TYPES
+    TwinDBBackupError, LOCK_FILE, INTERVALS, MEDIA_TYPES
 from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.clone import clone_mysql
-from twindb_backup.configuration import get_destination
+from twindb_backup.configuration import TwinDBBackupConfig
 from twindb_backup.copy.file_copy import FileCopy
 from twindb_backup.exceptions import LockWaitTimeoutError, OperationError
 from twindb_backup.ls import list_available_backups
@@ -34,7 +32,6 @@ from twindb_backup.util import ensure_empty, kill_children, \
     get_hostname_from_backup_copy, get_run_type_from_backup_copy
 from twindb_backup.verify import verify_mysql_backup
 
-PASS_CFG = click.make_pass_decorator(ConfigParser, ensure=True)
 MEDIA_STATUS_MAP = {
     'files': NotImplementedError,
     'mysql': MySQLStatus,
@@ -52,25 +49,21 @@ MEDIA_STATUS_MAP = {
               default=False)
 @click.option('--xtrabackup-binary',
               help='Path to xtrabackup binary.',
-              default=XTRABACKUP_BINARY,
+              default=None,
               show_default=True)
 @click.option('--xbstream-binary',
               help='Path to xbstream binary.',
-              default=XBSTREAM_BINARY,
+              default=None,
               show_default=True)
-@PASS_CFG
 @click.pass_context
-def main(ctx, cfg, debug,  # pylint: disable=too-many-arguments
+def main(ctx, debug,  # pylint: disable=too-many-arguments
          config, version,
-         xtrabackup_binary=XTRABACKUP_BINARY,
-         xbstream_binary=XBSTREAM_BINARY):
+         xtrabackup_binary, xbstream_binary):
     """
     Main entry point
 
     :param ctx: context (See Click docs (http://click.pocoo.org/6/)
     for explanation)
-    :param cfg: instance of ConfigParser
-    :type cfg: ConfigParser.ConfigParser
     :param debug: if True enabled debug logging
     :type debug: bool
     :param config: path to configuration file
@@ -93,13 +86,15 @@ def main(ctx, cfg, debug,  # pylint: disable=too-many-arguments
     setup_logging(LOG, debug=debug)
 
     if os.path.exists(config):
-        cfg.read(config)
-        try:
-            cfg.set('mysql', 'xtrabackup_binary', xtrabackup_binary)
-            cfg.set('mysql', 'xbstream_binary', xbstream_binary)
-        except NoSectionError:
-            # if there is no mysql section, we will not backup mysql
-            pass
+        ctx.obj = {
+            'twindb_config': TwinDBBackupConfig(config_file=config)
+        }
+        if xtrabackup_binary is not None:
+            ctx.obj['twindb_config'].mysql.xtrabackup_binary = \
+                xtrabackup_binary
+        if xbstream_binary is not None:
+            ctx.obj['twindb_config'].mysql.xbstream_binary = \
+                xbstream_binary
     else:
         LOG.warning("Config file %s doesn't exist", config)
 
@@ -123,13 +118,13 @@ def main(ctx, cfg, debug,  # pylint: disable=too-many-arguments
     is_flag=True,
     help='If specified the tool will copy only MySQL binary logs.'
 )
-@PASS_CFG
-def backup(cfg, run_type, lock_file, binlogs_only):
+@click.pass_context
+def backup(ctx, run_type, lock_file, binlogs_only):
     """Run backup job"""
     try:
 
         run_backup_job(
-            cfg,
+            ctx.obj['twindb_config'],
             run_type,
             lock_file=lock_file,
             binlogs_only=binlogs_only
@@ -159,26 +154,26 @@ def backup(cfg, run_type, lock_file, binlogs_only):
     type=click.Choice(MEDIA_TYPES),
     default=None
 )
-@PASS_CFG
-def list_backups(cfg, copy_type):
+@click.pass_context
+def list_backups(ctx, copy_type):
     """List available backup copies"""
     list_available_backups(
-        cfg,
+        ctx.obj['twindb_config'],
         copy_type=copy_type
     )
 
 
 @main.command(name='share')
 @click.argument('s3_url', type=str, required=False)
-@PASS_CFG
-def share_backup(cfg, s3_url):
+@click.pass_context
+def share_backup(ctx, s3_url):
     """Share backup copy for download"""
     if not s3_url:
         LOG.info('No backup copy specified. Choose one from below:')
-        list_available_backups(cfg)
+        list_available_backups(ctx.obj['twindb_config'])
         exit(1)
     try:
-        share(cfg, s3_url)
+        share(ctx.obj['twindb_config'], s3_url)
     except TwinDBBackupError as err:
         LOG.error(err)
         exit(1)
@@ -192,10 +187,10 @@ def share_backup(cfg, s3_url):
 )
 @click.option('--hostname', help='Hostname', show_default=True,
               default=socket.gethostname())
-@PASS_CFG
-def status(cfg, copy_type, hostname):
+@click.pass_context
+def status(ctx, copy_type, hostname):
     """Print backups status"""
-    dst = get_destination(cfg, hostname)
+    dst = ctx.obj['twindb_config'].destination(backup_source=hostname)
     print(
         dst.status(
             cls=MEDIA_STATUS_MAP[copy_type]
@@ -204,10 +199,10 @@ def status(cfg, copy_type, hostname):
 
 
 @main.group('restore')
-@PASS_CFG
-def restore(cfg):
+@click.pass_context
+def restore(ctx):
     """Restore from backup"""
-    LOG.debug('restore: %r', cfg)
+    LOG.debug('restore: %r', ctx.obj['twindb_config'])
 
 
 @restore.command('mysql')
@@ -216,28 +211,32 @@ def restore(cfg):
               default='.', show_default=True)
 @click.option('--cache', help='Save full backup copy in this directory',
               default=None)
-@PASS_CFG
-def restore_mysql(cfg, dst, backup_copy, cache):
+@click.pass_context
+def restore_mysql(ctx, dst, backup_copy, cache):
     """Restore from mysql backup"""
-    LOG.debug('mysql: %r', cfg)
+    LOG.debug('mysql: %r', ctx.obj['twindb_config'])
 
     if not backup_copy:
         LOG.info('No backup copy specified. Choose one from below:')
-        list_available_backups(cfg)
+        list_available_backups(ctx.obj['twindb_config'])
         exit(1)
 
     try:
         ensure_empty(dst)
-        dst_storage = get_destination(
-            cfg,
-            get_hostname_from_backup_copy(backup_copy)
+        dst_storage = ctx.obj['twindb_config'].destination(
+            backup_source=get_hostname_from_backup_copy(backup_copy)
         )
         key = dst_storage.basename(backup_copy)
         copy = dst_storage.status()[key]
         if cache:
-            restore_from_mysql(cfg, copy, dst, cache=Cache(cache))
+            restore_from_mysql(
+                ctx.obj['twindb_config'],
+                copy,
+                dst,
+                cache=Cache(cache)
+            )
         else:
-            restore_from_mysql(cfg, copy, dst)
+            restore_from_mysql(ctx.obj['twindb_config'], copy, dst)
 
     except (TwinDBBackupError, CacheException) as err:
         LOG.error(err)
@@ -251,14 +250,14 @@ def restore_mysql(cfg, dst, backup_copy, cache):
 @click.argument('backup_copy', required=False)
 @click.option('--dst', help='Directory where to restore the backup copy',
               default='.', show_default=True)
-@PASS_CFG
-def restore_file(cfg, dst, backup_copy):
+@click.pass_context
+def restore_file(ctx, dst, backup_copy):
     """Restore from file backup"""
-    LOG.debug('file: %r', cfg)
+    LOG.debug('file: %r', ctx.obj['twindb_config'])
 
     if not backup_copy:
         LOG.info('No backup copy specified. Choose one from below:')
-        list_available_backups(cfg)
+        list_available_backups(ctx.obj['twindb_config'])
         exit(1)
 
     try:
@@ -268,7 +267,7 @@ def restore_file(cfg, dst, backup_copy):
             basename(backup_copy),
             get_run_type_from_backup_copy(backup_copy)
         )
-        restore_from_file(cfg, copy, dst)
+        restore_from_file(ctx.obj['twindb_config'], copy, dst)
     except TwinDBBackupError as err:
         LOG.error(err)
         exit(1)
@@ -279,10 +278,10 @@ def restore_file(cfg, dst, backup_copy):
 
 
 @main.group('verify')
-@PASS_CFG
-def verify(cfg):
+@click.pass_context
+def verify(ctx):
     """Verify backup"""
-    LOG.debug('Restore: %r', cfg)
+    LOG.debug('Restore: %r', ctx.obj['twindb_config'])
 
 
 @verify.command('mysql')
@@ -300,17 +299,24 @@ def verify(cfg):
     default=socket.gethostname(),
     show_default=True
 )
-@PASS_CFG
-def verify_mysql(cfg, hostname, dst, backup_copy):
+@click.pass_context
+def verify_mysql(ctx, hostname, dst, backup_copy):
     """Verify backup"""
-    LOG.debug('mysql: %r', cfg)
+    LOG.debug('mysql: %r', ctx.obj['twindb_config'])
 
     try:
         if not backup_copy:
-            list_available_backups(cfg)
+            list_available_backups(ctx.obj['twindb_config'])
             exit(1)
 
-        print(verify_mysql_backup(cfg, dst, backup_copy, hostname))
+        print(
+            verify_mysql_backup(
+                ctx.obj['twindb_config'],
+                dst,
+                backup_copy,
+                hostname
+            )
+        )
 
     finally:
 
@@ -318,10 +324,10 @@ def verify_mysql(cfg, hostname, dst, backup_copy):
 
 
 @main.group('clone')
-@PASS_CFG
-def clone(cfg):
+@click.pass_context
+def clone(ctx):
     """Clone backup on remote server"""
-    LOG.debug('Clone: %r', cfg)
+    LOG.debug('Clone: %r', ctx.obj['twindb_config'])
 
 
 @clone.command('mysql')
@@ -340,8 +346,8 @@ def clone(cfg):
 @click.option('--compress', is_flag=True,
               help='Compress stream while sending it over network.',
               default=False)
-@PASS_CFG
-def clone_mysql_backup(cfg, netcat_port,  # pylint: disable=too-many-arguments
+@click.pass_context
+def clone_mysql_backup(ctx, netcat_port,  # pylint: disable=too-many-arguments
                        replication_user,
                        replication_password,
                        compress,
@@ -355,7 +361,12 @@ def clone_mysql_backup(cfg, netcat_port,  # pylint: disable=too-many-arguments
 
      If port isn't specified 3306 will be assumed.
     """
-    clone_mysql(cfg, source, destination,
-                replication_user, replication_password,
-                netcat_port=netcat_port,
-                compress=compress)
+    clone_mysql(
+        ctx.obj['twindb_config'],
+        source,
+        destination,
+        replication_user,
+        replication_password,
+        netcat_port=netcat_port,
+        compress=compress
+    )

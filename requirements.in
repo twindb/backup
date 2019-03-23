@@ -1,10 +1,14 @@
 # Moto requires this version of dateutil
-python-dateutil<2.7.0,>=2.1
-Click>=6.0
-PyMySQL
-boto3
-psutil
-contextlib2
-pyasn1
-paramiko
-datadog
+python-dateutil>=2.1,<2.7.0
+Click~=6.7
+PyMySQL~=0.9
+boto3~=1.7
+psutil~=5.4
+contextlib2~=0.5
+pyasn1~=0.4
+datadog~=0.22
+# Paramiko version 2.4.2 is buggy. See
+# https://github.com/paramiko/paramiko/issues/1386
+# https://github.com/paramiko/paramiko/issues/1369
+paramiko ~= 2.4
+cryptography ~= 2.4.2

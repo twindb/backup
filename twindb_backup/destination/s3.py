@@ -42,14 +42,7 @@ S3_UPLOAD_IO_QUEUE_SIZE = 200
 # The max size of each chunk in the io queue.
 S3_UPLOAD_IO_CHUNKS_SIZE_BYTES = 256 * 1024
 
-
-class AWSAuthOptions(object):  # pylint: disable=too-few-public-methods
-    """Class to store AWS credentials"""
-    def __init__(self, access_key_id, secret_access_key,
-                 default_region='us-east-1'):
-        self.default_region = default_region
-        self.secret_access_key = secret_access_key
-        self.access_key_id = access_key_id
+AWS_DEFAULT_REGION = "us-east-1"
 
 
 class S3FileAccess(object):  # pylint: disable=too-few-public-methods
@@ -62,30 +55,40 @@ class S3(BaseDestination):
     """
     S3 destination class.
 
-    :param bucket: Bucket name.
-    :type bucket: str
-    :param aws_options: AWS credentials.
-    :type aws_options: AWSAuthOptions
-    :param hostname: Hostname of a host where a backup is taken from.
-    """
-    def __init__(self, bucket, aws_options, hostname=socket.gethostname()):
+    :param kwargs: Keyword arguments.
 
-        self.bucket = bucket
-        self.remote_path = 's3://{bucket}'.format(bucket=self.bucket)
+    * **bucket** - S3 bucket name.
+    * **aws_access_key_id** - AWS key id.
+    * **aws_secret_access_key** - AWS secret key.
+    * **aws_default_region** - AWS default region.
+    * **hostname** - Hostname of a host where a backup is taken from.
+    """
+    def __init__(self, **kwargs):
+
+        self._bucket = kwargs.get('bucket')
+        self._hostname = kwargs.get('hostname', socket.gethostname())
+
+        self.remote_path = 's3://{bucket}'.format(
+            bucket=self._bucket
+        )
         super(S3, self).__init__(self.remote_path)
 
-        self.aws = aws_options
+        os.environ["AWS_ACCESS_KEY_ID"] = kwargs.get('aws_access_key_id')
+        os.environ["AWS_SECRET_ACCESS_KEY"] = kwargs.get(
+            'aws_secret_access_key'
+        )
+        os.environ["AWS_DEFAULT_REGION"] = kwargs.get(
+            'aws_default_region',
+            AWS_DEFAULT_REGION
+        )
 
-        os.environ["AWS_ACCESS_KEY_ID"] = self.aws.access_key_id
-        os.environ["AWS_SECRET_ACCESS_KEY"] = self.aws.secret_access_key
-        os.environ["AWS_DEFAULT_REGION"] = self.aws.default_region
-
-        self._hostname = hostname
-        # self.status_path = "{hostname}/status".format(
-        #     hostname=hostname
-        # )
         # Setup an authenticated S3 client that we will use throughout
         self.s3_client = self.setup_s3_client()
+
+    @property
+    def bucket(self):
+        """S3 bucket name."""
+        return self._bucket
 
     def status_path(self, cls=MySQLStatus):
         """
@@ -100,22 +103,26 @@ class S3(BaseDestination):
             basename=cls().basename
         )
 
-    def setup_s3_client(self):
+    @staticmethod
+    def setup_s3_client():
         """Creates an authenticated s3 client.
 
         :return: S3 client instance.
         :rtype: botocore.client.BaseClient
         """
         session = boto3.Session(
-            aws_access_key_id=self.aws.access_key_id,
-            aws_secret_access_key=self.aws.secret_access_key
+            aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"]
         )
         s3_config = Config(
             connect_timeout=S3_CONNECT_TIMEOUT,
             read_timeout=S3_READ_TIMEOUT
         )
-        client = session.client('s3', region_name=self.aws.default_region,
-                                config=s3_config)
+        client = session.client(
+            's3',
+            region_name=os.environ["AWS_DEFAULT_REGION"],
+            config=s3_config
+        )
 
         return client
 
@@ -127,7 +134,7 @@ class S3(BaseDestination):
         bucket_exists = True
 
         try:
-            self.s3_client.head_bucket(Bucket=self.bucket)
+            self.s3_client.head_bucket(Bucket=self._bucket)
         except ClientError as err:
             # We come here meaning we did not find the bucket
             if err.response['ResponseMetadata']['HTTPStatusCode'] == 404:
@@ -136,8 +143,8 @@ class S3(BaseDestination):
                 raise
 
         if not bucket_exists:
-            LOG.info('Created bucket %s', self.bucket)
-            response = self.s3_client.create_bucket(Bucket=self.bucket)
+            LOG.info('Created bucket %s', self._bucket)
+            response = self.s3_client.create_bucket(Bucket=self._bucket)
             self.validate_client_response(response)
 
         return True
@@ -153,7 +160,7 @@ class S3(BaseDestination):
         bucket_exists = True
 
         try:
-            self.s3_client.head_bucket(Bucket=self.bucket)
+            self.s3_client.head_bucket(Bucket=self._bucket)
         except ClientError as err:
             # We come here meaning we did not find the bucket
             if err.response['ResponseMetadata']['HTTPStatusCode'] == 404:
@@ -162,16 +169,16 @@ class S3(BaseDestination):
                 raise
 
         if bucket_exists:
-            LOG.info('Deleting bucket %s', self.bucket)
+            LOG.info('Deleting bucket %s', self._bucket)
 
             if force:
-                LOG.info('Deleting the objects in the bucket %s', self.bucket)
+                LOG.info('Deleting the objects in the bucket %s', self._bucket)
                 self.delete_all_objects()
 
-            response = self.s3_client.delete_bucket(Bucket=self.bucket)
+            response = self.s3_client.delete_bucket(Bucket=self._bucket)
             self.validate_client_response(response)
 
-            LOG.info('Bucket %s successfully deleted', self.bucket)
+            LOG.info('Bucket %s successfully deleted', self._bucket)
 
         return True
 
@@ -182,13 +189,13 @@ class S3(BaseDestination):
         :raise S3DestinationError: if failed to delete objects from the bucket.
         """
         paginator = self.s3_client.get_paginator('list_objects')
-        response = paginator.paginate(Bucket=self.bucket)
+        response = paginator.paginate(Bucket=self._bucket)
 
         for item in response.search('Contents'):
             if not item:
                 continue
 
-            self.s3_client.delete_object(Bucket=self.bucket, Key=item['Key'])
+            self.s3_client.delete_object(Bucket=self._bucket, Key=item['Key'])
 
         return True
 
@@ -222,9 +229,9 @@ class S3(BaseDestination):
         :raise S3DestinationError: if failed to list files.
         """
         s3client = boto3.resource('s3')
-        bucket = s3client.Bucket(self.bucket)
+        bucket = s3client.Bucket(self._bucket)
 
-        LOG.debug('Listing bucket %s', self.bucket)
+        LOG.debug('Listing bucket %s', self._bucket)
         LOG.debug('prefix = %s', prefix)
 
         norm_prefix = prefix.replace('s3://%s' % bucket.name, '')
@@ -245,14 +252,14 @@ class S3(BaseDestination):
                         if re.search(pattern, file_object.key):
                             files.append(
                                 's3://{bucket}/{key}'.format(
-                                    bucket=self.bucket,
+                                    bucket=self._bucket,
                                     key=file_object.key
                                 )
                             )
                     else:
                         files.append(
                             's3://{bucket}/{key}'.format(
-                                bucket=self.bucket,
+                                bucket=self._bucket,
                                 key=file_object.key
                             )
                         )
@@ -280,12 +287,12 @@ class S3(BaseDestination):
         :raise S3DestinationError: if failed to delete object.
         """
         key = obj.replace(
-            's3://%s/' % self.bucket,
+            's3://%s/' % self._bucket,
             ''
         ) if obj.startswith('s3://') else obj
 
         s3client = boto3.resource('s3')
-        bucket = s3client.Bucket(self.bucket)
+        bucket = s3client.Bucket(self._bucket)
 
         s3obj = s3client.Object(bucket.name, key)
         LOG.debug('deleting s3://%s/%s', bucket.name, key)
@@ -337,12 +344,12 @@ class S3(BaseDestination):
         try:
             LOG.debug('Fetching object %s from bucket %s',
                       object_key,
-                      self.bucket)
+                      self._bucket)
 
             read_pipe, write_pipe = os.pipe()
 
             download_proc = Process(target=_download_object,
-                                    args=(self.s3_client, self.bucket,
+                                    args=(self.s3_client, self._bucket,
                                           object_key, read_pipe, write_pipe),
                                     name='_download_object')
             download_proc.start()
@@ -375,7 +382,7 @@ class S3(BaseDestination):
         :raise S3DestinationError: if failed to upload object.
         """
         remote_name = "s3://{bucket}/{name}".format(
-            bucket=self.bucket,
+            bucket=self._bucket,
             name=object_key
         )
 
@@ -385,7 +392,7 @@ class S3(BaseDestination):
         LOG.debug("Starting to stream to %s", remote_name)
         try:
             self.s3_client.upload_fileobj(file_obj,
-                                          self.bucket,
+                                          self._bucket,
                                           object_key,
                                           Config=s3_transfer_config)
             LOG.debug("Successfully streamed to %s", remote_name)
@@ -403,13 +410,13 @@ class S3(BaseDestination):
             the destination.
         """
         remote_name = "s3://{bucket}/{name}".format(
-            bucket=self.bucket,
+            bucket=self._bucket,
             name=object_key
         )
 
         LOG.debug("Validating upload to %s", remote_name)
 
-        response = self.s3_client.get_object(Bucket=self.bucket,
+        response = self.s3_client.get_object(Bucket=self._bucket,
                                              Key=object_key)
         self.validate_client_response(response)
 
@@ -420,7 +427,7 @@ class S3(BaseDestination):
     def _status_exists(self, cls=MySQLStatus):
         s3client = boto3.resource('s3')
         status_object = s3client.Object(
-            self.bucket,
+            self._bucket,
             self.status_path(cls=cls)
         )
         try:
@@ -436,7 +443,7 @@ class S3(BaseDestination):
     def _read_status(self, cls=MySQLStatus):
         if self._status_exists(cls=cls):
             response = self.s3_client.get_object(
-                Bucket=self.bucket,
+                Bucket=self._bucket,
                 Key=self.status_path(cls=cls))
             self.validate_client_response(response)
 
@@ -448,7 +455,7 @@ class S3(BaseDestination):
     def _write_status(self, status, cls=MySQLStatus):
         response = self.s3_client.put_object(
             Body=status.serialize(),
-            Bucket=self.bucket,
+            Bucket=self._bucket,
             Key=self.status_path(cls=cls)
         )
         self.validate_client_response(response)
@@ -499,7 +506,7 @@ class S3(BaseDestination):
         :type url: str
         """
         object_key = urlparse(url).path.lstrip('/')
-        self.s3_client.put_object_acl(Bucket=self.bucket, ACL=access_mode,
+        self.s3_client.put_object_acl(Bucket=self._bucket, ACL=access_mode,
                                       Key=object_key)
 
     def _get_file_url(self, s3_url):
@@ -511,11 +518,13 @@ class S3(BaseDestination):
         :rtype: str
         """
         object_key = urlparse(s3_url).path.lstrip('/')
-        return self.s3_client.generate_presigned_url('get_object',
-                                                     Params={
-                                                         'Bucket': self.bucket,
-                                                         'Key': object_key
-                                                     })
+        return self.s3_client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': self._bucket,
+                'Key': object_key
+            }
+        )
 
     def share(self, s3_url):
         """
@@ -544,7 +553,7 @@ class S3(BaseDestination):
         while sleep_time <= 2**attempts:
             try:
                 response = self.s3_client.get_object(
-                    Bucket=self.bucket,
+                    Bucket=self._bucket,
                     Key=path
                 )
                 self.validate_client_response(response)
@@ -552,22 +561,22 @@ class S3(BaseDestination):
                 content = response['Body'].read()
                 return content
             except ClientError as err:
-                LOG.warning('Failed to read s3://%s/%s', self.bucket, path)
+                LOG.warning('Failed to read s3://%s/%s', self._bucket, path)
                 LOG.warning(err)
                 LOG.info('Will try again in %d seconds', sleep_time)
                 time.sleep(sleep_time)
                 sleep_time *= 2
         msg = 'Failed to read s3://%s/%s after %d attempts' \
-              % (self.bucket, path, attempts)
+              % (self._bucket, path, attempts)
         raise TwinDBBackupError(msg)
 
     def _move_file(self, source, destination):
         s3client = boto3.resource('s3')
         response = s3client.Object(
-            self.bucket, destination
+            self._bucket, destination
         ).copy_from(
             CopySource={
-                "Bucket": self.bucket,
+                "Bucket": self._bucket,
                 "Key": source
             }
         )

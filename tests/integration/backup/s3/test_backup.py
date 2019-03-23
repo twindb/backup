@@ -4,7 +4,7 @@ import os
 import magic
 
 from tests.integration.conftest import docker_execute, get_twindb_config_dir
-from twindb_backup.destination.s3 import S3, AWSAuthOptions
+from twindb_backup.destination.s3 import S3
 
 
 def test__take_file_backup(master1,
@@ -62,6 +62,10 @@ def test__take_file_backup(master1,
            '--config', twindb_config_guest,
            'restore', 'file', '--dst', '/tmp/restore', backup_to_restore]
 
+    # print('test paused')
+    # print(' '.join(cmd))
+    # from time import sleep
+    # sleep(36000)
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -228,10 +232,11 @@ password=qwerty
         print(cout)
         assert ret == 0
     hostname = 'master1_1'
-    dst = S3(s3_client.bucket,
-             AWSAuthOptions(os.environ['AWS_ACCESS_KEY_ID'],
-                            os.environ['AWS_SECRET_ACCESS_KEY'])
-             )
+    dst = S3(
+        bucket=s3_client.bucket,
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+    )
 
     for x in xrange(10):
         result = dst.list_files(dst.remote_path, pattern='/daily/')
@@ -498,15 +503,17 @@ password=qwerty
     print(cout)
     assert ret == 0
 
-    cmd = ['gpg',
-           '--no-default-keyring',
-           '--keyring', gpg_keyring,
-           '--secret-keyring', gpg_secret_keyring,
-           '--yes',
-           '--no-tty',
-           '--batch',
-           '--import',
-           gpg_private_key_path_guest]
+    cmd = [
+        'gpg',
+        '--no-default-keyring',
+        '--keyring', gpg_keyring,
+        '--secret-keyring', gpg_secret_keyring,
+        '--yes',
+        '--no-tty',
+        '--batch',
+        '--import',
+        gpg_private_key_path_guest
+    ]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -523,16 +530,24 @@ password=qwerty
             MY_CNF='/etc/twindb/my.cnf'
         )
         fp.write(content)
-    cmd = ['twindb-backup', '--debug',
-           '--config', twindb_config_guest,
-           'backup', 'daily']
+    cmd = [
+        'twindb-backup',
+        '--debug',
+        '--config',
+        twindb_config_guest,
+        'backup',
+        'daily'
+    ]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
 
-    cmd = ['twindb-backup',
-           '--config', twindb_config_guest,
-           'status']
+    cmd = [
+        'twindb-backup',
+        '--config',
+        twindb_config_guest,
+        'status'
+    ]
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -550,11 +565,15 @@ password=qwerty
     assert ret == 0
 
     cmd = [
-        'twindb-backup', '--debug',
-        '--config', str(twindb_config_guest),
-        'restore', 'mysql',
+        'twindb-backup',
+        '--debug',
+        '--config',
+        str(twindb_config_guest),
+        'restore',
+        'mysql',
         backup_copy,
-        '--dst', dst_dir
+        '--dst',
+        dst_dir
     ]
 
     # LOG.debug('Test paused')
@@ -580,10 +599,15 @@ password=qwerty
     assert ret == 0
 
     files_to_test = []
-    for datadir_file in ['ibdata1', 'ib_logfile0', 'ib_logfile1',
-                         'mysql/user.MYD',
-                         'backup-my.cnf',
-                         'xtrabackup_logfile']:
+    mysql_files = [
+        'ibdata1',
+        'ib_logfile0',
+        'ib_logfile1',
+        'mysql/user.MYD',
+        'backup-my.cnf',
+        'xtrabackup_logfile'
+    ]
+    for datadir_file in mysql_files:
         files_to_test += [
             "test -f %s/%s" % (dst_dir, datadir_file)
         ]

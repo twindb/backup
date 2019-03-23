@@ -1,16 +1,28 @@
-bumpversion
-pytest
-mock
-coverage
-codecov
-pytest-cov
-pytest-timeout
-Sphinx
-unittest2
-moto
-pylint<2.0.0
-pycodestyle
-docker
-python-magic
+bumpversion~=0.5
+pytest~=3.7
+mock~=2.0
+coverage~=4.5
+codecov~=2.0
+pytest-cov~=2.5
+pytest-timeout~=1.3
+Sphinx~=1.7
+unittest2~=1.1
+moto~=1.3
+pylint~=1.6
+pycodestyle~=2.3
+docker~=3.5
+python-magic~=0.4
 # Moto requires this version of dateutil
-python-dateutil<2.7.0,>=2.1
+python-dateutil>=2.1,<2.7.0
+
+# Paramiko version 2.4.2 is buggy. See
+# https://github.com/paramiko/paramiko/issues/1386
+# https://github.com/paramiko/paramiko/issues/1369
+cryptography ~= 2.4.2
+
+# PyUP
+Click~=6.7
+safety ~= 1.8
+
+# https://nvd.nist.gov/vuln/detail/CVE-2017-18342
+pyyaml~=4.2b1
