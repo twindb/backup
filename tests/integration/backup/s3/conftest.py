@@ -39,7 +39,14 @@ def s3_client(bucket_name):
 
     yield client
 
-    client.delete_bucket(force=True)
+    if client.keep_bucket:
+        LOG.warning(
+            'Keeping bucket %s for troubleshooting '
+            'https://travis-ci.org/twindb/backup/jobs/505257966#L4423',
+            bucket_name
+        )
+    else:
+        client.delete_bucket(force=True)
 
 
 @pytest.fixture

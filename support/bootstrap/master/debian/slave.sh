@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
 
 set -exu
-apt-get update
+
+wait_time=2
+for i in $(seq 5)
+do
+    apt-get update && break
+    echo "Waiting ${wait_time} seconds before retry"
+    sleep ${wait_time}
+    let wait_time=${wait_time}*2
+done
+
 
 TB_VERSION=$(PYTHONPATH=/twindb-backup python -c "from twindb_backup import __version__; print __version__")
 
