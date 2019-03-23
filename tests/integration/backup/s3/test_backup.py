@@ -640,7 +640,6 @@ password=qwerty
     )
     print(cout)
     assert ret == 0
-    s3_client.keep_bucket = False
 
 
 def test_take_mysql_backup_aenc_restores_inc(
