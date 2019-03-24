@@ -11,7 +11,7 @@ from subprocess import Popen, PIPE
 
 import psutil
 
-from twindb_backup import LOG, INTERVALS, TwinDBBackupError
+from twindb_backup import LOG, TwinDBBackupError
 
 
 def mkdir_p(path, mode=0777):
@@ -66,37 +66,6 @@ def empty_dir(path):
             os.unlink(file_path)
         elif os.path.isdir(file_path):
             shutil.rmtree(file_path)
-
-
-def get_hostname_from_backup_copy(backup_copy):
-    """
-    Backup copy includes hostname where the backup was taken from.
-    The function extracts the hostname from the backup name.
-
-    :param backup_copy: Backup copy name.
-    :type backup_copy: str
-    :return: Hostname where the backup was taken from.
-    :rtype: str
-    """
-    chunks = backup_copy.split('/')
-    for run_type in INTERVALS:
-        if run_type in chunks:
-            return chunks[chunks.index(run_type) - 1]
-    return None
-
-
-def get_run_type_from_backup_copy(backup_copy):
-    """
-    Backup copy includes hostname where the backup was taken from.
-    The function extracts the run type from the backup name.
-
-    :param backup_copy: Backup copy name.
-    :type backup_copy: str
-    :return: Run type.
-    :rtype: str
-    """
-    chunks = backup_copy.split('/')
-    return chunks[-3]
 
 
 @contextmanager
