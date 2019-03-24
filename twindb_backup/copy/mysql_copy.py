@@ -35,24 +35,22 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
         'type'
     ]
 
-    def __init__(self, host, run_type, name, **kwargs):
-        super(MySQLCopy, self).__init__(host, run_type, name)
+    def __init__(self, *args, **kwargs):
+
+        super(MySQLCopy, self).__init__(*args, **kwargs)
 
         self._source_type = 'mysql'
 
         if 'type' in kwargs and kwargs.get('type') in ['full', 'incremental']:
             self._type = kwargs.get('type')
         else:
-            raise WrongInputData(
-                'Type of MySQL backup copy is mandatory.'
-                ' Can be either full or incremental'
-            )
+            self._type = None
 
-        if '/' in name:
+        if '/' in self.name:
             raise WrongInputData(
                 'name must be relative, without any slashes.'
                 ' Got %s instead.'
-                % name
+                % self.name
             )
 
         self._backup_started = int(kwargs.get('backup_started', 0)) or None
@@ -107,16 +105,6 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
                 indent=4
             ).replace(' \n', '\n')
         )
-
-    @property
-    def host(self):
-        """Host where the backup was taken"""
-        return self._host
-
-    @property
-    def name(self):
-        """Name of the backup. It's basename w/o directory part."""
-        return self._name
 
     @property
     def created_at(self):
