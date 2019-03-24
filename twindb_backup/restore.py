@@ -9,8 +9,8 @@ from os import path as osp
 import tempfile
 import errno
 import time
-
 import psutil
+import ConfigParser
 
 from twindb_backup import LOG, XBSTREAM_BINARY, XTRABACKUP_BINARY
 from twindb_backup.destination.exceptions import DestinationError
@@ -20,7 +20,38 @@ from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.gzip import Gzip
+from twindb_backup.modifiers.bzip2 import Bzip2
+from twindb_backup.modifiers.pigz import Pigz
+from twindb_backup.modifiers.lbzip2 import Lbzip2
 from twindb_backup.util import mkdir_p, empty_dir
+
+
+def _get_uncompressed_stream(stream, config):
+    """get uncompressed stream
+
+        :param stream: input stream
+        :param config: Tool configuration
+        :type config: TwinDBBackupConfig
+        :returns compression modifier
+        """
+    try:
+        program = config.compression.program
+    except ConfigParser.NoOptionError:
+        program = 'gzip'
+
+    try:
+        threads = config.compression.threads
+    except ConfigParser.NoOptionError:
+        threads = None
+
+    if program is 'bzip2':
+        return Bzip2(stream)
+    elif program is 'lbzip2':
+        return Lbzip2(stream, threads)
+    elif program is 'pigz':
+        return Pigz(stream, threads)
+    else:
+        return Gzip(stream)
 
 
 def get_my_cnf(status, key):
@@ -72,7 +103,7 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
     else:
         LOG.debug('Not decrypting the stream')
 
-    stream = Gzip(stream).revert_stream()
+    stream = _get_uncompressed_stream(stream, config)
 
     with stream as handler:
         if not _extract_xbstream(handler, dst_dir, xbstream_binary):
@@ -180,7 +211,7 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
     else:
         LOG.debug('Not decrypting the stream')
 
-    stream = Gzip(stream).revert_stream()
+    stream = _get_uncompressed_stream(stream, config)
 
     with stream as handler:
         if not _extract_xbstream(handler, inc_dir, xbstream_binary):
