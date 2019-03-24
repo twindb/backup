@@ -16,7 +16,25 @@ class PeriodicCopy(BaseCopy):
     :type name: str
     """
 
-    def __init__(self, host, run_type, name):
+    def __init__(self, *args, **kwargs):
+
+        path = kwargs.get('path', None)
+        if path is None:
+            host = kwargs.get('host', args[0])
+            run_type = kwargs.get('run_type', args[1])
+            name = kwargs.get('name', args[2])
+        else:
+            chunks = path.split('/')
+
+            run_type = None
+            for rtype in INTERVALS:
+                if rtype in chunks:
+                    run_type = rtype
+                    break
+
+            host = chunks[chunks.index(run_type) - 1]
+            name = chunks[-1]
+
         super(PeriodicCopy, self).__init__(host, name)
         if run_type in INTERVALS:
             self._run_type = run_type
@@ -25,6 +43,16 @@ class PeriodicCopy(BaseCopy):
                 'Wrong value of run_type: %s. Must be one of %s'
                 % (run_type, ", ".join(INTERVALS))
             )
+
+    @property
+    def host(self):
+        """Host where the backup was taken"""
+        return self._host
+
+    @property
+    def name(self):
+        """Name of the backup. It's basename w/o directory part."""
+        return self._name
 
     @property
     def run_type(self):
