@@ -21,6 +21,9 @@ from twindb_backup.export import export_info
 from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
 from twindb_backup.modifiers.gzip import Gzip
+from twindb_backup.modifiers.bzip2 import Bzip2
+from twindb_backup.modifiers.pigz import Pigz
+from twindb_backup.modifiers.lbzip2 import Lbzip2
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.binlog_source import BinlogSource, BinlogParser
@@ -45,9 +48,12 @@ def _backup_stream(config, src, dst, callbacks=None):
     :return:
     """
     stream = src.get_stream()
-    # Gzip modifier
-    stream = Gzip(stream).get_stream()
-    src.suffix += '.gz'
+
+    # Compression modifier
+    cmp_modifier = _get_compression_modifier(stream, config)
+    stream = cmp_modifier.get_stream()
+    src.suffix += cmp_modifier.suffix
+
     # KeepLocal modifier
     if config.keep_local_path:
         keep_local_path = config.keep_local_path
@@ -272,6 +278,39 @@ def binlogs_to_backup(cursor, last_binlog=None):
             binlogs.append(binlog)
 
     return binlogs[:-1]
+
+
+def _get_compression_modifier(stream, config):
+    """get compression modifier
+
+    :param stream: input stream
+    :param config: Tool configuration
+    :type config: TwinDBBackupConfig
+    :returns compression modifier
+    """
+    try:
+        program = config.compression.program
+    except ConfigParser.NoOptionError:
+        program = 'gzip'
+
+    try:
+        threads = config.compression.threads
+    except ConfigParser.NoOptionError:
+        threads = None
+
+    try:
+        level = config.compression.level
+    except ConfigParser.NoOptionError:
+        level = None
+
+    if program is 'bzip2':
+        return Bzip2(stream, level)
+    elif program is 'lbzip2':
+        return Lbzip2(stream, threads, level)
+    elif program is 'pigz':
+        return Pigz(stream, threads, level)
+    else:
+        return Gzip(stream, level)
 
 
 def set_open_files_limit():

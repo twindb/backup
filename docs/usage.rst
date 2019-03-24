@@ -45,6 +45,21 @@ It's useful if you want to stream a MySQL backup to S3 and would like to keep a 
     backup_destination=ssh
     keep_local_path=/var/backup/local
 
+Compression
+-------------
+
+In ``[compression]`` section you can specify compression program such as gzip,pigz,bzip2 and lbzip2.
+You can use parallel compression by using pigz or lbzip2, and specify number of threads to use in parallel.
+Number of threads defaults to number of cores minus one, if not specified.
+Level specifies the compression level from 1 to 9
+
+::
+
+    [compression]
+    program=pigz
+    #threads=4
+    #level=9
+
 Amazon S3
 ~~~~~~~~~
 

@@ -63,6 +63,9 @@ backup_dirs={TEST_DIR}
 [destination]
 backup_destination=s3
 
+[compression]
+program=gzip
+
 [s3]
 AWS_ACCESS_KEY_ID={AWS_ACCESS_KEY_ID}
 AWS_SECRET_ACCESS_KEY={AWS_SECRET_ACCESS_KEY}
