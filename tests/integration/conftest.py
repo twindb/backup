@@ -201,44 +201,46 @@ def master1(docker_client, container_network, tmpdir_factory):
         twindb_config_dir=str(twindb_config_dir),
         last_n=1
     )
+    try:
+        timeout = time.time() + 30 * 60
+        LOG.info('Waiting until port TCP/3306 becomes available')
+        while time.time() < timeout:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            if sock.connect_ex((container['ip'], 3306)) == 0:
+                break
+            time.sleep(1)
+            LOG.info('Still waiting')
 
-    timeout = time.time() + 30 * 60
-    LOG.info('Waiting until port TCP/3306 becomes available')
-    while time.time() < timeout:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if sock.connect_ex((container['ip'], 3306)) == 0:
-            break
-        time.sleep(1)
-        LOG.info('Still waiting')
+        LOG.info('Port TCP/3306 is ready')
 
-    LOG.info('Port TCP/3306 is ready')
+        privileges_file = "/twindb-backup/vagrant/environment/puppet/" \
+                          "modules/profile/files/mysql_grants.sql"
+        cmd = ["bash", "-c",
+               "mysql -uroot mysql < %s" % privileges_file]
+        ret, cout = docker_execute(docker_client, container['Id'], cmd)
 
-    privileges_file = "/twindb-backup/vagrant/environment/puppet/" \
-                      "modules/profile/files/mysql_grants.sql"
-    cmd = ["bash", "-c",
-           "mysql -uroot mysql < %s" % privileges_file]
-    ret, cout = docker_execute(docker_client, container['Id'], cmd)
+        print(cout)
+        assert ret == 0
 
-    print(cout)
-    assert ret == 0
+        ret, _ = docker_execute(docker_client, container['Id'], ['ls'])
+        assert ret == 0
 
-    ret, _ = docker_execute(docker_client, container['Id'], ['ls'])
-    assert ret == 0
+        ret, cout = docker_execute(
+            docker_client,
+            container['Id'],
+            ['bash', bootstrap_script]
+        )
+        print(cout)
+        assert ret == 0
 
-    ret, cout = docker_execute(
-        docker_client,
-        container['Id'],
-        ['bash', bootstrap_script]
-    )
-    print(cout)
-    assert ret == 0
+        yield container
 
-    yield container
-
-    if container:
+    finally:
         LOG.info('Removing container %s', container['Id'])
-        docker_client.api.remove_container(container=container['Id'],
-                                           force=True)
+        docker_client.api.remove_container(
+            container=container['Id'],
+            force=True
+        )
 
 
 # noinspection PyShadowingNames
@@ -268,32 +270,36 @@ def slave(docker_client, container_network, tmpdir_factory):
         last_n=2,
         image=image_name
     )
-    timeout = time.time() + 30 * 60
-    LOG.info('Waiting until port TCP/22 becomes available')
-    while time.time() < timeout:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if sock.connect_ex((container['ip'], 22)) == 0:
-            break
-        time.sleep(1)
-        LOG.info('Still waiting')
-    LOG.info('Port TCP/22 is ready')
-    ret, _ = docker_execute(docker_client, container['Id'], ['ls'])
-    assert ret == 0
+    try:
+        timeout = time.time() + 30 * 60
+        LOG.info('Waiting until port TCP/22 becomes available')
+        while time.time() < timeout:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            if sock.connect_ex((container['ip'], 22)) == 0:
+                break
+            time.sleep(1)
+            LOG.info('Still waiting')
+        LOG.info('Port TCP/22 is ready')
+        ret, _ = docker_execute(docker_client, container['Id'], ['ls'])
+        assert ret == 0
 
-    ret, cout = docker_execute(
-        docker_client,
-        container['Id'],
-        ['bash', bootstrap_script]
-    )
-    print(cout)
-    assert ret == 0
+        ret, cout = docker_execute(
+            docker_client,
+            container['Id'],
+            ['bash', bootstrap_script]
+        )
+        print(cout)
+        assert ret == 0
 
-    yield container
+        yield container
 
-    if container:
+    finally:
+
         LOG.info('Removing container %s', container['Id'])
-        docker_client.api.remove_container(container=container['Id'],
-                                           force=True)
+        docker_client.api.remove_container(
+            container=container['Id'],
+            force=True
+        )
 
 
 # noinspection PyShadowingNames
@@ -324,20 +330,22 @@ def runner(docker_client, container_network, tmpdir_factory):
         twindb_config_dir=str(twindb_config_dir),
         datadir=datadir
     )
-    ret, _ = docker_execute(docker_client, container['Id'], ['ls'])
-    assert ret == 0
+    try:
+        ret, _ = docker_execute(docker_client, container['Id'], ['ls'])
+        assert ret == 0
 
-    ret, cout = docker_execute(
-        docker_client,
-        container['Id'],
-        ['bash', bootstrap_script]
-    )
-    print(cout)
-    assert ret == 0
+        ret, cout = docker_execute(
+            docker_client,
+            container['Id'],
+            ['bash', bootstrap_script]
+        )
+        print(cout)
+        assert ret == 0
 
-    yield container
+        yield container
 
-    if container:
+    finally:
+
         LOG.info('Removing container %s', container['Id'])
         docker_client.api.remove_container(
             container=container['Id'],

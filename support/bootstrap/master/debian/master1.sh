@@ -18,3 +18,6 @@ package="/twindb-backup/omnibus/pkg/twindb-backup_${TB_VERSION}-1_amd64.deb"
 
 dpkg -I ${package} | grep Depends: | sed -e 's/Depends://' -e 's/,//g' | xargs apt-get -y install
 dpkg -i ${package}
+
+#/bin/cp -R /twindb-backup/twindb_backup \
+#   /opt/twindb-backup/embedded/lib/python2.7/site-packages/twindb_backup-${TB_VERSION}-py2.7.egg
