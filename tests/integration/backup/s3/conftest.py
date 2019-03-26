@@ -35,11 +35,14 @@ def s3_client(bucket_name):
         aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
         aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
     )
-    assert client.create_bucket()
+    try:
+        assert client.create_bucket()
 
-    yield client
+        yield client
 
-    client.delete_bucket(force=True)
+    finally:
+
+        client.delete_bucket(force=True)
 
 
 @pytest.fixture
@@ -62,9 +65,6 @@ backup_dirs={TEST_DIR}
 
 [destination]
 backup_destination=s3
-
-[compression]
-program=gzip
 
 [s3]
 AWS_ACCESS_KEY_ID={AWS_ACCESS_KEY_ID}

@@ -1,5 +1,3 @@
-import mock
-
 from twindb_backup.modifiers.base import Modifier
 
 

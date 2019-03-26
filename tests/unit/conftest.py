@@ -18,9 +18,6 @@ backup_mysql=yes
 backup_destination={destination}
 keep_local_path=/var/backup/local
 
-[compression]
-program=gzip
-
 [s3]
 AWS_ACCESS_KEY_ID="XXXXX"
 AWS_SECRET_ACCESS_KEY="YYYYY"

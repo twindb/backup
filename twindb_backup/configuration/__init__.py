@@ -184,7 +184,10 @@ class TwinDBBackupConfig(object):
 
     @property
     def compression(self):
-        """Compression configuration"""
+        """
+        :return: Compression configuration
+        :rtype: CompressionConfig
+        """
         kwargs = {}
         try:
             options = [
@@ -194,13 +197,19 @@ class TwinDBBackupConfig(object):
             ]
             for opt in options:
                 try:
-                    kwargs[opt] = self.__cfg.get('compression', opt).strip('"\'')
+                    kwargs[opt] = self.__cfg.get(
+                        'compression',
+                        opt
+                    ).strip('"\'')
                 except NoOptionError:
-                    LOG.debug('Option %s is not defined in section compression', opt)
+                    LOG.debug(
+                        'Option %s is not defined in section compression',
+                        opt
+                    )
             return CompressionConfig(**kwargs)
 
         except NoSectionError:
-            return None
+            return CompressionConfig()
 
     @property
     def gpg(self):
