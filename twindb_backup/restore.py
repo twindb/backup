@@ -9,7 +9,6 @@ from os import path as osp
 import tempfile
 import errno
 import time
-
 import psutil
 
 from twindb_backup import LOG, XBSTREAM_BINARY, XTRABACKUP_BINARY
@@ -19,7 +18,6 @@ from twindb_backup.export import export_info
 from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
 from twindb_backup.modifiers.gpg import Gpg
-from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.util import mkdir_p, empty_dir
 
 
@@ -72,7 +70,7 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
     else:
         LOG.debug('Not decrypting the stream')
 
-    stream = Gzip(stream).revert_stream()
+    stream = config.compression.get_modifier(stream).revert_stream()
 
     with stream as handler:
         if not _extract_xbstream(handler, dst_dir, xbstream_binary):
@@ -180,7 +178,7 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
     else:
         LOG.debug('Not decrypting the stream')
 
-    stream = Gzip(stream).revert_stream()
+    stream = config.compression.get_modifier(stream).revert_stream()
 
     with stream as handler:
         if not _extract_xbstream(handler, inc_dir, xbstream_binary):

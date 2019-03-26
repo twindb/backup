@@ -20,7 +20,6 @@ from twindb_backup.exceptions import OperationError, LockWaitTimeoutError
 from twindb_backup.export import export_info
 from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
-from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.binlog_source import BinlogSource, BinlogParser
@@ -45,9 +44,12 @@ def _backup_stream(config, src, dst, callbacks=None):
     :return:
     """
     stream = src.get_stream()
-    # Gzip modifier
-    stream = Gzip(stream).get_stream()
-    src.suffix += '.gz'
+
+    # Compression modifier
+    cmp_modifier = config.compression.get_modifier(stream)
+    stream = cmp_modifier.get_stream()
+    src.suffix += cmp_modifier.suffix
+
     # KeepLocal modifier
     if config.keep_local_path:
         keep_local_path = config.keep_local_path

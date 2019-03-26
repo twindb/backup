@@ -1,4 +1,3 @@
-import pytest
 from twindb_backup.configuration.retention import RetentionPolicy
 
 

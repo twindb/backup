@@ -13,6 +13,7 @@ from twindb_backup.configuration.exceptions import ConfigurationError
 from twindb_backup.configuration.gpg import GPGConfig
 from twindb_backup.configuration.mysql import MySQLConfig
 from twindb_backup.configuration.retention import RetentionPolicy
+from twindb_backup.configuration.compression import CompressionConfig
 from twindb_backup.configuration.run_intervals import RunIntervals
 from twindb_backup.destination.s3 import S3
 from twindb_backup.destination.ssh import Ssh
@@ -180,6 +181,35 @@ class TwinDBBackupConfig(object):
 
         except NoSectionError:
             return None
+
+    @property
+    def compression(self):
+        """
+        :return: Compression configuration
+        :rtype: CompressionConfig
+        """
+        kwargs = {}
+        try:
+            options = [
+                'program',
+                'threads',
+                'level'
+            ]
+            for opt in options:
+                try:
+                    kwargs[opt] = self.__cfg.get(
+                        'compression',
+                        opt
+                    ).strip('"\'')
+                except NoOptionError:
+                    LOG.debug(
+                        'Option %s is not defined in section compression',
+                        opt
+                    )
+            return CompressionConfig(**kwargs)
+
+        except NoSectionError:
+            return CompressionConfig()
 
     @property
     def gpg(self):
