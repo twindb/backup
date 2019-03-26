@@ -16,7 +16,7 @@ backports.functools-lru-cache==1.5  # via astroid, isort, pylint
 backports.ssl-match-hostname==3.7.0.1  # via docker
 backports.tempfile==1.0   # via moto
 backports.weakref==1.0.post1  # via backports.tempfile
-boto3==1.9.123            # via moto
+boto3==1.9.123
 boto==2.49.0              # via moto
 botocore==1.12.123        # via boto3, moto, s3transfer
 bumpversion==0.5.3
