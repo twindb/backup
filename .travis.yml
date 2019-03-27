@@ -14,21 +14,24 @@ matrix:
     env: PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=xenial DOCKER_IMAGE=twindb/backup-test:xenial
   - python: '2.7'
     env: PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=bionic DOCKER_IMAGE=twindb/backup-test:bionic
+
 services:
 - docker
+
 before_install:
 - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
 - sudo apt-get update -qq
 install:
 - sudo -H make bootstrap
+
 script:
-- make safety lint test
-- travis_wait 120 make package
-- make test-integration
+- travis_wait 120 make lint test safety package test-integration
+
 before_deploy:
 - sudo docker pull ${DOCKER_IMAGE}
 - travis_wait 120 make package
 - make test-integration
+
 deploy:
   provider: packagecloud
   repository: main
@@ -38,6 +41,7 @@ deploy:
   dist: "${DISTRO}/${OS_VERSION}"
   skip_cleanup: true
   local-dir: omnibus/pkg/
+
 notifications:
   slack:
     secure: dKHhMOyQWZtaZZeaBgOvgk5natVRelxMcryvmjeqG/odTCfJXCD5geodYPsGLmkvA1qRdplGsGRmJnYEsUHeGTpUh3rlUd+j9iQ+pDcSD7d9EisL0lQji/DFek85NcMAXtiyNeKio5aukNXbGJT1cY4oHv/H2agk2TPC6hMKdDUk5hTpDKk4SAeHqpPYQzA5kthCCO+0y5Eh8zW5fiiH8FN+eID4FTt110bPDz3mNC4tzKExWw18dSB5m8ZxFQKQID8ZRedesBsGBdn4TMRObhjSwQOXIrV/Dif6BZjadA9MNoBvcQT6pCTmc4z0UVFR6MRVrIPwiIqaVI7jKp1ZUtVPVEa+Fui0TwRRSxPb78SCjKHc2jaVgsdxDE9Hk+0CXpZTUC4QG4+vBL0c4Ile2/qlhEXfIth6uOwzxyoNJ2zwxZarKpw3YvLKg23g7ZxfjAAGg4S8VUsNcaiSfGbSPAqQNa63KribP2Rp9/3IBNbuKwYvHyS8CxcAstTIKZkZg5BvRhDb1sv1UAyLum0qLI7e2Oz3SBAO+9ejoV5gnxl7iab89bg5XxuJiSjtcbwT3TNJ34ZdtWh/vnOjsz68DG71dK9VQ4rzg4/gpMY3YWARbKc/GTNUhBOeTtH0tmKWLEATP4VIHinu+QuBzs/9QlGqy1LhB2Ct4XkXPL3uMEk=
