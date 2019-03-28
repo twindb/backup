@@ -1,3 +1,4 @@
+#@IgnoreInspection BashAddShebang
 # Moto requires this version of dateutil
 python-dateutil >=2.1,<2.7.0
 Click ~= 6.7
@@ -12,5 +13,5 @@ datadog ~= 0.22
 # https://github.com/paramiko/paramiko/issues/1369
 paramiko ~= 2.4
 cryptography ~= 2.4.2
-google
-google-cloud-storage
+google ~= 2.0
+google-cloud-storage ~= 1.14
