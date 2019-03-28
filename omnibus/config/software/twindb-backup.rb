@@ -23,6 +23,7 @@ skip_transitive_dependency_licensing true
 
 dependency 'python'
 dependency 'setuptools'
+dependency 'libffi'
 
 source path: '/twindb-backup'
 
