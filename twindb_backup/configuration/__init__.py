@@ -59,15 +59,16 @@ class TwinDBBackupConfig(object):
         :rtype: RunIntervals
         """
         kwargs = {}
-        for i in INTERVALS:
-            option = 'run_%s' % i
-            try:
-                kwargs[i] = self.__cfg.getboolean('intervals', option)
-            except (NoOptionError, NoSectionError):
-                LOG.debug(
-                    'Option %s is not defined in section intervals',
-                    option
-                )
+        try:
+            kwargs = {
+                i: self.__cfg.getboolean('intervals', 'run_%s' % i)
+                for i in INTERVALS
+            }
+
+        except (NoOptionError, NoSectionError) as err:
+                LOG.debug(err)
+                LOG.debug('Will use default retention policy')
+
         return RunIntervals(**kwargs)
 
     @property
@@ -77,24 +78,10 @@ class TwinDBBackupConfig(object):
         :rtype: MySQLConfig
         """
         if self.__mysql is None:
-            kwargs = {}
             try:
-                options = [
-                    'mysql_defaults_file',
-                    'full_backup',
-                    'expire_log_days',
-                    'xtrabackup_binary',
-                    'xbstream_binary'
-                ]
-                for opt in options:
-                    try:
-                        kwargs[opt] = self.__cfg.get('mysql', opt).strip('"\'')
-                    except NoOptionError:
-                        LOG.debug(
-                            'Option %s is not defined in section mysql',
-                            opt
-                        )
-                self.__mysql = MySQLConfig(**kwargs)
+                self.__mysql = MySQLConfig(
+                    **self.__read_options_from_section('mysql')
+                )
 
             except NoSectionError:
                 return None
@@ -107,21 +94,8 @@ class TwinDBBackupConfig(object):
         :return: Remote SSH configuration.
         :rtype: SSHConfig
         """
-        kwargs = {}
         try:
-            options = [
-                'ssh_user',
-                'ssh_key',
-                'port',
-                'backup_host',
-                'backup_dir'
-            ]
-            for opt in options:
-                try:
-                    kwargs[opt] = self.__cfg.get('ssh', opt).strip('"\'')
-                except NoOptionError:
-                    LOG.debug('Option %s is not defined in section ssh', opt)
-            return SSHConfig(**kwargs)
+            return SSHConfig(**self.__read_options_from_section('ssh'))
 
         except NoSectionError:
             return None
@@ -129,20 +103,8 @@ class TwinDBBackupConfig(object):
     @property
     def s3(self):  # pylint: disable=invalid-name
         """Amazon S3 configuration"""
-        kwargs = {}
         try:
-            options = [
-                'aws_access_key_id',
-                'aws_secret_access_key',
-                'aws_default_region',
-                'bucket'
-            ]
-            for opt in options:
-                try:
-                    kwargs[opt] = self.__cfg.get('s3', opt).strip('"\'')
-                except NoOptionError:
-                    LOG.debug('Option %s is not defined in section s3', opt)
-            return S3Config(**kwargs)
+            return S3Config(**self.__read_options_from_section('s3'))
 
         except NoSectionError:
             return None
@@ -150,19 +112,8 @@ class TwinDBBackupConfig(object):
     @property
     def gcs(self):  # pylint: disable=invalid-name
         """Google Cloud Storage configuration"""
-        kwargs = {}
         try:
-            options = [
-                'gc_credentials_file',
-                'gc_encryption_key',
-                'bucket'
-            ]
-            for opt in options:
-                try:
-                    kwargs[opt] = self.__cfg.get('gcs', opt).strip('"\'')
-                except NoOptionError:
-                    LOG.debug('Option %s is not defined in section gcs', opt)
-            return GCSConfig(**kwargs)
+            return GCSConfig(**self.__read_options_from_section('gcs'))
 
         except NoSectionError:
             return None
@@ -210,25 +161,10 @@ class TwinDBBackupConfig(object):
         :return: Compression configuration
         :rtype: CompressionConfig
         """
-        kwargs = {}
         try:
-            options = [
-                'program',
-                'threads',
-                'level'
-            ]
-            for opt in options:
-                try:
-                    kwargs[opt] = self.__cfg.get(
-                        'compression',
-                        opt
-                    ).strip('"\'')
-                except NoOptionError:
-                    LOG.debug(
-                        'Option %s is not defined in section compression',
-                        opt
-                    )
-            return CompressionConfig(**kwargs)
+            return CompressionConfig(
+                **self.__read_options_from_section('compression')
+            )
 
         except NoSectionError:
             return CompressionConfig()
@@ -236,18 +172,8 @@ class TwinDBBackupConfig(object):
     @property
     def gpg(self):
         """GPG configuration."""
-        kwargs = {}
         try:
-            for opt in ['secret_keyring']:
-                try:
-                    kwargs[opt] = self.__cfg.get('gpg', opt).strip('"\'')
-                except NoOptionError:
-                    LOG.debug('Option %s is not defined in section s3', opt)
-            return GPGConfig(
-                self.__cfg.get('gpg', 'recipient').strip('"\''),
-                self.__cfg.get('gpg', 'keyring').strip('"\''),
-                **kwargs
-            )
+            return GPGConfig(**self.__read_options_from_section('gpg'))
 
         except NoSectionError:
             return None
@@ -261,6 +187,7 @@ class TwinDBBackupConfig(object):
         except NoOptionError:
             return []
         except NoSectionError as err:
+            LOG.error("Section 'source' is mandatory")
             raise ConfigurationError(err)
 
     @property
@@ -271,6 +198,7 @@ class TwinDBBackupConfig(object):
         except NoOptionError:
             return False
         except NoSectionError as err:
+            LOG.error("Section 'source' is mandatory")
             raise ConfigurationError(err)
 
     def destination(self, backup_source=socket.gethostname()):
@@ -334,3 +262,9 @@ class TwinDBBackupConfig(object):
                     section
                 )
         return RetentionPolicy(**kwargs)
+
+    def __read_options_from_section(self, section):
+        return {
+            opt: self.__cfg.get(section, opt).strip('"\'')
+            for opt in self.__cfg.options(section)
+        }
