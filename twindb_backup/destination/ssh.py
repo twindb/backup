@@ -97,9 +97,9 @@ class Ssh(BaseDestination):
         cmd = 'mkdir -p "%s"' % path
         self.execute_command(cmd)
 
-    def _list_files(self, path, recursive=False, files_only=False):
+    def _list_files(self, prefix=None, recursive=False, files_only=False):
         return self._ssh_client.list_files(
-            path,
+            prefix,
             recursive=recursive,
             files_only=files_only
         )

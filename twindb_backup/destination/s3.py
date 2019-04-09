@@ -18,9 +18,10 @@ from botocore.client import Config
 import boto3
 from boto3.s3.transfer import TransferConfig
 
-from twindb_backup import LOG, TwinDBBackupError
+from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import S3DestinationError
+from twindb_backup.exceptions import OperationError
 from twindb_backup.status.mysql_status import MySQLStatus
 
 S3_CONNECT_TIMEOUT = 60
@@ -545,7 +546,7 @@ class S3(BaseDestination):
             self._set_file_access(S3FileAccess.public_read, s3_url)
             return self._get_file_url(s3_url)
         else:
-            raise TwinDBBackupError("File not found via url: %s" % s3_url)
+            raise OperationError("File not found via url: %s" % s3_url)
 
     def _get_file_content(self, path):
         attempts = 10  # up to 1024 seconds
@@ -568,7 +569,7 @@ class S3(BaseDestination):
                 sleep_time *= 2
         msg = 'Failed to read s3://%s/%s after %d attempts' \
               % (self._bucket, path, attempts)
-        raise TwinDBBackupError(msg)
+        raise OperationError(msg)
 
     def _move_file(self, source, destination):
         s3client = boto3.resource('s3')

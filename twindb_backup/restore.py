@@ -18,6 +18,7 @@ from twindb_backup.export import export_info
 from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
 from twindb_backup.modifiers.gpg import Gpg
+from twindb_backup.status.mysql_status import MySQLStatus
 from twindb_backup.util import mkdir_p, empty_dir
 
 
@@ -100,8 +101,10 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
         return False
 
 
-def _extract_xbstream(input_stream, working_dir,
-                      xbstream_binary=XBSTREAM_BINARY):
+def _extract_xbstream(
+        input_stream,
+        working_dir,
+        xbstream_binary=XBSTREAM_BINARY):
     """
     Extract xbstream stream in directory
 
@@ -115,11 +118,13 @@ def _extract_xbstream(input_stream, working_dir,
         LOG.debug('Running %s', ' '.join(cmd))
         LOG.debug('Working directory: %s', working_dir)
         LOG.debug('Xbstream binary: %s', xbstream_binary)
-        proc = Popen(cmd,
-                     stdin=input_stream,
-                     stdout=PIPE,
-                     stderr=PIPE,
-                     cwd=working_dir)
+        proc = Popen(
+            cmd,
+            stdin=input_stream,
+            stdout=PIPE,
+            stderr=PIPE,
+            cwd=working_dir
+        )
         cout, cerr = proc.communicate()
         ret = proc.returncode
         if ret:
@@ -324,7 +329,7 @@ def restore_from_mysql(twindb_config, copy, dst_dir,
         dst = twindb_config.destination(backup_source=hostname)
 
     key = copy.key
-    status = dst.status()
+    status = MySQLStatus(dst=dst)
 
     stream = dst.get_stream(copy)
 

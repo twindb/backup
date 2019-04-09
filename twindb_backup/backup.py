@@ -128,7 +128,7 @@ def backup_mysql(run_type, config):
         full_backup = 'daily'
     backup_start = time.time()
 
-    status = dst.status(cls=MySQLStatus)
+    status = MySQLStatus(dst=dst)
 
     kwargs = {
         'backup_type': status.next_backup_type(full_backup, run_type),
@@ -184,7 +184,8 @@ def backup_mysql(run_type, config):
         category=ExportCategory.mysql,
         measure_type=ExportMeasureType.backup
     )
-    dst.status(status, cls=MySQLStatus)
+
+    status.save(dst)
 
     LOG.debug('Callbacks are %r', callbacks)
     for callback in callbacks:
@@ -204,18 +205,19 @@ def backup_binlogs(run_type, config):  # pylint: disable=too-many-locals
         return
 
     dst = config.destination()
-    status = dst.status(cls=BinlogStatus)
+    status = BinlogStatus(dst=dst)
     mysql_client = MySQLClient(
         defaults_file=config.mysql.defaults_file
     )
 
-    last_copy = status.get_latest_backup()
-    LOG.debug('Latest copied binlog %s', last_copy)
+    # last_copy = status.latest_backup
+    LOG.debug('Latest copied binlog %s', status.latest_backup)
     with mysql_client.cursor() as cur:
         cur.execute("FLUSH BINARY LOGS")
         backup_set = binlogs_to_backup(
             cur,
-            last_binlog=last_copy.name if last_copy else None
+            last_binlog=status.latest_backup.name
+            if status.latest_backup else None
         )
         cur.execute("SELECT @@log_bin_basename")
         row = cur.fetchone()
@@ -253,7 +255,7 @@ def backup_binlogs(run_type, config):  # pylint: disable=too-many-locals
             dst.delete(copy.key + ".gz")
             status.remove(copy.key)
 
-    dst.status(status, cls=BinlogStatus)
+    status.save(dst)
 
 
 def binlogs_to_backup(cursor, last_binlog=None):
@@ -372,6 +374,7 @@ def run_backup_job(twindb_config,
                 LOG.debug('Not running because run_%s is no', run_type)
         except IOError as err:
             if err.errno != errno.EINTR:
+                LOG.debug(traceback.format_exc())
                 raise LockWaitTimeoutError(err)
             msg = 'Another instance of twindb-backup is running?'
             if run_type == 'hourly':

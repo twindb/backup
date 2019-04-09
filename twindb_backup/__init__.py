@@ -31,7 +31,6 @@
  +--------+    +------------+    +------------+    +-------------+
 
  """
-import ConfigParser
 import glob
 import json
 import logging
@@ -55,10 +54,6 @@ MY_CNF_COMMON_PATHS = [
 ]
 
 LOG = logging.getLogger(__name__)
-
-
-class TwinDBBackupError(Exception):
-    """Class for script errors"""
 
 
 class LessThanFilter(logging.Filter):  # pylint: disable=too-few-public-methods
