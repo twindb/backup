@@ -6,36 +6,17 @@ from twindb_backup.status.base_status import BaseStatus
 
 
 class PeriodicStatus(BaseStatus):
-    """Periodic class for status"""
-
-    def _status_serialize(self):
-        raise NotImplementedError
+    """Periodic class for status."""
+    def __init__(self, content=None, dst=None, status_directory=None):
+        super(PeriodicStatus, self).__init__(
+            content=content,
+            dst=dst,
+            status_directory=status_directory
+        )
 
     @property
     def basename(self):
         raise NotImplementedError
-
-    def _load(self, status_as_json):
-        raise NotImplementedError
-
-    def __init__(self, content=None):
-        super(PeriodicStatus, self).__init__(content=content)
-
-    def __eq__(self, other):
-        comparison = ()
-        for interval in INTERVALS:
-            comparison += (
-                getattr(self, interval) == getattr(other, interval),
-            )
-
-        return all(comparison)
-
-    def __run_type(self, run_type):
-        result = {}
-        for copy in self._status:
-            if copy.run_type == run_type:
-                result[copy.key] = copy
-        return result
 
     @property
     def hourly(self):
@@ -61,3 +42,26 @@ class PeriodicStatus(BaseStatus):
     def yearly(self):
         """Dictionary with yearly backups"""
         return self.__run_type('yearly')
+
+    def _load(self, status_as_json):
+        raise NotImplementedError
+
+    def _status_serialize(self):
+        raise NotImplementedError
+
+    def __eq__(self, other):
+        comparison = ()
+        for interval in INTERVALS:
+            comparison += (
+                getattr(self, interval) == getattr(other, interval),
+            )
+
+        return all(comparison)
+
+    def __run_type(self, run_type):
+        result = {}
+        for copy in self._status:
+            if copy.run_type == run_type:
+                result[copy.key] = copy
+        return result
+

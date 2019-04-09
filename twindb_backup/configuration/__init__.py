@@ -268,3 +268,6 @@ class TwinDBBackupConfig(object):
             opt: self.__cfg.get(section, opt).strip('"\'')
             for opt in self.__cfg.options(section)
         }
+
+    def __repr__(self):
+        return '%s: %s' % (self.__class__.__name__, self._config_file)

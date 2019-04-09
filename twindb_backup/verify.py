@@ -9,7 +9,8 @@ import ConfigParser
 import tempfile
 import traceback
 
-from twindb_backup import LOG, TwinDBBackupError
+from twindb_backup import LOG
+from twindb_backup.exceptions import TwinDBBackupError
 from twindb_backup.restore import restore_from_mysql
 
 

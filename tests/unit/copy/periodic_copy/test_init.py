@@ -1,5 +1,6 @@
 import pytest
 
+from twindb_backup.copy.exceptions import WrongInputData
 from twindb_backup.copy.periodic_copy import PeriodicCopy
 
 
@@ -34,3 +35,8 @@ def test_copy_from_path(path, host, run_type, name):
     assert copy.host == host
     assert copy.run_type == run_type
     assert copy.name == name
+
+
+def test_init_raises_on_wrong_inputs():
+    with pytest.raises(WrongInputData):
+        PeriodicCopy(path='foo')

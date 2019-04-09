@@ -11,7 +11,8 @@ from subprocess import Popen, PIPE
 
 import psutil
 
-from twindb_backup import LOG, TwinDBBackupError
+from twindb_backup import LOG
+from twindb_backup.exceptions import OperationError
 
 
 def mkdir_p(path, mode=0777):
@@ -45,7 +46,7 @@ def ensure_empty(path):
         if os.listdir(path):
             msg = 'You asked to restore backup copy in directory "%s". ' \
                   'But it is not empty.' % path
-            raise TwinDBBackupError(msg)
+            raise OperationError(msg)
 
     except OSError as err:
         if err.errno == 2:  # OSError: [Errno 2] No such file or directory
