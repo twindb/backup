@@ -9,7 +9,6 @@ import socket
 import tempfile
 import traceback
 import os
-from os.path import basename
 
 import click
 
@@ -20,6 +19,7 @@ from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.clone import clone_mysql
 from twindb_backup.configuration import TwinDBBackupConfig
 from twindb_backup.copy.file_copy import FileCopy
+from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.exceptions import LockWaitTimeoutError, OperationError
 from twindb_backup.ls import list_available_backups
 from twindb_backup.modifiers.base import ModifierException
@@ -28,8 +28,7 @@ from twindb_backup.share import share
 from twindb_backup.source.exceptions import SourceError
 from twindb_backup.status.binlog_status import BinlogStatus
 from twindb_backup.status.mysql_status import MySQLStatus
-from twindb_backup.util import ensure_empty, kill_children, \
-    get_hostname_from_backup_copy, get_run_type_from_backup_copy
+from twindb_backup.util import ensure_empty, kill_children
 from twindb_backup.verify import verify_mysql_backup
 
 MEDIA_STATUS_MAP = {
@@ -223,8 +222,11 @@ def restore_mysql(ctx, dst, backup_copy, cache):
 
     try:
         ensure_empty(dst)
+        copy = MySQLCopy(
+            path=backup_copy
+        )
         dst_storage = ctx.obj['twindb_config'].destination(
-            backup_source=get_hostname_from_backup_copy(backup_copy)
+            backup_source=copy.host
         )
         key = dst_storage.basename(backup_copy)
         copy = dst_storage.status()[key]
@@ -262,11 +264,7 @@ def restore_file(ctx, dst, backup_copy):
 
     try:
         ensure_empty(dst)
-        copy = FileCopy(
-            get_hostname_from_backup_copy(backup_copy),
-            basename(backup_copy),
-            get_run_type_from_backup_copy(backup_copy)
-        )
+        copy = FileCopy(path=backup_copy)
         restore_from_file(ctx.obj['twindb_config'], copy, dst)
     except TwinDBBackupError as err:
         LOG.error(err)

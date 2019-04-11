@@ -3,11 +3,7 @@
 Module defines modifier that implements asymmetric encryption with gpg
 """
 import os
-from contextlib import contextmanager
 
-from subprocess import Popen, PIPE
-
-from twindb_backup import LOG
 from twindb_backup.modifiers.base import Modifier, ModifierException
 
 
@@ -38,44 +34,29 @@ class Gpg(Modifier):
         self.recipient = recipient
         super(Gpg, self).__init__(input_stream)
 
-    @contextmanager
-    def get_stream(self):
-        """
-        Encrypt the input stream and return it as the output stream
+    @property
+    def _modifier_cmd(self):
+        """get compression program cmd"""
+        return [
+            'gpg', '--no-default-keyring',
+            '--trust-model', 'always',
+            '--keyring', self.keyring,
+            '--recipient', self.recipient,
+            '--encrypt',
+            '--yes',
+            '--batch'
+        ]
 
-        :return: output stream handle
-        :raise: OSError if failed to call the gpg command
-        """
-        with self.input as input_stream:
-            proc = Popen(['gpg', '--no-default-keyring',
-                          '--trust-model', 'always',
-                          '--keyring', self.keyring,
-                          '--recipient', self.recipient,
-                          '--encrypt',
-                          '--yes',
-                          '--batch'],
-                         stdin=input_stream,
-                         stdout=PIPE,
-                         stderr=PIPE)
-            yield proc.stdout
-            cerr = proc.communicate()
-            if proc.returncode:
-                LOG.error('gpg exited with non-zero code.')
-                LOG.error(cerr)
-
-#    @contextmanager
-    def revert_stream(self):
-        """
-        Decrypt the input stream and return it as the output stream
-
-        :return: output stream handle
-        :raise: OSError if failed to call the gpg command
-        """
-        return self._revert_stream(['gpg', '--no-default-keyring',
-                                    '--trust-model', 'always',
-                                    '--secret-keyring', self.secret_keyring,
-                                    '--keyring', self.keyring,
-                                    '--recipient', self.recipient,
-                                    '--decrypt',
-                                    '--yes',
-                                    '--batch'])
+    @property
+    def _unmodifier_cmd(self):
+        """get decompression program cmd"""
+        return [
+            'gpg', '--no-default-keyring',
+            '--trust-model', 'always',
+            '--secret-keyring', self.secret_keyring,
+            '--keyring', self.keyring,
+            '--recipient', self.recipient,
+            '--decrypt',
+            '--yes',
+            '--batch'
+        ]
