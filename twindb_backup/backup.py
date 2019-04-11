@@ -11,6 +11,9 @@ import signal
 import time
 from contextlib import contextmanager
 from resource import getrlimit, RLIMIT_NOFILE, setrlimit
+
+from pymysql import InternalError
+
 from twindb_backup import (
     LOG, get_timeout, LOCK_FILE, save_measures, MY_CNF_COMMON_PATHS)
 from twindb_backup.copy.binlog_copy import BinlogCopy
@@ -260,6 +263,8 @@ def binlogs_to_backup(cursor, last_binlog=None):
     """
     Finds list of binlogs to copy. It will return the binlogs
     from the last to the current one (excluding it).
+    If binlog are not enabled in the server the function will return
+    empty list.
 
     :param cursor: MySQL cursor
     :param last_binlog: Name of the last copied binlog.
@@ -267,13 +272,19 @@ def binlogs_to_backup(cursor, last_binlog=None):
     :rtype: list
     """
     binlogs = []
-    cursor.execute("SHOW BINARY LOGS")
-    for row in cursor.fetchall():
-        binlog = row['Log_name']
-        if not last_binlog or binlog > last_binlog:
-            binlogs.append(binlog)
+    try:
+        cursor.execute("SHOW BINARY LOGS")
+        for row in cursor.fetchall():
+            binlog = row['Log_name']
+            if not last_binlog or binlog > last_binlog:
+                binlogs.append(binlog)
 
-    return binlogs[:-1]
+        return binlogs[:-1]
+    except InternalError as err:
+        if err.args and err.args[0] == 1381:  # ER_NO_BINARY_LOGGING
+            return binlogs
+        else:
+            raise OperationError(err)
 
 
 def set_open_files_limit():
