@@ -3,9 +3,6 @@
 Module defines modifier that save a stream on the local file system
 """
 import os
-from contextlib import contextmanager
-
-from subprocess import Popen, PIPE
 
 from twindb_backup.destination.local import Local
 from twindb_backup.modifiers.base import Modifier, ModifierException
@@ -28,24 +25,16 @@ class KeepLocal(Modifier):
         try:
             mkdir_p(local_dir)
         except OSError as err:
-            raise ModifierException('Failed to create directory %s: %s'
-                                    % (local_dir, err))
-
-    @contextmanager
-    def get_stream(self):
-        """
-        Save a copy of the input stream and return the output stream
-
-        :return: output stream handle
-        :raise: OSError if failed to call the tee command
-        """
-        with self.input as input_stream:
-            proc = Popen(['tee', self.local_path],
-                         stdin=input_stream,
-                         stdout=PIPE)
-            yield proc.stdout
-            proc.communicate()
+            raise ModifierException(
+                'Failed to create directory %s: %s'
+                % (local_dir, err)
+            )
 
     def callback(self, **kwargs):
         local_dst = Local(kwargs['keep_local_path'])
         local_dst.status(kwargs['dst'].status())
+
+    @property
+    def _modifier_cmd(self):
+        """get compression program cmd"""
+        return ['tee', self.local_path]
