@@ -5,7 +5,6 @@ from base64 import b64encode
 
 from twindb_backup.copy.binlog_copy import BinlogCopy
 from twindb_backup.status.base_status import BaseStatus
-from twindb_backup.status.exceptions import StatusKeyNotFound
 
 
 class BinlogStatus(BaseStatus):
@@ -67,4 +66,3 @@ class BinlogStatus(BaseStatus):
 
     def __ne__(self, other):
         return not self.__eq__(other)
-

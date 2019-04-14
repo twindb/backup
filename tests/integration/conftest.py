@@ -158,7 +158,10 @@ def get_container(name, client, network,
         'hostname': container_hostname,
         'host_config': host_config,
         'networking_config': networking_config,
-        'volumes': ['/twindb-backup']
+        'volumes': ['/twindb-backup'],
+        'environment': {
+            'DEV': os.environ['DEV']
+        }
     }
     if bootstrap_script:
         kwargs['command'] = 'bash %s' % bootstrap_script
@@ -399,3 +402,15 @@ def get_twindb_config_dir(client, container_id):
         if guest_dir == '/etc/twindb':
             return host_dir
     raise RuntimeError('Could not find binding for /etc/twindb')
+
+
+def pause_test(msg):
+    """Pause """
+    try:
+        if os.environ['PAUSE_TEST']:
+            print('Test paused')
+            print(msg)
+            import time
+            time.sleep(36000)
+    except KeyError:
+        pass

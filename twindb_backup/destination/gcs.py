@@ -2,12 +2,12 @@
 """
 Module for GCS destination.
 """
-import os
-import re
 from contextlib import contextmanager
 from functools import partial
 from multiprocessing import Process
+import os
 from os import path as osp
+import re
 
 from google.api_core.exceptions import GoogleAPIError, NotFound
 from google.auth.exceptions import GoogleAuthError
@@ -35,6 +35,10 @@ class GCS(BaseDestination):
     * **chunk_size** - when storing a stream use this a a chunk size.
         The stream will be stored a set of chunks of this size on the GS.
     """
+
+    # def save(self, handler, filepath):
+    #     pass
+
     def __init__(self, **kwargs):
         self._bucket = kwargs.get('bucket')
         super(GCS, self).__init__(self.bucket)
@@ -49,6 +53,7 @@ class GCS(BaseDestination):
                 'when initializing %s class' % self.__class__.__name__
             )
         self._chunk_size = kwargs.get('chunk_size', DEFAULT_CHUNK_SIZE)
+        self.__bucket_obj = None
 
     @property
     def bucket(self):
@@ -139,26 +144,30 @@ class GCS(BaseDestination):
         )
         obj.upload_from_string(content)
 
-    def save(self, handler, name):
+    def save(self, handler, filepath):
         """
         Read from handler and save it to GCS
 
-        :param name: save backup copy in a file with this name
         :param handler: stdout handler from backup source
         :type handler: file
+        :param filepath: save backup copy in a file with this name
+        :type filepath: str
         """
         with handler as f_src:
             chunk_no = 0
             for chunk in iter(partial(f_src.read, self._chunk_size), b''):
                 self.write(
                     chunk,
-                    osp.join(name, 'part-%016d' % chunk_no)
+                    osp.join(filepath, 'part-%016d' % chunk_no)
                 )
                 chunk_no += 1
 
     @property
     def _bucket_obj(self):
-        return self._gcs_client.get_bucket(self.bucket)
+        if self.__bucket_obj is None:
+            self.__bucket_obj = self._gcs_client.get_bucket(self.bucket)
+
+        return self.__bucket_obj
 
     @_bucket_obj.setter
     def _bucket_obj(self, value):

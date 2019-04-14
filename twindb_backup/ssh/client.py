@@ -129,10 +129,12 @@ class SshClient(object):
                     exit_code = channel.recv_exit_status()
                     if exit_code != 0:
                         if not quiet:
-                            LOG.error("Failed while execute command %s", cmd)
+                            LOG.error("Failed to execute command %s", cmd)
                             LOG.error(''.join(stderr_chunks))
-                        raise SshClientException('%s exited with code %d'
-                                                 % (cmd, exit_code))
+                        raise SshClientException(
+                            '%s exited with code %d'
+                            % (cmd, exit_code)
+                        )
                     return ''.join(stdout_chunks), ''.join(stderr_chunks)
                 else:
                     LOG.debug('Executing in background: %s', cmd)
@@ -209,9 +211,10 @@ class SshClient(object):
         :return: File content
         :rtype: str
         """
-
-        cout, _ = self.execute("cat %s" % path)
-        return cout
+        with self._shell() as ssh_client:
+            sftp_client = ssh_client.open_sftp()
+            with sftp_client.open(path) as remote_file:
+                return remote_file.read()
 
     def write_content(self, path, content):
         """
@@ -220,9 +223,10 @@ class SshClient(object):
         :param path: Path to file
         :param content: Content
         """
-        with self.get_remote_handlers("cat - > %s" % path) \
-                as (cin, _, _):
-            cin.write(content)
+        with self._shell() as ssh_client:
+            sftp_client = ssh_client.open_sftp()
+            with sftp_client.open(path, 'w') as remote_file:
+                remote_file.write(content)
 
     def write_config(self, path, cfg):
         """

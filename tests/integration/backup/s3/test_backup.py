@@ -1,10 +1,21 @@
 import StringIO
 import json
 import os
+from textwrap import dedent
+
 import magic
 
-from tests.integration.conftest import docker_execute, get_twindb_config_dir
+from tests.integration.conftest import docker_execute, get_twindb_config_dir, \
+    pause_test
 from twindb_backup.destination.s3 import S3
+
+MY_CNF_CONTENT = dedent(
+    """
+    [client]
+    user=dba
+    password=qwerty
+    """
+)
 
 
 def test__take_file_backup(master1,
@@ -98,14 +109,8 @@ def test__take_mysql_backup(master1,
     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
 
-    contents = """
-[client]
-user=dba
-password=qwerty
-"""
-
     with open(my_cnf_path, "w") as my_cnf:
-        my_cnf.write(contents)
+        my_cnf.write(MY_CNF_CONTENT)
 
     with open(twindb_config_host, 'w') as fp:
         content = config_content_mysql_only.format(
@@ -118,10 +123,13 @@ password=qwerty
         )
         fp.write(content)
 
-    cmd = ['twindb-backup',
-           '--debug',
-           '--config', twindb_config_guest,
-           'backup', 'hourly']
+    cmd = [
+        'twindb-backup',
+        '--debug',
+        '--config', twindb_config_guest,
+        'backup', 'hourly'
+    ]
+    pause_test(' '.join(cmd))
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
@@ -140,20 +148,15 @@ def test__take_mysql_backup_retention(master1,
                                       docker_client,
                                       s3_client,
                                       config_content_mysql_only):
+
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
 
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
 
-    contents = """
-[client]
-user=dba
-password=qwerty
-"""
-
     with open(my_cnf_path, "w") as my_cnf:
-        my_cnf.write(contents)
+        my_cnf.write(MY_CNF_CONTENT)
 
     with open(twindb_config_host, 'w') as fp:
         content = config_content_mysql_only.format(
@@ -168,6 +171,8 @@ password=qwerty
 
     cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest,
            'backup', 'daily']
+
+    # pause_test(' '.join(cmd))
     for i in range(0, 3):
         ret, cout = docker_execute(docker_client, master1['Id'], cmd)
         print(cout)
@@ -203,14 +208,8 @@ def test__s3_find_files_returns_sorted(master1,
     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
 
-    contents = """
-[client]
-user=dba
-password=qwerty
-"""
-
     with open(my_cnf_path, "w") as my_cnf:
-        my_cnf.write(contents)
+        my_cnf.write(MY_CNF_CONTENT)
 
     with open(twindb_config_host, 'w') as fp:
         content = config_content_mysql_only.format(
@@ -385,14 +384,9 @@ def test__take_mysql_backup_aenc_suffix_gpg(master1,
     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
 
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
-    contents = """
-[client]
-user=dba
-password=qwerty
-"""
 
     with open(my_cnf_path, "w") as my_cnf:
-        my_cnf.write(contents)
+        my_cnf.write(MY_CNF_CONTENT)
 
     gpg_public_key_path_host = "%s/public_key" % twindb_config_dir
     gpg_private_key_path_host = "%s/private_key" % twindb_config_dir
@@ -477,14 +471,9 @@ def test_take_mysql_backup_aenc_restores_full(
     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
 
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
-    contents = """
-[client]
-user=dba
-password=qwerty
-"""
 
     with open(my_cnf_path, "w") as my_cnf:
-        my_cnf.write(contents)
+        my_cnf.write(MY_CNF_CONTENT)
 
     gpg_public_key_path_host = "%s/public_key" % twindb_config_dir
     gpg_private_key_path_host = "%s/private_key" % twindb_config_dir
@@ -576,10 +565,7 @@ password=qwerty
         dst_dir
     ]
 
-    # LOG.debug('Test paused')
-    # LOG.debug(' '.join(cmd))
-    # import time
-    # time.sleep(36000)
+    pause_test(' '.join(cmd))
 
     ret, cout = docker_execute(
         docker_client,
@@ -656,14 +642,9 @@ def test_take_mysql_backup_aenc_restores_inc(
     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
 
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
-    contents = """
-[client]
-user=dba
-password=qwerty
-"""
 
     with open(my_cnf_path, "w") as my_cnf:
-        my_cnf.write(contents)
+        my_cnf.write(MY_CNF_CONTENT)
 
     gpg_public_key_path_host = "%s/public_key" % twindb_config_dir
     gpg_private_key_path_host = "%s/private_key" % twindb_config_dir

@@ -12,7 +12,9 @@ from urlparse import urlparse
 
 import time
 
-from botocore.exceptions import ClientError
+import botocore
+from botocore.errorfactory import BaseClientExceptions, ClientExceptionsFactory
+from botocore.exceptions import ClientError, DataNotFoundError, BotoCoreError
 from botocore.client import Config
 
 import boto3
@@ -20,7 +22,8 @@ from boto3.s3.transfer import TransferConfig
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.destination.exceptions import S3DestinationError
+from twindb_backup.destination.exceptions import S3DestinationError, \
+    FileNotFound
 from twindb_backup.exceptions import OperationError
 from twindb_backup.status.mysql_status import MySQLStatus
 
@@ -91,42 +94,6 @@ class S3(BaseDestination):
         """S3 bucket name."""
         return self._bucket
 
-    def status_path(self, cls=MySQLStatus):
-        """
-        Return key path where status is stored for a given type of status.
-
-        :param cls: status class. By default MySQLStatus
-        :return: key name in S3 bucket where status is stored.
-        :rtype: str
-        """
-        return "{hostname}/{basename}".format(
-            hostname=self._hostname,
-            basename=cls().basename
-        )
-
-    @staticmethod
-    def setup_s3_client():
-        """Creates an authenticated s3 client.
-
-        :return: S3 client instance.
-        :rtype: botocore.client.BaseClient
-        """
-        session = boto3.Session(
-            aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
-            aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"]
-        )
-        s3_config = Config(
-            connect_timeout=S3_CONNECT_TIMEOUT,
-            read_timeout=S3_READ_TIMEOUT
-        )
-        client = session.client(
-            's3',
-            region_name=os.environ["AWS_DEFAULT_REGION"],
-            config=s3_config
-        )
-
-        return client
-
     def create_bucket(self):
         """Creates the bucket in s3 that will store the backups.
 
@@ -147,6 +114,43 @@ class S3(BaseDestination):
             LOG.info('Created bucket %s', self._bucket)
             response = self.s3_client.create_bucket(Bucket=self._bucket)
             self.validate_client_response(response)
+
+        return True
+
+    def delete(self, obj):
+        """Deletes an S3 object.
+
+        :param obj: Key of S3 object.
+        :type obj: str
+        :raise S3DestinationError: if failed to delete object.
+        """
+        key = obj.replace(
+            's3://%s/' % self._bucket,
+            ''
+        ) if obj.startswith('s3://') else obj
+
+        s3client = boto3.resource('s3')
+        bucket = s3client.Bucket(self._bucket)
+
+        s3obj = s3client.Object(bucket.name, key)
+        LOG.debug('deleting s3://%s/%s', bucket.name, key)
+
+        return s3obj.delete()
+
+    def delete_all_objects(self):
+        """
+        Delete all objects from S3 bucket.
+
+        :raise S3DestinationError: if failed to delete objects from the bucket.
+        """
+        paginator = self.s3_client.get_paginator('list_objects')
+        response = paginator.paginate(Bucket=self._bucket)
+
+        for item in response.search('Contents'):
+            if not item:
+                continue
+
+            self.s3_client.delete_object(Bucket=self._bucket, Key=item['Key'])
 
         return True
 
@@ -182,123 +186,6 @@ class S3(BaseDestination):
             LOG.info('Bucket %s successfully deleted', self._bucket)
 
         return True
-
-    def delete_all_objects(self):
-        """
-        Delete all objects from S3 bucket.
-
-        :raise S3DestinationError: if failed to delete objects from the bucket.
-        """
-        paginator = self.s3_client.get_paginator('list_objects')
-        response = paginator.paginate(Bucket=self._bucket)
-
-        for item in response.search('Contents'):
-            if not item:
-                continue
-
-            self.s3_client.delete_object(Bucket=self._bucket, Key=item['Key'])
-
-        return True
-
-    def save(self, handler, name):
-        """
-        Read from handler and save it to Amazon S3
-
-        :param name: save backup copy in a file with this name
-        :param handler: stdout handler from backup source
-        """
-        with handler as file_obj:
-            ret = self._upload_object(file_obj, name)
-            LOG.debug('Returning code %d', ret)
-
-    def list_files(self, prefix, recursive=False, pattern=None,
-                   files_only=False):
-        """
-        List files in the destination that have common prefix.
-
-        :param prefix: Common prefix. May include the bucket name.
-            (e.g. ``s3://my_bucket/foo/``) or simply a prefix in the bucket
-            (e.g. ``foo/``).
-        :type prefix: str
-        :param recursive: Does nothing for this class.
-        :return: sorted list of file names.
-        :param pattern: files must match with this regexp if specified.
-        :type pattern: str
-        :param files_only: Does nothing for this class.
-        :return: Full S3 url in form ``s3://bucket/path/to/file``.
-        :rtype: list(str)
-        :raise S3DestinationError: if failed to list files.
-        """
-        s3client = boto3.resource('s3')
-        bucket = s3client.Bucket(self._bucket)
-
-        LOG.debug('Listing bucket %s', self._bucket)
-        LOG.debug('prefix = %s', prefix)
-
-        norm_prefix = prefix.replace('s3://%s' % bucket.name, '')
-        norm_prefix = norm_prefix.lstrip('/')
-        LOG.debug('normal prefix = %s', norm_prefix)
-
-        # Try to list the bucket several times
-        # because of intermittent error NoSuchBucket:
-        # https://travis-ci.org/twindb/backup/jobs/204053690
-        expire = time.time() + S3_READ_TIMEOUT
-        retry_interval = 2
-        while time.time() < expire:
-            try:
-                files = []
-                all_objects = bucket.objects.filter(Prefix=norm_prefix)
-                for file_object in all_objects:
-                    if pattern:
-                        if re.search(pattern, file_object.key):
-                            files.append(
-                                's3://{bucket}/{key}'.format(
-                                    bucket=self._bucket,
-                                    key=file_object.key
-                                )
-                            )
-                    else:
-                        files.append(
-                            's3://{bucket}/{key}'.format(
-                                bucket=self._bucket,
-                                key=file_object.key
-                            )
-                        )
-
-                return sorted(files)
-            except ClientError as err:
-                LOG.warning(
-                    '%s. Will retry in %d seconds.',
-                    err,
-                    retry_interval
-                )
-                time.sleep(retry_interval)
-                retry_interval *= 2
-
-        raise S3DestinationError('Failed to list files.')
-
-    def _list_files(self, path, recursive=False, files_only=False):
-        raise NotImplementedError
-
-    def delete(self, obj):
-        """Deletes an S3 object.
-
-        :param obj: Key of S3 object.
-        :type obj: str
-        :raise S3DestinationError: if failed to delete object.
-        """
-        key = obj.replace(
-            's3://%s/' % self._bucket,
-            ''
-        ) if obj.startswith('s3://') else obj
-
-        s3client = boto3.resource('s3')
-        bucket = s3client.Bucket(self._bucket)
-
-        s3obj = s3client.Object(bucket.name, key)
-        LOG.debug('deleting s3://%s/%s', bucket.name, key)
-
-        return s3obj.delete()
 
     @contextmanager
     def get_stream(self, copy):
@@ -374,6 +261,193 @@ class S3(BaseDestination):
             if download_proc:
                 download_proc.join()
 
+    @staticmethod
+    def get_transfer_config():
+        """
+        Build Transfer config
+
+        :return: Transfer config
+        :rtype: boto3.s3.transfer.TransferConfig
+        """
+        transfer_config = TransferConfig(
+            multipart_threshold=S3_UPLOAD_CHUNK_SIZE_BYTES,
+            max_concurrency=S3_UPLOAD_CONCURRENCY,
+            multipart_chunksize=S3_UPLOAD_CHUNK_SIZE_BYTES,
+            max_io_queue=S3_UPLOAD_IO_QUEUE_SIZE,
+            io_chunksize=S3_UPLOAD_IO_CHUNKS_SIZE_BYTES)
+
+        return transfer_config
+
+    def list_files(self, prefix, recursive=False, pattern=None,
+                   files_only=False):
+        """
+        List files in the destination that have common prefix.
+
+        :param prefix: Common prefix. May include the bucket name.
+            (e.g. ``s3://my_bucket/foo/``) or simply a prefix in the bucket
+            (e.g. ``foo/``).
+        :type prefix: str
+        :param recursive: Does nothing for this class.
+        :return: sorted list of file names.
+        :param pattern: files must match with this regexp if specified.
+        :type pattern: str
+        :param files_only: Does nothing for this class.
+        :return: Full S3 url in form ``s3://bucket/path/to/file``.
+        :rtype: list(str)
+        :raise S3DestinationError: if failed to list files.
+        """
+        s3client = boto3.resource('s3')
+        bucket = s3client.Bucket(self._bucket)
+
+        LOG.debug('Listing bucket %s', self._bucket)
+        LOG.debug('prefix = %s', prefix)
+
+        norm_prefix = prefix.replace('s3://%s' % bucket.name, '')
+        norm_prefix = norm_prefix.lstrip('/')
+        LOG.debug('normal prefix = %s', norm_prefix)
+
+        # Try to list the bucket several times
+        # because of intermittent error NoSuchBucket:
+        # https://travis-ci.org/twindb/backup/jobs/204053690
+        expire = time.time() + S3_READ_TIMEOUT
+        retry_interval = 2
+        while time.time() < expire:
+            try:
+                files = []
+                all_objects = bucket.objects.filter(Prefix=norm_prefix)
+                for file_object in all_objects:
+                    if pattern:
+                        if re.search(pattern, file_object.key):
+                            files.append(
+                                's3://{bucket}/{key}'.format(
+                                    bucket=self._bucket,
+                                    key=file_object.key
+                                )
+                            )
+                    else:
+                        files.append(
+                            's3://{bucket}/{key}'.format(
+                                bucket=self._bucket,
+                                key=file_object.key
+                            )
+                        )
+
+                return sorted(files)
+            except ClientError as err:
+                LOG.warning(
+                    '%s. Will retry in %d seconds.',
+                    err,
+                    retry_interval
+                )
+                time.sleep(retry_interval)
+                retry_interval *= 2
+
+        raise S3DestinationError('Failed to list files.')
+
+    def read(self, filepath):
+        """
+        Read content of filepath and return it as a string.
+
+        :param filepath: Path in S3 bucket.
+        :return: Content of the file.
+        :rtype: str
+        :raises FileNotFound: If filepath doesn't exist.
+        """
+        try:
+            response = self.s3_client.get_object(
+                Bucket=self._bucket,
+                Key=filepath
+            )
+            return response['Body'].read()
+
+        except self.s3_client.exceptions.NoSuchKey:
+            raise FileNotFound('%s does not exist' % filepath)
+
+    def save(self, handler, name):
+        """
+        Read from handler and save it to Amazon S3
+
+        :param name: save backup copy in a file with this name
+        :param handler: stdout handler from backup source
+        """
+        with handler as file_obj:
+            ret = self._upload_object(file_obj, name)
+            LOG.debug('Returning code %d', ret)
+
+    @staticmethod
+    def setup_s3_client():
+        """Creates an authenticated s3 client.
+
+        :return: S3 client instance.
+        :rtype: botocore.client.BaseClient
+        """
+        session = boto3.Session(
+            aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"]
+        )
+        s3_config = Config(
+            connect_timeout=S3_CONNECT_TIMEOUT,
+            read_timeout=S3_READ_TIMEOUT
+        )
+        client = session.client(
+            's3',
+            region_name=os.environ["AWS_DEFAULT_REGION"],
+            config=s3_config
+        )
+
+        return client
+
+    def share(self, s3_url):
+        """
+        Share S3 file and return public link
+
+        :param s3_url: S3 url
+        :type s3_url: str
+        :return: Public url
+        :rtype: str
+        :raise S3DestinationError: if failed to share object.
+        """
+        run_type = s3_url.split('/')[4]
+        backup_urls = self.list_files(
+            self.remote_path,
+            pattern="/%s/" % run_type
+        )
+        if s3_url in backup_urls:
+            self._set_file_access(S3FileAccess.public_read, s3_url)
+            return self._get_file_url(s3_url)
+        else:
+            raise OperationError("File not found via url: %s" % s3_url)
+
+    @staticmethod
+    def validate_client_response(response):
+        """Validates the response returned by the client. Raises an exception
+            if the response code is not 200 or 204
+
+        :param response: The response that needs to be validated.
+        :type response: dict
+        :raise S3DestinationError: if response from S3 is invalid.
+        """
+        try:
+            http_status_code = response['ResponseMetadata']['HTTPStatusCode']
+        except KeyError as err:
+            raise S3DestinationError('S3 client returned invalid response: %s'
+                                     % err)
+
+        if http_status_code not in [200, 204]:
+            raise S3DestinationError('S3 client returned error code: %s'
+                                     % http_status_code)
+
+    def write(self, content, filepath):
+        response = self.s3_client.put_object(
+            Body=content,
+            Bucket=self._bucket,
+            Key=filepath
+        )
+        self.validate_client_response(response)
+
+    def _list_files(self, path, recursive=False, files_only=False):
+        raise NotImplementedError
+
     def _upload_object(self, file_obj, object_key):
         """Upload objects to S3 in streaming fashion.
 
@@ -441,18 +515,6 @@ class S3(BaseDestination):
                 raise
         return False
 
-    def _read_status(self, cls=MySQLStatus):
-        if self._status_exists(cls=cls):
-            response = self.s3_client.get_object(
-                Bucket=self._bucket,
-                Key=self.status_path(cls=cls))
-            self.validate_client_response(response)
-
-            content = response['Body'].read()
-            return cls(content=content)
-        else:
-            return cls()
-
     def _write_status(self, status, cls=MySQLStatus):
         response = self.s3_client.put_object(
             Body=status.serialize(),
@@ -460,42 +522,6 @@ class S3(BaseDestination):
             Key=self.status_path(cls=cls)
         )
         self.validate_client_response(response)
-
-    @staticmethod
-    def validate_client_response(response):
-        """Validates the response returned by the client. Raises an exception
-            if the response code is not 200 or 204
-
-        :param response: The response that needs to be validated.
-        :type response: dict
-        :raise S3DestinationError: if response from S3 is invalid.
-        """
-        try:
-            http_status_code = response['ResponseMetadata']['HTTPStatusCode']
-        except KeyError as err:
-            raise S3DestinationError('S3 client returned invalid response: %s'
-                                     % err)
-
-        if http_status_code not in [200, 204]:
-            raise S3DestinationError('S3 client returned error code: %s'
-                                     % http_status_code)
-
-    @staticmethod
-    def get_transfer_config():
-        """
-        Build Transfer config
-
-        :return: Transfer config
-        :rtype: boto3.s3.transfer.TransferConfig
-        """
-        transfer_config = TransferConfig(
-            multipart_threshold=S3_UPLOAD_CHUNK_SIZE_BYTES,
-            max_concurrency=S3_UPLOAD_CONCURRENCY,
-            multipart_chunksize=S3_UPLOAD_CHUNK_SIZE_BYTES,
-            max_io_queue=S3_UPLOAD_IO_QUEUE_SIZE,
-            io_chunksize=S3_UPLOAD_IO_CHUNKS_SIZE_BYTES)
-
-        return transfer_config
 
     def _set_file_access(self, access_mode, url):
         """
@@ -526,27 +552,6 @@ class S3(BaseDestination):
                 'Key': object_key
             }
         )
-
-    def share(self, s3_url):
-        """
-        Share S3 file and return public link
-
-        :param s3_url: S3 url
-        :type s3_url: str
-        :return: Public url
-        :rtype: str
-        :raise S3DestinationError: if failed to share object.
-        """
-        run_type = s3_url.split('/')[4]
-        backup_urls = self.list_files(
-            self.remote_path,
-            pattern="/%s/" % run_type
-        )
-        if s3_url in backup_urls:
-            self._set_file_access(S3FileAccess.public_read, s3_url)
-            return self._get_file_url(s3_url)
-        else:
-            raise OperationError("File not found via url: %s" % s3_url)
 
     def _get_file_content(self, path):
         attempts = 10  # up to 1024 seconds

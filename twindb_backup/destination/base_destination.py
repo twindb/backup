@@ -4,7 +4,6 @@ Module defines Base destination class and destination exception(s).
 """
 import re
 from abc import abstractmethod
-from contextlib import contextmanager
 
 from twindb_backup import LOG
 from twindb_backup.destination.exceptions import DestinationError
