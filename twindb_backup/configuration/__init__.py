@@ -66,8 +66,8 @@ class TwinDBBackupConfig(object):
             }
 
         except (NoOptionError, NoSectionError) as err:
-                LOG.debug(err)
-                LOG.debug('Will use default retention policy')
+            LOG.debug(err)
+            LOG.debug('Will use default retention policy')
 
         return RunIntervals(**kwargs)
 

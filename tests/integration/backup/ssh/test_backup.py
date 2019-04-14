@@ -1,3 +1,5 @@
+import json
+
 from tests.integration.conftest import get_twindb_config_dir, docker_execute
 
 
@@ -66,9 +68,26 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
            '--debug',
            '--config', twindb_config_guest,
            'backup', 'hourly']
+
+    # print('Test paused')
+    # print(' '.join(cmd))
+    # import time
+    # time.sleep(36000)
+
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
+
+    cmd = [
+        'twindb-backup',
+        '--config', twindb_config_guest,
+        'status'
+    ]
+
+    ret, cout = docker_execute(docker_client, master1['Id'], cmd)
+    assert ret == 0
+    status = json.loads(cout)
+    assert len(status["hourly"]) == 1
 
     cmd = ['twindb-backup',
            '--debug',

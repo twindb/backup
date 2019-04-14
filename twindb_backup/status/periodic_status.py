@@ -64,4 +64,3 @@ class PeriodicStatus(BaseStatus):
             if copy.run_type == run_type:
                 result[copy.key] = copy
         return result
-

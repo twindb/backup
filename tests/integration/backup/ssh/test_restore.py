@@ -88,6 +88,7 @@ nwKBgCIXVhXCDaXOOn8M4ky6k27bnGJrTkrRjHaq4qWiQhzizOBTb+7MjCrJIV28
            "--dst", dst_dir]
 
     # print('Test paused')
+    # print(' '.join(cmd))
     # import time
     # time.sleep(36000)
 

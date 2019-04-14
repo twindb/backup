@@ -4,6 +4,7 @@ from abc import abstractmethod, abstractproperty
 from base64 import b64decode
 import json
 import hashlib
+from errno import ENOENT
 from os import path as osp
 import socket
 
@@ -33,6 +34,7 @@ class BaseStatus(object):
 
     def __init__(self, content=None, dst=None, status_directory=None):
         self._status_directory = status_directory or socket.gethostname()
+        self._status = []
         if dst:
             self.__init_from_str(self._read(dst))
         else:
@@ -62,7 +64,8 @@ class BaseStatus(object):
     @property
     def md5(self):
         """
-        :return: MD5 checksum of the status. It is calculated as a md5 of output of
+        :return: MD5 checksum of the status. It is calculated as
+            a md5 of output of
         ``self._status_serialize()``.
         :rtype: str
         """
@@ -101,6 +104,9 @@ class BaseStatus(object):
     def remove(self, key):
         """
         Remove key from the status.
+
+        :param key: A copy key in the status.
+        :type key: str
         """
         copy = self[key]
         self._status.remove(copy)
@@ -164,8 +170,6 @@ class BaseStatus(object):
             return self._status[item]
         elif isinstance(item, (str, unicode)):
             for copy in self._status:
-                print(' copy.key = %s' % copy.key)
-                print('str(item) = %s' % str(item))
                 if copy.key == str(item):
                     return copy
             raise StatusKeyNotFound('Copy %s not found' % item)
@@ -210,4 +214,3 @@ class BaseStatus(object):
             self._status.sort(
                 key=lambda cp: cp.created_at
             )
-
