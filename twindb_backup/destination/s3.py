@@ -12,9 +12,7 @@ from urlparse import urlparse
 
 import time
 
-import botocore
-from botocore.errorfactory import BaseClientExceptions, ClientExceptionsFactory
-from botocore.exceptions import ClientError, DataNotFoundError, BotoCoreError
+from botocore.exceptions import ClientError
 from botocore.client import Config
 
 import boto3
@@ -25,7 +23,6 @@ from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import S3DestinationError, \
     FileNotFound
 from twindb_backup.exceptions import OperationError
-from twindb_backup.status.mysql_status import MySQLStatus
 
 S3_CONNECT_TIMEOUT = 60
 S3_READ_TIMEOUT = 600
@@ -117,17 +114,17 @@ class S3(BaseDestination):
 
         return True
 
-    def delete(self, obj):
+    def delete(self, path):
         """Deletes an S3 object.
 
-        :param obj: Key of S3 object.
-        :type obj: str
+        :param path: Key of S3 object.
+        :type path: str
         :raise S3DestinationError: if failed to delete object.
         """
-        key = obj.replace(
+        key = path.replace(
             's3://%s/' % self._bucket,
             ''
-        ) if obj.startswith('s3://') else obj
+        ) if path.startswith('s3://') else path
 
         s3client = boto3.resource('s3')
         bucket = s3client.Bucket(self._bucket)
@@ -278,7 +275,7 @@ class S3(BaseDestination):
 
         return transfer_config
 
-    def list_files(self, prefix, recursive=False, pattern=None,
+    def list_files(self, prefix=None, recursive=False, pattern=None,
                    files_only=False):
         """
         List files in the destination that have common prefix.
@@ -363,15 +360,15 @@ class S3(BaseDestination):
         except self.s3_client.exceptions.NoSuchKey:
             raise FileNotFound('%s does not exist' % filepath)
 
-    def save(self, handler, name):
+    def save(self, handler, filepath):
         """
         Read from handler and save it to Amazon S3
 
-        :param name: save backup copy in a file with this name
+        :param filepath: save backup copy in a file with this name
         :param handler: stdout handler from backup source
         """
         with handler as file_obj:
-            ret = self._upload_object(file_obj, name)
+            ret = self._upload_object(file_obj, filepath)
             LOG.debug('Returning code %d', ret)
 
     @staticmethod
@@ -445,7 +442,7 @@ class S3(BaseDestination):
         )
         self.validate_client_response(response)
 
-    def _list_files(self, path, recursive=False, files_only=False):
+    def _list_files(self, prefix=None, recursive=False, files_only=False):
         raise NotImplementedError
 
     def _upload_object(self, file_obj, object_key):
@@ -498,30 +495,6 @@ class S3(BaseDestination):
         LOG.debug("Upload successfully validated")
 
         return 0
-
-    def _status_exists(self, cls=MySQLStatus):
-        s3client = boto3.resource('s3')
-        status_object = s3client.Object(
-            self._bucket,
-            self.status_path(cls=cls)
-        )
-        try:
-            if status_object.content_length > 0:
-                return True
-        except ClientError as err:
-            if err.response['ResponseMetadata']['HTTPStatusCode'] == 404:
-                return False
-            else:
-                raise
-        return False
-
-    def _write_status(self, status, cls=MySQLStatus):
-        response = self.s3_client.put_object(
-            Body=status.serialize(),
-            Bucket=self._bucket,
-            Key=self.status_path(cls=cls)
-        )
-        self.validate_client_response(response)
 
     def _set_file_access(self, access_mode, url):
         """

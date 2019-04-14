@@ -4,7 +4,6 @@ from abc import abstractmethod, abstractproperty
 from base64 import b64decode
 import json
 import hashlib
-from errno import ENOENT
 from os import path as osp
 import socket
 
@@ -108,8 +107,16 @@ class BaseStatus(object):
         :param key: A copy key in the status.
         :type key: str
         """
-        copy = self[key]
-        self._status.remove(copy)
+        copy = None
+        try:
+            copy = self[key]
+            self._status.remove(copy)
+        except StatusKeyNotFound:
+            for copy in self._status:
+                if key.endswith(copy.key):
+                    self._status.remove(copy)
+                    return
+            raise
 
     def serialize(self):
         """
