@@ -43,14 +43,14 @@ class Local(BaseDestination):
         return self._path
 
     def read(self, filepath):
-        with open(osp.join(self.path, filepath), 'r') as fp:
-            return fp.read()
+        with open(osp.join(self.path, filepath), 'r') as fdesc:
+            return fdesc.read()
 
-    def save(self, handler, name):
+    def save(self, handler, filepath):
         """
         Read from handler and save it on local storage
 
-        :param name: store backup copy as this name
+        :param filepath: store backup copy as this name
         :param handler: Input stream
         """
         with handler as in_stream:
@@ -60,7 +60,7 @@ class Local(BaseDestination):
                 stdout=open(
                     osp.join(
                         self.path,
-                        name
+                        filepath
                     ),
                     'wb'
                 )
@@ -88,15 +88,15 @@ class Local(BaseDestination):
             else:
                 return cout.read().split()[1:]
 
-    def delete(self, obj):
-        cmd = ["rm", obj]
+    def delete(self, path):
+        cmd = ["rm", path]
         LOG.debug('Running %s', ' '.join(cmd))
         proc = Popen(cmd)
         proc.communicate()
 
     def write(self, content, filepath):
-        with open(osp.join(self.path, filepath), 'w') as fp:
-            fp.write(content)
+        with open(osp.join(self.path, filepath), 'w') as fdesc:
+            fdesc.write(content)
 
     def __str__(self):
         return "Local(%s)" % self.path

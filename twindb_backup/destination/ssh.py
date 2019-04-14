@@ -2,12 +2,12 @@
 """
 Module for SSH destination.
 """
+import os
+from os import path as osp
 import socket
 
-import os
-from errno import ENOENT
-from os import path as osp
 from contextlib import contextmanager
+from errno import ENOENT
 from multiprocessing import Process
 
 import time
@@ -68,13 +68,13 @@ class Ssh(BaseDestination):
         """SSH user."""
         return self._ssh_client.user
 
-    def delete(self, obj):
+    def delete(self, path):
         """
         Delete file by path
 
-        :param obj: path to a remote file.
+        :param path: path to a remote file.
         """
-        cmd = "rm %s" % obj
+        cmd = "rm %s" % path
         self.execute_command(cmd)
 
     def ensure_tcp_port_listening(self, port, wait_timeout=10):
@@ -207,16 +207,16 @@ class Ssh(BaseDestination):
             else:
                 raise
 
-    def save(self, handler, name):
+    def save(self, handler, filepath):
         """
         Read from handler and save it on remote ssh server
 
-        :param name: relative path to a file to store the backup copy.
+        :param filepath: relative path to a file to store the backup copy.
         :param handler: stream with content of the backup.
         """
         remote_name = osp.join(
             self.remote_path,
-            name
+            filepath
         )
         self._mkdir_r(osp.dirname(remote_name))
 
