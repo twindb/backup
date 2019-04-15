@@ -26,20 +26,16 @@
 
 # Disable git caching
 # ------------------------------
-use_git_caching false
+use_git_caching true
 
 # Enable S3 asset caching
 # ------------------------------
-bucket = ENV['S3_OMNIBUS_BUCKET']
+bucket = 'omnibus-cache-twindb-backup'
 
-if bucket.nil? || bucket.empty?
-  use_s3_caching false
-else
-  use_s3_caching true
-  s3_access_key  ENV['AWS_ACCESS_KEY_ID']
-  s3_secret_key  ENV['AWS_SECRET_ACCESS_KEY']
-  s3_bucket      ENV['AWS_S3_BUCKET']
-end
+use_s3_caching true
+s3_access_key  ENV['AWS_ACCESS_KEY_ID']
+s3_secret_key  ENV['AWS_SECRET_ACCESS_KEY']
+s3_bucket      bucket
 
 # Customize compiler bits
 # ------------------------------
