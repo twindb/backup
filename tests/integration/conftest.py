@@ -159,10 +159,14 @@ def get_container(name, client, network,
         'host_config': host_config,
         'networking_config': networking_config,
         'volumes': ['/twindb-backup'],
-        'environment': {
+        'environment': {}
+    }
+    try:
+        kwargs['environment'] = {
             'DEV': os.environ['DEV']
         }
-    }
+    except KeyError:
+        pass
     if bootstrap_script:
         kwargs['command'] = 'bash %s' % bootstrap_script
     container = api.create_container(**kwargs)
