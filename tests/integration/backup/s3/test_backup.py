@@ -172,7 +172,7 @@ def test__take_mysql_backup_retention(master1,
     cmd = ['twindb-backup', '--debug', '--config', twindb_config_guest,
            'backup', 'daily']
 
-    # pause_test(' '.join(cmd))
+    pause_test(' '.join(cmd))
     for i in range(0, 3):
         ret, cout = docker_execute(docker_client, master1['Id'], cmd)
         print(cout)

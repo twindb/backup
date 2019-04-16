@@ -12,6 +12,7 @@ import traceback
 from twindb_backup import LOG
 from twindb_backup.exceptions import TwinDBBackupError
 from twindb_backup.restore import restore_from_mysql
+from twindb_backup.status.mysql_status import MySQLStatus
 
 
 def edit_backup_my_cnf(dst_path):
@@ -29,28 +30,30 @@ def edit_backup_my_cnf(dst_path):
         backup_cfg.write(backup_fp)
 
 
-def verify_mysql_backup(twindb_config, dst_path, backup_copy, hostname=None):
+def verify_mysql_backup(twindb_config, dst_path, backup_file, hostname=None):
     """
     Restore mysql backup and measure time
 
     :param hostname:
-    :param backup_copy:
+    :param backup_file:
     :param dst_path:
     :param twindb_config: tool configuration
     :type twindb_config: TwinDBBackupConfig
 
     """
     dst = twindb_config.destination(backup_source=hostname)
-    status = dst.status()
-    if backup_copy == "latest":
-        copy = status.get_latest_backup()
-    else:
-        key = dst.basename(backup_copy)
-        copy = status[key]
+    status = MySQLStatus(dst=dst)
+    copy = None
 
+    if backup_file == "latest":
+        copy = status.latest_backup
+    else:
+        for copy in status:
+            if backup_file.endswith(copy.key):
+                break
     if copy is None:
         return json.dumps({
-            'backup_copy': backup_copy,
+            'backup_copy': backup_file,
             'restore_time': 0,
             'success': False
         }, indent=4, sort_keys=True)
