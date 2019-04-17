@@ -19,7 +19,7 @@ with open('requirements_dev.txt') as f:
 
 setup(
     name='twindb-backup',
-    version='2.17.1',
+    version='2.18.0',
     description="TwinDB Backup tool for files, MySQL et al.",
     long_description=readme + '\n\n' + history,
     author="TwinDB Development Team",
