@@ -1,21 +1,12 @@
 import StringIO
 import json
 import os
-from textwrap import dedent
 
 import magic
 
 from tests.integration.conftest import docker_execute, get_twindb_config_dir, \
     pause_test
 from twindb_backup.destination.s3 import S3
-
-MY_CNF_CONTENT = dedent(
-    """
-    [client]
-    user=dba
-    password=qwerty
-    """
-)
 
 
 def test__take_file_backup(master1,
@@ -102,7 +93,8 @@ def test__take_file_backup(master1,
 def test__take_mysql_backup(master1,
                             docker_client,
                             s3_client,
-                            config_content_mysql_only):
+                            config_content_mysql_only,
+                            client_my_cnf):
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
 
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
@@ -110,7 +102,7 @@ def test__take_mysql_backup(master1,
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
 
     with open(my_cnf_path, "w") as my_cnf:
-        my_cnf.write(MY_CNF_CONTENT)
+        my_cnf.write(client_my_cnf)
 
     with open(twindb_config_host, 'w') as fp:
         content = config_content_mysql_only.format(
@@ -147,7 +139,8 @@ def test__take_mysql_backup(master1,
 def test__take_mysql_backup_retention(master1,
                                       docker_client,
                                       s3_client,
-                                      config_content_mysql_only):
+                                      config_content_mysql_only,
+                                      client_my_cnf):
 
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
 
@@ -156,7 +149,7 @@ def test__take_mysql_backup_retention(master1,
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
 
     with open(my_cnf_path, "w") as my_cnf:
-        my_cnf.write(MY_CNF_CONTENT)
+        my_cnf.write(client_my_cnf)
 
     with open(twindb_config_host, 'w') as fp:
         content = config_content_mysql_only.format(
@@ -198,7 +191,8 @@ def test__take_mysql_backup_retention(master1,
 def test__s3_find_files_returns_sorted(master1,
                                        docker_client,
                                        s3_client,
-                                       config_content_mysql_only):
+                                       config_content_mysql_only,
+                                       client_my_cnf):
     # cleanup the bucket first
     s3_client.delete_all_objects()
 
@@ -209,7 +203,7 @@ def test__s3_find_files_returns_sorted(master1,
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
 
     with open(my_cnf_path, "w") as my_cnf:
-        my_cnf.write(MY_CNF_CONTENT)
+        my_cnf.write(client_my_cnf)
 
     with open(twindb_config_host, 'w') as fp:
         content = config_content_mysql_only.format(
@@ -377,7 +371,8 @@ def test__take_mysql_backup_aenc_suffix_gpg(master1,
                                             s3_client,
                                             config_content_mysql_aenc,
                                             gpg_public_key,
-                                            gpg_private_key):
+                                            gpg_private_key,
+                                            client_my_cnf):
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
 
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
@@ -386,7 +381,7 @@ def test__take_mysql_backup_aenc_suffix_gpg(master1,
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
 
     with open(my_cnf_path, "w") as my_cnf:
-        my_cnf.write(MY_CNF_CONTENT)
+        my_cnf.write(client_my_cnf)
 
     gpg_public_key_path_host = "%s/public_key" % twindb_config_dir
     gpg_private_key_path_host = "%s/private_key" % twindb_config_dir
@@ -456,14 +451,14 @@ def test__take_mysql_backup_aenc_suffix_gpg(master1,
 
 
 def test_take_mysql_backup_aenc_restores_full(
-    master1,
-    docker_client,
-    s3_client,
-    config_content_mysql_aenc,
-    gpg_public_key,
-    gpg_private_key,
-    tmpdir
-):
+        master1,
+        docker_client,
+        s3_client,
+        config_content_mysql_aenc,
+        gpg_public_key,
+        gpg_private_key,
+        tmpdir,
+        client_my_cnf):
 
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
 
@@ -473,7 +468,7 @@ def test_take_mysql_backup_aenc_restores_full(
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
 
     with open(my_cnf_path, "w") as my_cnf:
-        my_cnf.write(MY_CNF_CONTENT)
+        my_cnf.write(client_my_cnf)
 
     gpg_public_key_path_host = "%s/public_key" % twindb_config_dir
     gpg_private_key_path_host = "%s/private_key" % twindb_config_dir
@@ -635,7 +630,8 @@ def test_take_mysql_backup_aenc_restores_inc(
         config_content_mysql_aenc,
         gpg_public_key,
         gpg_private_key,
-        tmpdir):
+        tmpdir,
+        client_my_cnf):
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
 
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
@@ -644,7 +640,7 @@ def test_take_mysql_backup_aenc_restores_inc(
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
 
     with open(my_cnf_path, "w") as my_cnf:
-        my_cnf.write(MY_CNF_CONTENT)
+        my_cnf.write(client_my_cnf)
 
     gpg_public_key_path_host = "%s/public_key" % twindb_config_dir
     gpg_private_key_path_host = "%s/private_key" % twindb_config_dir
