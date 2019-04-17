@@ -6,8 +6,9 @@ from multiprocessing import Process
 
 import time
 
-from twindb_backup import INTERVALS, LOG, TwinDBBackupError
+from twindb_backup import INTERVALS, LOG
 from twindb_backup.destination.ssh import Ssh
+from twindb_backup.exceptions import OperationError
 from twindb_backup.source.mysql_source import MySQLConnectInfo, MySQLMasterInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
 from twindb_backup.ssh.exceptions import SshClientException
@@ -47,8 +48,10 @@ def _mysql_service(dst, action):
             )
     except SshClientException as err:
         LOG.error(err)
-        raise TwinDBBackupError('Failed to %s MySQL on %r'
-                                % (action, dst))
+        raise OperationError(
+            'Failed to %s MySQL on %r'
+            % (action, dst)
+        )
 
 
 def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
@@ -139,13 +142,9 @@ def clone_mysql(cfg, source, destination,  # pylint: disable=too-many-arguments
 
     LOG.debug('Binlog coordinates: (%s, %d)', binlog, position)
 
-    try:
-        LOG.debug('Starting MySQL on the destination')
-        _mysql_service(dst, action='start')
-        LOG.debug('MySQL started')
-    except TwinDBBackupError as err:
-        LOG.error(err)
-        exit(1)
+    LOG.debug('Starting MySQL on the destination')
+    _mysql_service(dst, action='start')
+    LOG.debug('MySQL started')
 
     LOG.debug('Setting up replication.')
     LOG.debug('Master host: %s', source)

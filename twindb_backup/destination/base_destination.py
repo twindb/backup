@@ -4,14 +4,10 @@ Module defines Base destination class and destination exception(s).
 """
 import re
 from abc import abstractmethod
-from os.path import sep, join
-
-from subprocess import Popen, PIPE
 
 from twindb_backup import LOG
 from twindb_backup.destination.exceptions import DestinationError
-from twindb_backup.status.exceptions import CorruptedStatus
-from twindb_backup.status.mysql_status import MySQLStatus
+from twindb_backup.exceptions import TwinDBBackupInternalError
 
 
 class BaseDestination(object):
@@ -25,52 +21,35 @@ class BaseDestination(object):
         self.remote_path = remote_path.rstrip('/')
 
     @abstractmethod
-    def save(self, handler, name):
+    def delete(self, path):
         """
-        Save the given stream.
+        Delete object from the destination
 
-        :param handler: Incoming stream.
-        :type handler: file
-        :param name: Save stream as this name.
-        :type name: str
-        :raise: DestinationError if any error
+        :param path: Relative path to the file to delete
         """
 
-    @staticmethod
-    def _save(cmd, handler):
+    @abstractmethod
+    def get_stream(self, copy):
+        """
+        Get a PIPE handler with content of the backup copy streamed from
+        the destination.
 
-        with handler as input_handler:
-            LOG.debug('Running %s', ' '.join(cmd))
-            try:
-                proc = Popen(cmd, stdin=input_handler,
-                             stdout=PIPE,
-                             stderr=PIPE)
-                cout_ssh, cerr_ssh = proc.communicate()
-
-                ret = proc.returncode
-                if ret:
-                    if cout_ssh:
-                        LOG.info(cout_ssh)
-                    if cerr_ssh:
-                        LOG.error(cerr_ssh)
-                    raise DestinationError('%s exited with error code %d'
-                                           % (' '.join(cmd), ret))
-                LOG.debug('Exited with code %d', ret)
-            except OSError as err:
-                raise DestinationError('Failed to run %s: %s'
-                                       % (' '.join(cmd), err))
+        :param copy: Backup copy
+        :type copy: BaseCopy
+        :return: Standard output.
+        """
 
     def list_files(self,
-                   prefix,
+                   prefix=None,
                    recursive=False,
                    pattern=None,
                    files_only=False):
         """
-        Get list of file by prefix
+        Get list of file by prefix.
 
         :param prefix: Path
-        :param recursive: Recursive return list of files
         :type prefix: str
+        :param recursive: Recursive return list of files
         :type recursive: bool
         :param pattern: files must match with this regexp if specified
         :type pattern: str
@@ -82,7 +61,7 @@ class BaseDestination(object):
         return sorted(
             self._match_files(
                 self._list_files(
-                    prefix,
+                    prefix=prefix,
                     recursive=recursive,
                     files_only=files_only
                 ),
@@ -91,94 +70,60 @@ class BaseDestination(object):
         )
 
     @abstractmethod
-    def _list_files(self, path, recursive=False, files_only=False):
-        raise NotImplementedError
-
-    @abstractmethod
-    def delete(self, obj):
+    def read(self, filepath):
         """
-        Delete object from the destination
+        Read content of a file path from destination.
 
-        :param obj:
-        :return:
-        """
-
-    def status(self, status=None, cls=MySQLStatus):
-        """
-        Read or save backup status. Status is an instance of Status class.
-        If status is None the function will read status from
-        the remote storage.
-        Otherwise it will store the status remotely.
-
-        :param status: instance of Status class
-        :type status: Status
-        :param cls: class of status. By default, MySQLStatus
-        :return: instance of Status class
-        :rtype: Status
-        """
-        def _write_retry(status_content, attempts=3):
-            for _ in xrange(attempts):
-                self._write_status(status_content, cls=cls)
-                try:
-                    return self._read_status(cls=cls)
-                except CorruptedStatus:
-                    pass
-            raise DestinationError("Can't write status")
-        if status:
-            return _write_retry(status, attempts=3)
-        else:
-            return self._read_status(cls=cls)
-
-    @abstractmethod
-    def _write_status(self, status, cls=MySQLStatus):
-        """Function that actually writes status"""
-
-    @abstractmethod
-    def _read_status(self, cls=MySQLStatus):
-        """Function that actually reads status"""
-
-    @abstractmethod
-    def _status_exists(self, cls=MySQLStatus):
-        """Check if status file exists"""
-
-    def get_run_type_from_full_path(self, path):
-        """
-        For a given backup copy path find what run_type it was.
-        For example,
-        s3://bucket/ip-10-0-52-101/daily/files/_etc-2018-04-05_00_07_13.tar.gz
-        is a daily backup and
-        /path/to/twindb-server-backups/master1/hourly/
-        mysql/mysql-2018-04-08_03_51_18.xbstream.gz
-        is an hourly backup.
-
-        :param path: Full path of the backup copy
-        :return: Run type this backup was taken on:
-
-            - hourly
-            - daily
-            - weekly
-            - monthly
-            - yearly
+        :param filepath: Relative path to file.
+        :type filepath: str
+        :return: Content of the file.
         :rtype: str
         """
-        return self.basename(path).split('/')[1]
+        raise TwinDBBackupInternalError(
+            'Method read() is not implemented in %s'
+            % self.__class__
+        )
 
-    def basename(self, filename):
+    @abstractmethod
+    def save(self, handler, filepath):
         """
-        Basename of backup copy
+        Save a stream given as handler to filepath.
 
-        :param filename:
-        :return:
+        :param handler: Incoming stream.
+        :type handler: file
+        :param filepath: Save stream as this name.
+        :type filepath: str
         """
-        return filename.replace(self.remote_path, '', 1).lstrip(sep)
+        raise TwinDBBackupInternalError(
+            'Method save() is not implemented in %s'
+            % self.__class__
+        )
 
-    def get_latest_backup(self):
-        """Get latest backup path"""
-        cur_status = self.status()
-        latest = cur_status.get_latest_backup()
-        if latest is None:
-            return None
-        return join(self.remote_path, latest.key)
+    @abstractmethod
+    def write(self, content, filepath):
+        """
+        Write string to a file.
+
+        :param content: String.
+        :type content: str
+        :param filepath: Relative path to file.
+        :type filepath: str
+        """
+        raise TwinDBBackupInternalError(
+            'Method write() is not implemented in %s'
+            % self.__class__
+        )
+
+    @abstractmethod
+    def _list_files(self, prefix=None, recursive=False, files_only=False):
+        """
+        A descendant class must implement this method.
+        It should return a list of files already filtered out by prefix.
+        Some storage engines (e.g. Google Cloud Storage) allow that
+        at the API level. The method should use storage level filtering
+        to save on network transfers.
+        """
+        raise NotImplementedError
 
     @staticmethod
     def _match_files(files, pattern=None):

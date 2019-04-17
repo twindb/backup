@@ -154,6 +154,7 @@ docker-test: ## Test twindb-backup in a docker container
 		-e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
 		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
 		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
+		-e "GC_CREDENTIALS_FILE=${GC_CREDENTIALS_FILE}" \
 		-e "OS_VERSION"=${OS_VERSION} \
 		-e "CI"=${CI} \
 		-e "TRAVIS"=${TRAVIS} \
@@ -173,6 +174,7 @@ docker-start:
 		-e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
 		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
 		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
+		-e "GC_CREDENTIALS_FILE=${GC_CREDENTIALS_FILE}" \
 		-it \
 		--name builder_xtrabackup \
 		--rm \

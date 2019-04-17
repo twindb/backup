@@ -1,5 +1,5 @@
 """Status exceptions"""
-from twindb_backup import TwinDBBackupError
+from twindb_backup.exceptions import TwinDBBackupError
 
 
 class StatusError(TwinDBBackupError):

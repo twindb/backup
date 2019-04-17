@@ -14,5 +14,7 @@ do
     let wait_time=${wait_time}*2
 done
 
-#/bin/cp -R /twindb-backup/twindb_backup \
-#   /opt/twindb-backup/embedded/lib/python2.7/site-packages/twindb_backup-${TB_VERSION}-py2.7.egg
+set +u
+if ! test -z "${DEV}"; then
+    /bin/cp -R /twindb-backup/twindb_backup /opt/twindb-backup/embedded/lib/python2.7/site-packages
+fi
