@@ -13,19 +13,17 @@ import os
 import click
 
 from twindb_backup import setup_logging, LOG, __version__, \
-    TwinDBBackupError, LOCK_FILE, INTERVALS, MEDIA_TYPES
+    LOCK_FILE, INTERVALS, MEDIA_TYPES
 from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.clone import clone_mysql
 from twindb_backup.configuration import TwinDBBackupConfig
 from twindb_backup.copy.file_copy import FileCopy
 from twindb_backup.copy.mysql_copy import MySQLCopy
-from twindb_backup.exceptions import LockWaitTimeoutError, OperationError
+from twindb_backup.exceptions import TwinDBBackupError
 from twindb_backup.ls import list_available_backups
-from twindb_backup.modifiers.base import ModifierException
 from twindb_backup.restore import restore_from_mysql, restore_from_file
 from twindb_backup.share import share
-from twindb_backup.source.exceptions import SourceError
 from twindb_backup.status.binlog_status import BinlogStatus
 from twindb_backup.status.mysql_status import MySQLStatus
 from twindb_backup.util import ensure_empty, kill_children
@@ -128,19 +126,11 @@ def backup(ctx, run_type, lock_file, binlogs_only):
             lock_file=lock_file,
             binlogs_only=binlogs_only
         )
-    except (LockWaitTimeoutError, OperationError) as err:
+    except TwinDBBackupError as err:
         LOG.error(err)
         LOG.debug(traceback.format_exc())
         exit(1)
-    except ModifierException as err:
-        LOG.error('Error in modifier class')
-        LOG.error(err)
-        LOG.debug(traceback.format_exc())
-        exit(1)
-    except SourceError as err:
-        LOG.error(err)
-        LOG.debug(traceback.format_exc())
-        exit(1)
+
     except KeyboardInterrupt:
         LOG.info('Exiting...')
         kill_children()
@@ -191,9 +181,7 @@ def status(ctx, copy_type, hostname):
     """Print backups status"""
     dst = ctx.obj['twindb_config'].destination(backup_source=hostname)
     print(
-        dst.status(
-            cls=MEDIA_STATUS_MAP[copy_type]
-        )
+        MEDIA_STATUS_MAP[copy_type](dst=dst)
     )
 
 
@@ -222,14 +210,33 @@ def restore_mysql(ctx, dst, backup_copy, cache):
 
     try:
         ensure_empty(dst)
-        copy = MySQLCopy(
+
+        incomplete_copy = MySQLCopy(
             path=backup_copy
         )
         dst_storage = ctx.obj['twindb_config'].destination(
-            backup_source=copy.host
+            backup_source=incomplete_copy.host
         )
-        key = dst_storage.basename(backup_copy)
-        copy = dst_storage.status()[key]
+        mysql_status = MySQLStatus(dst=dst_storage)
+
+        copies = [
+            cp for cp in mysql_status if backup_copy.endswith(cp.name)
+        ]
+        try:
+            copy = copies.pop(0)
+        except IndexError:
+            raise TwinDBBackupError(
+                'Can not find copy %s in MySQL status. '
+                'Inspect output of `twindb-backup status` and verify '
+                'that correct copy is specified.'
+                % backup_copy
+            )
+        if copies:
+            raise TwinDBBackupError(
+                'Multiple copies match pattern %s. Make sure you give unique '
+                'copy name for restore.'
+            )
+
         if cache:
             restore_from_mysql(
                 ctx.obj['twindb_config'],
@@ -242,9 +249,11 @@ def restore_mysql(ctx, dst, backup_copy, cache):
 
     except (TwinDBBackupError, CacheException) as err:
         LOG.error(err)
+        LOG.debug(traceback.format_exc())
         exit(1)
     except (OSError, IOError) as err:
         LOG.error(err)
+        LOG.debug(traceback.format_exc())
         exit(1)
 
 

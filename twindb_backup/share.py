@@ -4,7 +4,7 @@ Module that works with sharing backups
 """
 from __future__ import print_function
 
-from twindb_backup import TwinDBBackupError
+from twindb_backup.exceptions import TwinDBBackupInternalError
 
 
 def share(twindb_config, s3_url):
@@ -20,4 +20,4 @@ def share(twindb_config, s3_url):
     try:
         print(twindb_config.destination().share(s3_url))
     except NotImplementedError as err:
-        raise TwinDBBackupError(err)
+        raise TwinDBBackupInternalError(err)
