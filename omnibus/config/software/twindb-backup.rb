@@ -24,6 +24,7 @@ skip_transitive_dependency_licensing true
 dependency 'python'
 dependency 'setuptools'
 dependency 'libffi'
+dependency 'pip'
 
 source path: '/twindb-backup'
 
@@ -34,10 +35,8 @@ build do
   # helper everywhere. It will become the default in the future.
   env = with_standard_compiler_flags(with_embedded_path)
 
-  command "#{install_dir}/embedded/bin/python setup.py install" \
-          " --prefix=#{install_dir}/embedded" \
-          " --install-scripts=#{install_dir}/bin", env: env
-
+  command "#{install_dir}/embedded/bin/pip install -I" \
+          " --build #{project_dir} .", env: env
   # support files
   copy 'support/twindb-backup.cfg', "#{install_dir}/"
   copy 'support/twindb-backup.cron', "#{install_dir}/"

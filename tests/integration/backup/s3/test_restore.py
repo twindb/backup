@@ -7,21 +7,16 @@ from tests.integration.conftest import get_twindb_config_dir, docker_execute
 def test__restore_mysql_inc_creates_log_files(master1,
                                               docker_client,
                                               s3_client,
-                                              config_content_mysql_only):
+                                              config_content_mysql_only,
+                                              client_my_cnf):
     twindb_config_dir = get_twindb_config_dir(docker_client, master1['Id'])
 
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
     twindb_config_guest = '/etc/twindb/twindb-backup-1.cfg'
     my_cnf_path = "%s/my.cnf" % twindb_config_dir
 
-    contents = """
-[client]
-user=dba
-password=qwerty
-"""
-
     with open(my_cnf_path, "w") as my_cnf:
-        my_cnf.write(contents)
+        my_cnf.write(client_my_cnf)
 
     with open(twindb_config_host, 'w') as fp:
         content = config_content_mysql_only.format(
@@ -101,8 +96,12 @@ password=qwerty
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)
     assert ret == 0
-    cmd = ["bash", "-c", 'test -f /tmp/dst_full_log_files/_config/etc/my.cnf || '
-                         'test -f /tmp/dst_full_log_files/_config/etc/mysql/my.cnf']
+    cmd = [
+        "bash",
+        "-c",
+        'test -f /tmp/dst_full_log_files/_config/etc/my.cnf '
+        '|| test -f /tmp/dst_full_log_files/_config/etc/mysql/my.cnf'
+    ]
     print(cmd)
     ret, cout = docker_execute(docker_client, master1['Id'], cmd)
     print(cout)

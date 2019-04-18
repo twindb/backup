@@ -9,6 +9,7 @@ import re
 from contextlib import contextmanager
 
 import time
+from errno import ENOENT
 
 import pymysql
 from twindb_backup import LOG, MY_CNF_COMMON_PATHS
@@ -162,6 +163,11 @@ class RemoteMySQLSource(MySQLSource):
                 return cfg_path
             except SshClientException:
                 continue
+            except IOError as err:
+                if err.errno == ENOENT:
+                    continue
+                else:
+                    raise
         raise OSError("Root my.cnf not found")
 
     def _get_config(self, cfg_path):

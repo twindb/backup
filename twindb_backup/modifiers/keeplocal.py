@@ -6,6 +6,7 @@ import os
 
 from twindb_backup.destination.local import Local
 from twindb_backup.modifiers.base import Modifier, ModifierException
+from twindb_backup.status.mysql_status import MySQLStatus
 from twindb_backup.util import mkdir_p
 
 
@@ -32,7 +33,8 @@ class KeepLocal(Modifier):
 
     def callback(self, **kwargs):
         local_dst = Local(kwargs['keep_local_path'])
-        local_dst.status(kwargs['dst'].status())
+        status = MySQLStatus(dst=kwargs['dst'])
+        status.save(local_dst)
 
     @property
     def _modifier_cmd(self):

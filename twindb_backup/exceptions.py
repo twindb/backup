@@ -1,11 +1,17 @@
 """Module that describes exceptions of twindb_backup module"""
 
 
-class OperationError(Exception):
+class TwinDBBackupError(Exception):
+    """Catch-all exceptions"""
+
+
+class OperationError(TwinDBBackupError):
     """High level exceptions of twindb_backup package"""
-    pass
 
 
-class LockWaitTimeoutError(Exception):
+class LockWaitTimeoutError(TwinDBBackupError):
     """Class that describes exception of lock wait timeout"""
-    pass
+
+
+class TwinDBBackupInternalError(TwinDBBackupError):
+    """Internal errors in the tool itself"""

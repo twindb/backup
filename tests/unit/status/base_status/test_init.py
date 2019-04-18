@@ -124,3 +124,16 @@ def test_init_reads_deprecated_invalid(
         '                  ],\r\n'
         '            }'
     )
+
+
+def test_status_set_dir():
+    # noinspection PyTypeChecker
+    status = BaseStatus(None, status_directory='foo')
+    assert status.status_path == 'foo/status'
+
+
+@mock.patch('twindb_backup.status.base_status.socket.gethostname')
+def test_status_default_status_dir(mock_gethostname):
+    mock_gethostname.return_value = 'foo'
+    status = BaseStatus()
+    assert status.status_path == 'foo/status'

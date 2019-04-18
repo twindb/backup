@@ -18,37 +18,71 @@ class MySQLStatus(PeriodicStatus):
     """
     Class that stores status file and implements operations on it.
     """
+    def __init__(self, content=None, dst=None, status_directory=None):
+        super(MySQLStatus, self).__init__(
+            content=content,
+            dst=dst,
+            status_directory=status_directory
+        )
 
     @property
     def basename(self):
         return 'status'
 
-    def _status_serialize(self):
+    def candidate_parent(self, run_type):
+        """
+        Find a backup copy that can be a parent
 
-        def _serialize_config_dict(cfg):
-            config_serialized = []
-            for key, value in cfg.iteritems():
-                config_serialized.append(
-                    {
-                        key: b64encode(value)
-                    }
-                )
-            return config_serialized
+        :param run_type: See :func:`~get_backup_type`.
+        :return: Backup copy or None
+        :rtype: MySQLCopy
+        """
+        full_backup_index = INTERVALS.index(run_type)
+        LOG.debug('Looking a parent candidate for %s run', run_type)
+        for i in xrange(full_backup_index, len(INTERVALS)):
+            period_copies = getattr(self, INTERVALS[i])
+            LOG.debug(
+                'Checking %d %s copies',
+                len(period_copies),
+                INTERVALS[i]
+            )
+            for _, value in period_copies.iteritems():
+                try:
+                    if value.type == 'full':
+                        LOG.debug('Found parent %r', value)
+                        return value
+                except KeyError:
+                    return None
+        LOG.debug('No eligible parents')
+        return None
 
-        status = {}
-        for interval in INTERVALS:
-            status[interval] = {}
-            copies = getattr(self, interval)
-            for _, copy in copies.iteritems():
+    def full_copy_exists(self, run_type):
+        """
+        Check whether there is a full copy.
 
-                status[interval][copy.key] = copy.as_dict()
-                status[interval][copy.key]['config'] = _serialize_config_dict(
-                    status[interval][copy.key]['config']
-                )
+        :param run_type: See :func:`~get_backup_type`.
+        :return: True if there is a full copy. False if there is no
+            an eligible full copy.
+        :rtype: bool
+        """
+        return self.candidate_parent(run_type) is not None
 
-        return b64encode(
-            json.dumps(status)
-        )
+    def next_backup_type(self, full_backup, run_type):
+        """
+        Return backup type to take. If full_backup=daily then
+        for hourly backups it will be incremental, for all other - full
+
+        :param full_backup: when to take full backup according to config.
+        :param run_type: what kind of backup run it is.
+        :return: "full" or "incremental"
+        :rtype: str
+        """
+        if INTERVALS.index(full_backup) <= INTERVALS.index(run_type):
+            return "full"
+        elif not self.full_copy_exists(run_type):
+            return "full"
+        else:
+            return "incremental"
 
     def _load(self, status_as_json):
         status = []
@@ -96,66 +130,32 @@ class MySQLStatus(PeriodicStatus):
 
         return status
 
-    def __init__(self, content=None):
-        super(MySQLStatus, self).__init__(content=content)
+    def _status_serialize(self):
 
-    # def __repr__(self):
-    #     return json.dumps(self.as_dict(), indent=4, sort_keys=True)
+        def _serialize_config_dict(cfg):
+            config_serialized = []
+            for key, value in cfg.iteritems():
+                config_serialized.append(
+                    {
+                        key: b64encode(value)
+                    }
+                )
+            return config_serialized
 
-    def next_backup_type(self, full_backup, run_type):
-        """
-        Return backup type to take. If full_backup=daily then
-        for hourly backups it will be incremental, for all other - full
+        status = {}
+        for interval in INTERVALS:
+            status[interval] = {}
+            copies = getattr(self, interval)
+            for _, copy in copies.iteritems():
 
-        :param full_backup: when to take full backup according to config.
-        :param run_type: what kind of backup run it is.
-        :return: "full" or "incremental"
-        :rtype: str
-        """
-        if INTERVALS.index(full_backup) <= INTERVALS.index(run_type):
-            return "full"
-        elif not self.full_copy_exists(run_type):
-            return "full"
-        else:
-            return "incremental"
+                status[interval][copy.key] = copy.as_dict()
+                status[interval][copy.key]['config'] = _serialize_config_dict(
+                    status[interval][copy.key]['config']
+                )
 
-    def candidate_parent(self, run_type):
-        """
-        Find a backup copy that can be a parent
-
-        :param run_type: See :func:`~get_backup_type`.
-        :return: Backup copy or None
-        :rtype: MySQLCopy
-        """
-        full_backup_index = INTERVALS.index(run_type)
-        LOG.debug('Looking a parent candidate for %s run', run_type)
-        for i in xrange(full_backup_index, len(INTERVALS)):
-            period_copies = getattr(self, INTERVALS[i])
-            LOG.debug(
-                'Checking %d %s copies',
-                len(period_copies),
-                INTERVALS[i]
-            )
-            for _, value in period_copies.iteritems():
-                try:
-                    if value.type == 'full':
-                        LOG.debug('Found parent %r', value)
-                        return value
-                except KeyError:
-                    return None
-        LOG.debug('No eligible parents')
-        return None
-
-    def full_copy_exists(self, run_type):
-        """
-        Check whether there is a full copy.
-
-        :param run_type: See :func:`~get_backup_type`.
-        :return: True if there is a full copy. False if there is no
-            an eligible full copy.
-        :rtype: bool
-        """
-        return self.candidate_parent(run_type) is not None
+        return b64encode(
+            json.dumps(status)
+        )
 
     @staticmethod
     def __serialize_config(copy):

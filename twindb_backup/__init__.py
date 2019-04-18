@@ -31,7 +31,6 @@
  +--------+    +------------+    +------------+    +-------------+
 
  """
-import ConfigParser
 import glob
 import json
 import logging
@@ -41,7 +40,7 @@ import sys
 
 __author__ = 'TwinDB Development Team'
 __email__ = 'dev@twindb.com'
-__version__ = '2.17.1'
+__version__ = '2.18.0'
 STATUS_FORMAT_VERSION = 1
 LOCK_FILE = '/var/run/twindb-backup.lock'
 LOG_FILE = '/var/log/twindb-backup-measures.log'
@@ -55,10 +54,6 @@ MY_CNF_COMMON_PATHS = [
 ]
 
 LOG = logging.getLogger(__name__)
-
-
-class TwinDBBackupError(Exception):
-    """Class for script errors"""
 
 
 class LessThanFilter(logging.Filter):  # pylint: disable=too-few-public-methods

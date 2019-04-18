@@ -154,6 +154,7 @@ docker-test: ## Test twindb-backup in a docker container
 		-e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
 		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
 		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
+		-e "GC_CREDENTIALS_FILE=${GC_CREDENTIALS_FILE}" \
 		-e "OS_VERSION"=${OS_VERSION} \
 		-e "CI"=${CI} \
 		-e "TRAVIS"=${TRAVIS} \
@@ -173,11 +174,16 @@ docker-start:
 		-e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
 		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
 		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
+		-e "GC_CREDENTIALS_FILE=${GC_CREDENTIALS_FILE}" \
 		-it \
 		--name builder_xtrabackup \
 		--rm \
 		--dns 8.8.8.8 \
 		--dns 208.67.222.222 \
+		--env AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+		--env AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+		--env PLATFORM=${PLATFORM} \
+		--env OS_VERSION=${OS_VERSION} \
 		"twindb/omnibus-${PLATFORM}:backup-${OS_VERSION}" \
 		bash -l
 
@@ -189,6 +195,10 @@ package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
 		--rm \
 		--dns 8.8.8.8 \
 		--dns 208.67.222.222 \
+		--env AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+		--env AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+		--env PLATFORM=${PLATFORM} \
+		--env OS_VERSION=${OS_VERSION} \
 		"twindb/omnibus-${PLATFORM}:backup-${OS_VERSION}" \
 		bash -l /twindb-backup/omnibus/omnibus_build.sh
 
