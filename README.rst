@@ -13,6 +13,9 @@ TwinDB Backup
     :target: https://twindb-backup.readthedocs.io/en/master/?badge=master
     :alt: Documentation Status
 
+.. image:: https://img.shields.io/gitter/room/twindb/twindb-backup.svg
+    :target: https://gitter.im/twindb/backup
+    :alt: Join the chat at https://gitter.im/twindb/backup
 
 TwinDB Backup is a multipurpose tool for backing up MySQL and file system.
 It can store backup copies on a remote SSH server, Amazon S3 or Google Cloud Storage.
