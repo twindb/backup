@@ -22,18 +22,20 @@ from twindb_backup.ssh.exceptions import SshClientException
 
 class Ssh(BaseDestination):
     """
-    SSH destination class
+    The SSH destination class represents a destination backup storage with
+    running SSH demon.
 
-    :param remote_path: Path to store backup
-    :param kwargs: Keyword arguments. See below
-    :param kwargs: dict
+    :param remote_path: Path to store backups.
+    :type remote_path: str
+    :param kwargs: Keyword arguments. See below.
+    :type kwargs: dict
 
-    :**hostname**(str): Hostname of the host where backup is taken from.
-    :**ssh_host**(str): Hostname for SSH connection. Default '127.0.0.1'.
-    :**ssh_user**(str): Username for SSH connection. Default 'root'.
-    :**ssh_port**(int): TCP port for SSH connection. Default 22.
-    :**ssh_key**(str): File with an rsa/dsa key for SSH authentication.
-        Default '/root/.ssh/id_rsa'.
+    * **hostname** (str): Hostname of the host where backup is taken from.
+    * **ssh_host** (str): Hostname for SSH connection. Default ``127.0.0.1``.
+    * **ssh_user** (str): Username for SSH connection. Default ``root``.
+    * **ssh_port** (int): TCP port for SSH connection. Default 22.
+    * **ssh_key** (str): File with an rsa/dsa key for SSH authentication.
+        Default ``/root/.ssh/id_rsa``.
     """
     def __init__(self, remote_path, **kwargs):
 
@@ -50,29 +52,43 @@ class Ssh(BaseDestination):
 
     @property
     def client(self):
-        """Return client"""
+        """
+        :return: SSH client.
+        :rtype: SshClient
+        """
         return self._ssh_client
 
     @property
     def host(self):
-        """IP address of the destination."""
+        """
+        :return: IP address of the destination.
+        :rtype: str
+        """
         return self._ssh_client.host
 
     @property
     def port(self):
-        """TCP port of the destination."""
+        """
+        :return: TCP port of the destination.
+        :rtype: int
+        """
         return self._ssh_client.port
 
     @property
     def user(self):
-        """SSH user."""
+        """
+        :return: SSH user.
+        :rtype: str
+        """
         return self._ssh_client.user
 
     def delete(self, path):
         """
-        Delete file by path
+        Delete file by path. The path is a relative to
+        the ``self.remote_path``.
 
-        :param path: path to a remote file.
+        :param path: Path to a remote file.
+        :type path: str
         """
         cmd = "rm %s" % path
         self.execute_command(cmd)
@@ -80,13 +96,13 @@ class Ssh(BaseDestination):
     def ensure_tcp_port_listening(self, port, wait_timeout=10):
         """
         Check that tcp port is open and ready to accept connections.
-        Keep checking up to wait_timeout seconds.
+        Keep checking up to ``wait_timeout`` seconds.
 
         :param port: TCP port that is supposed to be listening.
         :type port: int
-        :param wait_timeout: wait this many seconds until the port is ready.
+        :param wait_timeout: Wait this many seconds until the port is ready.
         :type wait_timeout: int
-        :return: True if the TCP port is listening.
+        :return: ``True`` if the TCP port is listening.
         :rtype: bool
         """
         stop_waiting_at = time.time() + wait_timeout
@@ -106,15 +122,15 @@ class Ssh(BaseDestination):
         return False
 
     def execute_command(self, cmd, quiet=False, background=False):
-        """Execute ssh command
+        """Execute ssh command on the remote destination.
 
-
-        :param cmd: Command for execution
+        :param cmd: Command to execute.
         :type cmd: str
-        :param quiet: If True don't print errors
-        :param background: Don't wait until the command exits.
+        :param quiet: If ``True`` don't print errors.
+        :type quiet: bool
+        :param background: If ``True`` don't wait until the command exits.
         :type background: bool
-        :return: Handlers of stdin, stdout and stderr
+        :return: stdin, stdout and stderr handlers.
         :rtype: tuple
         """
         LOG.debug('Executing: %s', cmd)
@@ -129,11 +145,12 @@ class Ssh(BaseDestination):
     def get_stream(self, copy):
         """
         Get a PIPE handler with content of the backup copy streamed from
-        the destination
+        the destination.
 
-        :param copy: Backup copy
+        :param copy: Backup copy.
         :type copy: BaseCopy
         :return: Standard output.
+        :rtype: file
         """
 
         path = "%s/%s" % (self.remote_path, copy.key)
@@ -187,8 +204,14 @@ class Ssh(BaseDestination):
 
     def netcat(self, command, port=9990):
         """
-        Run netcat on the destination pipe it to a given command.
+        Run ``netcat`` on the destination pipe it to a given command::
 
+            ncat -l <port> --recv-only | <command>
+
+        :param command: Command that would accept ``netcat``'s output.
+        :type command: str
+        :param port: TCP port to run ``netcat`` on. Default 9999.
+        :type port: int
         """
         try:
             return self.execute_command("ncat -l %d --recv-only | "
@@ -209,10 +232,13 @@ class Ssh(BaseDestination):
 
     def save(self, handler, filepath):
         """
-        Read from handler and save it on remote ssh server
+        Read from the handler and save it on the remote ssh server in a file
+        ``filepath``.
 
-        :param filepath: relative path to a file to store the backup copy.
-        :param handler: stream with content of the backup.
+        :param filepath: Relative path to a file to store the backup copy.
+        :type filepath: str
+        :param handler: Stream with content of the backup.
+        :type handler: file
         """
         remote_name = osp.join(
             self.remote_path,
@@ -247,9 +273,9 @@ class Ssh(BaseDestination):
 
     def _mkdir_r(self, path):
         """
-        Create directory on the remote server
+        Create directory on the remote server.
 
-        :param path: remote directory
+        :param path: Remote directory.
         :type path: str
         """
         cmd = 'mkdir -p "%s"' % path

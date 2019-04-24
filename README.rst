@@ -4,7 +4,7 @@ TwinDB Backup
 
 
 .. image:: https://img.shields.io/travis/twindb/backup.svg
-    :target: https://travis-ci.org/twindb/backup
+    :target: https://travis-ci.com/twindb/backup
 
 .. image:: https://img.shields.io/codecov/c/github/twindb/backup.svg
     :target: https://codecov.io/gh/twindb/backup
