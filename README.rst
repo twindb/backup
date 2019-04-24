@@ -49,7 +49,7 @@ backup destination. It can be:
 - Google Cloud Storage bucket
 - Any server with SSH demon
 
-.. figure:: _static/TwinDB_Backup.png
+.. figure:: https://user-images.githubusercontent.com/1763754/56677794-20901b80-6676-11e9-8f71-8de0b0b6f066.png
     :width: 400px
     :align: center
     :height: 300px
