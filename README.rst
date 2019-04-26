@@ -127,12 +127,24 @@ Configuration
 Configuration is stored in ``/etc/twindb/twindb-backup.cfg``.
 See https://twindb-backup.readthedocs.io/ for more details.
 
+.. include:: ../AUTHORS.rst
+
 Credits
 -------
 
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
+- This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
-TwinDB Backup uses `Percona Xtrabackup`_ for MySQL backups.
+- TwinDB Backup uses `Percona Xtrabackup`_ for MySQL backups.
+- Contributors (in alphabetical order):
+
+  * `Andrew Ernst <https://github.com/ernstae>`_
+  * `Arda Beyazoğlu <https://github.com/ardabeyazoglu>`_
+  * `fonthead <https://github.com/fonthead>`_
+  * `Maksym Kryva <https://github.com/mkryva>`_
+  * `Manjot Singh <https://github.com/ManjotS>`_
+  * `Michael Rikmas <https://github.com/catyellow>`_
+  * `Ovais Tariq <https://github.com/ovaistariq>`_
+  * `Pim Widdershoven <https://github.com/piwi91>`_
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
