@@ -48,6 +48,7 @@ backup destination. It can be:
 - Amazon S3 bucket
 - Google Cloud Storage bucket
 - Any server with SSH demon
+<<<<<<< HEAD
 
 .. figure:: https://user-images.githubusercontent.com/1763754/56677794-20901b80-6676-11e9-8f71-8de0b0b6f066.png
     :width: 400px
@@ -56,6 +57,16 @@ backup destination. It can be:
     :alt: TwinDB Backup Architecture
     :figclass: align-center
 
+=======
+
+.. figure:: https://user-images.githubusercontent.com/1763754/56677794-20901b80-6676-11e9-8f71-8de0b0b6f066.png
+    :width: 400px
+    :align: center
+    :height: 300px
+    :alt: TwinDB Backup Architecture
+    :figclass: align-center
+
+>>>>>>> bdae2df9a45d7018641fb7c20681afc2fb659da2
     TwinDB Backup Architecture
 
 The tool can easily restore the backup copies.
@@ -145,6 +156,8 @@ Credits
   * `Michael Rikmas <https://github.com/catyellow>`_
   * `Ovais Tariq <https://github.com/ovaistariq>`_
   * `Pim Widdershoven <https://github.com/piwi91>`_
+
+TwinDB Backup uses `Percona Xtrabackup`_ for MySQL backups.
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
