@@ -1,5 +1,4 @@
 * TwinDB Backup version:
-* Python version:
 * Operating System:
 
 ### Description
