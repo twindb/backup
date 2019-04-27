@@ -4,51 +4,64 @@
 Installation
 ============
 
-Requirements
-------------
+**TwinDB Backup** is distributed via package repositories. We provide packages
+for CentOS, Ubuntu and Debian operating systems.
 
-TwinDB Backup package will pull all necessary dependencies except ``aws`` tool. We recommend to install it from PyPi.
+Supported versions:
 
-.. code-block:: console
+ * CentOS 6, 7
+ * Ubuntu trusty, xenial, bionic, cosmic
+ * Debian jessie and stretch
 
-    # pip install awscli
+The installation process consists of two parts: installing the repository and
+installing ``twindb-backup`` package from it.
 
-Stable release
---------------
+Repository installation
+-----------------------
 
-To install TwinDB Backup, run this command in your terminal:
+The installation instructions are published on `the repository website`_.
 
-.. code-block:: console
-
-    # yum install https://twindb.com/twindb-release-latest.noarch.rpm
-    # yum install twindb-backup
-
-This is the preferred method to install TwinDB Backup, as it will always install the most recent stable release.
-
-
-From sources
-------------
-
-The sources for TwinDB Backup can be downloaded from the `Github repo`_.
-
-You can either clone the public repository:
+For CentOS and alike operating systems:
 
 .. code-block:: console
 
-    $ git clone git://github.com/twindb/backup
+    curl -s https://packagecloud.io/install/repositories/TwinDB/main/script.rpm.sh | sudo bash
 
-Or download the `tarball`_:
-
-.. code-block:: console
-
-    $ curl  -OL https://github.com/twindb/backup/tarball/master
-
-Once you have a copy of the source, you can install it with:
+For Debian and Ubuntu the command is:
 
 .. code-block:: console
 
-    $ make install
+    curl -s https://packagecloud.io/install/repositories/TwinDB/main/script.deb.sh | sudo bash
+
+We also provide `the TwinDB Repo cookbook`_ for Chef users.
 
 
-.. _Github repo: https://github.com/twindb/backup
-.. _tarball: https://github.com/twindb/backup/tarball/master
+Package installation
+--------------------
+
+As soon as the repository is installed you can install the TwinDB Backup package.
+
+For CentOS and RedHat:
+
+.. code-block:: console
+
+    yum install twindb-backup
+
+For Debian and Ubuntu:
+
+.. code-block:: console
+
+    apt-get install twindb-backup
+
+The package bundles TwinDB itself, Python, dependencies and tested version
+of Percona Xtrabackup. The installed package requires about 800MB of disk space.
+Make sure you have enough in ``/opt/``.
+
+Besides the TwinDB Backup software the package installs also the config file
+in ``/etc/twindb/twindb-backup.cfg`` and a cron configuration in
+``/etc/cron.d/twindb-backup``.
+
+For configuration see :ref:`usage`.
+
+.. _the repository website: https://packagecloud.io/TwinDB/main/install
+.. _the TwinDB Repo cookbook: https://supermarket.chef.io/cookbooks/twindb-repo

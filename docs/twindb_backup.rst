@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
 
     twindb_backup.cache
+    twindb_backup.configuration
     twindb_backup.copy
     twindb_backup.destination
     twindb_backup.exporter
@@ -38,14 +39,6 @@ twindb\_backup.clone module
 ---------------------------
 
 .. automodule:: twindb_backup.clone
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-twindb\_backup.configuration module
------------------------------------
-
-.. automodule:: twindb_backup.configuration
     :members:
     :undoc-members:
     :show-inheritance:

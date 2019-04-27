@@ -102,9 +102,9 @@ class BaseDestination(object):
     @abstractmethod
     def write(self, content, filepath):
         """
-        Write string to a file.
+        Write ``content`` to a file.
 
-        :param content: String.
+        :param content: Content to write to the file.
         :type content: str
         :param filepath: Relative path to file.
         :type filepath: str

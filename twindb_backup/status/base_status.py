@@ -64,8 +64,7 @@ class BaseStatus(object):
     def md5(self):
         """
         :return: MD5 checksum of the status. It is calculated as
-            a md5 of output of
-        ``self._status_serialize()``.
+            a md5 of output of ``self._status_serialize()``.
         :rtype: str
         """
         return hashlib.md5(
