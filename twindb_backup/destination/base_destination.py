@@ -11,8 +11,15 @@ from twindb_backup.exceptions import TwinDBBackupInternalError
 
 
 class BaseDestination(object):
-    """Base destination class"""
+    """
+    Base destination class.
 
+    :param remote_path: Common path where all backups are stored.
+        The remote path is specific to the actual destination class.
+        For example, for Amazon S3 it will be something like
+        ``s3://bucket_with_backups``
+    :type remote_path: str
+    """
     def __init__(self, remote_path):
         if not remote_path:
             raise DestinationError(

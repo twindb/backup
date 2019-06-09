@@ -24,4 +24,5 @@ build do
 
     make "-j #{workers}", env: env
     make 'install', env: env
+    delete "#{install_dir}/libboost"
 end

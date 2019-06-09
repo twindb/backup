@@ -14,6 +14,7 @@ import psutil
 from twindb_backup import LOG, XBSTREAM_BINARY, XTRABACKUP_BINARY
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
+from twindb_backup.exceptions import TwinDBBackupError
 from twindb_backup.export import export_info
 from twindb_backup.exporter.base_exporter import ExportCategory, \
     ExportMeasureType
@@ -97,8 +98,9 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
             LOG.error('%s exited with code %d', " ".join(xtrabackup_cmd), ret)
         return ret == 0
     except OSError as err:
-        LOG.error('Failed to prepare backup in %s: %s', dst_dir, err)
-        return False
+        raise TwinDBBackupError(
+            'Failed to prepare backup in %s: %s' % (dst_dir, err)
+        )
 
 
 def _extract_xbstream(
@@ -136,8 +138,9 @@ def _extract_xbstream(
         return ret == 0
 
     except OSError as err:
-        LOG.error('Failed to extract xbstream: %s', err)
-        return False
+        raise TwinDBBackupError(
+            'Failed to extract xbstream: %s' % err
+        )
 
 
 # pylint: disable=too-many-locals,too-many-branches,too-many-statements
@@ -329,7 +332,7 @@ def restore_from_mysql(twindb_config, copy, dst_dir,
         dst = twindb_config.destination(backup_source=hostname)
 
     key = copy.key
-    status = MySQLStatus(dst=dst)
+    status = MySQLStatus(dst=dst, status_directory=hostname)
 
     stream = dst.get_stream(copy)
 
