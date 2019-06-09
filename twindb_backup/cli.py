@@ -94,6 +94,7 @@ def main(ctx, debug,  # pylint: disable=too-many-arguments
                 xbstream_binary
     else:
         LOG.warning("Config file %s doesn't exist", config)
+        exit(os.EX_CONFIG)
 
 
 @main.command()
@@ -181,7 +182,10 @@ def status(ctx, copy_type, hostname):
     """Print backups status"""
     dst = ctx.obj['twindb_config'].destination(backup_source=hostname)
     print(
-        MEDIA_STATUS_MAP[copy_type](dst=dst)
+        MEDIA_STATUS_MAP[copy_type](
+            dst=dst,
+            status_directory=hostname
+        )
     )
 
 
@@ -217,7 +221,10 @@ def restore_mysql(ctx, dst, backup_copy, cache):
         dst_storage = ctx.obj['twindb_config'].destination(
             backup_source=incomplete_copy.host
         )
-        mysql_status = MySQLStatus(dst=dst_storage)
+        mysql_status = MySQLStatus(
+            dst=dst_storage,
+            status_directory=incomplete_copy.host
+        )
 
         copies = [
             cp for cp in mysql_status if backup_copy.endswith(cp.name)
