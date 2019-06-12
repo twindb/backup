@@ -66,6 +66,7 @@ dependency 'preparation'
 runtime_dependency 'libtool'
 runtime_dependency 'nmap'
 dependency 'xtrabackup'
+dependency 'xtrabackup-8'
 
 # Debian
 if debian?

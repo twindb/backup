@@ -12,7 +12,7 @@ source url: "https://s3.amazonaws.com/twindb-release/percona-xtrabackup-#{versio
 relative_path "percona-xtrabackup-#{version}"
 whitelist_file /.*/
 
-workers = 2
+# workers = 2
 
 build do
     env = with_standard_compiler_flags(with_embedded_path)
@@ -25,4 +25,5 @@ build do
     make "-j #{workers}", env: env
     make 'install', env: env
     delete "#{install_dir}/libboost"
+    strip "#{install_dir}/embedded/bin"
 end
