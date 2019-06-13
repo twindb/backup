@@ -224,7 +224,10 @@ def backup_binlogs(run_type, config):  # pylint: disable=too-many-locals
         )
         cur.execute("SELECT @@log_bin_basename")
         row = cur.fetchone()
-        binlog_dir = osp.dirname(row['@@log_bin_basename'])
+        if row['@@log_bin_basename']:
+            binlog_dir = osp.dirname(row['@@log_bin_basename'])
+        else:
+            return
 
     for binlog_name in backup_set:
         src = BinlogSource(run_type, mysql_client, binlog_name)
