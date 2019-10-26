@@ -72,6 +72,9 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
     else:
         LOG.debug('Not decrypting the stream')
 
+    if config.mysql.xtrabackup_binary:
+        xtrabackup_binary=config.mysql.xtrabackup_binary
+
     stream = config.compression.get_modifier(stream).revert_stream()
 
     with stream as handler:
@@ -185,6 +188,9 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
         stream = gpg.revert_stream()
     else:
         LOG.debug('Not decrypting the stream')
+
+    if config.mysql.xtrabackup_binary:
+        xtrabackup_binary=config.mysql.xtrabackup_binary
 
     stream = config.compression.get_modifier(stream).revert_stream()
 
