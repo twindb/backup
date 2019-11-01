@@ -13,10 +13,6 @@ attrs==19.1.0             # via pytest
 aws-sam-translator==1.10.0  # via cfn-lint
 aws-xray-sdk==2.4.2       # via moto
 babel==2.6.0              # via sphinx
-backports.functools-lru-cache==1.5  # via astroid, isort, pylint
-backports.ssl-match-hostname==3.7.0.1  # via docker
-backports.tempfile==1.0   # via moto
-backports.weakref==1.0.post1  # via backports.tempfile
 boto3==1.9.134
 boto==2.49.0              # via moto
 botocore==1.12.134        # via aws-xray-sdk, boto3, moto, s3transfer
@@ -27,23 +23,16 @@ cfn-lint==0.19.1          # via moto
 chardet==3.0.4            # via requests
 click==6.7
 codecov==2.0.15
-configparser==3.7.4       # via pylint
-cookies==2.2.1            # via responses
 coverage==4.5.3
 cryptography==2.4.2
 docker-pycreds==0.4.0     # via docker
 docker==3.7.2
 docutils==0.14            # via botocore, sphinx
 dparse==0.4.1             # via safety
-ecdsa==0.13.2             # via python-jose
-enum34==1.1.6             # via astroid, aws-sam-translator, aws-xray-sdk, cryptography
-funcsigs==1.0.2           # via mock, pytest
-functools32==3.2.3.post2  # via jsonschema
+ecdsa==0.13.3             # via python-jose
 future==0.17.1            # via aws-xray-sdk, python-jose
-futures==3.2.0            # via isort, s3transfer
 idna==2.8                 # via cryptography, moto, requests
 imagesize==1.1.0          # via sphinx
-ipaddress==1.0.22         # via cryptography, docker
 isort==4.3.17             # via pylint
 jinja2==2.10.1            # via moto, sphinx
 jmespath==0.9.4           # via boto3, botocore
@@ -60,7 +49,6 @@ mock==2.0.0
 more-itertools==5.0.0     # via pytest
 moto==1.3.8
 packaging==19.0           # via dparse, safety, sphinx
-pathlib2==2.3.3           # via cfn-lint, pytest
 pbr==5.1.3                # via mock
 pluggy==0.9.0             # via pytest
 py==1.8.0                 # via pytest
@@ -83,14 +71,11 @@ responses==0.10.6         # via moto
 rsa==4.0                  # via python-jose
 s3transfer==0.2.0         # via boto3
 safety==1.8.5
-scandir==1.10.0           # via pathlib2
-singledispatch==3.4.0.3   # via astroid, pylint
-six==1.12.0               # via astroid, aws-sam-translator, cfn-lint, cryptography, docker, docker-pycreds, dparse, mock, more-itertools, moto, packaging, pathlib2, pylint, pytest, python-dateutil, python-jose, responses, singledispatch, sphinx, unittest2, websocket-client
+six==1.12.0               # via astroid, aws-sam-translator, cfn-lint, cryptography, docker, docker-pycreds, dparse, mock, more-itertools, moto, packaging, pylint, pytest, python-dateutil, python-jose, responses, sphinx, unittest2, websocket-client
 snowballstemmer==1.2.1    # via sphinx
 sphinx==1.8.5
 sphinxcontrib-websupport==1.1.0  # via sphinx
 traceback2==1.4.0         # via unittest2
-typing==3.6.6             # via sphinx
 unittest2==1.1.0
 urllib3==1.24.2           # via botocore, requests
 websocket-client==0.56.0  # via docker
