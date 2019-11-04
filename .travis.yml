@@ -29,7 +29,7 @@ install:
 - sudo -H make bootstrap
 
 script:
-- travis_wait 120 make lint test safety package test-integration
+- travis_wait 120 make lint test safety package
 
 notifications:
   slack:
