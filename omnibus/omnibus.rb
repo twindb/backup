@@ -26,13 +26,13 @@
 
 # Test git caching
 # ------------------------------
-use_git_caching true
+use_git_caching false
 
 # Enable S3 asset caching
 # ------------------------------
 bucket = 'omnibus-cache-twindb-backup'
 
-use_s3_caching true
+use_s3_caching false
 s3_access_key  ENV['AWS_ACCESS_KEY_ID']
 s3_secret_key  ENV['AWS_SECRET_ACCESS_KEY']
 s3_bucket      bucket

@@ -12,21 +12,15 @@ unittest2~=1.1
 moto ~= 1.3
 boto3 ~= 1.7
 
-pylint~=1.6
+pylint==1.9.4
 pycodestyle~=2.3
 docker~=3.5
 python-magic~=0.4
 # Moto requires this version of dateutil
 python-dateutil>=2.1,<2.7.0
 
-# Paramiko version 2.4.2 is buggy. See
-# https://github.com/paramiko/paramiko/issues/1386
-# https://github.com/paramiko/paramiko/issues/1369
-cryptography ~= 2.4.2
-
 # PyUP
-Click~=6.7
 safety ~= 1.8
 
 # https://nvd.nist.gov/vuln/detail/CVE-2017-18342
-pyyaml~=4.2b1
+pyyaml ~= 5.1
