@@ -12,3 +12,4 @@ files/**/cache/
 vendor/cookbooks
 *.iml
 .idea/
+Gemfile.lock
