@@ -90,6 +90,7 @@ if redhat?
 end
 
 override :python, version: '2.7.14'
+override :setuptools, version: '41.0.1'
 
 # twindb-backup
 dependency 'twindb-backup'

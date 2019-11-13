@@ -75,6 +75,7 @@ clean-build: ## remove build artifacts
 	rm -fr .eggs/
 	rm -rf pkg/
 	rm -rf omnibus/pkg/
+	rm -f omnibus/Gemfile.lock
 	rm -rf cache/
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
@@ -184,7 +185,7 @@ docker-start:
 		--env AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
 		--env PLATFORM=${PLATFORM} \
 		--env OS_VERSION=${OS_VERSION} \
-		"twindb/omnibus-${PLATFORM}:backup-${OS_VERSION}" \
+		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
 		bash -l
 
 
@@ -199,7 +200,7 @@ package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu"
 		--env AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
 		--env PLATFORM=${PLATFORM} \
 		--env OS_VERSION=${OS_VERSION} \
-		"twindb/omnibus-${PLATFORM}:backup-${OS_VERSION}" \
+		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
 		bash -l /twindb-backup/omnibus/omnibus_build.sh
 
 install_package:

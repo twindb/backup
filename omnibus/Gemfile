@@ -1,7 +1,9 @@
 source 'https://rubygems.org'
 
 # Install omnibus
-gem 'omnibus', '~> 6.0'
+gem 'omnibus', '~> 6.1'
+gem 'minitar-cli', '~> 0.8'
+gem 'chef-sugar-ng', '~> 5.0.4'
 
 # Use Chef's software definitions. It is recommended that you write your own
 # software definitions, but you can clone/fork Chef's to get you started.
