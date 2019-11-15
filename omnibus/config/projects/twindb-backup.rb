@@ -23,7 +23,7 @@ homepage 'https://twindb.com'
 # and /opt/twindb-backup on all other platforms
 install_dir '/opt/twindb-backup'
 
-build_version '2.18.4'
+build_version '2.18.5'
 
 build_iteration 1
 
@@ -90,6 +90,7 @@ if redhat?
 end
 
 override :python, version: '2.7.14'
+override :setuptools, version: '41.0.1'
 
 # twindb-backup
 dependency 'twindb-backup'
