@@ -26,9 +26,9 @@ class RemoteMySQLSource(MySQLSource):
     def __init__(self, kwargs):
 
         ssh_kwargs = {}
-        for arg in ['ssh_host', 'ssh_port', 'ssh_user', 'ssh_key']:
+        for arg in ["ssh_host", "ssh_port", "ssh_user", "ssh_key"]:
             if arg in kwargs:
-                ssh_kwargs[arg.replace('ssh_', '')] = kwargs.pop(arg)
+                ssh_kwargs[arg.replace("ssh_", "")] = kwargs.pop(arg)
 
         self._ssh_client = SshClient(**ssh_kwargs)
 
@@ -56,26 +56,28 @@ class RemoteMySQLSource(MySQLSource):
             src=self._ssh_client.host,
             src_port=self._ssh_client.port,
             dst=dest_host,
-            dst_port=port
+            dst_port=port,
         )
         if compress:
             compress_cmd = "| gzip -c - "
         else:
             compress_cmd = ""
 
-        cmd = "bash -c \"sudo %s " \
-              "--stream=xbstream " \
-              "--host=127.0.0.1 " \
-              "--backup " \
-              "--target-dir ./ 2> %s" \
-              " %s | ncat %s %d --send-only\"" \
-              % (self._xtrabackup, error_log, compress_cmd, dest_host, port)
+        cmd = (
+            'bash -c "sudo %s '
+            "--stream=xbstream "
+            "--host=127.0.0.1 "
+            "--backup "
+            "--target-dir ./ 2> %s"
+            ' %s | ncat %s %d --send-only"'
+            % (self._xtrabackup, error_log, compress_cmd, dest_host, port)
+        )
         while retry < 3:
             try:
                 return self._ssh_client.execute(cmd)
             except SshClientException as err:
                 LOG.warning(err)
-                LOG.info('Will try again in after %d seconds', retry_time)
+                LOG.info("Will try again in after %d seconds", retry_time)
                 time.sleep(retry_time)
                 retry_time *= 2
                 retry += 1
@@ -94,7 +96,8 @@ class RemoteMySQLSource(MySQLSource):
     def _find_all_cnf(self, root_path):
         """ Return list of embed cnf files
 
-        :param root_path: Path to the originating my.cnf config. (/etc/my.cnf, or /etc/mysql/my.cnf)
+        :param root_path: Path to the originating my.cnf config.
+            (/etc/my.cnf, or /etc/mysql/my.cnf)
         :type root_path: Path
         :return: List of all included my.cnf files
         :rtype: list
@@ -102,26 +105,26 @@ class RemoteMySQLSource(MySQLSource):
         files = [str(root_path)]
         cfg_content = self._ssh_client.get_text_content(str(root_path))
         for line in cfg_content.splitlines():
-            if '!includedir' in line:
+            if "!includedir" in line:
                 rel_path = line.split()[1]
                 file_list = self._ssh_client.list_files(
                     root_path.parent.joinpath(rel_path),
                     recursive=False,
-                    files_only=True
+                    files_only=True,
                 )
                 LOG.debug(file_list)
                 for sub_file in file_list:
                     files.extend(
                         self._find_all_cnf(
-                            root_path.parent.joinpath(rel_path).joinpath(sub_file)
+                            root_path.parent.joinpath(rel_path).joinpath(
+                                sub_file
+                            )
                         )
                     )
-            elif '!include' in line:
+            elif "!include" in line:
                 rel_path = line.split()[1]
                 files.extend(
-                    self._find_all_cnf(
-                        root_path.parent.joinpath(rel_path)
-                    )
+                    self._find_all_cnf(root_path.parent.joinpath(rel_path))
                 )
         return files
 
@@ -148,7 +151,7 @@ class RemoteMySQLSource(MySQLSource):
                 cfg = self._get_config(path)
                 option = self._find_server_id_by_path(cfg)
                 if option:
-                    cfg.set('mysqld', option, value=str(server_id))
+                    cfg.set("mysqld", option, value=str(server_id))
                     is_server_id_set = True
                 dst.client.write_config(path, cfg)
                 valid_cfg.append(path)
@@ -160,7 +163,7 @@ class RemoteMySQLSource(MySQLSource):
             for path in valid_cfg:
                 cfg = self._get_config(path)
                 if cfg.has_section("mysqld"):
-                    cfg.set('mysqld', "server_id", value=str(server_id))
+                    cfg.set("mysqld", "server_id", value=str(server_id))
                     dst.client.write_config(path, cfg)
                     return
 
@@ -198,7 +201,9 @@ class RemoteMySQLSource(MySQLSource):
             raise
         return cfg
 
-    def setup_slave(self, master_info):  # noqa # pylint: disable=too-many-arguments
+    def setup_slave(
+        self, master_info
+    ):  # noqa # pylint: disable=too-many-arguments
         """
         Change master
 
@@ -208,21 +213,22 @@ class RemoteMySQLSource(MySQLSource):
         """
         try:
             with self._cursor() as cursor:
-                query = "CHANGE MASTER TO " \
-                        "MASTER_HOST = '{master}', " \
-                        "MASTER_USER = '{user}', " \
-                        "MASTER_PORT = {port}, " \
-                        "MASTER_PASSWORD = '{password}', " \
-                        "MASTER_LOG_FILE = '{binlog}', " \
-                        "MASTER_LOG_POS = {binlog_pos}"\
-                    .format(
+                query = (
+                    "CHANGE MASTER TO "
+                    "MASTER_HOST = '{master}', "
+                    "MASTER_USER = '{user}', "
+                    "MASTER_PORT = {port}, "
+                    "MASTER_PASSWORD = '{password}', "
+                    "MASTER_LOG_FILE = '{binlog}', "
+                    "MASTER_LOG_POS = {binlog_pos}".format(
                         master=master_info.host,
                         user=master_info.user,
                         password=master_info.password,
                         binlog=master_info.binlog,
                         binlog_pos=master_info.binlog_position,
-                        port=master_info.port
+                        port=master_info.port,
                     )
+                )
                 cursor.execute(query)
                 cursor.execute("START SLAVE")
             return True
@@ -244,15 +250,17 @@ class RemoteMySQLSource(MySQLSource):
         except OSError:
             use_memory = ""
         logfile_path = "/tmp/xtrabackup-apply-log.log"
-        cmd = "sudo {xtrabackup} --prepare --apply-log-only " \
-              "--target-dir {target_dir} {use_memory} " \
-              "> {logfile} 2>&1" \
-              "".format(
-                  xtrabackup=self._xtrabackup,
-                  target_dir=datadir,
-                  use_memory=use_memory,
-                  logfile=logfile_path
-              )
+        cmd = (
+            "sudo {xtrabackup} --prepare --apply-log-only "
+            "--target-dir {target_dir} {use_memory} "
+            "> {logfile} 2>&1"
+            "".format(
+                xtrabackup=self._xtrabackup,
+                target_dir=datadir,
+                use_memory=use_memory,
+                logfile=logfile_path,
+            )
+        )
 
         try:
             self._ssh_client.execute(cmd)
@@ -276,11 +284,11 @@ class RemoteMySQLSource(MySQLSource):
             "awk -v low=$(grep low /proc/zoneinfo | "
             "awk '{k+=$2}END{print k}') "
             "'{a[$1]=$2}END{m="
-            "a[\"MemFree:\"]"
-            "+a[\"Active(file):\"]"
-            "+a[\"Inactiv‌​e(file):\"]"
-            "+a[\"SRecla‌​imable:\"]; "
-            "print a[\"MemAvailable:\"]}' "
+            'a["MemFree:"]'
+            '+a["Active(file):"]'
+            '+a["Inactiv‌​e(file):"]'
+            '+a["SRecla‌​imable:"]; '
+            'print a["MemAvailable:"]}\' '
             "/proc/meminfo"
         )
         mem = stdout_.strip()
@@ -308,7 +316,7 @@ class RemoteMySQLSource(MySQLSource):
         :rtype: tuple
         """
         stdout_, _ = self._ssh_client.execute(
-            'sudo cat %s/xtrabackup_binlog_info' % backup_path
+            "sudo cat %s/xtrabackup_binlog_info" % backup_path
         )
-        binlog_info = re.split(r'\t+', stdout_.rstrip())
+        binlog_info = re.split(r"\t+", stdout_.rstrip())
         return binlog_info[0], int(binlog_info[1])

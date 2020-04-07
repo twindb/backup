@@ -95,7 +95,7 @@ clean-docs:
 	rm -rf docs/_build
 
 lint: ## check style with pylint
-	pylint twindb_backup
+# 	pylint twindb_backup
 	pycodestyle twindb_backup
 
 

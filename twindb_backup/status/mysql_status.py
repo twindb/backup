@@ -18,16 +18,15 @@ class MySQLStatus(PeriodicStatus):
     """
     Class that stores status file and implements operations on it.
     """
+
     def __init__(self, content=None, dst=None, status_directory=None):
         super(MySQLStatus, self).__init__(
-            content=content,
-            dst=dst,
-            status_directory=status_directory
+            content=content, dst=dst, status_directory=status_directory
         )
 
     @property
     def basename(self):
-        return 'status'
+        return "status"
 
     def candidate_parent(self, run_type):
         """
@@ -38,22 +37,20 @@ class MySQLStatus(PeriodicStatus):
         :rtype: MySQLCopy
         """
         full_backup_index = INTERVALS.index(run_type)
-        LOG.debug('Looking a parent candidate for %s run', run_type)
+        LOG.debug("Looking a parent candidate for %s run", run_type)
         for i in range(full_backup_index, len(INTERVALS)):
             period_copies = getattr(self, INTERVALS[i])
             LOG.debug(
-                'Checking %d %s copies',
-                len(period_copies),
-                INTERVALS[i]
+                "Checking %d %s copies", len(period_copies), INTERVALS[i]
             )
             for _, value in period_copies.items():
                 try:
-                    if value.type == 'full':
-                        LOG.debug('Found parent %r', value)
+                    if value.type == "full":
+                        LOG.debug("Found parent %r", value)
                         return value
                 except KeyError:
                     return None
-        LOG.debug('No eligible parents')
+        LOG.debug("No eligible parents")
         return None
 
     def full_copy_exists(self, run_type):
@@ -90,55 +87,47 @@ class MySQLStatus(PeriodicStatus):
             status_as_obj = json.loads(status_as_json)
         except ValueError:
             raise CorruptedStatus(
-                'Could not load status from a bad JSON string %s'
-                % (status_as_json, )
+                "Could not load status from a bad JSON string %s"
+                % (status_as_json,)
             )
 
         for run_type in INTERVALS:
             for key, value in status_as_obj[run_type].items():
 
                 try:
-                    host = key.split('/')[0]
-                    file_name = key.split('/')[3]
+                    host = key.split("/")[0]
+                    file_name = key.split("/")[3]
                     kwargs = {
-                        'type': value['type'],
-                        'config': self.__serialize_config(value)
+                        "type": value["type"],
+                        "config": self.__serialize_config(value),
                     }
                     keys = [
-                        'backup_started',
-                        'backup_finished',
-                        'binlog',
-                        'parent',
-                        'lsn',
-                        'position',
-                        'wsrep_provider_version',
+                        "backup_started",
+                        "backup_finished",
+                        "binlog",
+                        "parent",
+                        "lsn",
+                        "position",
+                        "wsrep_provider_version",
                     ]
                     for copy_key in keys:
                         if copy_key in value:
                             kwargs[copy_key] = value[copy_key]
 
-                    copy = MySQLCopy(
-                        host,
-                        run_type,
-                        file_name,
-                        **kwargs
-                    )
+                    copy = MySQLCopy(host, run_type, file_name, **kwargs)
                     status.append(copy)
                 except IndexError as err:
                     LOG.error(err)
-                    raise CorruptedStatus('Unexpected key %s' % key)
+                    raise CorruptedStatus("Unexpected key %s" % key)
 
         return status
 
     def _status_serialize(self):
-
         def _serialize_config_dict(cfg):
             config_serialized = []
             for key, value in cfg.items():
                 config_serialized.append(
-                    {
-                        key: b64encode(value.encode("utf-8")).decode("utf-8")
-                    }
+                    {key: b64encode(value.encode("utf-8")).decode("utf-8")}
                 )
             return config_serialized
 
@@ -149,21 +138,21 @@ class MySQLStatus(PeriodicStatus):
             for _, copy in copies.items():
 
                 status[interval][copy.key] = copy.as_dict()
-                status[interval][copy.key]['config'] = _serialize_config_dict(
-                    status[interval][copy.key]['config']
+                status[interval][copy.key]["config"] = _serialize_config_dict(
+                    status[interval][copy.key]["config"]
                 )
 
-        return b64encode(
-            json.dumps(status).encode("utf-8")
-        ).decode("utf-8")
+        return b64encode(json.dumps(status).encode("utf-8")).decode("utf-8")
 
     @staticmethod
     def __serialize_config(copy):
         config = {}
         try:
-            for cfg in copy['config']:
+            for cfg in copy["config"]:
                 for cfg_key, cfg_value in cfg.items():
-                    config[cfg_key] = b64decode(cfg_value.encode("utf-8")).decode("utf-8")
+                    config[cfg_key] = b64decode(
+                        cfg_value.encode("utf-8")
+                    ).decode("utf-8")
         except KeyError:
             config = {}
 
