@@ -25,13 +25,13 @@ class BinlogStatus(BaseStatus):
         return b64encode(
             json.dumps(
                 self._as_dict()
-            )
-        )
+            ).encode("utf-8")
+        ).decode("utf-8")
 
     def _load(self, status_as_json):
 
         self._status = []
-        for key, value in json.loads(status_as_json).iteritems():
+        for key, value in sorted(json.loads(status_as_json).items()):
             host = key.split('/')[0]
             name = key.split('/')[2]
             try:

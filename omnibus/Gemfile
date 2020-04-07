@@ -2,15 +2,15 @@ source 'https://rubygems.org'
 
 # Install omnibus
 gem 'omnibus', '~> 6.1'
-gem 'minitar-cli', '~> 0.8'
-gem 'chef-sugar-ng', '~> 5.0.4'
+# gem 'minitar-cli', '~> 0.8'
+# gem 'chef-sugar-ng', '~> 5.0.4'
 
 # Use Chef's software definitions. It is recommended that you write your own
 # software definitions, but you can clone/fork Chef's to get you started.
 gem 'omnibus-software', github: 'twindb/omnibus-software'
 
-gem 'ohai', '~> 14.8'
-gem 'artifactory', '~> 3.0'
+# gem 'ohai', '~> 14.8'
+# gem 'artifactory', '~> 3.0'
 
 # This development group is installed by default when you run `bundle install`,
 # but if you are using Omnibus in a CI-based infrastructure, you do not need

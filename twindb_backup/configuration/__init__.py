@@ -3,7 +3,7 @@
 Module to process configuration file.
 """
 import socket
-from ConfigParser import ConfigParser, NoOptionError, NoSectionError
+from configparser import ConfigParser, NoOptionError, NoSectionError
 from shlex import split
 
 from twindb_backup import LOG, INTERVALS

@@ -113,7 +113,7 @@ def test_init_raises_on_wrong_key():
                             u'foo/weekly/some_file.txt': {u'type': u'full'}},
                         u'yearly': {}
                     }
-                )
+                ).encode("utf-8")
             )
         )
 
@@ -130,7 +130,7 @@ def test_init_weekly_only():
                         u'foo/weekly/mysql/some_file.txt': {u'type': u'full'}},
                     u'yearly': {}
                 }
-            )
+            ).encode("utf-8")
         )
     )
     assert not status.daily
@@ -169,7 +169,7 @@ def test_init_example_0():
                 'monthly': {},
                 'yearly': {}
             }
-        )
+        ).encode("utf-8")
     )
     status = MySQLStatus(content=content)
     assert len(status.hourly) == 1
@@ -191,7 +191,7 @@ def test_init_example_1():
                 'monthly': {},
                 'yearly': {}
             }
-        )
+        ).encode("utf-8")
     )
     status = MySQLStatus(content=content)
     assert len(status.weekly) == 1

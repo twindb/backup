@@ -76,7 +76,7 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
             self._config = {}
             config_files = kwargs.get('config_files', [])
             for config_file in config_files:
-                with open(config_file) as config_descr:
+                with open(config_file, "r") as config_descr:
                     self._config[config_file] = config_descr.read()
 
         else:
@@ -165,6 +165,10 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
     def wsrep_provider_version(self):
         """If it was Galera, value of wsrep_provider_version"""
         return self._wsrep_provider_version
+
+    @property
+    def sort_key(self):
+        return self.created_at or 0
 
     def as_dict(self):
         """Return representation of the class instance for output purposes."""
