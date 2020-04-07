@@ -39,14 +39,14 @@ class MySQLStatus(PeriodicStatus):
         """
         full_backup_index = INTERVALS.index(run_type)
         LOG.debug('Looking a parent candidate for %s run', run_type)
-        for i in xrange(full_backup_index, len(INTERVALS)):
+        for i in range(full_backup_index, len(INTERVALS)):
             period_copies = getattr(self, INTERVALS[i])
             LOG.debug(
                 'Checking %d %s copies',
                 len(period_copies),
                 INTERVALS[i]
             )
-            for _, value in period_copies.iteritems():
+            for _, value in period_copies.items():
                 try:
                     if value.type == 'full':
                         LOG.debug('Found parent %r', value)
@@ -95,7 +95,7 @@ class MySQLStatus(PeriodicStatus):
             )
 
         for run_type in INTERVALS:
-            for key, value in status_as_obj[run_type].iteritems():
+            for key, value in status_as_obj[run_type].items():
 
                 try:
                     host = key.split('/')[0]
@@ -134,10 +134,10 @@ class MySQLStatus(PeriodicStatus):
 
         def _serialize_config_dict(cfg):
             config_serialized = []
-            for key, value in cfg.iteritems():
+            for key, value in cfg.items():
                 config_serialized.append(
                     {
-                        key: b64encode(value)
+                        key: b64encode(value.encode("utf-8")).decode("utf-8")
                     }
                 )
             return config_serialized
@@ -146,7 +146,7 @@ class MySQLStatus(PeriodicStatus):
         for interval in INTERVALS:
             status[interval] = {}
             copies = getattr(self, interval)
-            for _, copy in copies.iteritems():
+            for _, copy in copies.items():
 
                 status[interval][copy.key] = copy.as_dict()
                 status[interval][copy.key]['config'] = _serialize_config_dict(
@@ -154,16 +154,16 @@ class MySQLStatus(PeriodicStatus):
                 )
 
         return b64encode(
-            json.dumps(status)
-        )
+            json.dumps(status).encode("utf-8")
+        ).decode("utf-8")
 
     @staticmethod
     def __serialize_config(copy):
         config = {}
         try:
             for cfg in copy['config']:
-                for cfg_key, cfg_value in cfg.iteritems():
-                    config[cfg_key] = b64decode(cfg_value)
+                for cfg_key, cfg_value in cfg.items():
+                    config[cfg_key] = b64decode(cfg_value.encode("utf-8")).decode("utf-8")
         except KeyError:
             config = {}
 

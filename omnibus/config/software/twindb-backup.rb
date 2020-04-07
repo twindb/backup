@@ -21,10 +21,11 @@ license 'Apache-2.0'
 license_file 'LICENSE'
 skip_transitive_dependency_licensing true
 
-dependency 'python'
-dependency 'setuptools'
-dependency 'libffi'
+dependency 'libyaml'
 dependency 'pip'
+dependency 'python3'
+dependency 'setuptools'
+dependency 'libpcap'
 
 source path: '/twindb-backup'
 

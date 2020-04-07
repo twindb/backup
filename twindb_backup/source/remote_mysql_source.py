@@ -2,7 +2,7 @@
 """
 Module defines MySQL source class for backing up remote MySQL.
 """
-import ConfigParser
+import configparser
 import socket
 import struct
 import re
@@ -10,6 +10,7 @@ from contextlib import contextmanager
 
 import time
 from errno import ENOENT
+from pathlib import Path
 
 import pymysql
 from twindb_backup import LOG, MY_CNF_COMMON_PATHS
@@ -91,27 +92,35 @@ class RemoteMySQLSource(MySQLSource):
         self._save_cfg(dst, cfg_path)
 
     def _find_all_cnf(self, root_path):
-        """ Return list of embed cnf files"""
-        files = [root_path]
-        cfg_content = self._ssh_client.get_text_content(root_path)
+        """ Return list of embed cnf files
+
+        :param root_path: Path to the originating my.cnf config. (/etc/my.cnf, or /etc/mysql/my.cnf)
+        :type root_path: Path
+        :return: List of all included my.cnf files
+        :rtype: list
+        """
+        files = [str(root_path)]
+        cfg_content = self._ssh_client.get_text_content(str(root_path))
         for line in cfg_content.splitlines():
             if '!includedir' in line:
-                path = line.split()[1]
+                rel_path = line.split()[1]
                 file_list = self._ssh_client.list_files(
-                    path,
+                    root_path.parent.joinpath(rel_path),
                     recursive=False,
                     files_only=True
                 )
+                LOG.debug(file_list)
                 for sub_file in file_list:
                     files.extend(
                         self._find_all_cnf(
-                            sub_file
+                            root_path.parent.joinpath(rel_path).joinpath(sub_file)
                         )
                     )
             elif '!include' in line:
+                rel_path = line.split()[1]
                 files.extend(
                     self._find_all_cnf(
-                        line.split()[1]
+                        root_path.parent.joinpath(rel_path)
                     )
                 )
         return files
@@ -124,7 +133,7 @@ class RemoteMySQLSource(MySQLSource):
             try:
                 if cfg.has_option("mysqld", option):
                     return option
-            except ConfigParser.Error:
+            except configparser.Error:
                 pass
         return None
 
@@ -143,7 +152,7 @@ class RemoteMySQLSource(MySQLSource):
                     is_server_id_set = True
                 dst.client.write_config(path, cfg)
                 valid_cfg.append(path)
-            except ConfigParser.ParsingError:
+            except configparser.ParsingError:
                 cfg_content = self._ssh_client.get_text_content(path)
                 dst.client.write_content(path, cfg_content)
 
@@ -179,12 +188,12 @@ class RemoteMySQLSource(MySQLSource):
         :return: Path and config
         :rtype: ConfigParser.ConfigParser
         """
-        cfg = ConfigParser.ConfigParser(allow_no_value=True)
+        cfg = configparser.ConfigParser(allow_no_value=True)
         try:
             cmd = "cat %s" % cfg_path
             with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
                 cfg.readfp(cout)
-        except ConfigParser.ParsingError as err:
+        except configparser.ParsingError as err:
             LOG.error(err)
             raise
         return cfg

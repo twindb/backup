@@ -47,23 +47,20 @@ help:
 virtualenv: ## create virtual environment typically used for development purposes
 	virtualenv env --setuptools --prompt='(twindb_backup)'
 
-.PHONY: rebuild-requirements
-rebuild-requirements: ## Rebuild requirements files requirements.txt and requirements_dev.txt
-	pip-compile --verbose --no-index --output-file requirements.txt requirements.in
-	pip-compile --verbose --no-index --output-file requirements_dev.txt requirements_dev.in
+.PHONY: pip-tools
+pip-tools:
+	pip install pip-tools
 
 .PHONY: upgrade-requirements
-upgrade-requirements: ## Upgrade requirements
+upgrade-requirements: pip-tools ## Upgrade requirements
 	pip-compile --upgrade --verbose --no-index --output-file requirements.txt requirements.in
 	pip-compile --upgrade --verbose --no-index --output-file requirements_dev.txt requirements_dev.in
 
 .PHONY: bootstrap
 bootstrap: ## bootstrap the development environment
-	# pin pip version because of weird errors
-	# https://travis-ci.org/twindb/backup/jobs/415246056
-	pip install -U "pip ~= 9.0.3"
-	pip install -U "setuptools ~= 41.0"
-	pip install -U "pip-tools ~= 3.8"
+	pip install -U "pip ~= 20.0"
+	pip install -U "setuptools ~= 45.0"
+	pip install -U "pip-tools ~= 4.5"
 	pip-sync requirements.txt requirements_dev.txt
 	pip install --editable .
 
@@ -75,7 +72,6 @@ clean-build: ## remove build artifacts
 	rm -fr .eggs/
 	rm -rf pkg/
 	rm -rf omnibus/pkg/
-	rm -f omnibus/Gemfile.lock
 	rm -rf cache/
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
@@ -212,4 +208,5 @@ install_package:
 	fi
 
 safety: ## check for known security vulnerabilities
-	safety check
+	docker run --rm -it -v ${pwd}:/twindb-backup pyupio/safety safety check -r /twindb-backup/requirements.txt
+	docker run --rm -it -v ${pwd}:/twindb-backup pyupio/safety safety check -r /twindb-backup/requirements_dev.txt

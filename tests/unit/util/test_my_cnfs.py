@@ -69,7 +69,7 @@ def test_my_cnfs(paths, configs, tmpdir):
     full_paths = [x.format(root=str(root)) for x in paths]
 
     keys = []
-    for key, content in configs.iteritems():
+    for key, content in configs.items():
         full_path = key.format(root=str(root))
         keys.append(full_path)
         mkdir_p(dirname(full_path))

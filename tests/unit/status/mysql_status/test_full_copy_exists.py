@@ -200,7 +200,7 @@ def test_full_copy_exists(run_type, full_backup, status, expected):
 
     istatus = MySQLStatus(
         content=b64encode(
-            json.dumps(status)
-        )
+            json.dumps(status).encode("utf-8")
+        ).decode("utf-8")
     )
     assert istatus.full_copy_exists(run_type) == expected

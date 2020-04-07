@@ -15,7 +15,7 @@ class CompressionConfig(object):
     :type level: int
     """
     def __init__(self, **kwargs):
-        self._program = kwargs.get('program', COMPRESSION_MODIFIERS.keys()[0])
+        self._program = kwargs.get('program', list(COMPRESSION_MODIFIERS.keys())[0])
         if self.program not in COMPRESSION_MODIFIERS:
             raise ConfigurationError(
                 'Unsupported compression tool %s' % self.program

@@ -70,5 +70,5 @@ from twindb_backup.util import normalize_b64_data
     )
 ])
 def test_b64_normalize(data, expected):
-    result = b64decode(normalize_b64_data(data))
+    result = b64decode(normalize_b64_data(data)).decode("utf-8")
     assert result == expected

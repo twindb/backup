@@ -35,7 +35,12 @@ def get_my_cnf(status, key):
     :rtype: str
     """
     for path in status[key].config:
-        yield path, status[key].config[path]
+        if isinstance(status[key].config[path], str):
+            yield path, status[key].config[path]
+        elif isinstance(status[key].config[path], bytes):
+            yield path, status[key].config[path].decode("utf-8")
+        else:
+            raise TwinDBBackupError("Unexpected type of %r" % status[key].config[path])
 
 
 def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
@@ -400,7 +405,7 @@ def restore_from_mysql(twindb_config, copy, dst_dir,
             config_dir,
             os.path.dirname(path).lstrip('/')
         )
-        mkdir_p(config_sub_dir, mode=0755)
+        mkdir_p(config_sub_dir, mode=0o755)
 
         with open(os.path.join(config_sub_dir,
                                os.path.basename(path)), 'w') as mysql_config:

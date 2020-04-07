@@ -158,7 +158,7 @@ def status_raw_empty():
                 "monthly": {},
                 "yearly": {}
             }
-        )
+        ).encode("utf-8")
     )
 
 
