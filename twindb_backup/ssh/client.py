@@ -62,7 +62,13 @@ class SshClient(object):
         shell = SSHClient()
         shell.set_missing_host_key_policy(AutoAddPolicy())
         try:
-            LOG.debug("Connecting to %s:%d as %s with key %s", self._host, self._port, self._user, self._key)
+            LOG.debug(
+                "Connecting to %s:%d as %s with key %s",
+                self._host,
+                self._port,
+                self._user,
+                self._key
+            )
             shell.connect(
                 hostname=self._host,
                 key_filename=self._key,
@@ -127,7 +133,9 @@ class SshClient(object):
                             )
                         if channel.recv_stderr_ready():
                             stderr_chunks.append(
-                                channel.recv_stderr(max_chunk_size).decode("utf-8")
+                                channel.recv_stderr(
+                                    max_chunk_size
+                                ).decode("utf-8")
                             )
 
                     exit_code = channel.recv_exit_status()
