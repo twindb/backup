@@ -84,9 +84,9 @@ class Local(BaseDestination):
         with run_command(cmd) as cout:
 
             if files_only:
-                return cout.read().split()
+                return cout.read().decode("utf-8").split()
             else:
-                return cout.read().split()[1:]
+                return cout.read().decode("utf-8").split()[1:]
 
     def delete(self, path):
         cmd = ["rm", path]

@@ -23,7 +23,7 @@ homepage 'https://twindb.com'
 # and /opt/twindb-backup on all other platforms
 install_dir '/opt/twindb-backup'
 
-build_version '2.18.5'
+build_version '2.20.0'
 
 build_iteration 1
 
@@ -89,8 +89,10 @@ if redhat?
     runtime_dependency 'libcurl-devel'
 end
 
-override :python, version: '2.7.14'
-override :setuptools, version: '41.0.1'
+# override :python, version: '2.7.14'
+# override :setuptools, version: '41.0.1'
+override :libyaml, version: '0.2.2'
+override :libffi, version: '3.3'
 
 # twindb-backup
 dependency 'twindb-backup'

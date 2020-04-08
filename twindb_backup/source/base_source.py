@@ -2,7 +2,7 @@
 """
 Module defines base source class.
 """
-import ConfigParser
+import configparser
 from os import path as osp
 import socket
 
@@ -85,7 +85,7 @@ class BaseSource(object):
             )
             delete_local_files(dir_backups, keep_copies)
 
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             pass
 
     @property

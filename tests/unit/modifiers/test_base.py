@@ -12,4 +12,4 @@ def test_modifier_get_stream(input_file):
     with open(str(input_file), 'r') as f:
         m = Modifier(f)
         with m.get_stream() as m_f:
-            assert m_f.read() == 'foo bar'
+            assert m_f.read().decode("utf-8") == "foo bar"

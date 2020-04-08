@@ -2,7 +2,7 @@
 """Module that parses config file, builds a modifiers chain and fires
 backup jobs.
 """
-import ConfigParser
+import configparser
 import errno
 import fcntl
 from os import path as osp
@@ -127,7 +127,7 @@ def backup_mysql(run_type, config):
 
     try:
         full_backup = config.mysql.full_backup
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         full_backup = 'daily'
     backup_start = time.time()
 
@@ -246,7 +246,7 @@ def backup_binlogs(run_type, config):  # pylint: disable=too-many-locals
 
     try:
         expire_log_days = config.mysql.expire_log_days
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+    except (configparser.NoSectionError, configparser.NoOptionError):
         expire_log_days = 7
 
     for copy in status:
@@ -327,7 +327,7 @@ def backup_everything(run_type, twindb_config, binlogs_only=False):
             save_measures(backup_start, end)
         else:
             backup_binlogs(run_type, twindb_config)
-    except ConfigParser.NoSectionError as err:
+    except configparser.NoSectionError as err:
         LOG.debug(traceback.format_exc())
         LOG.error(err)
         exit(1)

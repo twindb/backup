@@ -1,5 +1,3 @@
-from ConfigParser import ConfigParser
-
 import mock
 
 from twindb_backup.backup import run_backup_job

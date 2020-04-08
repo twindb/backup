@@ -62,8 +62,8 @@ password=qwerty
     'Percona-Server-client-56', 'Percona-Server-server-56',
     'Percona-Server-devel-56', 'Percona-Server-shared-56', 'percona-toolkit',
     'percona-xtrabackup-24',
-    'python2-pip',
-    'gcc', 'python-devel', 'zlib-devel', 'openssl-devel',
+    'python3-devel', 'python3', 'python36-virtualenv',
+    'gcc', 'zlib-devel', 'openssl-devel',
     'rpm-build','docker', 'strace', 'jq']
 
   package { $packages:
@@ -84,12 +84,6 @@ password=qwerty
 
   package { 'epel-release':
     ensure => installed
-  }
-
-  package { ['tox', 'awscli']:
-    ensure   => installed,
-    provider => pip,
-    require  => Package['python2-pip']
   }
 
   service { 'docker':

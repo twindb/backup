@@ -15,7 +15,7 @@ from twindb_backup import LOG
 from twindb_backup.exceptions import OperationError
 
 
-def mkdir_p(path, mode=0777):
+def mkdir_p(path, mode=0o777):
     """
     Emulate mkdir -p.
     Create a directory named path with numeric mode mode.
