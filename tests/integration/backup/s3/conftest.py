@@ -8,32 +8,33 @@ import time
 
 from twindb_backup import LOG, setup_logging
 from twindb_backup.destination.s3 import S3
+
 setup_logging(LOG, debug=True)
 
 
 @pytest.fixture()
 def bucket_name():
-    travis_job_number = os.environ.get('TRAVIS_JOB_NUMBER')
-    LOG.debug('TRAVIS_JOB_NUMBER=%s' % travis_job_number)
+    travis_job_number = os.environ.get("TRAVIS_JOB_NUMBER")
+    LOG.debug("TRAVIS_JOB_NUMBER=%s" % travis_job_number)
 
     number = random.randint(0, 1000000)
-    LOG.debug('Default job number %d' % number)
+    LOG.debug("Default job number %d" % number)
 
     if travis_job_number:
-        bucket = 'twindb-backup-test-travis-%s' % travis_job_number
+        bucket = "twindb-backup-test-travis-%s" % travis_job_number
     else:
-        bucket = 'twindb-backup-test-travis-%d' % number
+        bucket = "twindb-backup-test-travis-%d" % number
 
-    return '%s-%s' % (bucket, time.time())
+    return "%s-%s" % (bucket, time.time())
 
 
 @pytest.fixture()
 def s3_client(bucket_name):
-    LOG.debug('Bucket: %s' % bucket_name)
+    LOG.debug("Bucket: %s" % bucket_name)
     client = S3(
         bucket=bucket_name,
-        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+        aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
     )
     try:
         assert client.create_bucket()
@@ -47,12 +48,11 @@ def s3_client(bucket_name):
 
 @pytest.fixture
 def foo_bar_dir(tmpdir):
-    test_dir = tmpdir.join('foo/bar')
+    test_dir = tmpdir.join("foo/bar")
 
-    assert call('rm -rf %s' % str(test_dir), shell=True) == 0
-    assert call('mkdir -p %s' % str(test_dir), shell=True) == 0
-    assert call('echo $RANDOM > %s' %
-                str(test_dir.join('file')), shell=True) == 0
+    assert call("rm -rf %s" % str(test_dir), shell=True) == 0
+    assert call("mkdir -p %s" % str(test_dir), shell=True) == 0
+    assert call("echo $RANDOM > %s" % str(test_dir.join("file")), shell=True) == 0
 
     return str(test_dir)
 
@@ -205,21 +205,27 @@ ohpgdDRTSPdHqW7zEDyuALbkDhNX
 @pytest.fixture
 def config_content_mysql_aenc(config_content_mysql_only):
 
-    return config_content_mysql_only + """
+    return (
+        config_content_mysql_only
+        + """
 
 [gpg]
 keyring = {gpg_keyring}
 secret_keyring = {gpg_secret_keyring}
 recipient = foo@bar
 """
+    )
 
 
 @pytest.fixture
 def config_content_files_aenc(config_content_files_only):
-    return config_content_files_only + """
+    return (
+        config_content_files_only
+        + """
 
 [gpg]
 keyring = {gpg_keyring}
 secret_keyring = {gpg_secret_keyring}
 recipient = foo@bar
 """
+    )

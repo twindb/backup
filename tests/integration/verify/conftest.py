@@ -11,30 +11,29 @@ from twindb_backup import LOG
 @pytest.yield_fixture
 def storage_server(docker_client, container_network):
 
-    bootstrap_script = '/twindb-backup/support/bootstrap/storage_server.sh'
+    bootstrap_script = "/twindb-backup/support/bootstrap/storage_server.sh"
     container = get_container(
-        'storage_server',
+        "storage_server",
         docker_client,
         container_network,
         bootstrap_script=bootstrap_script,
         image="centos:centos7",
-        last_n=3
+        last_n=3,
     )
 
     timeout = time.time() + 30 * 60
 
     while time.time() < timeout:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if sock.connect_ex((container['ip'], 22)) == 0:
+        if sock.connect_ex((container["ip"], 22)) == 0:
             break
         time.sleep(1)
 
     yield container
 
     if container:
-        LOG.info('Removing container %s', container['Id'])
-        docker_client.api.remove_container(container=container['Id'],
-                                           force=True)
+        LOG.info("Removing container %s", container["Id"])
+        docker_client.api.remove_container(container=container["Id"], force=True)
 
 
 @pytest.fixture

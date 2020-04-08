@@ -61,3 +61,4 @@ target/
 .DS_Store
 /vagrant/README.html
 /.pytest_cache/
+/.venv/

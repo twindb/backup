@@ -40,7 +40,7 @@ import sys
 
 __author__ = 'TwinDB Development Team'
 __email__ = 'dev@twindb.com'
-__version__ = '2.19.0'
+__version__ = '2.20.0'
 STATUS_FORMAT_VERSION = 1
 LOCK_FILE = '/var/run/twindb-backup.lock'
 LOG_FILE = '/var/log/twindb-backup-measures.log'
@@ -154,7 +154,7 @@ def get_timeout(run_type):
         'monthly': 30 * 24 * 3600 / 2,
         'yearly': 365 * 24 * 3600 / 2
     }
-    return timeouts[run_type]
+    return int(timeouts[run_type])
 
 
 def save_measures(start_time, end_time, log_path=LOG_FILE):

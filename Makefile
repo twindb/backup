@@ -181,6 +181,8 @@ docker-start:
 		--env AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
 		--env PLATFORM=${PLATFORM} \
 		--env OS_VERSION=${OS_VERSION} \
+		--env LC_ALL=C.UTF-8 \
+		--env LANG=C.UTF-8 \
 		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
 		bash -l
 

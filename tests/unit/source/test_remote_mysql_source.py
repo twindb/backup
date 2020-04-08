@@ -1,14 +1,11 @@
 import os
-from configparser import ConfigParser
 from os import path as osp
 
-from io import StringIO
 from pathlib import PurePath, Path
 from pprint import pformat
 from textwrap import dedent
 
 import mock
-import py
 import pytest
 
 from twindb_backup import INTERVALS, LOG

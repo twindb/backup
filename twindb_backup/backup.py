@@ -327,7 +327,7 @@ def backup_everything(run_type, twindb_config, binlogs_only=False):
             save_measures(backup_start, end)
         else:
             backup_binlogs(run_type, twindb_config)
-    except CONFIGPARSER.NoSectionError as err:
+    except configparser.NoSectionError as err:
         LOG.debug(traceback.format_exc())
         LOG.error(err)
         exit(1)

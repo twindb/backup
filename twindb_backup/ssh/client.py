@@ -62,6 +62,13 @@ class SshClient(object):
         shell = SSHClient()
         shell.set_missing_host_key_policy(AutoAddPolicy())
         try:
+            LOG.debug(
+                "Connecting to %s:%d as %s with key %s",
+                self._host,
+                self._port,
+                self._user,
+                self._key
+            )
             shell.connect(
                 hostname=self._host,
                 key_filename=self._key,
@@ -69,7 +76,10 @@ class SshClient(object):
                 username=self._user
             )
             yield shell
+        except FileNotFoundError:
+            raise
         except (AuthenticationException, SSHException, socket.error) as err:
+            # print(type(err))
             raise SshClientException(err)
         finally:
             shell.close()
@@ -119,11 +129,13 @@ class SshClient(object):
                             or channel.recv_stderr_ready():
                         if channel.recv_ready():
                             stdout_chunks.append(
-                                channel.recv(max_chunk_size)
+                                channel.recv(max_chunk_size).decode("utf-8")
                             )
                         if channel.recv_stderr_ready():
                             stderr_chunks.append(
-                                channel.recv_stderr(max_chunk_size)
+                                channel.recv_stderr(
+                                    max_chunk_size
+                                ).decode("utf-8")
                             )
 
                     exit_code = channel.recv_exit_status()
@@ -211,10 +223,11 @@ class SshClient(object):
         :return: File content
         :rtype: str
         """
+        LOG.debug("Reading remote file %s", path)
         with self._shell() as ssh_client:
             sftp_client = ssh_client.open_sftp()
             with sftp_client.open(path) as remote_file:
-                return remote_file.read()
+                return remote_file.read().decode("utf-8")
 
     def write_content(self, path, content):
         """
