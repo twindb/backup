@@ -23,7 +23,7 @@ homepage 'https://twindb.com'
 # and /opt/twindb-backup on all other platforms
 install_dir '/opt/twindb-backup'
 
-build_version '2.19.0'
+build_version '2.20.0'
 
 build_iteration 1
 
