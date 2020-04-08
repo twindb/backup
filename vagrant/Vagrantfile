@@ -3,12 +3,12 @@
 nodes = [
     { :hostname   => 'master1',
       :ip         => '192.168.36.250',
-      :box        => 'bento/centos-7.3',
+      :box        => 'bento/centos-7',
       :ram        => 3072
     },
     { :hostname   => 'master2',
       :ip         => '192.168.36.251',
-      :box        => 'bento/centos-7.3',
+      :box        => 'bento/centos-7',
       :ram        => 3072
     }
 ]
@@ -43,7 +43,12 @@ which puppet || install_puppet
 
 SCRIPT
 
+
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+    config.vm.provider "virtualbox" do |v|
+        v.memory = 1024
+        v.cpus = 4
+    end
     nodes.each do |node|
         config.vm.define node[:hostname] do |nodeconfig|
             nodeconfig.vm.box = node[:box]
@@ -57,7 +62,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
             nodeconfig.vm.provider :virtualbox do |vb|
                 vb.customize [
                                  'modifyvm', :id,
-                                 '--cpuexecutioncap', '40',
+                                 '--cpuexecutioncap', '90',
                                  '--memory', memory.to_s,
                              ]
 

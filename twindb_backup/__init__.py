@@ -154,7 +154,7 @@ def get_timeout(run_type):
         'monthly': 30 * 24 * 3600 / 2,
         'yearly': 365 * 24 * 3600 / 2
     }
-    return timeouts[run_type]
+    return int(timeouts[run_type])
 
 
 def save_measures(start_time, end_time, log_path=LOG_FILE):

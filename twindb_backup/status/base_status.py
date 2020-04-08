@@ -165,7 +165,7 @@ class BaseStatus(object):
         """
         try:
             return dst.read(self.status_path)
-        except FileNotFound:
+        except (FileNotFound, FileNotFoundError):
             return None
 
     def _status_serialize(self):
@@ -195,10 +195,7 @@ class BaseStatus(object):
         if content == '':
             raise CorruptedStatus('Status content cannot be an empty string')
         try:
-            print("Content")
-            print(content)
             status = json.loads(content)
-            print(status)
             md5_stored = status['md5']
             md5_calculated = hashlib.md5(
                 status['status'].encode("utf-8")
@@ -211,8 +208,6 @@ class BaseStatus(object):
                     status['status']
                 ).decode("utf-8")
             )
-            print(self._status)
-            # 1/0
             self._status.sort(
                 key=lambda cp: cp.created_at
             )

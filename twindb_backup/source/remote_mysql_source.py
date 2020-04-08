@@ -142,7 +142,7 @@ class RemoteMySQLSource(MySQLSource):
 
     def _save_cfg(self, dst, root_cfg):
         """Save configs on destination recursively"""
-        files = self._find_all_cnf(root_cfg)
+        files = self._find_all_cnf(Path(root_cfg))
         server_id = self._get_server_id(dst.host)
         is_server_id_set = False
         valid_cfg = []
