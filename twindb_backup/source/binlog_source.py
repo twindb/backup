@@ -46,7 +46,7 @@ class BinlogParser(object):
     def created_at(self):
         """Timestamp when the binlog was created"""
         try:
-            with open(self._binlog) as binlog_descriptor:
+            with open(self._binlog, "rb") as binlog_descriptor:
                 self.__read_magic_number(binlog_descriptor)
                 return self.__read_int(binlog_descriptor, 4)
         except IOError as err:
@@ -63,7 +63,7 @@ class BinlogParser(object):
     def end_position(self):
         """Last position in the binlog"""
         last_position = self.start_position
-        with open(self._binlog) as binlog_descriptor:
+        with open(self._binlog, "rb") as binlog_descriptor:
             self.__read_magic_number(binlog_descriptor)
             while True:
                 event = self.__read_binlog_event(binlog_descriptor)

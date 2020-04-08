@@ -14,6 +14,6 @@ def test_keeplocal_saves_file(input_file, tmpdir):
     with open(str(input_file), 'r') as f:
         m = KeepLocal(f, str(local_copy))
         with m.get_stream() as m_f:
-            remote_copy = m_f.read()
+            remote_copy = m_f.read().decode("utf-8")
             with open(str(local_copy), 'r') as l:
                 assert l.read() == remote_copy

@@ -31,7 +31,7 @@ class DataDogExporter(BaseExporter):  # pylint: disable=too-few-public-methods
         :param data: Data to posting
         :raise: DataDogExporterError if data is invalid
         """
-        if isinstance(data, (int, float, long)):
+        if isinstance(data, (int, float)):
             metric_name = self._suffix
             if category == ExportCategory.files:
                 metric_name += "files."

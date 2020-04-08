@@ -8,9 +8,9 @@ import socket
 
 from contextlib import contextmanager
 from multiprocessing import Process
-from urlparse import urlparse
 
 import time
+from urllib.parse import urlparse
 
 from botocore.exceptions import ClientError
 from botocore.client import Config
@@ -208,7 +208,7 @@ class S3(BaseDestination):
             with os.fdopen(write_fd, 'wb') as w_pipe:
                 try:
                     retry_interval = 2
-                    for _ in xrange(10):
+                    for _ in range(10):
                         try:
                             s3_client.download_fileobj(bucket_name,
                                                        key,

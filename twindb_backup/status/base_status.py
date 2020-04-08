@@ -7,7 +7,7 @@ import hashlib
 from os import path as osp
 import socket
 
-from twindb_backup import STATUS_FORMAT_VERSION
+from twindb_backup import STATUS_FORMAT_VERSION, LOG
 from twindb_backup.destination.exceptions import FileNotFound
 from twindb_backup.status.exceptions import CorruptedStatus, StatusKeyNotFound
 
@@ -68,7 +68,7 @@ class BaseStatus(object):
         :rtype: str
         """
         return hashlib.md5(
-            self._status_serialize()
+            self._status_serialize().encode("utf-8")
         ).hexdigest()
 
     @property
@@ -165,7 +165,7 @@ class BaseStatus(object):
         """
         try:
             return dst.read(self.status_path)
-        except FileNotFound:
+        except (FileNotFound, FileNotFoundError):
             return None
 
     def _status_serialize(self):
@@ -174,7 +174,7 @@ class BaseStatus(object):
     def __getitem__(self, item):
         if isinstance(item, int):
             return self._status[item]
-        elif isinstance(item, (str, unicode)):
+        elif isinstance(item, (str, )):
             for copy in self._status:
                 if copy.key == str(item):
                     return copy
@@ -185,7 +185,7 @@ class BaseStatus(object):
     def __str__(self):
         return b64decode(
             self._status_serialize()
-        )
+        ).decode("utf-8")
 
     def __len__(self):
         return len(self._status)
@@ -198,7 +198,7 @@ class BaseStatus(object):
             status = json.loads(content)
             md5_stored = status['md5']
             md5_calculated = hashlib.md5(
-                status['status']
+                status['status'].encode("utf-8")
             ).hexdigest()
             if md5_calculated != md5_stored:
                 raise CorruptedStatus('Checksum mismatch')
@@ -206,17 +206,20 @@ class BaseStatus(object):
             self._status = self._load(
                 b64decode(
                     status['status']
-                )
+                ).decode("utf-8")
             )
             self._status.sort(
                 key=lambda cp: cp.created_at
             )
         except TypeError:  # Init from None
             self._status = []
-        except ValueError:  # Old format
+        except ValueError as err:  # Old format
+            LOG.debug(err)
+            LOG.debug("Looks like old format")
             self._status = self._load(
-                b64decode(content)
+                b64decode(content).decode("utf-8")
             )
+            LOG.debug("Loaded status: %s", self._status)
             self._status.sort(
-                key=lambda cp: cp.created_at
+                key=lambda cp: cp.sort_key
             )

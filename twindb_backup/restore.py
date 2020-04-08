@@ -16,8 +16,10 @@ from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
 from twindb_backup.exceptions import TwinDBBackupError
 from twindb_backup.export import export_info
-from twindb_backup.exporter.base_exporter import ExportCategory, \
-    ExportMeasureType
+from twindb_backup.exporter.base_exporter import (
+    ExportCategory,
+    ExportMeasureType,
+)
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.status.mysql_status import MySQLStatus
 from twindb_backup.util import mkdir_p, empty_dir
@@ -35,12 +37,24 @@ def get_my_cnf(status, key):
     :rtype: str
     """
     for path in status[key].config:
-        yield path, status[key].config[path]
+        if isinstance(status[key].config[path], str):
+            yield path, status[key].config[path]
+        elif isinstance(status[key].config[path], bytes):
+            yield path, status[key].config[path].decode("utf-8")
+        else:
+            raise TwinDBBackupError(
+                "Unexpected type of %r" % status[key].config[path]
+            )
 
 
-def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
-                            xtrabackup_binary=XTRABACKUP_BINARY,
-                            xbstream_binary=XBSTREAM_BINARY):
+def restore_from_mysql_full(
+    stream,
+    dst_dir,
+    config,
+    redo_only=False,
+    xtrabackup_binary=XTRABACKUP_BINARY,
+    xbstream_binary=XBSTREAM_BINARY,
+):
     """
     Restore MySQL datadir from a backup copy
 
@@ -65,12 +79,12 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
             stream,
             config.gpg.recipient,
             config.gpg.keyring,
-            secret_keyring=config.gpg.secret_keyring
+            secret_keyring=config.gpg.secret_keyring,
         )
-        LOG.debug('Decrypting stream')
+        LOG.debug("Decrypting stream")
         stream = gpg.revert_stream()
     else:
-        LOG.debug('Not decrypting the stream')
+        LOG.debug("Not decrypting the stream")
 
     if config.mysql.xtrabackup_binary:
         xtrabackup_binary = config.mysql.xtrabackup_binary
@@ -83,33 +97,32 @@ def restore_from_mysql_full(stream, dst_dir, config, redo_only=False,
 
     mem_usage = psutil.virtual_memory()
     try:
-        xtrabackup_cmd = [xtrabackup_binary,
-                          '--use-memory=%d' % (mem_usage.available/2),
-                          '--prepare']
+        xtrabackup_cmd = [
+            xtrabackup_binary,
+            "--use-memory=%d" % (mem_usage.available / 2),
+            "--prepare",
+        ]
         if redo_only:
-            xtrabackup_cmd += ['--apply-log-only']
+            xtrabackup_cmd += ["--apply-log-only"]
 
         xtrabackup_cmd += ["--target-dir", dst_dir]
 
-        LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
-        xtrabackup_proc = Popen(xtrabackup_cmd,
-                                stdout=None,
-                                stderr=None)
+        LOG.debug("Running %s", " ".join(xtrabackup_cmd))
+        xtrabackup_proc = Popen(xtrabackup_cmd, stdout=None, stderr=None)
         xtrabackup_proc.communicate()
         ret = xtrabackup_proc.returncode
         if ret:
-            LOG.error('%s exited with code %d', " ".join(xtrabackup_cmd), ret)
+            LOG.error("%s exited with code %d", " ".join(xtrabackup_cmd), ret)
         return ret == 0
     except OSError as err:
         raise TwinDBBackupError(
-            'Failed to prepare backup in %s: %s' % (dst_dir, err)
+            "Failed to prepare backup in %s: %s" % (dst_dir, err)
         )
 
 
 def _extract_xbstream(
-        input_stream,
-        working_dir,
-        xbstream_binary=XBSTREAM_BINARY):
+    input_stream, working_dir, xbstream_binary=XBSTREAM_BINARY
+):
     """
     Extract xbstream stream in directory
 
@@ -119,37 +132,36 @@ def _extract_xbstream(
     :return: True if extracted successfully
     """
     try:
-        cmd = [xbstream_binary, '-x']
-        LOG.debug('Running %s', ' '.join(cmd))
-        LOG.debug('Working directory: %s', working_dir)
-        LOG.debug('Xbstream binary: %s', xbstream_binary)
+        cmd = [xbstream_binary, "-x"]
+        LOG.debug("Running %s", " ".join(cmd))
+        LOG.debug("Working directory: %s", working_dir)
+        LOG.debug("Xbstream binary: %s", xbstream_binary)
         proc = Popen(
-            cmd,
-            stdin=input_stream,
-            stdout=PIPE,
-            stderr=PIPE,
-            cwd=working_dir
+            cmd, stdin=input_stream, stdout=PIPE, stderr=PIPE, cwd=working_dir
         )
         cout, cerr = proc.communicate()
         ret = proc.returncode
         if ret:
-            LOG.error('%s exited with code %d', ' '.join(cmd), ret)
+            LOG.error("%s exited with code %d", " ".join(cmd), ret)
             if cout:
-                LOG.error('STDOUT: %s', cout)
+                LOG.error("STDOUT: %s", cout)
             if cerr:
-                LOG.error('STDERR: %s', cerr)
+                LOG.error("STDERR: %s", cerr)
         return ret == 0
 
     except OSError as err:
-        raise TwinDBBackupError(
-            'Failed to extract xbstream: %s' % err
-        )
+        raise TwinDBBackupError("Failed to extract xbstream: %s" % err)
 
 
 # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
-                                   xtrabackup_binary=XTRABACKUP_BINARY,
-                                   xbstream_binary=XBSTREAM_BINARY):
+def restore_from_mysql_incremental(
+    stream,
+    dst_dir,
+    config,
+    tmp_dir=None,
+    xtrabackup_binary=XTRABACKUP_BINARY,
+    xbstream_binary=XBSTREAM_BINARY,
+):
     """
     Restore MySQL datadir from an incremental copy.
 
@@ -182,12 +194,12 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
             stream,
             config.gpg.recipient,
             config.gpg.keyring,
-            secret_keyring=config.gpg.secret_keyring
+            secret_keyring=config.gpg.secret_keyring,
         )
-        LOG.debug('Decrypting stream')
+        LOG.debug("Decrypting stream")
         stream = gpg.revert_stream()
     else:
-        LOG.debug('Not decrypting the stream')
+        LOG.debug("Not decrypting the stream")
 
     if config.mysql.xtrabackup_binary:
         xtrabackup_binary = config.mysql.xtrabackup_binary
@@ -203,48 +215,39 @@ def restore_from_mysql_incremental(stream, dst_dir, config, tmp_dir=None,
         try:
             xtrabackup_cmd = [
                 xtrabackup_binary,
-                '--use-memory=%d' % (mem_usage.available / 2),
-                '--prepare',
-                '--apply-log-only',
-                '--target-dir=%s' % dst_dir
+                "--use-memory=%d" % (mem_usage.available / 2),
+                "--prepare",
+                "--apply-log-only",
+                "--target-dir=%s" % dst_dir,
             ]
-            LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
-            xtrabackup_proc = Popen(
-                xtrabackup_cmd,
-                stdout=None,
-                stderr=None
-            )
+            LOG.debug("Running %s", " ".join(xtrabackup_cmd))
+            xtrabackup_proc = Popen(xtrabackup_cmd, stdout=None, stderr=None)
             xtrabackup_proc.communicate()
             ret = xtrabackup_proc.returncode
             if ret:
                 LOG.error(
-                    '%s exited with code %d',
-                    " ".join(xtrabackup_cmd),
-                    ret)
+                    "%s exited with code %d", " ".join(xtrabackup_cmd), ret
+                )
                 return False
 
             xtrabackup_cmd = [
                 xtrabackup_binary,
-                '--use-memory=%d' % (mem_usage.available / 2),
-                '--prepare',
+                "--use-memory=%d" % (mem_usage.available / 2),
+                "--prepare",
                 "--target-dir=%s" % dst_dir,
-                "--incremental-dir=%s" % inc_dir
+                "--incremental-dir=%s" % inc_dir,
             ]
-            LOG.debug('Running %s', ' '.join(xtrabackup_cmd))
-            xtrabackup_proc = Popen(
-                xtrabackup_cmd,
-                stdout=None,
-                stderr=None
-            )
+            LOG.debug("Running %s", " ".join(xtrabackup_cmd))
+            xtrabackup_proc = Popen(xtrabackup_cmd, stdout=None, stderr=None)
             xtrabackup_proc.communicate()
             ret = xtrabackup_proc.returncode
             if ret:
-                LOG.error('%s exited with code %d',
-                          " ".join(xtrabackup_cmd),
-                          ret)
+                LOG.error(
+                    "%s exited with code %d", " ".join(xtrabackup_cmd), ret
+                )
             return ret == 0
         except OSError as err:
-            LOG.error('Failed to prepare backup in %s: %s', dst_dir, err)
+            LOG.error("Failed to prepare backup in %s: %s", dst_dir, err)
             return False
     finally:
         try:
@@ -263,13 +266,17 @@ def gen_grastate(path, version, uuid, seqno):
     :param uuid: UUID from grastate.dat.
     :param seqno: seqno from grastate.dat.
     """
-    with open(path, 'w') as file_desc:
-        file_desc.write("""# GALERA saved state
+    with open(path, "w") as file_desc:
+        file_desc.write(
+            """# GALERA saved state
 version: {version}
 uuid:    {uuid}
 seqno:   {seqno}
 cert_index:
-""".format(version=version, uuid=uuid, seqno=seqno))
+""".format(
+                version=version, uuid=uuid, seqno=seqno
+            )
+        )
 
 
 def update_grastate(dst_dir, status, key):
@@ -284,23 +291,21 @@ def update_grastate(dst_dir, status, key):
     :param key: Backup name
     :type key: str
     """
-    if os.path.exists(dst_dir + '/xtrabackup_galera_info'):
+    if os.path.exists(dst_dir + "/xtrabackup_galera_info"):
         version = status[key].wsrep_provider_version
 
-        with open(dst_dir + '/xtrabackup_galera_info') as galera_info:
+        with open(dst_dir + "/xtrabackup_galera_info") as galera_info:
             galera_info = galera_info.read()
-            uuid = galera_info.split(':')[0]
-            seqno = galera_info.split(':')[1]
+            uuid = galera_info.split(":")[0]
+            seqno = galera_info.split(":")[1]
 
-        gen_grastate(dst_dir + '/grastate.dat',
-                     version, uuid, seqno)
+        gen_grastate(dst_dir + "/grastate.dat", version, uuid, seqno)
 
 
 # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-def restore_from_mysql(twindb_config, copy, dst_dir,
-                       tmp_dir=None,
-                       cache=None,
-                       hostname=None):
+def restore_from_mysql(
+    twindb_config, copy, dst_dir, tmp_dir=None, cache=None, hostname=None
+):
     """
     Restore MySQL datadir in a given directory
 
@@ -318,7 +323,7 @@ def restore_from_mysql(twindb_config, copy, dst_dir,
     :type hostname: str
 
     """
-    LOG.info('Restoring %s in %s', copy, dst_dir)
+    LOG.info("Restoring %s in %s", copy, dst_dir)
     mkdir_p(dst_dir)
 
     dst = None
@@ -331,10 +336,7 @@ def restore_from_mysql(twindb_config, copy, dst_dir,
         if not hostname:
             hostname = copy.host
             if not hostname:
-                raise DestinationError(
-                    'Failed to get hostname from %s'
-                    % copy
-                )
+                raise DestinationError("Failed to get hostname from %s" % copy)
         dst = twindb_config.destination(backup_source=hostname)
 
     key = copy.key
@@ -351,23 +353,16 @@ def restore_from_mysql(twindb_config, copy, dst_dir,
                 cache.restore_in(cache_key, dst_dir)
             else:
                 restore_from_mysql_full(
-                    stream,
-                    dst_dir,
-                    twindb_config,
-                    redo_only=False
+                    stream, dst_dir, twindb_config, redo_only=False
                 )
                 cache.add(dst_dir, cache_key)
         else:
             restore_from_mysql_full(
-                stream,
-                dst_dir,
-                twindb_config,
-                redo_only=False)
+                stream, dst_dir, twindb_config, redo_only=False
+            )
 
     else:
-        full_copy = status.candidate_parent(
-            copy.run_type
-        )
+        full_copy = status.candidate_parent(copy.run_type)
         full_stream = dst.get_stream(full_copy)
         LOG.debug("Full parent copy is %s", full_copy.key)
         cache_key = os.path.basename(full_copy.key)
@@ -378,55 +373,53 @@ def restore_from_mysql(twindb_config, copy, dst_dir,
                 cache.restore_in(cache_key, dst_dir)
             else:
                 restore_from_mysql_full(
-                    full_stream,
-                    dst_dir,
-                    twindb_config,
-                    redo_only=True
+                    full_stream, dst_dir, twindb_config, redo_only=True
                 )
                 cache.add(dst_dir, cache_key)
         else:
             restore_from_mysql_full(
-                full_stream,
-                dst_dir,
-                twindb_config,
-                redo_only=True
+                full_stream, dst_dir, twindb_config, redo_only=True
             )
 
-        restore_from_mysql_incremental(
-            stream,
-            dst_dir,
-            twindb_config,
-            tmp_dir
-        )
+        restore_from_mysql_incremental(stream, dst_dir, twindb_config, tmp_dir)
 
     config_dir = os.path.join(dst_dir, "_config")
 
     for path, content in get_my_cnf(status, key):
         config_sub_dir = os.path.join(
-            config_dir,
-            os.path.dirname(path).lstrip('/')
+            config_dir, os.path.dirname(path).lstrip("/")
         )
-        mkdir_p(config_sub_dir, mode=0755)
+        mkdir_p(config_sub_dir, mode=0o755)
 
-        with open(os.path.join(config_sub_dir,
-                               os.path.basename(path)), 'w') as mysql_config:
+        with open(
+            os.path.join(config_sub_dir, os.path.basename(path)), "w"
+        ) as mysql_config:
             mysql_config.write(content)
 
     update_grastate(dst_dir, status, key)
-    export_info(twindb_config, data=time.time() - restore_start,
-                category=ExportCategory.mysql,
-                measure_type=ExportMeasureType.restore)
-    LOG.info('Successfully restored %s in %s.', copy.key, dst_dir)
-    LOG.info('Now copy content of %s to MySQL datadir: '
-             'cp -R %s /var/lib/mysql/', dst_dir, osp.join(dst_dir, '*'))
-    LOG.info('Fix permissions: chown -R mysql:mysql /var/lib/mysql/')
-    LOG.info('Make sure innodb_log_file_size and innodb_log_files_in_group '
-             'in %s/backup-my.cnf and in /etc/my.cnf are same.', dst_dir)
+    export_info(
+        twindb_config,
+        data=time.time() - restore_start,
+        category=ExportCategory.mysql,
+        measure_type=ExportMeasureType.restore,
+    )
+    LOG.info("Successfully restored %s in %s.", copy.key, dst_dir)
+    LOG.info(
+        "Now copy content of %s to MySQL datadir: " "cp -R %s /var/lib/mysql/",
+        dst_dir,
+        osp.join(dst_dir, "*"),
+    )
+    LOG.info("Fix permissions: chown -R mysql:mysql /var/lib/mysql/")
+    LOG.info(
+        "Make sure innodb_log_file_size and innodb_log_files_in_group "
+        "in %s/backup-my.cnf and in /etc/my.cnf are same.",
+        dst_dir,
+    )
 
     if osp.exists(config_dir):
-        LOG.info('Original my.cnf is restored in %s.', config_dir)
+        LOG.info("Original my.cnf is restored in %s.", config_dir)
 
-    LOG.info('Then you can start MySQL normally.')
+    LOG.info("Then you can start MySQL normally.")
 
 
 def restore_from_file(twindb_config, copy, dst_dir):
@@ -440,7 +433,7 @@ def restore_from_file(twindb_config, copy, dst_dir):
     :param dst_dir: Path to destination directory. Must exist and be empty.
     :type dst_dir: str
     """
-    LOG.info('Restoring %s in %s', copy.key, dst_dir)
+    LOG.info("Restoring %s in %s", copy.key, dst_dir)
     mkdir_p(dst_dir)
     restore_start = time.time()
     keep_local_path = twindb_config.keep_local_path
@@ -458,37 +451,37 @@ def restore_from_file(twindb_config, copy, dst_dir):
                 stream,
                 twindb_config.gpg.recipient,
                 twindb_config.gpg.keyring,
-                secret_keyring=twindb_config.gpg.secret_keyring
+                secret_keyring=twindb_config.gpg.secret_keyring,
             )
-            LOG.debug('Decrypting stream')
+            LOG.debug("Decrypting stream")
             stream = gpg.revert_stream()
         else:
-            LOG.debug('Not decrypting the stream')
+            LOG.debug("Not decrypting the stream")
 
     with stream as handler:
         try:
-            LOG.debug('handler type: %s', type(handler))
-            LOG.debug('stream type: %s', type(stream))
+            LOG.debug("handler type: %s", type(handler))
+            LOG.debug("stream type: %s", type(stream))
             cmd = ["tar", "zvxf", "-"]
-            LOG.debug('Running %s', ' '.join(cmd))
+            LOG.debug("Running %s", " ".join(cmd))
             proc = Popen(cmd, stdin=handler, cwd=dst_dir)
             cout, cerr = proc.communicate()
             ret = proc.returncode
             if ret:
-                LOG.error('%s exited with code %d', cmd, ret)
+                LOG.error("%s exited with code %d", cmd, ret)
                 if cout:
-                    LOG.error('STDOUT: %s', cout)
+                    LOG.error("STDOUT: %s", cout)
                 if cerr:
-                    LOG.error('STDERR: %s', cerr)
+                    LOG.error("STDERR: %s", cerr)
                 return
-            LOG.info('Successfully restored %s in %s', copy.key, dst_dir)
+            LOG.info("Successfully restored %s in %s", copy.key, dst_dir)
         except (OSError, DestinationError) as err:
-            LOG.error('Failed to decompress %s: %s', copy.key, err)
+            LOG.error("Failed to decompress %s: %s", copy.key, err)
             exit(1)
 
     export_info(
         twindb_config,
         data=time.time() - restore_start,
         category=ExportCategory.files,
-        measure_type=ExportMeasureType.restore
+        measure_type=ExportMeasureType.restore,
     )
