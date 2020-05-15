@@ -90,7 +90,8 @@ class Ssh(BaseDestination):
         :param path: Path to a remote file.
         :type path: str
         """
-        cmd = "rm %s" % path
+        remote_name = osp.join(self.remote_path, path)
+        cmd = "rm %s" % remote_name
         self.execute_command(cmd)
 
     def ensure_tcp_port_listening(self, port, wait_timeout=10):
