@@ -1,4 +1,4 @@
-"""Backup copy cache"""
+"""Backup copy cache."""
 import os
 import shutil
 
@@ -7,20 +7,22 @@ from twindb_backup.cache.exceptions import CacheException
 
 
 class Cache:
-    """Class implements local cache to save full backup copies"""
+    """Class implements local cache to save full backup copies.
+
+    Init Cache object with cache storage in local path.
+    The cache is a directory on a local file system e.g.
+    ``/var/tmp/cache``.
+    Each item is a sub directory in the cache::
+
+        /var/tmp/cache/mysql-2017-05-12_03_47_21.xbstream.gz/
+        /var/tmp/cache/mysql-2017-05-13_22_04_06.xbstream.gz/
+
+    :param path: path to directory that becomes cache.
+    :type path: str
+    :raise CacheException: if path doesn't exist.
+    """
 
     def __init__(self, path):
-        """Init Cache object with cache storage in local path.
-        The cache is a directory on a local file system e.g.
-        ``/var/tmp/cache``.
-        Each item is a sub directory in the cache::
-
-            /var/tmp/cache/mysql-2017-05-12_03_47_21.xbstream.gz/
-            /var/tmp/cache/mysql-2017-05-13_22_04_06.xbstream.gz/
-
-        :param path: path to directory that becomes cache
-        :raise CacheException: if path doesn't exist
-        """
         if os.path.exists(path):
             self.path = path
         else:
@@ -30,12 +32,12 @@ class Cache:
         return item in os.listdir(self.path)
 
     def add(self, path, key=None):
-        # pylint: disable=line-too-long
         """Add directory to cache.
         The directory may be a full or relative path with backup copy.
         The directory name must match with a file name of the backup copy.
         If backup copy is
-        ``/path/to/backups/master1/daily/mysql/mysql-2017-05-13_22_04_06.xbstream.gz``.
+        ``/path/to/backups/master1/
+        daily/mysql/mysql-2017-05-13_22_04_06.xbstream.gz``.
         then the directory can be something like
         ``/var/tmp/mysql-2017-05-13_22_04_06.xbstream.gz/``.
 
@@ -50,11 +52,12 @@ class Cache:
         you need to specify the key e.g.
         ``add('/var/tmp/cache', 'mysql-2017-05-13_22_04_06.xbstream.gz')``
 
-        :param path: full or relative path
+        :param path: full or relative path.
         :type path: str
         :param key: if specified the directory will be added as this key name
-            in the cache
-        :raise: CacheException if errors
+            in the cache.
+        :type key: str
+        :raise CacheException: if failed to add the directory to the cache.
         """
         if key:
             LOG.debug("Cache key %s", key)

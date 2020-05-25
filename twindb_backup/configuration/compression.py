@@ -4,29 +4,24 @@ from twindb_backup.configuration.exceptions import ConfigurationError
 from twindb_backup.modifiers import COMPRESSION_MODIFIERS
 
 
-class CompressionConfig(object):
-    """Compression configuration
+class CompressionConfig:
+    """Compression configuration.
 
-    :param program: compression program
-    :type program: str
-    :param threads: number of threads
-    :type threads: int
-    :param level: compression level
-    :type level: int
+    :param kwargs: Keyword arguments.
+
+    .. rubric:: Keyword arguments
+
+    - **program** (*str*): compression program
+    - **threads** (*int*): number of threads
+    - **level** (*int*): compression level
     """
 
     def __init__(self, **kwargs):
-        self._program = kwargs.get(
-            "program", list(COMPRESSION_MODIFIERS.keys())[0]
-        )
+        self._program = kwargs.get("program", list(COMPRESSION_MODIFIERS.keys())[0])
         if self.program not in COMPRESSION_MODIFIERS:
-            raise ConfigurationError(
-                "Unsupported compression tool %s" % self.program
-            )
+            raise ConfigurationError("Unsupported compression tool %s" % self.program)
 
-        self._threads = (
-            int(kwargs.get("threads")) if "threads" in kwargs else None
-        )
+        self._threads = int(kwargs.get("threads")) if "threads" in kwargs else None
 
         self._level = int(kwargs.get("level")) if "level" in kwargs else None
 
@@ -53,6 +48,7 @@ class CompressionConfig(object):
         Build a compression modifier based on the given configuration
 
         :param stream: stream to compress
+        :type stream: file like object
         :return: compression modifier
         :rtype: Modifier
         """

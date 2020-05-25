@@ -1,14 +1,17 @@
-"""SSH destination configuration"""
+"""SSH destination configuration."""
 
 
-class SSHConfig(object):
+class SSHConfig:
     """SSH destination configuration."""
-    def __init__(self,
-                 backup_host='127.0.0.1',
-                 backup_dir='/var/backup',
-                 ssh_user='root',
-                 port=22,
-                 ssh_key='/root/.ssh/id_rsa'):
+
+    def __init__(
+            self,
+            backup_host="127.0.0.1",
+            backup_dir="/var/backup",
+            ssh_user="root",
+            port=22,
+            ssh_key="/root/.ssh/id_rsa",
+    ):
 
         self._host = backup_host
         self._path = backup_dir
