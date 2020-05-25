@@ -139,6 +139,7 @@ Credits
 
   * `Andrew Ernst <https://github.com/ernstae>`_
   * `Arda Beyazoğlu <https://github.com/ardabeyazoglu>`_
+  * `Egor Lyutov <https://github.com/el4v>`_
   * `fonthead <https://github.com/fonthead>`_
   * `Maksym Kryva <https://github.com/mkryva>`_
   * `Manjot Singh <https://github.com/ManjotS>`_

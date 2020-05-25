@@ -49,7 +49,7 @@ virtualenv: ## create virtual environment typically used for development purpose
 
 .PHONY: pip-tools
 pip-tools:
-	pip install pip-tools
+	pip install -U "pip-tools ~= 5.1"
 
 .PHONY: upgrade-requirements
 upgrade-requirements: pip-tools ## Upgrade requirements
@@ -57,10 +57,9 @@ upgrade-requirements: pip-tools ## Upgrade requirements
 	pip-compile --upgrade --verbose --no-index --output-file requirements_dev.txt requirements_dev.in
 
 .PHONY: bootstrap
-bootstrap: ## bootstrap the development environment
+bootstrap: pip-tools ## bootstrap the development environment
 	pip install -U "pip ~= 20.0"
 	pip install -U "setuptools ~= 45.0"
-	pip install -U "pip-tools ~= 4.5"
 	pip-sync requirements.txt requirements_dev.txt
 	pip install --editable .
 
