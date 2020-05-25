@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
-Module for exporters exceptions
+Module for exporters exceptions.
 """
+from twindb_backup.exceptions import TwinDBBackupError
 
 
-class BaseExporterError(Exception):
+class BaseExporterError(TwinDBBackupError):
     """General exporters error"""
     pass
 

@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 """
-Module for destination exceptions
+Module for destination exceptions.
 """
 from twindb_backup.exceptions import TwinDBBackupError
 
