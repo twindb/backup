@@ -1,4 +1,4 @@
-"""Modifier exceptions"""
+"""Modifier exceptions."""
 from twindb_backup.exceptions import TwinDBBackupError
 
 
