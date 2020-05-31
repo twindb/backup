@@ -4,54 +4,45 @@
 Installation
 ============
 
-**TwinDB Backup** is distributed via package repositories. We provide packages
-for CentOS, Ubuntu and Debian operating systems.
-
 Supported versions:
 
  * CentOS 6, 7
  * Ubuntu trusty, xenial, bionic, cosmic
  * Debian jessie and stretch
 
-The installation process consists of two parts: installing the repository and
-installing ``twindb-backup`` package from it.
+**TwinDB Backup** can be installed from a DEB/RPM package.
+The TwinDB Backup package can build on a machine with Docker service.
 
-Repository installation
------------------------
+``make package`` will build the package for the operating system defined in the ``OS_VERSION`` environment variable.
+Possible ``OS_VERSION`` values:
 
-The installation instructions are published on `the repository website`_.
-
-For CentOS and alike operating systems:
-
-.. code-block:: console
-
-    curl -s https://packagecloud.io/install/repositories/TwinDB/main/script.rpm.sh | sudo bash
-
-For Debian and Ubuntu the command is:
-
-.. code-block:: console
-
-    curl -s https://packagecloud.io/install/repositories/TwinDB/main/script.deb.sh | sudo bash
-
-We also provide `the TwinDB Repo cookbook`_ for Chef users.
-
-
-Package installation
---------------------
-
-As soon as the repository is installed you can install the TwinDB Backup package.
-
-For CentOS and RedHat:
+ * 6
+ * 7
+ * jessie
+ * stretch
+ * trusty
+ * xenial
+ * bionic
+ * cosmic.
 
 .. code-block:: console
 
-    yum install twindb-backup
+    # export OS_VERSION=bionic
+    # make package
 
-For Debian and Ubuntu:
+.. note:: The build process requires a lot of available memory.
+    If you see error ``g++: internal compiler error: Killed (program cc1plus)``,
+    run ``make package`` on a bigger machine.
+
+The package file will be generated in ``omnibus/pkg/``:
 
 .. code-block:: console
 
-    apt-get install twindb-backup
+    $ ls omnibus/pkg/*.deb
+    omnibus/pkg/twindb-backup_2.20.0-1_amd64.deb
+
+Once the package is built you can install it with rpm/dpkg or upload it to your repository
+and install it with apt or yum.
 
 The package bundles TwinDB itself, Python, dependencies and tested version
 of Percona Xtrabackup. The installed package requires about 800MB of disk space.
