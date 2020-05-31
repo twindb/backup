@@ -24,7 +24,7 @@ from twindb_backup.exporter.datadog_exporter import DataDogExporter
 DEFAULT_CONFIG_FILE_PATH = "/etc/twindb/twindb-backup.cfg"
 
 
-class TwinDBBackupConfig(object):
+class TwinDBBackupConfig:
     """
     Class represents TwinDB Backup configuration
     """

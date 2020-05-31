@@ -1,7 +1,7 @@
 """Amazon S3 destrination configuration"""
 
 
-class S3Config(object):
+class S3Config:
     """Amazon S3 configuration."""
 
     def __init__(

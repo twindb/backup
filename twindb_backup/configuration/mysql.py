@@ -2,7 +2,7 @@
 from twindb_backup import INTERVALS, XTRABACKUP_BINARY, XBSTREAM_BINARY
 
 
-class MySQLConfig(object):
+class MySQLConfig:
     """
     MySQL Instance configuration
     """

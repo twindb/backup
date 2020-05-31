@@ -1,7 +1,7 @@
 """Google Cloud Storage destination configuration"""
 
 
-class GCSConfig(object):
+class GCSConfig:
     """Google Cloud Storage configuration."""
 
     __attr__ = ["gc_credentials_file", "gc_encryption_key", "bucket"]

@@ -1,7 +1,7 @@
 """GPG configuration"""
 
 
-class GPGConfig(object):
+class GPGConfig:
     """
     GPG configuration
     """
