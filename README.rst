@@ -9,8 +9,8 @@ TwinDB Backup
 .. image:: https://img.shields.io/codecov/c/github/twindb/backup.svg
     :target: https://codecov.io/gh/twindb/backup
 
-.. image:: https://readthedocs.org/projects/twindb-backup/badge/?version=master
-    :target: https://twindb-backup.readthedocs.io/en/master/?badge=master
+.. image:: https://readthedocs.org/projects/twindb-backup/badge/
+    :target: https://twindb-backup.readthedocs.io/
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/gitter/room/twindb/twindb-backup.svg
