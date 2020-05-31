@@ -3,14 +3,12 @@ import os
 import shutil
 
 from twindb_backup import LOG
+from twindb_backup.cache.exceptions import CacheException
 
 
-class CacheException(Exception):
-    """Cache errors"""
-
-
-class Cache(object):
+class Cache:
     """Class implements local cache to save full backup copies"""
+
     def __init__(self, path):
         """Init Cache object with cache storage in local path.
         The cache is a directory on a local file system e.g.
@@ -26,7 +24,7 @@ class Cache(object):
         if os.path.exists(path):
             self.path = path
         else:
-            raise CacheException('Cache directory %s doesn\'t exist' % path)
+            raise CacheException("Cache directory %s doesn't exist" % path)
 
     def __contains__(self, item):
         return item in os.listdir(self.path)
@@ -59,12 +57,12 @@ class Cache(object):
         :raise: CacheException if errors
         """
         if key:
-            LOG.debug('Cache key %s', key)
+            LOG.debug("Cache key %s", key)
             dst = os.path.join(self.path, key)
         else:
             dst = os.path.join(self.path, os.path.basename(path))
 
-        LOG.debug('Saving content of %s in %s', path, dst)
+        LOG.debug("Saving content of %s in %s", path, dst)
         try:
             shutil.copytree(path, dst)
         except OSError as err:

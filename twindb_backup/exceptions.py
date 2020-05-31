@@ -1,4 +1,4 @@
-"""Module that describes exceptions of twindb_backup module"""
+"""Module that describes exceptions of twindb_backup module."""
 
 
 class TwinDBBackupError(Exception):
