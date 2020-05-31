@@ -102,25 +102,35 @@ Other features:
 How do I get set up?
 --------------------
 
-**TwinDB Backup** is distributed via package repositories.
+**TwinDB Backup** can be installed from a DEB/RPM package.
+The TwinDB Backup package can build on a machine with Docker service.
 
-See installation instruction on https://packagecloud.io/twindb/main/install.
-Once the repository for your operating system is configured, install the ``twindb-backup`` package.
+``make package`` will build the package for the operating system defined in the ``OS_VERSION`` environment variable.
+Possible ``OS_VERSION`` values:
 
-**On CentOS and RedHat**
+ * 6
+ * 7
+ * jessie
+ * stretch
+ * trusty
+ * xenial
+ * bionic
+ * cosmic.
 
 .. code-block:: console
 
-    # curl -s https://packagecloud.io/install/repositories/twindb/main/script.rpm.sh | sudo bash
-    # yum install twindb-backup
+    # export OS_VERSION=bionic
+    # make package
 
-**On Debian and Ubuntu**
+The package file will be generated in ``omnibus/pkg/``:
 
 .. code-block:: console
 
-    # curl -s https://packagecloud.io/install/repositories/twindb/main/script.deb.sh | sudo bash
-    # apt-get install twindb-backup
+    $ ls omnibus/pkg/*.deb
+    omnibus/pkg/twindb-backup_2.20.0-1_amd64.deb
 
+Once the package is built you can install it with rpm/dpkg or upload it to your repository
+and install it with apt or yum.
 
 Configuration
 -------------

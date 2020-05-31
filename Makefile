@@ -186,8 +186,29 @@ docker-start:
 		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
 		bash -l
 
+ifeq ($(OS_VERSION),6)
+        PLATFORM = centos
+endif
+ifeq ($(OS_VERSION),7)
+        PLATFORM = centos
+endif
+ifeq ($(OS_VERSION),xenial)
+        PLATFORM = ubuntu
+endif
+ifeq ($(OS_VERSION),bionic)
+        PLATFORM = ubuntu
+endif
+ifeq ($(OS_VERSION),cosmic)
+        PLATFORM = ubuntu
+endif
 
-package: ## Build package - PLATFORM must be one of "centos", "debian", "ubuntu". OS_VERSION must be: 6, 7, jessie, stretch, xenial, bionic, cosmic.
+ifeq ($(OS_VERSION),jessie)
+        PLATFORM = debian
+endif
+ifeq ($(OS_VERSION),stretch)
+        PLATFORM = debian
+endif
+package: ## Build package - OS_VERSION must be one of: 6, 7, jessie, stretch, xenial, bionic, cosmic.
 	@docker run \
 		-v ${pwd}:/twindb-backup \
 		--name builder_xtrabackup \
