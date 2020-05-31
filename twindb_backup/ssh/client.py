@@ -4,8 +4,12 @@ Module that implements SSH client.
 import socket
 from contextlib import contextmanager
 
-from paramiko import SSHClient, AutoAddPolicy, AuthenticationException, \
-    SSHException
+from paramiko import (
+    SSHClient,
+    AutoAddPolicy,
+    AuthenticationException,
+    SSHException,
+)
 
 from twindb_backup import LOG
 from twindb_backup.ssh.exceptions import SshClientException
@@ -26,11 +30,10 @@ class SshClient(object):
     :param user: SSH client username. Default is 'root'.
     :type user: str
     """
-    def __init__(self,
-                 host='127.0.0.1',
-                 port=22,
-                 key='/root/.id_rsa',
-                 user='root'):
+
+    def __init__(
+        self, host="127.0.0.1", port=22, key="/root/.id_rsa", user="root"
+    ):
 
         self._host = host
         self._port = port
@@ -67,13 +70,13 @@ class SshClient(object):
                 self._host,
                 self._port,
                 self._user,
-                self._key
+                self._key,
             )
             shell.connect(
                 hostname=self._host,
                 key_filename=self._key,
                 port=self._port,
-                username=self._user
+                username=self._user,
             )
             yield shell
         except FileNotFoundError:
@@ -117,49 +120,49 @@ class SshClient(object):
         try:
             with self._shell() as shell:
                 if not background:
-                    LOG.debug('Executing command: %s', cmd)
+                    LOG.debug("Executing command: %s", cmd)
                     stdin_, stdout_, _ = shell.exec_command(cmd)
                     channel = stdout_.channel
                     stdin_.close()
                     channel.shutdown_write()
                     stdout_chunks = []
                     stderr_chunks = []
-                    while not channel.closed \
-                            or channel.recv_ready() \
-                            or channel.recv_stderr_ready():
+                    while (
+                        not channel.closed
+                        or channel.recv_ready()
+                        or channel.recv_stderr_ready()
+                    ):
                         if channel.recv_ready():
                             stdout_chunks.append(
                                 channel.recv(max_chunk_size).decode("utf-8")
                             )
                         if channel.recv_stderr_ready():
                             stderr_chunks.append(
-                                channel.recv_stderr(
-                                    max_chunk_size
-                                ).decode("utf-8")
+                                channel.recv_stderr(max_chunk_size).decode(
+                                    "utf-8"
+                                )
                             )
 
                     exit_code = channel.recv_exit_status()
                     if exit_code != 0:
                         if not quiet:
                             LOG.error("Failed to execute command %s", cmd)
-                            LOG.error(''.join(stderr_chunks))
+                            LOG.error("".join(stderr_chunks))
                         raise SshClientException(
-                            '%s exited with code %d'
-                            % (cmd, exit_code)
+                            "%s exited with code %d" % (cmd, exit_code)
                         )
-                    return ''.join(stdout_chunks), ''.join(stderr_chunks)
+                    return "".join(stdout_chunks), "".join(stderr_chunks)
                 else:
-                    LOG.debug('Executing in background: %s', cmd)
+                    LOG.debug("Executing in background: %s", cmd)
                     transport = shell.get_transport()
                     channel = transport.open_session()
                     channel.exec_command(cmd)
-                    LOG.debug('Ran %s in background', cmd)
+                    LOG.debug("Ran %s in background", cmd)
 
         except (SSHException, IOError) as err:
             if not quiet:
-                LOG.error('Failed to execute %s: %s', cmd, err)
-            raise SshClientException('Failed to execute %s: %s'
-                                     % (cmd, err))
+                LOG.error("Failed to execute %s: %s", cmd, err)
+            raise SshClientException("Failed to execute %s: %s" % (cmd, err))
 
     @contextmanager
     def get_remote_handlers(self, cmd):
@@ -179,7 +182,7 @@ class SshClient(object):
                 yield stdin_, stdout_, stderr_
 
         except SSHException as err:
-            LOG.error('Failed to execute %s', cmd)
+            LOG.error("Failed to execute %s", cmd)
             raise SshClientException(err)
 
     def list_files(self, path, recursive=False, files_only=False):
@@ -198,13 +201,11 @@ class SshClient(object):
         rec_cond = "" if recursive else " -maxdepth 1"
         fil_cond = " -type f" if files_only else ""
 
-        cmd = "bash -c 'if test -d {path} ; " \
-              "then find {path}{recursive}{files_only}; fi'"
-        cmd = cmd.format(
-            path=path,
-            recursive=rec_cond,
-            files_only=fil_cond
+        cmd = (
+            "bash -c 'if test -d {path} ; "
+            "then find {path}{recursive}{files_only}; fi'"
         )
+        cmd = cmd.format(path=path, recursive=rec_cond, files_only=fil_cond)
         cout, cerr = self.execute(cmd)
         LOG.debug("COUT:\n%s", cout)
         LOG.debug("CERR:\n%s", cerr)
@@ -238,7 +239,7 @@ class SshClient(object):
         """
         with self._shell() as ssh_client:
             sftp_client = ssh_client.open_sftp()
-            with sftp_client.open(path, 'w') as remote_file:
+            with sftp_client.open(path, "w") as remote_file:
                 remote_file.write(content)
 
     def write_config(self, path, cfg):
@@ -248,6 +249,5 @@ class SshClient(object):
         :param path: Path to file
         :param cfg: Instance of ConfigParser
         """
-        with self.get_remote_handlers("cat - > %s" % path) \
-                as (cin, _, _):
+        with self.get_remote_handlers("cat - > %s" % path) as (cin, _, _):
             cfg.write(cin)

@@ -18,13 +18,13 @@ class PeriodicCopy(BaseCopy):
 
     def __init__(self, *args, **kwargs):
 
-        path = kwargs.get('path', None)
+        path = kwargs.get("path", None)
         if path is None:
-            host = kwargs.get('host', args[0])
-            run_type = kwargs.get('run_type', args[1])
-            name = kwargs.get('name', args[2])
+            host = kwargs.get("host", args[0])
+            run_type = kwargs.get("run_type", args[1])
+            name = kwargs.get("name", args[2])
         else:
-            chunks = path.split('/')
+            chunks = path.split("/")
 
             run_type = None
             for rtype in INTERVALS:
@@ -44,7 +44,7 @@ class PeriodicCopy(BaseCopy):
             self._run_type = run_type
         else:
             raise WrongInputData(
-                'Wrong value of run_type: %s. Must be one of %s.'
+                "Wrong value of run_type: %s. Must be one of %s."
                 % (run_type, ", ".join(INTERVALS))
             )
 

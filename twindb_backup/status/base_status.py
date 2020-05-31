@@ -29,6 +29,7 @@ class BaseStatus(object):
     :raise CorruptedStatus: If the content string is not a valid status
         or empty string.
     """
+
     __version__ = STATUS_FORMAT_VERSION
 
     def __init__(self, content=None, dst=None, status_directory=None):
@@ -45,7 +46,7 @@ class BaseStatus(object):
         Returns file name without a directory path
         where the status is stored in the destination.
         """
-        return 'status'
+        return "status"
 
     @property
     def latest_backup(self):
@@ -67,9 +68,7 @@ class BaseStatus(object):
             a md5 of output of ``self._status_serialize()``.
         :rtype: str
         """
-        return hashlib.md5(
-            self._status_serialize().encode("utf-8")
-        ).hexdigest()
+        return hashlib.md5(self._status_serialize().encode("utf-8")).hexdigest()
 
     @property
     def status_path(self):
@@ -125,9 +124,9 @@ class BaseStatus(object):
             {
                 "status": self._status_serialize(),
                 "version": self.version,
-                "md5": self.md5
+                "md5": self.md5,
             },
-            sort_keys=True
+            sort_keys=True,
         )
 
     def save(self, dst):
@@ -137,10 +136,7 @@ class BaseStatus(object):
         :param dst: Destination instance.
         :type dst: BasicDestination
         """
-        dst.write(
-            self.serialize(),
-            self.status_path
-        )
+        dst.write(self.serialize(), self.status_path)
 
     @abstractmethod
     def _load(self, status_as_json):
@@ -174,52 +170,42 @@ class BaseStatus(object):
     def __getitem__(self, item):
         if isinstance(item, int):
             return self._status[item]
-        elif isinstance(item, (str, )):
+        elif isinstance(item, (str,)):
             for copy in self._status:
                 if copy.key == str(item):
                     return copy
-            raise StatusKeyNotFound('Copy %s not found' % item)
+            raise StatusKeyNotFound("Copy %s not found" % item)
         else:
-            raise NotImplementedError('Type %s not supported' % type(item))
+            raise NotImplementedError("Type %s not supported" % type(item))
 
     def __str__(self):
-        return b64decode(
-            self._status_serialize()
-        ).decode("utf-8")
+        return b64decode(self._status_serialize()).decode("utf-8")
 
     def __len__(self):
         return len(self._status)
 
     def __init_from_str(self, content):
         """Initialize status from a string."""
-        if content == '':
-            raise CorruptedStatus('Status content cannot be an empty string')
+        if content == "":
+            raise CorruptedStatus("Status content cannot be an empty string")
         try:
             status = json.loads(content)
-            md5_stored = status['md5']
+            md5_stored = status["md5"]
             md5_calculated = hashlib.md5(
-                status['status'].encode("utf-8")
+                status["status"].encode("utf-8")
             ).hexdigest()
             if md5_calculated != md5_stored:
-                raise CorruptedStatus('Checksum mismatch')
+                raise CorruptedStatus("Checksum mismatch")
 
             self._status = self._load(
-                b64decode(
-                    status['status']
-                ).decode("utf-8")
+                b64decode(status["status"]).decode("utf-8")
             )
-            self._status.sort(
-                key=lambda cp: cp.created_at
-            )
+            self._status.sort(key=lambda cp: cp.created_at)
         except TypeError:  # Init from None
             self._status = []
         except ValueError as err:  # Old format
             LOG.debug(err)
             LOG.debug("Looks like old format")
-            self._status = self._load(
-                b64decode(content).decode("utf-8")
-            )
+            self._status = self._load(b64decode(content).decode("utf-8"))
             LOG.debug("Loaded status: %s", self._status)
-            self._status.sort(
-                key=lambda cp: cp.sort_key
-            )
+            self._status.sort(key=lambda cp: cp.sort_key)

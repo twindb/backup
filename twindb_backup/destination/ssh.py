@@ -14,8 +14,10 @@ import time
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.destination.exceptions import SshDestinationError, \
-    FileNotFound
+from twindb_backup.destination.exceptions import (
+    SshDestinationError,
+    FileNotFound,
+)
 from twindb_backup.ssh.client import SshClient
 from twindb_backup.ssh.exceptions import SshClientException
 
@@ -37,18 +39,19 @@ class Ssh(BaseDestination):
     * **ssh_key** (str): File with an rsa/dsa key for SSH authentication.
         Default ``/root/.ssh/id_rsa``.
     """
+
     def __init__(self, remote_path, **kwargs):
 
         super(Ssh, self).__init__(remote_path)
 
         self._ssh_client = SshClient(
-            host=kwargs.get('ssh_host', '127.0.0.1'),
-            port=kwargs.get('ssh_port', 22),
-            user=kwargs.get('ssh_user', 'root'),
-            key=kwargs.get('ssh_key', '/root/.ssh/id_rsa')
+            host=kwargs.get("ssh_host", "127.0.0.1"),
+            port=kwargs.get("ssh_port", 22),
+            user=kwargs.get("ssh_user", "root"),
+            key=kwargs.get("ssh_key", "/root/.ssh/id_rsa"),
         )
 
-        self._hostname = kwargs.get('hostname', socket.gethostname())
+        self._hostname = kwargs.get("hostname", socket.gethostname())
 
     @property
     def client(self):
@@ -110,11 +113,13 @@ class Ssh(BaseDestination):
         while time.time() < stop_waiting_at:
             try:
 
-                cmd = "netstat -ln | grep -w 0.0.0.0:%d 2>&1 " \
-                      "> /dev/null" % port
+                cmd = (
+                    "netstat -ln | grep -w 0.0.0.0:%d 2>&1 "
+                    "> /dev/null" % port
+                )
                 cout, cerr = self.execute_command(cmd)
-                LOG.debug('stdout: %s', cout)
-                LOG.debug('stderr: %s', cerr)
+                LOG.debug("stdout: %s", cout)
+                LOG.debug("stderr: %s", cerr)
                 return True
             except SshClientException as err:
                 LOG.debug(err)
@@ -134,13 +139,9 @@ class Ssh(BaseDestination):
         :return: stdin, stdout and stderr handlers.
         :rtype: tuple
         """
-        LOG.debug('Executing: %s', cmd)
+        LOG.debug("Executing: %s", cmd)
 
-        return self._ssh_client.execute(
-            cmd,
-            quiet=quiet,
-            background=background
-        )
+        return self._ssh_client.execute(cmd, quiet=quiet, background=background)
 
     @contextmanager
     def get_stream(self, copy):
@@ -160,7 +161,7 @@ class Ssh(BaseDestination):
         def _read_write_chunk(channel, write_fd, size=1024):
             while channel.recv_ready():
                 chunk = channel.recv(size)
-                LOG.debug('read %d bytes', len(chunk))
+                LOG.debug("read %d bytes", len(chunk))
                 if chunk:
                     os.write(write_fd, chunk)
 
@@ -169,13 +170,13 @@ class Ssh(BaseDestination):
                 os.close(read_fd)
 
                 with self._ssh_client.session() as channel:
-                    LOG.debug('Executing %s', cmd)
+                    LOG.debug("Executing %s", cmd)
                     channel.exec_command(cmd)
 
                     while not channel.exit_status_ready():
                         _read_write_chunk(channel, write_fd)
 
-                    LOG.debug('closing channel')
+                    LOG.debug("closing channel")
                     _read_write_chunk(channel, write_fd)
                     channel.recv_exit_status()
 
@@ -186,9 +187,11 @@ class Ssh(BaseDestination):
 
         try:
             read_pipe, write_pipe = os.pipe()
-            read_process = Process(target=_write_to_pipe,
-                                   args=(read_pipe, write_pipe),
-                                   name='_write_to_pipe')
+            read_process = Process(
+                target=_write_to_pipe,
+                args=(read_pipe, write_pipe),
+                name="_write_to_pipe",
+            )
             read_process.start()
             os.close(write_pipe)
             yield read_pipe
@@ -197,8 +200,8 @@ class Ssh(BaseDestination):
             read_process.join()
 
             if read_process.exitcode:
-                raise SshDestinationError('Failed to download %s' % path)
-            LOG.debug('Successfully streamed %s', path)
+                raise SshDestinationError("Failed to download %s" % path)
+            LOG.debug("Successfully streamed %s", path)
         finally:
             if read_process:
                 read_process.join()
@@ -215,8 +218,9 @@ class Ssh(BaseDestination):
         :type port: int
         """
         try:
-            return self.execute_command("ncat -l %d --recv-only | "
-                                        "%s" % (port, command))
+            return self.execute_command(
+                "ncat -l %d --recv-only | " "%s" % (port, command)
+            )
         except SshDestinationError as err:
             LOG.error(err)
 
@@ -227,7 +231,7 @@ class Ssh(BaseDestination):
             )
         except IOError as err:
             if err.errno == ENOENT:
-                raise FileNotFound('File %s does not exist' % filepath)
+                raise FileNotFound("File %s does not exist" % filepath)
             else:
                 raise
 
@@ -241,15 +245,11 @@ class Ssh(BaseDestination):
         :param handler: Stream with content of the backup.
         :type handler: file
         """
-        remote_name = osp.join(
-            self.remote_path,
-            filepath
-        )
+        remote_name = osp.join(self.remote_path, filepath)
         self._mkdir_r(osp.dirname(remote_name))
 
         cmd = "cat - > %s" % remote_name
-        with self._ssh_client.get_remote_handlers(cmd) \
-                as (cin, _, _):
+        with self._ssh_client.get_remote_handlers(cmd) as (cin, _, _):
             with handler as file_obj:
                 while True:
                     chunk = file_obj.read(1024)
@@ -259,17 +259,12 @@ class Ssh(BaseDestination):
                         break
 
     def write(self, content, filepath):
-        remote_name = osp.join(
-            self.remote_path,
-            filepath
-        )
+        remote_name = osp.join(self.remote_path, filepath)
         self._ssh_client.write_content(remote_name, content)
 
     def _list_files(self, prefix=None, recursive=False, files_only=False):
         return self._ssh_client.list_files(
-            prefix,
-            recursive=recursive,
-            files_only=files_only
+            prefix, recursive=recursive, files_only=files_only
         )
 
     def _mkdir_r(self, path):
@@ -283,7 +278,7 @@ class Ssh(BaseDestination):
         self.execute_command(cmd)
 
     def _move_file(self, source, destination):
-        cmd = 'yes | cp -rf %s %s' % (source, destination)
+        cmd = "yes | cp -rf %s %s" % (source, destination)
         self.execute_command(cmd)
 
     def __str__(self):

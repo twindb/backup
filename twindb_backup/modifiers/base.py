@@ -12,6 +12,7 @@ from twindb_backup.modifiers.exceptions import ModifierException
 
 class Modifier(object):
     """Base Modifier class"""
+
     def __init__(self, input_stream):
         """
         Base Modifier class that takes input stream, modifies it somehow
@@ -38,12 +39,9 @@ class Modifier(object):
         :return: output stream handle
         """
         with self._input as input_stream:
-            LOG.debug('Running %s', ' '.join(self._modifier_cmd))
+            LOG.debug("Running %s", " ".join(self._modifier_cmd))
             proc = Popen(
-                self._modifier_cmd,
-                stdin=input_stream,
-                stdout=PIPE,
-                stderr=PIPE
+                self._modifier_cmd, stdin=input_stream, stdout=PIPE, stderr=PIPE
             )
             yield proc.stdout
             proc.communicate()
@@ -58,19 +56,20 @@ class Modifier(object):
         :return: output stream handle
         """
         with self._input as input_stream:
-            LOG.debug('Running %s', ' '.join(self._unmodifier_cmd))
+            LOG.debug("Running %s", " ".join(self._unmodifier_cmd))
             proc = Popen(
                 self._unmodifier_cmd,
                 stdin=input_stream,
                 stdout=PIPE,
-                stderr=PIPE
+                stderr=PIPE,
             )
             yield proc.stdout
 
             _, cerr = proc.communicate()
             if proc.returncode:
-                msg = '%s exited with non-zero code.' \
-                      % ' '.join(self._unmodifier_cmd)
+                msg = "%s exited with non-zero code." % " ".join(
+                    self._unmodifier_cmd
+                )
                 LOG.error(msg)
                 LOG.error(cerr)
                 raise ModifierException(msg)
@@ -88,7 +87,7 @@ class Modifier(object):
         :return: Modifier command
         :rtype: list
         """
-        return ['cat', '-']
+        return ["cat", "-"]
 
     @property
     def _unmodifier_cmd(self):
@@ -99,4 +98,4 @@ class Modifier(object):
         :return: Modifier command
         :rtype: list
         """
-        return ['cat', '-']
+        return ["cat", "-"]

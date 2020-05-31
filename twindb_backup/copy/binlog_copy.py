@@ -15,10 +15,11 @@ class BinlogCopy(BaseCopy):  # pylint: disable=too-few-public-methods
     :param created_at: Time when copy created
     :type created_at: int
     """
+
     def __init__(self, host, name, created_at):
         super(BinlogCopy, self).__init__(host, name)
         self._created_at = int(created_at)
-        self._source_type = 'binlog'
+        self._source_type = "binlog"
 
     def __eq__(self, other):
         """
@@ -29,17 +30,14 @@ class BinlogCopy(BaseCopy):  # pylint: disable=too-few-public-methods
         :return:
         """
         return all(
-            (
-                self.created_at == other.created_at,
-                self.key == other.key,
-            )
+            (self.created_at == other.created_at, self.key == other.key,)
         )
 
     def __str__(self):
         return "%s: file name: %s, created at: %d" % (
             self.__class__.__name__,
             self.name,
-            self.created_at
+            self.created_at,
         )
 
     @property

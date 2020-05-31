@@ -20,7 +20,5 @@ def export_info(cfg, data, category, measure_type):
 
     if transport:
         transport.export(
-            category=category,
-            measure_type=measure_type,
-            data=data
+            category=category, measure_type=measure_type, data=data
         )

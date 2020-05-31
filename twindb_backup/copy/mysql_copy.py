@@ -19,73 +19,74 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
     :raise WrongInputData: if type is neither full or incremental,
         if name is not a basename.
     """
+
     __attr = [
-        'host',
-        'run_type',
-        'name',
-        'binlog',
-        'position',
-        'lsn',
-        'parent',
-        'galera',
-        'wsrep_provider_version',
-        'config',
-        'backup_started',
-        'backup_finished',
-        'type'
+        "host",
+        "run_type",
+        "name",
+        "binlog",
+        "position",
+        "lsn",
+        "parent",
+        "galera",
+        "wsrep_provider_version",
+        "config",
+        "backup_started",
+        "backup_finished",
+        "type",
     ]
 
     def __init__(self, *args, **kwargs):
 
         super(MySQLCopy, self).__init__(*args, **kwargs)
 
-        self._source_type = 'mysql'
+        self._source_type = "mysql"
 
-        if 'type' in kwargs and kwargs.get('type') in ['full', 'incremental']:
-            self._type = kwargs.get('type')
+        if "type" in kwargs and kwargs.get("type") in ["full", "incremental"]:
+            self._type = kwargs.get("type")
         else:
             self._type = None
 
-        if '/' in self.name:
+        if "/" in self.name:
             raise WrongInputData(
-                'name must be relative, without any slashes.'
-                ' Got %s instead.'
-                % self.name
+                "name must be relative, without any slashes."
+                " Got %s instead." % self.name
             )
 
-        self._backup_started = int(kwargs.get('backup_started', 0)) or None
-        self._backup_finished = int(kwargs.get('backup_finished', 0)) or None
-        self._binlog = kwargs.get('binlog', None)
-        self._position = kwargs.get('position', None)
-        self._lsn = kwargs.get('lsn', None)
-        self._parent = kwargs.get('parent', None)
+        self._backup_started = int(kwargs.get("backup_started", 0)) or None
+        self._backup_finished = int(kwargs.get("backup_finished", 0)) or None
+        self._binlog = kwargs.get("binlog", None)
+        self._position = kwargs.get("position", None)
+        self._lsn = kwargs.get("lsn", None)
+        self._parent = kwargs.get("parent", None)
 
-        if 'wsrep_provider_version' in kwargs:
-            self._wsrep_provider_version = kwargs.get('wsrep_provider_version')
+        if "wsrep_provider_version" in kwargs:
+            self._wsrep_provider_version = kwargs.get("wsrep_provider_version")
             self._galera = self._wsrep_provider_version is not None
         else:
             self._galera = False
             self._wsrep_provider_version = None
 
-        if 'config' in kwargs and 'config_files' in kwargs:
+        if "config" in kwargs and "config_files" in kwargs:
             raise WrongInputData(
-                'Either config or config_files can be used '
-                'to initialize config attribute')
+                "Either config or config_files can be used "
+                "to initialize config attribute"
+            )
 
-        if 'config_files' in kwargs:
+        if "config_files" in kwargs:
             self._config = {}
-            config_files = kwargs.get('config_files', [])
+            config_files = kwargs.get("config_files", [])
             for config_file in config_files:
                 with open(config_file, "r") as config_descr:
                     self._config[config_file] = config_descr.read()
 
         else:
-            self._config = kwargs.get('config', {})
+            self._config = kwargs.get("config", {})
 
     def __eq__(self, other):
         comparison = ()
         for attr in self.__attr:
-            comparison += (getattr(self, attr) == getattr(other, attr), )
+            comparison += (getattr(self, attr) == getattr(other, attr),)
 
         return all(comparison)
 
@@ -99,11 +100,9 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
         return "%s(%s) = %s" % (
             self.__class__.__name__,
             self.key,
-            json.dumps(
-                self.as_dict(),
-                sort_keys=True,
-                indent=4
-            ).replace(' \n', '\n')
+            json.dumps(self.as_dict(), sort_keys=True, indent=4).replace(
+                " \n", "\n"
+            ),
         )
 
     @property

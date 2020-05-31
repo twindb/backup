@@ -20,12 +20,13 @@ class BaseDestination(object):
         ``s3://bucket_with_backups``
     :type remote_path: str
     """
+
     def __init__(self, remote_path):
         if not remote_path:
             raise DestinationError(
-                'remote path must be defined and cannot be %r' % remote_path
+                "remote path must be defined and cannot be %r" % remote_path
             )
-        self.remote_path = remote_path.rstrip('/')
+        self.remote_path = remote_path.rstrip("/")
 
     @abstractmethod
     def delete(self, path):
@@ -46,11 +47,9 @@ class BaseDestination(object):
         :return: Standard output.
         """
 
-    def list_files(self,
-                   prefix=None,
-                   recursive=False,
-                   pattern=None,
-                   files_only=False):
+    def list_files(
+        self, prefix=None, recursive=False, pattern=None, files_only=False
+    ):
         """
         Get list of file by prefix.
 
@@ -68,11 +67,9 @@ class BaseDestination(object):
         return sorted(
             self._match_files(
                 self._list_files(
-                    prefix=prefix,
-                    recursive=recursive,
-                    files_only=files_only
+                    prefix=prefix, recursive=recursive, files_only=files_only
                 ),
-                pattern=pattern
+                pattern=pattern,
             )
         )
 
@@ -87,8 +84,7 @@ class BaseDestination(object):
         :rtype: str
         """
         raise TwinDBBackupInternalError(
-            'Method read() is not implemented in %s'
-            % self.__class__
+            "Method read() is not implemented in %s" % self.__class__
         )
 
     @abstractmethod
@@ -102,8 +98,7 @@ class BaseDestination(object):
         :type filepath: str
         """
         raise TwinDBBackupInternalError(
-            'Method save() is not implemented in %s'
-            % self.__class__
+            "Method save() is not implemented in %s" % self.__class__
         )
 
     @abstractmethod
@@ -117,8 +112,7 @@ class BaseDestination(object):
         :type filepath: str
         """
         raise TwinDBBackupInternalError(
-            'Method write() is not implemented in %s'
-            % self.__class__
+            "Method write() is not implemented in %s" % self.__class__
         )
 
     @abstractmethod
@@ -134,8 +128,8 @@ class BaseDestination(object):
 
     @staticmethod
     def _match_files(files, pattern=None):
-        LOG.debug('Pattern: %s', pattern)
-        LOG.debug('Unfiltered files: %r', files)
+        LOG.debug("Pattern: %s", pattern)
+        LOG.debug("Unfiltered files: %r", files)
         result = []
         for fil in files:
             if pattern:
@@ -143,5 +137,5 @@ class BaseDestination(object):
                     result.append(fil)
             else:
                 result.append(fil)
-        LOG.debug('Filtered files: %r', result)
+        LOG.debug("Filtered files: %r", result)
         return result

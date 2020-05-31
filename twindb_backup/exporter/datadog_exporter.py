@@ -5,8 +5,11 @@ Module defines DataDog exporter class.
 """
 from datadog import initialize, statsd
 
-from twindb_backup.exporter.base_exporter import BaseExporter, \
-    ExportCategory, ExportMeasureType
+from twindb_backup.exporter.base_exporter import (
+    BaseExporter,
+    ExportCategory,
+    ExportMeasureType,
+)
 from twindb_backup.exporter.exceptions import DataDogExporterError
 
 
@@ -14,12 +17,10 @@ class DataDogExporter(BaseExporter):  # pylint: disable=too-few-public-methods
     """
     DataDog exporter class
     """
+
     def __init__(self, app_key, api_key):
         super(DataDogExporter, self).__init__()
-        options = {
-            'api_key': api_key,
-            'app_key': app_key
-        }
+        options = {"api_key": api_key, "app_key": app_key}
         initialize(**options)
         self._suffix = "twindb."
 

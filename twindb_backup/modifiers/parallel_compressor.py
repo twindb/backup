@@ -12,12 +12,15 @@ class ParallelCompressor(Modifier):
     """
     Modifier that compresses the input_stream with pigz.
     """
-    def __init__(self,
-                 input_stream,
-                 program='pigz',
-                 threads=DEFAULT_THREADS,
-                 level=9,
-                 suffix='.gz'):
+
+    def __init__(
+        self,
+        input_stream,
+        program="pigz",
+        threads=DEFAULT_THREADS,
+        level=9,
+        suffix=".gz",
+    ):
         """
         Modifier that compresses in multiple threads.
 
@@ -44,17 +47,14 @@ class ParallelCompressor(Modifier):
         """get compression program cmd"""
         return [
             self._program,
-            '-{0}'.format(self._level),
-            '-p', str(self._threads),
-            '-c', '-'
+            "-{0}".format(self._level),
+            "-p",
+            str(self._threads),
+            "-c",
+            "-",
         ]
 
     @property
     def _unmodifier_cmd(self):
         """get decompression program cmd"""
-        return [
-            self._program,
-            '-p', str(self._threads),
-            '-d',
-            '-c'
-        ]
+        return [self._program, "-p", str(self._threads), "-d", "-c"]

@@ -9,8 +9,8 @@ from twindb_backup.modifiers.base import Modifier, ModifierException
 
 class Gpg(Modifier):
     """Asymmetric encryption"""
-    def __init__(self, input_stream, recipient, keyring,
-                 secret_keyring=None):
+
+    def __init__(self, input_stream, recipient, keyring, secret_keyring=None):
         """
         Modifier that encrypts the input_stream with gpg.
 
@@ -28,7 +28,7 @@ class Gpg(Modifier):
         if os.path.exists(keyring):
             self.keyring = keyring
         else:
-            raise ModifierException('Keyring file %s does not exit' % keyring)
+            raise ModifierException("Keyring file %s does not exit" % keyring)
 
         self.secret_keyring = secret_keyring
         self.recipient = recipient
@@ -38,25 +38,34 @@ class Gpg(Modifier):
     def _modifier_cmd(self):
         """get compression program cmd"""
         return [
-            'gpg', '--no-default-keyring',
-            '--trust-model', 'always',
-            '--keyring', self.keyring,
-            '--recipient', self.recipient,
-            '--encrypt',
-            '--yes',
-            '--batch'
+            "gpg",
+            "--no-default-keyring",
+            "--trust-model",
+            "always",
+            "--keyring",
+            self.keyring,
+            "--recipient",
+            self.recipient,
+            "--encrypt",
+            "--yes",
+            "--batch",
         ]
 
     @property
     def _unmodifier_cmd(self):
         """get decompression program cmd"""
         return [
-            'gpg', '--no-default-keyring',
-            '--trust-model', 'always',
-            '--secret-keyring', self.secret_keyring,
-            '--keyring', self.keyring,
-            '--recipient', self.recipient,
-            '--decrypt',
-            '--yes',
-            '--batch'
+            "gpg",
+            "--no-default-keyring",
+            "--trust-model",
+            "always",
+            "--secret-keyring",
+            self.secret_keyring,
+            "--keyring",
+            self.keyring,
+            "--recipient",
+            self.recipient,
+            "--decrypt",
+            "--yes",
+            "--batch",
         ]

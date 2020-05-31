@@ -12,6 +12,7 @@ class Pigz(ParallelCompressor):
     """
     Modifier that compresses the input_stream with pigz.
     """
+
     def __init__(self, input_stream, threads=DEFAULT_THREADS, level=9):
         """
         Modifier that uses pigz compression
@@ -24,8 +25,8 @@ class Pigz(ParallelCompressor):
         """
         super(Pigz, self).__init__(
             input_stream,
-            program='pigz',
+            program="pigz",
             threads=threads,
             level=level,
-            suffix='.gz'
+            suffix=".gz",
         )

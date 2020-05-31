@@ -17,14 +17,15 @@ class BinlogV4Event(object):  # pylint: disable=too-few-public-methods
     """
     MySQL Binary log event.
     """
+
     def __init__(self, **kwargs):
-        self.timestamp = kwargs.get('timestamp')
-        self.type_code = kwargs.get('type_code')
-        self.server_id = kwargs.get('server_id')
-        self.event_length = kwargs.get('event_length')
-        self.curr_position = kwargs.get('curr_position')
-        self.next_position = kwargs.get('next_position')
-        self.flags = kwargs.get('flags')
+        self.timestamp = kwargs.get("timestamp")
+        self.type_code = kwargs.get("type_code")
+        self.server_id = kwargs.get("server_id")
+        self.event_length = kwargs.get("event_length")
+        self.curr_position = kwargs.get("curr_position")
+        self.next_position = kwargs.get("next_position")
+        self.flags = kwargs.get("flags")
 
 
 class BinlogParser(object):
@@ -34,6 +35,7 @@ class BinlogParser(object):
     :param binlog: path to a binlog file.
     :type binlog: str
     """
+
     def __init__(self, binlog):
         self._binlog = binlog
 
@@ -80,15 +82,14 @@ class BinlogParser(object):
     @staticmethod
     def __read_int(fdesc, n_bytes):
         if n_bytes == 4:
-            return struct.unpack('i', fdesc.read(n_bytes))[0]
+            return struct.unpack("i", fdesc.read(n_bytes))[0]
         elif n_bytes == 2:
-            return struct.unpack('h', fdesc.read(n_bytes))[0]
+            return struct.unpack("h", fdesc.read(n_bytes))[0]
         elif n_bytes == 1:
-            return struct.unpack('b', fdesc.read(n_bytes))[0]
+            return struct.unpack("b", fdesc.read(n_bytes))[0]
         else:
             raise NotImplementedError(
-                'Reading %d bytes integer is unsupported'
-                % n_bytes
+                "Reading %d bytes integer is unsupported" % n_bytes
             )
 
     def __read_binlog_event(self, binlog_descriptor):
@@ -107,7 +108,7 @@ class BinlogParser(object):
                 event_length=self.__read_int(binlog_descriptor, 4),
                 curr_position=position,
                 next_position=self.__read_int(binlog_descriptor, 4),
-                flags=self.__read_int(binlog_descriptor, 2)
+                flags=self.__read_int(binlog_descriptor, 2),
             )
             binlog_descriptor.read(event.event_length - 19)
             return event
@@ -127,12 +128,13 @@ class BinlogSource(BaseSource):
         ``SHOW BINARY LOGS``.
     :type binlog_file: str
     """
+
     def __init__(self, run_type, mysql_client, binlog_file=None):
         super(BinlogSource, self).__init__(run_type)
         self._mysql_client = mysql_client
-        self._media_type = 'binlog'
+        self._media_type = "binlog"
         self._binlog_file = binlog_file
-        self.suffix = ''
+        self.suffix = ""
 
     @contextmanager
     def get_stream(self):
@@ -144,7 +146,7 @@ class BinlogSource(BaseSource):
         with self._mysql_client.cursor() as cursor:
             cursor.execute("SELECT @@log_bin_basename AS log_bin_basename")
             row = cursor.fetchone()
-            log_bin_basename = row['log_bin_basename']
+            log_bin_basename = row["log_bin_basename"]
 
         log_bin_dirname = osp.dirname(log_bin_basename)
         log_bin_file = osp.join(log_bin_dirname, self._binlog_file)
@@ -154,7 +156,7 @@ class BinlogSource(BaseSource):
             log_bin_file,
         ]
         try:
-            LOG.debug('Running %s', ' '.join(cmd))
+            LOG.debug("Running %s", " ".join(cmd))
 
             proc = Popen(cmd, stderr=PIPE, stdout=PIPE)
 
@@ -162,13 +164,13 @@ class BinlogSource(BaseSource):
 
             _, cerr = proc.communicate()
             if proc.returncode:
-                LOG.error('Failed to read from %s: %s', log_bin_file, cerr)
+                LOG.error("Failed to read from %s: %s", log_bin_file, cerr)
                 exit(1)
             else:
-                LOG.debug('Successfully streamed %s', log_bin_file)
+                LOG.debug("Successfully streamed %s", log_bin_file)
 
         except OSError as err:
-            LOG.error('Failed to run %s: %s', cmd, err)
+            LOG.error("Failed to run %s: %s", cmd, err)
             exit(1)
 
     def get_name(self):
@@ -176,8 +178,5 @@ class BinlogSource(BaseSource):
         return osp.join(
             self.host,
             self._media_type,
-            "{name}{suffix}".format(
-                name=self._binlog_file,
-                suffix=self.suffix
-            )
+            "{name}{suffix}".format(name=self._binlog_file, suffix=self.suffix),
         )

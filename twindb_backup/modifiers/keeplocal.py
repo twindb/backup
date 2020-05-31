@@ -13,6 +13,7 @@ from twindb_backup.util import mkdir_p
 class KeepLocal(Modifier):
     """KeepLocal() class saves a copy of the stream on the local file system.
     It doesn't alter the stream."""
+
     def __init__(self, input_stream, local_path):
         """
         Modifier that saves a local copy of the stream in local_path file.
@@ -27,16 +28,15 @@ class KeepLocal(Modifier):
             mkdir_p(local_dir)
         except OSError as err:
             raise ModifierException(
-                'Failed to create directory %s: %s'
-                % (local_dir, err)
+                "Failed to create directory %s: %s" % (local_dir, err)
             )
 
     def callback(self, **kwargs):
-        local_dst = Local(kwargs['keep_local_path'])
-        status = MySQLStatus(dst=kwargs['dst'])
+        local_dst = Local(kwargs["keep_local_path"])
+        status = MySQLStatus(dst=kwargs["dst"])
         status.save(local_dst)
 
     @property
     def _modifier_cmd(self):
         """get compression program cmd"""
-        return ['tee', self.local_path]
+        return ["tee", self.local_path]

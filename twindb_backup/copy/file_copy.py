@@ -15,6 +15,7 @@ class FileCopy(PeriodicCopy):
     :param run_type: run type. daily, hourly, etc.
     :type run_type: str
     """
+
     def __init__(self, *args, **kwargs):
         super(FileCopy, self).__init__(*args, **kwargs)
-        self._source_type = 'files'
+        self._source_type = "files"

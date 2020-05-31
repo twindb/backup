@@ -44,8 +44,10 @@ def ensure_empty(path):
     """
     try:
         if os.listdir(path):
-            msg = 'You asked to restore backup copy in directory "%s". ' \
-                  'But it is not empty.' % path
+            msg = (
+                'You asked to restore backup copy in directory "%s". '
+                "But it is not empty." % path
+            )
             raise OperationError(msg)
 
     except OSError as err:
@@ -81,7 +83,7 @@ def run_command(command, ok_non_zero=False):
     :return: file object with stdout as generator to use with ``with``
     """
     try:
-        LOG.debug('Running %s', " ".join(command))
+        LOG.debug("Running %s", " ".join(command))
         proc = Popen(command, stderr=PIPE, stdout=PIPE)
 
         yield proc.stdout
@@ -89,17 +91,18 @@ def run_command(command, ok_non_zero=False):
         _, cerr = proc.communicate()
 
         if proc.returncode and not ok_non_zero:
-            LOG.error('Command %s exited with error code %d',
-                      ' '.join(command),
-                      proc.returncode)
+            LOG.error(
+                "Command %s exited with error code %d",
+                " ".join(command),
+                proc.returncode,
+            )
             LOG.error(cerr)
             exit(1)
         else:
-            LOG.debug('Exited with zero code')
+            LOG.debug("Exited with zero code")
 
     except OSError as err:
-        LOG.error('Failed to run %s',
-                  ' '.join(command))
+        LOG.error("Failed to run %s", " ".join(command))
         LOG.error(err)
         exit(1)
 
@@ -116,13 +119,13 @@ def split_host_port(host_port):
     :rtype: tuple
     """
     try:
-        host = host_port.split(':')[0]
+        host = host_port.split(":")[0]
         if not host:
             host = None
     except AttributeError:
         host = None
     try:
-        port = int(host_port.split(':')[1])
+        port = int(host_port.split(":")[1])
     except (IndexError, AttributeError, ValueError):
         port = None
     return host, port
@@ -133,11 +136,11 @@ def kill_children():
     Kill child process
     """
     for proc in multiprocessing.active_children():
-        LOG.info('Terminating %r [%d] ...', proc, proc.pid)
+        LOG.info("Terminating %r [%d] ...", proc, proc.pid)
         proc.terminate()
     parent = psutil.Process(os.getpid())
     for child in parent.children(recursive=True):
-        LOG.info('Terminating process %r', child)
+        LOG.info("Terminating process %r", child)
         child.kill()
 
 
@@ -157,21 +160,17 @@ def my_cnfs(common_paths=None):
             result.append(my_cnf)
             with open(my_cnf) as fp_my_cnf:
                 for line in fp_my_cnf.read().splitlines():
-                    if '!includedir' in line:
+                    if "!includedir" in line:
                         path = line.split()[1]
                         c_paths = []
                         for included_file in os.listdir(path):
-                            if included_file.endswith('.cnf'):
+                            if included_file.endswith(".cnf"):
                                 c_paths.append("%s%s" % (path, included_file))
-                        result.extend(
-                            my_cnfs(common_paths=c_paths)
-                        )
-                    elif '!include' in line:
+                        result.extend(my_cnfs(common_paths=c_paths))
+                    elif "!include" in line:
 
                         include_file = line.split()[1]
-                        result.extend(
-                            my_cnfs(common_paths=[include_file])
-                        )
+                        result.extend(my_cnfs(common_paths=[include_file]))
     return result
 
 
@@ -184,5 +183,5 @@ def normalize_b64_data(coding):
     """
     missing_padding = len(coding) % 4
     if missing_padding != 0:
-        coding += b'=' * (4 - missing_padding)
+        coding += b"=" * (4 - missing_padding)
     return coding

@@ -15,6 +15,7 @@ class Local(BaseDestination):
     """
     Local destination class.
     """
+
     def __init__(self, path=None):
         super(Local, self).__init__(path)
         self._path = path
@@ -43,7 +44,7 @@ class Local(BaseDestination):
         return self._path
 
     def read(self, filepath):
-        with open(osp.join(self.path, filepath), 'r') as fdesc:
+        with open(osp.join(self.path, filepath), "r") as fdesc:
             return fdesc.read()
 
     def save(self, handler, filepath):
@@ -57,13 +58,7 @@ class Local(BaseDestination):
             proc = Popen(
                 ["cat", "-"],
                 stdin=in_stream,
-                stdout=open(
-                    osp.join(
-                        self.path,
-                        filepath
-                    ),
-                    'wb'
-                )
+                stdout=open(osp.join(self.path, filepath), "wb"),
             )
             proc.wait()
 
@@ -71,16 +66,14 @@ class Local(BaseDestination):
         rec_cond = "" if recursive else " -maxdepth 1"
         fil_cond = " -type f" if files_only else ""
 
-        cmd_str = "bash -c 'if test -d {prefix} ; " \
-                  "then find {prefix}{recursive}{files_only}; fi'"
-        cmd_str = cmd_str.format(
-            prefix=prefix,
-            recursive=rec_cond,
-            files_only=fil_cond
+        cmd_str = (
+            "bash -c 'if test -d {prefix} ; "
+            "then find {prefix}{recursive}{files_only}; fi'"
         )
-        cmd = [
-            'bash', '-c', cmd_str
-        ]
+        cmd_str = cmd_str.format(
+            prefix=prefix, recursive=rec_cond, files_only=fil_cond
+        )
+        cmd = ["bash", "-c", cmd_str]
         with run_command(cmd) as cout:
 
             if files_only:
@@ -90,12 +83,12 @@ class Local(BaseDestination):
 
     def delete(self, path):
         cmd = ["rm", path]
-        LOG.debug('Running %s', ' '.join(cmd))
+        LOG.debug("Running %s", " ".join(cmd))
         proc = Popen(cmd)
         proc.communicate()
 
     def write(self, content, filepath):
-        with open(osp.join(self.path, filepath), 'w') as fdesc:
+        with open(osp.join(self.path, filepath), "w") as fdesc:
             fdesc.write(content)
 
     def __str__(self):
