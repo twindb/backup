@@ -9,7 +9,7 @@ TwinDB Backup
 .. image:: https://img.shields.io/codecov/c/github/twindb/backup.svg
     :target: https://codecov.io/gh/twindb/backup
 
-.. image:: https://twindb-backup.readthedocs.io/
+.. image:: https://readthedocs.org/projects/twindb-backup/badge/
     :target: https://twindb-backup.readthedocs.io/
     :alt: Documentation Status
 
