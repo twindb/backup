@@ -94,10 +94,10 @@ clean-docs:
 	rm -rf docs/_build
 
 lint: ## check style with pylint
-# 	pylint twindb_backup
 	yamllint .
 	black --check --line-length 80 twindb_backup
 	pycodestyle --max-line-length=80 twindb_backup
+	pylint twindb_backup
 
 
 test: ## Run tests quickly with the default Python

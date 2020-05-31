@@ -9,7 +9,7 @@
 
 # Add files or directories to the blacklist. They should be base names, not
 # paths.
-ignore=CVS
+ignore=CVS,backup.py,cli.py,clone.py,configuration,copy,destination,exporter,modifiers,restore.py,source,ssh,status,util.py,verify.py
 
 # Add files or directories matching the regex patterns to the blacklist. The
 # regex matches against base names, not paths.
