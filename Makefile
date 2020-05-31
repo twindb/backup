@@ -95,6 +95,7 @@ clean-docs:
 
 lint: ## check style with pylint
 # 	pylint twindb_backup
+	yamllint .readthedocs.yml
 	pycodestyle twindb_backup
 
 
