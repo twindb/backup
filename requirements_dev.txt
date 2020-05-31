@@ -8,12 +8,12 @@ alabaster==0.7.12         # via sphinx
 astroid==2.4.1            # via pylint
 atomicwrites==1.4.0       # via pytest
 attrs==19.3.0             # via jsonschema, pytest
-aws-sam-translator==1.23.0  # via cfn-lint
+aws-sam-translator==1.24.0  # via cfn-lint
 aws-xray-sdk==2.5.0       # via moto
 babel==2.8.0              # via sphinx
-boto3==1.13.16            # via aws-sam-translator, moto
+boto3==1.13.19            # via aws-sam-translator, moto
 boto==2.49.0              # via moto
-botocore==1.16.16         # via aws-xray-sdk, boto3, moto, s3transfer
+botocore==1.16.19         # via aws-xray-sdk, boto3, moto, s3transfer
 bumpversion==0.5.3        # via -r requirements_dev.in
 certifi==2020.4.5.1       # via requests
 cffi==1.14.0              # via cryptography
@@ -48,6 +48,7 @@ more-itertools==8.3.0     # via pytest
 moto==1.3.14              # via -r requirements_dev.in
 networkx==2.4             # via cfn-lint
 packaging==20.4           # via sphinx
+pathspec==0.8.0           # via yamllint
 pbr==5.4.5                # via mock
 pluggy==0.13.1            # via pytest
 py==1.8.1                 # via pytest
@@ -65,7 +66,7 @@ python-dateutil==2.8.1    # via botocore, moto
 python-jose==3.1.0        # via moto
 python-magic==0.4.18      # via -r requirements_dev.in
 pytz==2020.1              # via babel, moto
-pyyaml==5.3.1             # via -r requirements_dev.in, cfn-lint, moto
+pyyaml==5.3.1             # via -r requirements_dev.in, cfn-lint, moto, yamllint
 requests==2.23.0          # via codecov, docker, moto, responses, sphinx
 responses==0.10.14        # via moto
 rsa==4.0                  # via python-jose
@@ -82,6 +83,7 @@ websocket-client==0.57.0  # via docker
 werkzeug==1.0.1           # via moto
 wrapt==1.12.1             # via astroid, aws-xray-sdk
 xmltodict==0.12.0         # via moto
+yamllint==1.23.0          # via -r requirements_dev.in
 zipp==3.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:

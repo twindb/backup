@@ -15,3 +15,5 @@ python-magic ~= 0.4
 
 # https://nvd.nist.gov/vuln/detail/CVE-2017-18342
 pyyaml ~= 5.1
+
+yamllint ~= 1.23
