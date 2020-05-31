@@ -1,6 +1,7 @@
+---
 driver:
   name: vagrant
-  forward_agent: yes
+  forward_agent: true
   customize:
     cpus: 2
     memory: 2048
@@ -32,7 +33,7 @@ suites:
     run_list: omnibus::default
     attributes:
       omnibus:
-        build_user:          vagrant
-        build_user_group:    vagrant
+        build_user: vagrant
+        build_user_group: vagrant
         build_user_password: vagrant
-        install_dir:         /opt/twindb-backup
+        install_dir: /opt/twindb-backup
