@@ -38,20 +38,17 @@ import os
 
 import sys
 
-__author__ = 'TwinDB Development Team'
-__email__ = 'dev@twindb.com'
-__version__ = '2.20.1'
+__author__ = "TwinDB Development Team"
+__email__ = "dev@twindb.com"
+__version__ = "2.20.2"
 STATUS_FORMAT_VERSION = 1
-LOCK_FILE = '/var/run/twindb-backup.lock'
-LOG_FILE = '/var/log/twindb-backup-measures.log'
-INTERVALS = ['hourly', 'daily', 'weekly', 'monthly', 'yearly']
-MEDIA_TYPES = ['files', 'mysql', 'binlog']
-XTRABACKUP_BINARY = '/opt/twindb-backup/embedded/bin/xtrabackup'
-XBSTREAM_BINARY = '/opt/twindb-backup/embedded/bin/xbstream'
-MY_CNF_COMMON_PATHS = [
-    '/etc/my.cnf',
-    '/etc/mysql/my.cnf'
-]
+LOCK_FILE = "/var/run/twindb-backup.lock"
+LOG_FILE = "/var/log/twindb-backup-measures.log"
+INTERVALS = ["hourly", "daily", "weekly", "monthly", "yearly"]
+MEDIA_TYPES = ["files", "mysql", "binlog"]
+XTRABACKUP_BINARY = "/opt/twindb-backup/embedded/bin/xtrabackup"
+XBSTREAM_BINARY = "/opt/twindb-backup/embedded/bin/xbstream"
+MY_CNF_COMMON_PATHS = ["/etc/my.cnf", "/etc/mysql/my.cnf"]
 
 LOG = logging.getLogger(__name__)
 
@@ -71,8 +68,10 @@ class LessThanFilter(logging.Filter):  # pylint: disable=too-few-public-methods
 def setup_logging(logger, debug=False):  # pragma: no cover
     """Configures logging for the module"""
 
-    fmt_str = "%(asctime)s: %(levelname)s:" \
-              " %(module)s.%(funcName)s():%(lineno)d: %(message)s"
+    fmt_str = (
+        "%(asctime)s: %(levelname)s:"
+        " %(module)s.%(funcName)s():%(lineno)d: %(message)s"
+    )
 
     console_handler = logging.StreamHandler(stream=sys.stdout)
     console_handler.addFilter(LessThanFilter(logging.WARNING))
@@ -113,7 +112,7 @@ def get_files_to_delete(all_files, keep_copies):
     :return: list of strings (files) to delete
     :rtype: list
     """
-    LOG.debug('Retain %d files', keep_copies)
+    LOG.debug("Retain %d files", keep_copies)
     if keep_copies == 0:
         return all_files
     else:
@@ -131,10 +130,10 @@ def delete_local_files(dir_backups, keep_copies):
 
     """
     local_files = sorted(glob.glob(dir_backups))
-    LOG.debug('Local copies: %r', local_files)
+    LOG.debug("Local copies: %r", local_files)
 
     for local_file in get_files_to_delete(local_files, keep_copies):
-        LOG.debug('Deleting: %s', local_file)
+        LOG.debug("Deleting: %s", local_file)
         os.unlink(local_file)
 
 
@@ -148,11 +147,11 @@ def get_timeout(run_type):
     :rtype: int
     """
     timeouts = {
-        'hourly': 3600 / 2,
-        'daily': 24 * 3600 / 2,
-        'weekly': 7 * 24 * 3600 / 2,
-        'monthly': 30 * 24 * 3600 / 2,
-        'yearly': 365 * 24 * 3600 / 2
+        "hourly": 3600 / 2,
+        "daily": 24 * 3600 / 2,
+        "weekly": 7 * 24 * 3600 / 2,
+        "monthly": 30 * 24 * 3600 / 2,
+        "yearly": 365 * 24 * 3600 / 2,
     }
     return int(timeouts[run_type])
 
@@ -160,20 +159,18 @@ def get_timeout(run_type):
 def save_measures(start_time, end_time, log_path=LOG_FILE):
     """Save backup measures to log file"""
     data = {
-        'start': start_time,
-        'finish': end_time,
-        'duration': end_time - start_time
+        "start": start_time,
+        "finish": end_time,
+        "duration": end_time - start_time,
     }
     try:
-        with open(log_path, 'r') as data_fp:
+        with open(log_path, "r") as data_fp:
             log = json.load(data_fp)
-            log['measures'].append(data)
-            if len(log['measures']) > 100:
-                del log['measures'][0]
+            log["measures"].append(data)
+            if len(log["measures"]) > 100:
+                del log["measures"][0]
     except (IOError, ValueError):
-        log = {
-            'measures': [data]
-        }
+        log = {"measures": [data]}
 
-    with open(log_path, 'w') as file_pt:
+    with open(log_path, "w") as file_pt:
         json.dump(log, file_pt)

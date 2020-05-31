@@ -7,11 +7,10 @@ from twindb_backup.status.base_status import BaseStatus
 
 class PeriodicStatus(BaseStatus):
     """Periodic class for status."""
+
     def __init__(self, content=None, dst=None, status_directory=None):
         super(PeriodicStatus, self).__init__(
-            content=content,
-            dst=dst,
-            status_directory=status_directory
+            content=content, dst=dst, status_directory=status_directory
         )
 
     @property
@@ -21,27 +20,27 @@ class PeriodicStatus(BaseStatus):
     @property
     def hourly(self):
         """Dictionary with hourly backups"""
-        return self.__run_type('hourly')
+        return self.__run_type("hourly")
 
     @property
     def daily(self):
         """Dictionary with daily backups"""
-        return self.__run_type('daily')
+        return self.__run_type("daily")
 
     @property
     def weekly(self):
         """Dictionary with weekly backups"""
-        return self.__run_type('weekly')
+        return self.__run_type("weekly")
 
     @property
     def monthly(self):
         """Dictionary with monthly backups"""
-        return self.__run_type('monthly')
+        return self.__run_type("monthly")
 
     @property
     def yearly(self):
         """Dictionary with yearly backups"""
-        return self.__run_type('yearly')
+        return self.__run_type("yearly")
 
     def _load(self, status_as_json):
         raise NotImplementedError
@@ -52,9 +51,7 @@ class PeriodicStatus(BaseStatus):
     def __eq__(self, other):
         comparison = ()
         for interval in INTERVALS:
-            comparison += (
-                getattr(self, interval) == getattr(other, interval),
-            )
+            comparison += (getattr(self, interval) == getattr(other, interval),)
 
         return all(comparison)
 

@@ -15,8 +15,7 @@ import sys
 import pymysql
 from pymysql import OperationalError
 
-from twindb_backup import LOG, get_files_to_delete, INTERVALS, \
-    XTRABACKUP_BINARY
+from twindb_backup import LOG, get_files_to_delete, INTERVALS, XTRABACKUP_BINARY
 from twindb_backup.source.base_source import BaseSource
 from twindb_backup.source.exceptions import MySQLSourceError
 from twindb_backup.status.exceptions import StatusKeyNotFound
@@ -24,10 +23,14 @@ from twindb_backup.status.exceptions import StatusKeyNotFound
 
 class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
     """MySQL connection details """
-    def __init__(self, defaults_file,
-                 connect_timeout=10,
-                 cursor=pymysql.cursors.DictCursor,
-                 hostname="127.0.0.1"):
+
+    def __init__(
+        self,
+        defaults_file,
+        connect_timeout=10,
+        cursor=pymysql.cursors.DictCursor,
+        hostname="127.0.0.1",
+    ):
 
         self.cursor = cursor
         self.connect_timeout = connect_timeout
@@ -37,8 +40,16 @@ class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
 
 class MySQLMasterInfo(object):  # pylint: disable=too-few-public-methods
     """MySQL master details """
-    def __init__(self, host, port,  # pylint: disable=too-many-arguments
-                 user, password, binlog, binlog_pos):
+
+    def __init__(
+        self,
+        host,
+        port,  # pylint: disable=too-many-arguments
+        user,
+        password,
+        binlog,
+        binlog_pos,
+    ):
         self.host = host
         self.user = user
         self.password = password
@@ -49,9 +60,8 @@ class MySQLMasterInfo(object):  # pylint: disable=too-few-public-methods
 
 class MySQLClient(object):
     """Class to send queries to MySQL"""
-    def __init__(self, defaults_file,
-                 connect_timeout=10,
-                 hostname="127.0.0.1"):
+
+    def __init__(self, defaults_file, connect_timeout=10, hostname="127.0.0.1"):
         self.connect_timeout = connect_timeout
         self.defaults_file = defaults_file
         self.hostname = hostname
@@ -70,17 +80,15 @@ class MySQLClient(object):
                 host=self.hostname,
                 read_default_file=self.defaults_file,
                 connect_timeout=self.connect_timeout,
-                cursorclass=pymysql.cursors.DictCursor
+                cursorclass=pymysql.cursors.DictCursor,
             )
 
             yield connection
         except OperationalError:
-            LOG.error(
-                "Can't connect to MySQL server on %s",
-                self.hostname)
+            LOG.error("Can't connect to MySQL server on %s", self.hostname)
             raise MySQLSourceError(
-                "Can't connect to MySQL server on %s"
-                % self.hostname)
+                "Can't connect to MySQL server on %s" % self.hostname
+            )
         finally:
             if connection:
                 connection.close()
@@ -97,7 +105,7 @@ class MySQLClient(object):
         with self.cursor() as cursor:
             cursor.execute("SELECT @@%s AS varname" % varname)
             row = cursor.fetchone()
-            return row['varname']
+            return row["varname"]
 
 
 class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
@@ -115,34 +123,35 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         :param dst:
         """
         if run_type not in INTERVALS:
-            raise MySQLSourceError('Incorrect run type %r' % run_type)
-        self._parent_lsn = kwargs.get('parent_lsn', None)
+            raise MySQLSourceError("Incorrect run type %r" % run_type)
+        self._parent_lsn = kwargs.get("parent_lsn", None)
 
         class _BackupInfo(object):  # pylint: disable=too-few-public-methods
             """class to store details about backup copy"""
-            def __init__(self, lsn=None,
-                         binlog_coordinate=None):
+
+            def __init__(self, lsn=None, binlog_coordinate=None):
                 self.lsn = lsn
                 self.binlog_coordinate = binlog_coordinate
 
         # MySQL
         if not isinstance(mysql_connect_info, MySQLConnectInfo):
-            raise MySQLSourceError('mysql_connect_info must be '
-                                   'instance of MySQLConnectInfo')
+            raise MySQLSourceError(
+                "mysql_connect_info must be " "instance of MySQLConnectInfo"
+            )
 
         self._connect_info = mysql_connect_info
 
         self._backup_info = _BackupInfo()
-        if backup_type in ['full', 'incremental']:
+        if backup_type in ["full", "incremental"]:
             self._type = backup_type
         else:
-            raise MySQLSourceError('Unrecognized backup type %s' % backup_type)
+            raise MySQLSourceError("Unrecognized backup type %s" % backup_type)
 
-        self._suffix = 'xbstream'
-        self._media_type = 'mysql'
-        self._file_name_prefix = 'mysql'
-        self.dst = kwargs.get('dst', None)
-        self._xtrabackup = kwargs.get('xtrabackup_binary', XTRABACKUP_BINARY)
+        self._suffix = "xbstream"
+        self._media_type = "mysql"
+        self._file_name_prefix = "mysql"
+        self.dst = kwargs.get("dst", None)
+        self._xtrabackup = kwargs.get("xtrabackup_binary", XTRABACKUP_BINARY)
         super(MySQLSource, self).__init__(run_type)
 
     @property
@@ -175,7 +184,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
             "--defaults-file=%s" % self._connect_info.defaults_file,
             "--stream=xbstream",
             "--host=127.0.0.1",
-            "--backup"
+            "--backup",
         ]
         cmd += ["--target-dir", "."]
         if self.is_galera():
@@ -185,42 +194,42 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
             cmd += [
                 "--incremental-basedir",
                 ".",
-                "--incremental-lsn=%d" % self._parent_lsn
+                "--incremental-lsn=%d" % self._parent_lsn,
             ]
         # If this is a Galera node then additional step needs to be taken to
         # prevent the backups from locking up the cluster.
         wsrep_desynced = False
-        LOG.debug('Running %s', ' '.join(cmd))
+        LOG.debug("Running %s", " ".join(cmd))
         stderr_file = tempfile.NamedTemporaryFile(delete=False)
         try:
             if self.is_galera():
                 wsrep_desynced = self.enable_wsrep_desync()
 
-            LOG.debug('Running %s', ' '.join(cmd))
-            proc_xtrabackup = Popen(cmd,
-                                    stderr=stderr_file,
-                                    stdout=PIPE)
+            LOG.debug("Running %s", " ".join(cmd))
+            proc_xtrabackup = Popen(cmd, stderr=stderr_file, stdout=PIPE)
 
             yield proc_xtrabackup.stdout
 
             proc_xtrabackup.communicate()
             if proc_xtrabackup.returncode:
-                LOG.error('Failed to run xtrabackup. '
-                          'Check error output in %s', stderr_file.name)
+                LOG.error(
+                    "Failed to run xtrabackup. " "Check error output in %s",
+                    stderr_file.name,
+                )
                 try:
                     if LOG.debug_enabled:
                         with open(stderr_file.name) as xb_out:
                             for line in xb_out:
-                                print(line, end='', file=sys.stderr)
+                                print(line, end="", file=sys.stderr)
                 except AttributeError:
                     pass
                 self.dst.delete(self.get_name())
                 exit(1)
             else:
-                LOG.debug('Successfully streamed xtrabackup output')
+                LOG.debug("Successfully streamed xtrabackup output")
             self._update_backup_info(stderr_file)
         except OSError as err:
-            LOG.error('Failed to run %s: %s', cmd, err)
+            LOG.error("Failed to run %s: %s", cmd, err)
             exit(1)
         finally:
             if wsrep_desynced:
@@ -229,16 +238,17 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
     def _handle_failure_exec(self, err, stderr_file):
         """Cleanup on failure exec"""
         LOG.error(err)
-        LOG.error('Failed to run xtrabackup. '
-                  'Check error output in %s', stderr_file.name)
+        LOG.error(
+            "Failed to run xtrabackup. " "Check error output in %s",
+            stderr_file.name,
+        )
         self.dst.delete(self.get_name())
         exit(1)
 
     def _update_backup_info(self, stderr_file):
         """Update backup_info from stderr"""
 
-        LOG.debug('xtrabackup error log file %s',
-                  stderr_file.name)
+        LOG.debug("xtrabackup error log file %s", stderr_file.name)
         self._backup_info.lsn = self._get_lsn(stderr_file.name)
         self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
             stderr_file.name
@@ -251,7 +261,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
 
         :return: file name
         """
-        return self._get_name('mysql')
+        return self._get_name("mysql")
 
     def apply_retention_policy(self, dst, config, run_type, status):
         """
@@ -269,29 +279,22 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         :rtype: Status
         """
 
-        prefix = osp.join(
-            dst.remote_path,
-            self.get_prefix(),
-            'mysql'
-        )
+        prefix = osp.join(dst.remote_path, self.get_prefix(), "mysql")
         keep_copies = getattr(config.retention, run_type)
 
-        backups_list = dst.list_files(
-            prefix,
-            files_only=True
-        )
-        LOG.debug('Remote copies: %r', backups_list)
+        backups_list = dst.list_files(prefix, files_only=True)
+        LOG.debug("Remote copies: %r", backups_list)
         for backup_file in get_files_to_delete(backups_list, keep_copies):
-            LOG.debug('Deleting remote file %s', backup_file)
+            LOG.debug("Deleting remote file %s", backup_file)
             dst.delete(backup_file)
             try:
                 status.remove(backup_file)
 
             except StatusKeyNotFound as err:
                 LOG.warning(err)
-                LOG.debug('Status: %r', status)
+                LOG.debug("Status: %r", status)
 
-        self._delete_local_files('mysql', config)
+        self._delete_local_files("mysql", config)
 
         return status
 
@@ -307,7 +310,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         """
         with open(err_log_path) as error_log:
             for line in error_log:
-                if line.startswith('MySQL binlog position:'):
+                if line.startswith("MySQL binlog position:"):
                     filename = line.split()[4].strip(",'")
                     position = int(line.split()[6].strip(",'"))
                     return filename, position
@@ -323,14 +326,15 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         """
         with open(err_log_path) as error_log:
             for line in error_log:
-                pattern = 'xtrabackup: ' \
-                          'The latest check point (for incremental):'
+                pattern = (
+                    "xtrabackup: " "The latest check point (for incremental):"
+                )
                 if line.startswith(pattern):
                     lsn = line.split()[7].strip("'")
                     return int(lsn)
-        raise MySQLSourceError('Could not find LSN'
-                               ' in XtraBackup error output %s'
-                               % err_log_path)
+        raise MySQLSourceError(
+            "Could not find LSN" " in XtraBackup error output %s" % err_log_path
+        )
 
     @property
     def full(self):
@@ -340,7 +344,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         :return: True if it's a full copy.
         :rtype: bool
         """
-        return self.type == 'full'
+        return self.type == "full"
 
     @property
     def incremental(self):
@@ -381,7 +385,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         try:
             with self.get_connection() as connection:
                 with connection.cursor() as cursor:
-                    cursor.execute('SET GLOBAL wsrep_desync=ON')
+                    cursor.execute("SET GLOBAL wsrep_desync=ON")
             return True
         except pymysql.Error as err:
             LOG.debug(err)
@@ -397,22 +401,28 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
             with self.get_connection() as connection:
                 with connection.cursor() as cursor:
                     while time.time() < max_time:
-                        cursor.execute("SHOW GLOBAL STATUS LIKE "
-                                       "'wsrep_local_recv_queue'")
+                        cursor.execute(
+                            "SHOW GLOBAL STATUS LIKE "
+                            "'wsrep_local_recv_queue'"
+                        )
 
-                        res = {r['Variable_name'].lower(): r['Value'].lower()
-                               for r in cursor.fetchall()}
+                        res = {
+                            r["Variable_name"].lower(): r["Value"].lower()
+                            for r in cursor.fetchall()
+                        }
 
-                        if not res.get('wsrep_local_recv_queue'):
-                            raise Exception('Unknown status variable '
-                                            '"wsrep_local_recv_queue"')
+                        if not res.get("wsrep_local_recv_queue"):
+                            raise Exception(
+                                "Unknown status variable "
+                                '"wsrep_local_recv_queue"'
+                            )
 
-                        if int(res['wsrep_local_recv_queue']) == 0:
+                        if int(res["wsrep_local_recv_queue"]) == 0:
                             break
 
                         time.sleep(1)
 
-                    LOG.debug('Disabling wsrep_desync')
+                    LOG.debug("Disabling wsrep_desync")
                     cursor.execute("SET GLOBAL wsrep_desync=OFF")
         except pymysql.Error as err:
             LOG.error(err)
@@ -428,11 +438,13 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         with self._cursor() as cursor:
             cursor.execute("SHOW STATUS LIKE 'wsrep_provider_version'")
 
-            res = {row['Variable_name'].lower(): row['Value'].lower()
-                   for row in cursor.fetchall()}
+            res = {
+                row["Variable_name"].lower(): row["Value"].lower()
+                for row in cursor.fetchall()
+            }
 
-        if res.get('wsrep_provider_version'):
-            return res['wsrep_provider_version'].split('(')[0]
+        if res.get("wsrep_provider_version"):
+            return res["wsrep_provider_version"].split("(")[0]
 
         return None
 
@@ -456,14 +468,16 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
                 cursor.execute("SELECT @@wsrep_on as wsrep_on")
                 row = cursor.fetchone()
 
-                return (str(row['wsrep_on']).lower() == "1" or
-                        str(row['wsrep_on']).lower() == 'on')
+                return (
+                    str(row["wsrep_on"]).lower() == "1"
+                    or str(row["wsrep_on"]).lower() == "on"
+                )
         except pymysql.InternalError as err:
             error_code = err.args[0]
             error_message = err.args[1]
 
             if error_code == 1193:
-                LOG.debug('Galera is not supported or not enabled')
+                LOG.debug("Galera is not supported or not enabled")
                 return False
             else:
                 LOG.error(error_message)
@@ -475,7 +489,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         with self._cursor() as cursor:
             cursor.execute("SELECT @@datadir AS datadir")
             row = cursor.fetchone()
-            return row['datadir']
+            return row["datadir"]
 
     @contextmanager
     def get_connection(self):
@@ -491,15 +505,19 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
                 host=self._connect_info.hostname,
                 read_default_file=self._connect_info.defaults_file,
                 connect_timeout=self._connect_info.connect_timeout,
-                cursorclass=self._connect_info.cursor
+                cursorclass=self._connect_info.cursor,
             )
 
             yield connection
         except OperationalError:
-            LOG.error("Can't connect to MySQL server on %s",
-                      self._connect_info.hostname)
-            raise MySQLSourceError("Can't connect to MySQL server on %s" %
-                                   self._connect_info.hostname)
+            LOG.error(
+                "Can't connect to MySQL server on %s",
+                self._connect_info.hostname,
+            )
+            raise MySQLSourceError(
+                "Can't connect to MySQL server on %s"
+                % self._connect_info.hostname
+            )
         finally:
             if connection:
                 connection.close()

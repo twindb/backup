@@ -3,11 +3,14 @@
 
 class S3Config(object):
     """Amazon S3 configuration."""
-    def __init__(self,
-                 aws_access_key_id,
-                 aws_secret_access_key,
-                 bucket,
-                 aws_default_region='us-east-1'):
+
+    def __init__(
+        self,
+        aws_access_key_id,
+        aws_secret_access_key,
+        bucket,
+        aws_default_region="us-east-1",
+    ):
 
         self._aws_access_key_id = aws_access_key_id
         self._aws_secret_access_key = aws_secret_access_key

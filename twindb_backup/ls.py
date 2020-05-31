@@ -16,17 +16,12 @@ def list_available_backups(twindb_config, copy_type=None):
     :param copy_type: Limit list to specific type of backups.
     :type copy_type: files|mysql
     """
-    dsts = [
-        twindb_config.destination()
-    ]
+    dsts = [twindb_config.destination()]
     if twindb_config.keep_local_path:
-        dsts.insert(
-            0,
-            Local(twindb_config.keep_local_path)
-        )
+        dsts.insert(0, Local(twindb_config.keep_local_path))
 
     for dst in dsts:
-        LOG.info('Destination %s', dst)
+        LOG.info("Destination %s", dst)
         for mtype in MEDIA_TYPES:
             if copy_type in [None, mtype]:
                 func = "_print_%s" % mtype
@@ -34,36 +29,30 @@ def list_available_backups(twindb_config, copy_type=None):
 
 
 def _print_files(dst):
-    _print_media_type(dst, 'files')
+    _print_media_type(dst, "files")
 
 
 def _print_mysql(dst):
-    _print_media_type(dst, 'mysql')
+    _print_media_type(dst, "mysql")
 
 
 def _print_media_type(dst, media_type):
     for run_type in INTERVALS:
         pattern = "/%s/%s/" % (run_type, media_type)
         dst_files = dst.list_files(
-            dst.remote_path,
-            pattern=pattern,
-            recursive=True,
-            files_only=True
+            dst.remote_path, pattern=pattern, recursive=True, files_only=True
         )
         if dst_files:
-            LOG.info('%s %s copies:', media_type, run_type)
+            LOG.info("%s %s copies:", media_type, run_type)
             for copy in dst_files:
                 print(copy)
 
 
 def _print_binlog(dst):
     dst_files = dst.list_files(
-        dst.remote_path,
-        pattern='/binlog/',
-        recursive=True,
-        files_only=True
+        dst.remote_path, pattern="/binlog/", recursive=True, files_only=True
     )
     if dst_files:
-        LOG.info('Binary logs:')
+        LOG.info("Binary logs:")
         for copy in dst_files:
             print(copy)

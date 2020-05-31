@@ -12,6 +12,7 @@ class Lbzip2(ParallelCompressor):
     """
     Modifier that compresses the input_stream with lbzip2.
     """
+
     def __init__(self, input_stream, threads=DEFAULT_THREADS, level=9):
         """
         Modifier that uses lbzip2 compression
@@ -24,10 +25,10 @@ class Lbzip2(ParallelCompressor):
         """
         super(Lbzip2, self).__init__(
             input_stream,
-            program='lbzip2',
+            program="lbzip2",
             threads=threads,
             level=level,
-            suffix='.bz'
+            suffix=".bz",
         )
 
     @property
@@ -35,17 +36,14 @@ class Lbzip2(ParallelCompressor):
         """get compression program cmd"""
         return [
             self._program,
-            '-{0}'.format(self._level),
-            '-n', str(self._threads),
-            '-c', '-'
+            "-{0}".format(self._level),
+            "-n",
+            str(self._threads),
+            "-c",
+            "-",
         ]
 
     @property
     def _unmodifier_cmd(self):
         """get decompression program cmd"""
-        return [
-            self._program,
-            '-n', str(self._threads),
-            '-d',
-            '-c'
-        ]
+        return [self._program, "-n", str(self._threads), "-d", "-c"]

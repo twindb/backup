@@ -14,8 +14,8 @@ class FileSource(BaseSource):
 
     def __init__(self, path, run_type):
         self.path = path
-        self._suffix = 'tar'
-        self._media_type = 'files'
+        self._suffix = "tar"
+        self._media_type = "files"
         super(FileSource, self).__init__(run_type)
 
     @property
@@ -36,20 +36,20 @@ class FileSource(BaseSource):
         """
         cmd = "tar cf - %s" % self.path
         try:
-            LOG.debug('Running %s', cmd)
+            LOG.debug("Running %s", cmd)
             proc = Popen(shlex.split(cmd), stderr=PIPE, stdout=PIPE)
 
             yield proc.stdout
 
             _, cerr = proc.communicate()
             if proc.returncode:
-                LOG.error('Failed to read from %s: %s', self.path, cerr)
+                LOG.error("Failed to read from %s: %s", self.path, cerr)
                 exit(1)
             else:
-                LOG.debug('Successfully streamed %s', self.path)
+                LOG.debug("Successfully streamed %s", self.path)
 
         except OSError as err:
-            LOG.error('Failed to run %s: %s', cmd, err)
+            LOG.error("Failed to run %s: %s", cmd, err)
             exit(1)
 
     def get_name(self):
@@ -61,7 +61,7 @@ class FileSource(BaseSource):
         return self._get_name(self._sanitize_filename())
 
     def _sanitize_filename(self):
-        return self.path.rstrip('/').replace('/', '_')
+        return self.path.rstrip("/").replace("/", "_")
 
     def apply_retention_policy(self, dst, config, run_type):
         """Apply retention policy
@@ -69,15 +69,15 @@ class FileSource(BaseSource):
         prefix = "{remote_path}/{prefix}/files/{file}".format(
             remote_path=dst.remote_path,
             prefix=self.get_prefix(),
-            file=self._sanitize_filename()
+            file=self._sanitize_filename(),
         )
         keep_copies = getattr(config.retention, run_type)
 
         backups_list = dst.list_files(prefix)
 
-        LOG.debug('Remote copies: %r', backups_list)
+        LOG.debug("Remote copies: %r", backups_list)
         for backup_copy in get_files_to_delete(backups_list, keep_copies):
-            LOG.debug('Deleting remote file %s', backup_copy)
+            LOG.debug("Deleting remote file %s", backup_copy)
             dst.delete(backup_copy)
 
         self._delete_local_files(self._sanitize_filename(), config)

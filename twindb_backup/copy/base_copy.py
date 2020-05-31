@@ -14,17 +14,14 @@ class BaseCopy(object):  # pylint: disable=too-few-public-methods
         on the destination.
     :type name: str
     """
+
     def __init__(self, host, name):
         self._host = host
         self._name = name
         self._source_type = None
 
     def __repr__(self):
-        return "%s(%s)" \
-               % (
-                   self.__class__.__name__,
-                   self.key
-               )
+        return "%s(%s)" % (self.__class__.__name__, self.key)
 
     @property
     def key(self):
@@ -43,12 +40,10 @@ class BaseCopy(object):  # pylint: disable=too-few-public-methods
                     host=self._host,
                     extra_path=self._extra_path,
                     name=self._name,
-                    source_type=self._source_type
+                    source_type=self._source_type,
                 )
             return "{host}/{source_type}/{name}".format(
-                host=self._host,
-                name=self._name,
-                source_type=self._source_type
+                host=self._host, name=self._name, source_type=self._source_type
             )
         else:
             raise UnknownSourceType("Source type is not defined")

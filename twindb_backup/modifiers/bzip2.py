@@ -9,6 +9,7 @@ class Bzip2(Modifier):
     """
     Modifier that compresses the input_stream with bzip2.
     """
+
     suffix = ".bz"
 
     def __init__(self, input_stream, level=9):
@@ -26,9 +27,9 @@ class Bzip2(Modifier):
     @property
     def _modifier_cmd(self):
         """get compression program cmd"""
-        return ['bzip2', '-{0}'.format(self._level), '-c', '-']
+        return ["bzip2", "-{0}".format(self._level), "-c", "-"]
 
     @property
     def _unmodifier_cmd(self):
         """get decompression program cmd"""
-        return ['bunzip2', '-d', '-c']
+        return ["bunzip2", "-d", "-c"]

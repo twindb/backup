@@ -6,9 +6,11 @@ from twindb_backup.exceptions import TwinDBBackupError
 
 class BaseExporterError(TwinDBBackupError):
     """General exporters error"""
+
     pass
 
 
 class DataDogExporterError(BaseExporterError):
     """DataDog exporters error"""
+
     pass

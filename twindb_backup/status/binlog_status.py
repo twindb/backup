@@ -12,37 +12,29 @@ class BinlogStatus(BaseStatus):
 
     def __init__(self, content=None, dst=None, status_directory=None):
         super(BinlogStatus, self).__init__(
-            content=content,
-            dst=dst,
-            status_directory=status_directory
+            content=content, dst=dst, status_directory=status_directory
         )
 
     @property
     def basename(self):
-        return 'binlog-status'
+        return "binlog-status"
 
     def _status_serialize(self):
-        return b64encode(
-            json.dumps(
-                self._as_dict()
-            ).encode("utf-8")
-        ).decode("utf-8")
+        return b64encode(json.dumps(self._as_dict()).encode("utf-8")).decode(
+            "utf-8"
+        )
 
     def _load(self, status_as_json):
 
         self._status = []
         for key, value in sorted(json.loads(status_as_json).items()):
-            host = key.split('/')[0]
-            name = key.split('/')[2]
+            host = key.split("/")[0]
+            name = key.split("/")[2]
             try:
-                created_at = value['created_at']
+                created_at = value["created_at"]
             except KeyError:
-                created_at = value['time_created']
-            copy = BinlogCopy(
-                host=host,
-                name=name,
-                created_at=created_at
-            )
+                created_at = value["time_created"]
+            copy = BinlogCopy(host=host, name=name, created_at=created_at)
             self._status.append(copy)
 
         return self._status
@@ -50,9 +42,7 @@ class BinlogStatus(BaseStatus):
     def _as_dict(self):
         status = {}
         for copy in self:
-            status[copy.key] = {
-                'time_created': copy.created_at
-            }
+            status[copy.key] = {"time_created": copy.created_at}
         return status
 
     def __eq__(self, other):

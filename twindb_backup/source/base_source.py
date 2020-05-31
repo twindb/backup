@@ -16,6 +16,7 @@ class BaseSource(object):
     """
     Base source for backup
     """
+
     run_type = None
     _suffix = None
     _media_type = None
@@ -23,7 +24,7 @@ class BaseSource(object):
     _name = None
     _host = None
     _created_at = None
-    _file_name_prefix = ''
+    _file_name_prefix = ""
 
     def __init__(self, run_type):
         """
@@ -34,7 +35,7 @@ class BaseSource(object):
         """
         self.run_type = run_type
         self._host = socket.gethostname()
-        self._created_at = time.strftime('%Y-%m-%d_%H_%M_%S')
+        self._created_at = time.strftime("%Y-%m-%d_%H_%M_%S")
 
     @abstractmethod
     def get_stream(self):
@@ -48,10 +49,7 @@ class BaseSource(object):
 
         :return: Backup name prefix like 'db-10/daily'
         """
-        return osp.join(
-            self._host,
-            self.run_type
-        )
+        return osp.join(self._host, self.run_type)
 
     @abstractmethod
     def get_name(self):
@@ -60,16 +58,13 @@ class BaseSource(object):
 
     def _get_name(self, filename_prefix):
 
-        LOG.debug('Suffix = %s', self.suffix)
+        LOG.debug("Suffix = %s", self.suffix)
         self._name = osp.join(
             self.get_prefix(),
             self._media_type,
             "{file}-{time}.{suffix}".format(
-                file=filename_prefix,
-                time=self._created_at,
-                suffix=self._suffix
-            )
-
+                file=filename_prefix, time=self._created_at, suffix=self._suffix
+            ),
         )
         return self._name
 
@@ -81,7 +76,7 @@ class BaseSource(object):
                 local_path=config.keep_local_path,
                 prefix=self.get_prefix(),
                 media_type=self._media_type,
-                file=filename
+                file=filename,
             )
             delete_local_files(dir_backups, keep_copies)
 
@@ -103,7 +98,7 @@ class BaseSource(object):
         return "{filename_prefix}-{time}.{suffix}".format(
             filename_prefix=self._file_name_prefix,
             time=self._created_at,
-            suffix=self._suffix
+            suffix=self._suffix,
         )
 
     @property

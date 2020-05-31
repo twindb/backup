@@ -15,13 +15,15 @@ from google.cloud.storage import Client
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.destination.exceptions import GCSDestinationError, \
-    FileNotFound
+from twindb_backup.destination.exceptions import (
+    GCSDestinationError,
+    FileNotFound,
+)
 
 GCS_CONNECT_TIMEOUT = 60
 GCS_READ_TIMEOUT = 600
 DEFAULT_CHUNK_SIZE = 250 * 1024 * 1024
-_CHUNK_PART_REGEXP = r'/part-[0-9]{16}$'
+_CHUNK_PART_REGEXP = r"/part-[0-9]{16}$"
 
 
 class GCS(BaseDestination):
@@ -40,19 +42,19 @@ class GCS(BaseDestination):
     #     pass
 
     def __init__(self, **kwargs):
-        self._bucket = kwargs.get('bucket')
+        self._bucket = kwargs.get("bucket")
         super(GCS, self).__init__(self.bucket)
 
-        if 'gc_credentials_file' in kwargs:
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = kwargs.get(
-                'gc_credentials_file'
+        if "gc_credentials_file" in kwargs:
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = kwargs.get(
+                "gc_credentials_file"
             )
         else:
             raise GCSDestinationError(
-                'gc_credentials_file keyword argument must be defined '
-                'when initializing %s class' % self.__class__.__name__
+                "gc_credentials_file keyword argument must be defined "
+                "when initializing %s class" % self.__class__.__name__
             )
-        self._chunk_size = kwargs.get('chunk_size', DEFAULT_CHUNK_SIZE)
+        self._chunk_size = kwargs.get("chunk_size", DEFAULT_CHUNK_SIZE)
         self.__bucket_obj = None
 
     @property
@@ -72,12 +74,12 @@ class GCS(BaseDestination):
         except (GoogleAPIError, GoogleAuthError) as err:
             raise GCSDestinationError(err)
 
-        LOG.info('Created bucket %s', self.bucket)
+        LOG.info("Created bucket %s", self.bucket)
 
     def delete(self, path):
         blobs = self._list_blob_or_chunks(path)
         if not blobs:
-            raise FileNotFound('File %s does not exist.' % path)
+            raise FileNotFound("File %s does not exist." % path)
 
         for blob in blobs:
             blob.delete()
@@ -96,15 +98,14 @@ class GCS(BaseDestination):
         except (GoogleAPIError, GoogleAuthError) as err:
             raise GCSDestinationError(err)
 
-        LOG.info('Deleted bucket %s', self.bucket)
+        LOG.info("Deleted bucket %s", self.bucket)
 
     @contextmanager
     def get_stream(self, copy):
         pipe_in, pipe_out = os.pipe()
 
         proc = Process(
-            target=self._download_to_pipe,
-            args=(copy.key, pipe_in, pipe_out)
+            target=self._download_to_pipe, args=(copy.key, pipe_in, pipe_out)
         )
         proc.start()
         os.close(pipe_out)
@@ -122,9 +123,7 @@ class GCS(BaseDestination):
         :rtype: str
         :raises FileNotFound: if filepath doesn't exist on the destination.
         """
-        obj = self._bucket_obj.blob(
-            filepath
-        )
+        obj = self._bucket_obj.blob(filepath)
         try:
             return obj.download_as_string()
         except NotFound as err:
@@ -139,9 +138,7 @@ class GCS(BaseDestination):
         :param filepath: Relative file path on the destination.
         :type filepath: str
         """
-        obj = self._bucket_obj.blob(
-            filepath
-        )
+        obj = self._bucket_obj.blob(filepath)
         obj.upload_from_string(content)
 
     def save(self, handler, filepath):
@@ -155,11 +152,8 @@ class GCS(BaseDestination):
         """
         with handler as f_src:
             chunk_no = 0
-            for chunk in iter(partial(f_src.read, self._chunk_size), b''):
-                self.write(
-                    chunk,
-                    osp.join(filepath, 'part-%016d' % chunk_no)
-                )
+            for chunk in iter(partial(f_src.read, self._chunk_size), b""):
+                self.write(chunk, osp.join(filepath, "part-%016d" % chunk_no))
                 chunk_no += 1
 
     @property
@@ -184,7 +178,7 @@ class GCS(BaseDestination):
 
     def _download_to_pipe(self, path, pipe_in, pipe_out):
         os.close(pipe_in)
-        pipe_out = os.fdopen(pipe_out, 'w')
+        pipe_out = os.fdopen(pipe_out, "w")
 
         for blob in self._list_blob_or_chunks(path):
             blob.download_to_file(pipe_out)
@@ -222,8 +216,9 @@ class GCS(BaseDestination):
         result = []
         blobs = self._bucket_obj.list_blobs(prefix=path)
         for blob in blobs:
-            if blob.name == path \
-                    or re.match(path + _CHUNK_PART_REGEXP, blob.name):
+            if blob.name == path or re.match(
+                path + _CHUNK_PART_REGEXP, blob.name
+            ):
                 result.append(blob)
         return result
 
@@ -242,17 +237,15 @@ class GCS(BaseDestination):
         :rtype: set(str)
         """
         if prefix:
-            prefix = prefix.lstrip('gs://').lstrip(self.bucket).lstrip('/')
+            prefix = prefix.lstrip("gs://").lstrip(self.bucket).lstrip("/")
 
         return set(
             [
                 osp.join(
                     "gs://",
                     self.bucket,
-                    re.sub(_CHUNK_PART_REGEXP, '', blob.name)
+                    re.sub(_CHUNK_PART_REGEXP, "", blob.name),
                 )
-                for blob in self._bucket_obj.list_blobs(
-                    prefix=prefix or None
-                )
+                for blob in self._bucket_obj.list_blobs(prefix=prefix or None)
             ]
         )

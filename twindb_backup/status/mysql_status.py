@@ -40,9 +40,7 @@ class MySQLStatus(PeriodicStatus):
         LOG.debug("Looking a parent candidate for %s run", run_type)
         for i in range(full_backup_index, len(INTERVALS)):
             period_copies = getattr(self, INTERVALS[i])
-            LOG.debug(
-                "Checking %d %s copies", len(period_copies), INTERVALS[i]
-            )
+            LOG.debug("Checking %d %s copies", len(period_copies), INTERVALS[i])
             for _, value in period_copies.items():
                 try:
                     if value.type == "full":
