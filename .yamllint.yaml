@@ -1,0 +1,35 @@
+---
+rules:
+    braces: "enable"
+    brackets: "enable"
+    colons: "enable"
+    commas: "enable"
+    comments:
+        level: "warning"
+    comments-indentation:
+        level: "warning"
+    document-end: "enable"
+    document-start:
+        level: "warning"
+    empty-lines: "enable"
+    empty-values: "enable"
+    hyphens: "enable"
+    indentation: "enable"
+    key-duplicates: "enable"
+    key-ordering: "disable"
+    line-length:
+        allow-non-breakable-inline-mappings: true
+        allow-non-breakable-words: true
+        max: 80
+    new-line-at-end-of-file: "enable"
+    new-lines: "enable"
+    octal-values: "enable"
+    quoted-strings: "enable"
+    trailing-spaces: "enable"
+    truthy:
+        level: "warning"
+yaml-files:
+    - '*.yaml'
+    - '*.yml'
+    - '.yamllint'
+...

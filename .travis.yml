@@ -1,30 +1,34 @@
-dist: bionic
-language: python
+---
+dist: "bionic"
+language: "python"
 python: '3.7'
+env:
+  global:
+    - secure: "R12xj6nvrJCM8WG26QXdwOIJX2yfR0FtaojMEGMy4f/aP7g9K5FfQAeqV1B4UNoQ/JgT8U/frjE3MOpvxu3WpWgkim+Ox+HhFzYo5tk1dMssrppA0CXFLp2GZB0Eld80esrNtB0Ey30FJk02D2jO+EWlDMODWUhZNCUuXzT5GJPVfK3TmNyTbEAmOdcsBxy0/C2na/YVsEoDm/0ZXcUc93o90kSNIm+PWbDdJbKyhc1dzUsdiPcp6fe0BooPhUkvJjYYdbzOYSy8XIgQpCDoeUa6TDCw1tzGCEtzwOC2Wcvj9H4vRNRrJKhqocPUhvFQrpfIFlI6JYUySQu6+NRJw6rEHeLnkvN9Egq/KRZc4e/sQDSTkGNJNsmDSOxFiKJO1nJt8YH62/ZLcepq9YTMYLbuFZV70h+JoBDLi7kDQMcN2G543TaJ7CWIKzYKJlO0aPbF9psyg3p9+ktpPN5WWDioP0Lf133//nB+u3F4YHxxjEj5cTk5z71zpPYn74M0SVPpRljWK6CzEWm2481f6VmLN7t4JKDqMua4DO0x7TcuQhZ9bgYACEWv/zDrR2pQuJja6tnDb7YRD9LXo78yuAfmu8D4ke6yLEgfjJJ5ECLGb2a6wnZLROoGOy2LjR/cqDjLRa6MzSLQ92oCl+976VVisv/ywCVARUFkFNSYl9g="
+    - secure: "hTOSrG8vHpqbc+W9FCVjGTSX0+LbZX4Dmd3RxcgV6Qq1sEWEqMiQAHA5wY4Ysosoo1Yr6KwNQ/vfGvH4LkQD2hPQepLfrVLh+zL0Sh7l7KSSu8ikLZwWhVXdSD3oaYNv/16L+vrXp3l0OI1EjoY4GWS0AxRzS/qlxMJFs3Lyq8VBMiIuHD8uq8apXaflZHZKBTDSp3UNKCj6jsPzI8EjQPqlHyy2Q6AzqxiWkNGlUjgaZnVzpzQ2o5rojodx/eUEPHtjjTAMHVAvBlMoS6RETC21Q/ELl3ge5ZfNUdjUJ57T/G6LlrQPvjaR95axrj6vtigv0PlG2lA9p60LMEVfIUu5lovC/rG5q1jWgc8zHs+6CHFsuSCqpcTOIz4qG5U+Fvo63M/QRKJCij8fJ2YbhNDcDM6nE1kBCBNqpf6sQJeSXfKElGbeWRBVSfyGpvEjwNLOxiTmqKrWmHq1YJBBe6XDjFYPMF4NoqWGex1+kIyk58oaBrpXCWLLuRVNXC+DP6/DAe+tdIejXMttSMs1aDKIaCp9/+D9qzTlcCG+j3+mtDLXF8veO1Ro+bdzveOl1MqGr707c5pDZJ6PFk+tnx91Dj4Oc5B3F6XsM/7BOvPO5LxEK2CjcTVyN8Q1FjurXZK77GChnn2qxVn2Tn7GgNN00Oqf+8mY2lX53OYM3Fo="
+services:
+  - "docker"
 matrix:
   fast_finish: true
   include:
-  - python: '3.7'
-    env: PLATFORM=centos DISTRO=el OS_VERSION=7 DOCKER_IMAGE=twindb/backup-test:centos-7
-  - python: '3.7'
-    env: PLATFORM=debian DISTRO=debian OS_VERSION=jessie DOCKER_IMAGE=twindb/backup-test:jessie
-  - python: '3.7'
-    env: PLATFORM=debian DISTRO=debian OS_VERSION=stretch DOCKER_IMAGE=twindb/backup-test:stretch
-  - python: '3.7'
-    env: PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=trusty DOCKER_IMAGE=twindb/backup-test:trusty
-  - python: '3.7'
-    env: PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=bionic DOCKER_IMAGE=twindb/backup-test:bionic
-
-services:
-- docker
+    - python: '3.7'
+      env: "PLATFORM=centos DISTRO=el OS_VERSION=7
+        DOCKER_IMAGE=twindb/backup-test:centos-7"
+    - python: '3.7'
+      env: "PLATFORM=debian DISTRO=debian OS_VERSION=jessie
+        DOCKER_IMAGE=twindb/backup-test:jessie"
+    - python: '3.7'
+      env: "PLATFORM=debian DISTRO=debian OS_VERSION=stretch
+        DOCKER_IMAGE=twindb/backup-test:stretch"
+    - python: '3.7'
+      env: "PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=trusty
+        DOCKER_IMAGE=twindb/backup-test:trusty"
+    - python: '3.7'
+      env: "PLATFORM=ubuntu DISTRO=ubuntu OS_VERSION=bionic
+        DOCKER_IMAGE=twindb/backup-test:bionic"
 
 install:
-- make bootstrap
-
+  - "make bootstrap"
 script:
-- make lint test safety
-
-env:
-  global:
-  - secure: R12xj6nvrJCM8WG26QXdwOIJX2yfR0FtaojMEGMy4f/aP7g9K5FfQAeqV1B4UNoQ/JgT8U/frjE3MOpvxu3WpWgkim+Ox+HhFzYo5tk1dMssrppA0CXFLp2GZB0Eld80esrNtB0Ey30FJk02D2jO+EWlDMODWUhZNCUuXzT5GJPVfK3TmNyTbEAmOdcsBxy0/C2na/YVsEoDm/0ZXcUc93o90kSNIm+PWbDdJbKyhc1dzUsdiPcp6fe0BooPhUkvJjYYdbzOYSy8XIgQpCDoeUa6TDCw1tzGCEtzwOC2Wcvj9H4vRNRrJKhqocPUhvFQrpfIFlI6JYUySQu6+NRJw6rEHeLnkvN9Egq/KRZc4e/sQDSTkGNJNsmDSOxFiKJO1nJt8YH62/ZLcepq9YTMYLbuFZV70h+JoBDLi7kDQMcN2G543TaJ7CWIKzYKJlO0aPbF9psyg3p9+ktpPN5WWDioP0Lf133//nB+u3F4YHxxjEj5cTk5z71zpPYn74M0SVPpRljWK6CzEWm2481f6VmLN7t4JKDqMua4DO0x7TcuQhZ9bgYACEWv/zDrR2pQuJja6tnDb7YRD9LXo78yuAfmu8D4ke6yLEgfjJJ5ECLGb2a6wnZLROoGOy2LjR/cqDjLRa6MzSLQ92oCl+976VVisv/ywCVARUFkFNSYl9g=
-  - secure: hTOSrG8vHpqbc+W9FCVjGTSX0+LbZX4Dmd3RxcgV6Qq1sEWEqMiQAHA5wY4Ysosoo1Yr6KwNQ/vfGvH4LkQD2hPQepLfrVLh+zL0Sh7l7KSSu8ikLZwWhVXdSD3oaYNv/16L+vrXp3l0OI1EjoY4GWS0AxRzS/qlxMJFs3Lyq8VBMiIuHD8uq8apXaflZHZKBTDSp3UNKCj6jsPzI8EjQPqlHyy2Q6AzqxiWkNGlUjgaZnVzpzQ2o5rojodx/eUEPHtjjTAMHVAvBlMoS6RETC21Q/ELl3ge5ZfNUdjUJ57T/G6LlrQPvjaR95axrj6vtigv0PlG2lA9p60LMEVfIUu5lovC/rG5q1jWgc8zHs+6CHFsuSCqpcTOIz4qG5U+Fvo63M/QRKJCij8fJ2YbhNDcDM6nE1kBCBNqpf6sQJeSXfKElGbeWRBVSfyGpvEjwNLOxiTmqKrWmHq1YJBBe6XDjFYPMF4NoqWGex1+kIyk58oaBrpXCWLLuRVNXC+DP6/DAe+tdIejXMttSMs1aDKIaCp9/+D9qzTlcCG+j3+mtDLXF8veO1Ro+bdzveOl1MqGr707c5pDZJ6PFk+tnx91Dj4Oc5B3F6XsM/7BOvPO5LxEK2CjcTVyN8Q1FjurXZK77GChnn2qxVn2Tn7GgNN00Oqf+8mY2lX53OYM3Fo=
+  - "make lint test safety"
+...

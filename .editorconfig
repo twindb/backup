@@ -15,7 +15,7 @@ indent_style = tab
 end_of_line = crlf
 
 
-[*.pp]
+[*.{pp,yml,yaml}]
 indent_style = space
 indent_size = 2
 trim_trailing_whitespace = true
