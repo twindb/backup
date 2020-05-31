@@ -4,7 +4,7 @@ from twindb_backup.configuration.exceptions import ConfigurationError
 from twindb_backup.modifiers import COMPRESSION_MODIFIERS
 
 
-class CompressionConfig(object):
+class CompressionConfig:
     """Compression configuration
 
     :param program: compression program

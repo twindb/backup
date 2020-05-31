@@ -1,7 +1,7 @@
 """SSH destination configuration"""
 
 
-class SSHConfig(object):
+class SSHConfig:
     """SSH destination configuration."""
 
     def __init__(
