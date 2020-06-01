@@ -75,10 +75,15 @@ requests==2.23.0          # via codecov, docker, moto, responses, sphinx
 responses==0.10.14        # via moto
 rsa==4.0                  # via python-jose
 s3transfer==0.3.3         # via boto3
-six==1.15.0               # via astroid, aws-sam-translator, cfn-lint, cryptography, docker, docker-pycreds, ecdsa, jsonschema, junit-xml, mock, moto, packaging, pytest, python-dateutil, python-jose, responses, sphinx, websocket-client
+six==1.15.0               # via astroid, aws-sam-translator, cfn-lint, cryptography, docker, docker-pycreds, ecdsa, jsonschema, junit-xml, mock, moto, packaging, pytest, python-dateutil, python-jose, responses, websocket-client
 snowballstemmer==2.0.0    # via sphinx
-sphinx==1.8.5             # via -r requirements_dev.in
-sphinxcontrib-websupport==1.2.2  # via sphinx
+sphinx==3.0.4             # via -r requirements_dev.in
+sphinxcontrib-applehelp==1.0.2  # via sphinx
+sphinxcontrib-devhelp==1.0.2  # via sphinx
+sphinxcontrib-htmlhelp==1.0.3  # via sphinx
+sphinxcontrib-jsmath==1.0.1  # via sphinx
+sphinxcontrib-qthelp==1.0.3  # via sphinx
+sphinxcontrib-serializinghtml==1.1.4  # via sphinx
 sshpubkeys==3.1.0         # via moto
 toml==0.10.1              # via black, pylint
 typed-ast==1.4.1          # via astroid, black
