@@ -3,6 +3,8 @@
 Module that restores backup copies.
 """
 from __future__ import print_function
+
+import sys
 from subprocess import Popen, PIPE
 import os
 from os import path as osp
@@ -180,12 +182,8 @@ def restore_from_mysql_incremental(
     if tmp_dir is None:
         try:
             inc_dir = tempfile.mkdtemp()
-        except (IOError, OSError):
-            try:
-                empty_dir(dst_dir)
-            except (IOError, OSError):
-                raise
-            raise
+        finally:
+            empty_dir(dst_dir)
     else:
         inc_dir = tmp_dir
     # GPG modifier
@@ -477,7 +475,7 @@ def restore_from_file(twindb_config, copy, dst_dir):
             LOG.info("Successfully restored %s in %s", copy.key, dst_dir)
         except (OSError, DestinationError) as err:
             LOG.error("Failed to decompress %s: %s", copy.key, err)
-            exit(1)
+            sys.exit(1)
 
     export_info(
         twindb_config,
