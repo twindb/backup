@@ -6,6 +6,7 @@ import errno
 import multiprocessing
 import os
 import shutil
+import sys
 from contextlib import contextmanager
 from subprocess import Popen, PIPE
 
@@ -97,14 +98,14 @@ def run_command(command, ok_non_zero=False):
                 proc.returncode,
             )
             LOG.error(cerr)
-            exit(1)
+            sys.exit(1)
         else:
             LOG.debug("Exited with zero code")
 
     except OSError as err:
         LOG.error("Failed to run %s", " ".join(command))
         LOG.error(err)
-        exit(1)
+        sys.exit(1)
 
 
 def split_host_port(host_port):
