@@ -31,7 +31,7 @@ docker==3.7.3             # via -r requirements_dev.in, moto
 docutils==0.15.2          # via botocore, sphinx
 ecdsa==0.15               # via python-jose, sshpubkeys
 future==0.18.2            # via aws-xray-sdk
-idna==2.8                 # via moto, requests
+idna==2.9                 # via moto, requests
 imagesize==1.2.0          # via sphinx
 importlib-metadata==1.6.1  # via jsonpickle, jsonschema, pluggy, pytest
 isort==4.3.21             # via pylint
