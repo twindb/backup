@@ -15,7 +15,7 @@ babel==2.8.0              # via sphinx
 black==19.10b0            # via -r requirements_dev.in
 boto3==1.14.5            # via aws-sam-translator, moto
 boto==2.49.0              # via moto
-botocore==1.16.19         # via aws-xray-sdk, boto3, moto, s3transfer
+botocore==1.17.5         # via aws-xray-sdk, boto3, moto, s3transfer
 bumpversion==0.5.3        # via -r requirements_dev.in
 certifi==2020.4.5.1       # via requests
 cffi==1.14.0              # via cryptography
