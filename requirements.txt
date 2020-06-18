@@ -37,7 +37,7 @@ pymysql==0.9.3            # via -r requirements.in
 pynacl==1.4.0             # via paramiko
 python-dateutil==2.8.1    # via botocore
 pytz==2020.1              # via google-api-core
-requests==2.23.0          # via datadog, google-api-core
+requests==2.24.0          # via datadog, google-api-core
 rsa==4.0                  # via google-auth
 s3transfer==0.3.3         # via boto3
 six==1.15.0               # via bcrypt, cryptography, google-api-core, google-auth, google-resumable-media, protobuf, pynacl, python-dateutil
