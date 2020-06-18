@@ -73,7 +73,7 @@ pyyaml==5.3.1             # via -r requirements_dev.in, cfn-lint, moto, yamllint
 regex==2020.5.14          # via black
 requests==2.24.0          # via codecov, docker, moto, responses, sphinx
 responses==0.10.14        # via moto
-rsa==4.0                  # via python-jose
+rsa==4.6                  # via python-jose
 s3transfer==0.3.3         # via boto3
 six==1.15.0               # via astroid, aws-sam-translator, cfn-lint, cryptography, docker, docker-pycreds, ecdsa, jsonschema, junit-xml, mock, moto, packaging, pytest, python-dateutil, python-jose, responses, websocket-client
 snowballstemmer==2.0.0    # via sphinx
