@@ -9,7 +9,7 @@ beautifulsoup4==4.9.1     # via google
 boto3==1.14.5            # via -r requirements.in
 botocore==1.17.5         # via boto3, s3transfer
 cachetools==4.1.0         # via google-auth
-certifi==2020.4.5.1       # via requests
+certifi==2020.4.5.2       # via requests
 cffi==1.14.0              # via bcrypt, cryptography, pynacl
 chardet==3.0.4            # via requests
 click==7.1.2              # via -r requirements.in
