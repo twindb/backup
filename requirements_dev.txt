@@ -46,7 +46,7 @@ junit-xml==1.9            # via cfn-lint
 lazy-object-proxy==1.4.3  # via astroid
 markupsafe==1.1.1         # via jinja2
 mccabe==0.6.1             # via pylint
-mock==2.0.0               # via -r requirements_dev.in, moto
+mock==4.0.2               # via -r requirements_dev.in, moto
 more-itertools==8.4.0     # via pytest
 moto==1.3.14              # via -r requirements_dev.in
 networkx==2.4             # via cfn-lint
