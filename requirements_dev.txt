@@ -6,23 +6,23 @@
 #
 alabaster==0.7.12         # via sphinx
 appdirs==1.4.4            # via black
-astroid==2.4.1            # via pylint
+astroid==2.4.2            # via pylint
 atomicwrites==1.4.0       # via pytest
 attrs==19.3.0             # via black, jsonschema, pytest
-aws-sam-translator==1.24.0  # via cfn-lint
-aws-xray-sdk==2.5.0       # via moto
+aws-sam-translator==1.25.0  # via cfn-lint
+aws-xray-sdk==2.6.0       # via moto
 babel==2.8.0              # via sphinx
 black==19.10b0            # via -r requirements_dev.in
-boto3==1.13.19            # via aws-sam-translator, moto
+boto3==1.14.5             # via aws-sam-translator, moto
 boto==2.49.0              # via moto
-botocore==1.16.19         # via aws-xray-sdk, boto3, moto, s3transfer
+botocore==1.17.5          # via aws-xray-sdk, boto3, moto, s3transfer
 bumpversion==0.5.3        # via -r requirements_dev.in
-certifi==2020.4.5.1       # via requests
+certifi==2020.4.5.2       # via requests
 cffi==1.14.0              # via cryptography
-cfn-lint==0.32.1          # via moto
+cfn-lint==0.33.1          # via moto
 chardet==3.0.4            # via requests
 click==7.1.2              # via black
-codecov==2.1.3            # via -r requirements_dev.in
+codecov==2.1.7            # via -r requirements_dev.in
 coverage==4.5.4           # via -r requirements_dev.in, codecov, pytest-cov
 cryptography==2.9.2       # via moto, sshpubkeys
 decorator==4.4.2          # via networkx
@@ -33,7 +33,7 @@ ecdsa==0.15               # via python-jose, sshpubkeys
 future==0.18.2            # via aws-xray-sdk
 idna==2.8                 # via moto, requests
 imagesize==1.2.0          # via sphinx
-importlib-metadata==1.6.0  # via jsonpickle, jsonschema, pluggy
+importlib-metadata==1.6.1  # via jsonpickle, jsonschema, pluggy, pytest
 isort==4.3.21             # via pylint
 jinja2==2.11.2            # via moto, sphinx
 jmespath==0.10.0          # via boto3, botocore
@@ -47,37 +47,37 @@ lazy-object-proxy==1.4.3  # via astroid
 markupsafe==1.1.1         # via jinja2
 mccabe==0.6.1             # via pylint
 mock==2.0.0               # via -r requirements_dev.in, moto
-more-itertools==8.3.0     # via pytest
+more-itertools==8.4.0     # via pytest
 moto==1.3.14              # via -r requirements_dev.in
 networkx==2.4             # via cfn-lint
-packaging==20.4           # via sphinx
+packaging==20.4           # via pytest, sphinx
 pathspec==0.8.0           # via black, yamllint
 pbr==5.4.5                # via mock
 pluggy==0.13.1            # via pytest
-py==1.8.1                 # via pytest
+py==1.8.2                 # via pytest
 pyasn1==0.4.8             # via python-jose, rsa
 pycodestyle==2.6.0        # via -r requirements_dev.in
 pycparser==2.20           # via cffi
 pygments==2.6.1           # via sphinx
-pylint==2.5.2             # via -r requirements_dev.in
+pylint==2.5.3             # via -r requirements_dev.in
 pyparsing==2.4.7          # via packaging
 pyrsistent==0.16.0        # via jsonschema
-pytest-cov==2.9.0         # via -r requirements_dev.in
-pytest-timeout==1.3.4     # via -r requirements_dev.in
-pytest==3.10.1            # via -r requirements_dev.in, pytest-cov, pytest-timeout
+pytest-cov==2.10.0        # via -r requirements_dev.in
+pytest-timeout==1.4.1     # via -r requirements_dev.in
+pytest==4.6.11            # via -r requirements_dev.in, pytest-cov, pytest-timeout
 python-dateutil==2.8.1    # via botocore, moto
 python-jose==3.1.0        # via moto
 python-magic==0.4.18      # via -r requirements_dev.in
 pytz==2020.1              # via babel, moto
 pyyaml==5.3.1             # via -r requirements_dev.in, cfn-lint, moto, yamllint
-regex==2020.5.14          # via black
-requests==2.23.0          # via codecov, docker, moto, responses, sphinx
-responses==0.10.14        # via moto
-rsa==4.0                  # via python-jose
+regex==2020.6.8           # via black
+requests==2.24.0          # via codecov, docker, moto, responses, sphinx
+responses==0.10.15        # via moto
+rsa==4.6                  # via python-jose
 s3transfer==0.3.3         # via boto3
 six==1.15.0               # via astroid, aws-sam-translator, cfn-lint, cryptography, docker, docker-pycreds, ecdsa, jsonschema, junit-xml, mock, moto, packaging, pytest, python-dateutil, python-jose, responses, websocket-client
 snowballstemmer==2.0.0    # via sphinx
-sphinx==3.0.4             # via -r requirements_dev.in
+sphinx==3.1.1             # via -r requirements_dev.in
 sphinxcontrib-applehelp==1.0.2  # via sphinx
 sphinxcontrib-devhelp==1.0.2  # via sphinx
 sphinxcontrib-htmlhelp==1.0.3  # via sphinx
@@ -88,6 +88,7 @@ sshpubkeys==3.1.0         # via moto
 toml==0.10.1              # via black, pylint
 typed-ast==1.4.1          # via astroid, black
 urllib3==1.25.9           # via botocore, requests
+wcwidth==0.2.4            # via pytest
 websocket-client==0.57.0  # via docker
 werkzeug==1.0.1           # via moto
 wrapt==1.12.1             # via astroid, aws-xray-sdk
