@@ -62,7 +62,7 @@ pygments==2.6.1           # via sphinx
 pylint==2.5.3             # via -r requirements_dev.in
 pyparsing==2.4.7          # via packaging
 pyrsistent==0.16.0        # via jsonschema
-pytest-cov==2.9.0         # via -r requirements_dev.in
+pytest-cov==2.10.0         # via -r requirements_dev.in
 pytest-timeout==1.3.4     # via -r requirements_dev.in
 pytest==3.10.1            # via -r requirements_dev.in, pytest-cov, pytest-timeout
 python-dateutil==2.8.1    # via botocore, moto
