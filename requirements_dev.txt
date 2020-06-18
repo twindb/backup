@@ -27,7 +27,7 @@ coverage==5.1           # via -r requirements_dev.in, codecov, pytest-cov
 cryptography==2.9.2       # via moto, sshpubkeys
 decorator==4.4.2          # via networkx
 docker-pycreds==0.4.0     # via docker
-docker==3.7.3             # via -r requirements_dev.in, moto
+docker==4.2.1             # via -r requirements_dev.in, moto
 docutils==0.16          # via botocore, sphinx
 ecdsa==0.15               # via python-jose, sshpubkeys
 future==0.18.2            # via aws-xray-sdk
