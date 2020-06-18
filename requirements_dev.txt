@@ -59,7 +59,7 @@ pyasn1==0.4.8             # via python-jose, rsa
 pycodestyle==2.6.0        # via -r requirements_dev.in
 pycparser==2.20           # via cffi
 pygments==2.6.1           # via sphinx
-pylint==2.5.2             # via -r requirements_dev.in
+pylint==2.5.3             # via -r requirements_dev.in
 pyparsing==2.4.7          # via packaging
 pyrsistent==0.16.0        # via jsonschema
 pytest-cov==2.9.0         # via -r requirements_dev.in
