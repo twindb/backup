@@ -37,7 +37,7 @@ importlib-metadata==1.6.1  # via jsonpickle, jsonschema, pluggy
 isort==4.3.21             # via pylint
 jinja2==2.11.2            # via moto, sphinx
 jmespath==0.10.0          # via boto3, botocore
-jsondiff==1.1.2           # via moto
+jsondiff==1.2.0           # via moto
 jsonpatch==1.25           # via cfn-lint
 jsonpickle==1.4.1         # via aws-xray-sdk
 jsonpointer==2.0          # via jsonpatch
