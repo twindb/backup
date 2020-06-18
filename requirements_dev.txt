@@ -33,7 +33,7 @@ ecdsa==0.15               # via python-jose, sshpubkeys
 future==0.18.2            # via aws-xray-sdk
 idna==2.9                 # via moto, requests
 imagesize==1.2.0          # via sphinx
-importlib-metadata==1.6.0  # via jsonpickle, jsonschema, pluggy
+importlib-metadata==1.6.1  # via jsonpickle, jsonschema, pluggy
 isort==4.3.21             # via pylint
 jinja2==2.11.2            # via moto, sphinx
 jmespath==0.10.0          # via boto3, botocore
