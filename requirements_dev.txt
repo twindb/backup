@@ -9,7 +9,7 @@ appdirs==1.4.4            # via black
 astroid==2.4.2            # via pylint
 atomicwrites==1.4.0       # via pytest
 attrs==19.3.0             # via black, jsonschema, pytest
-aws-sam-translator==1.24.0  # via cfn-lint
+aws-sam-translator==1.25.0  # via cfn-lint
 aws-xray-sdk==2.5.0       # via moto
 babel==2.8.0              # via sphinx
 black==19.10b0            # via -r requirements_dev.in
