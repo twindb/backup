@@ -3,7 +3,7 @@ black ~= 19.10b0
 Sphinx ~= 3.0
 bumpversion==0.6.0
 codecov ~= 2.0
-coverage ~= 4.5
+coverage==5.1
 docker ~= 3.5
 mock ~= 2.0
 moto ~= 1.3
