@@ -3,6 +3,10 @@ pin: false
 schedule: "every day"
 update: "insecure"
 requirements:
-  - "requirements.in"
-  - "requirements_dev.in"
+  - requirements.in:
+      update: "insecure"
+      pin: false
+  - requirements_dev.in:
+      update: "insecure"
+      pin: false
 ...
