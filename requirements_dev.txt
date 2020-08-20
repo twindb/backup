@@ -13,7 +13,7 @@ aws-sam-translator==1.25.0  # via cfn-lint
 aws-xray-sdk==2.6.0       # via moto
 babel==2.8.0              # via sphinx
 black==19.10b0            # via -r requirements_dev.in
-boto3==1.14.9             # via aws-sam-translator, moto
+boto3==1.14.46             # via aws-sam-translator, moto
 boto==2.49.0              # via moto
 botocore==1.17.9          # via aws-xray-sdk, boto3, moto, s3transfer
 bumpversion==0.5.3        # via -r requirements_dev.in
