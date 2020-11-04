@@ -14,7 +14,7 @@ cffi==1.14.0              # via bcrypt, cryptography, pynacl
 chardet==3.0.4            # via requests
 click==7.1.2              # via -r requirements.in
 contextlib2==0.6.0.post1  # via -r requirements.in
-cryptography==2.9.2       # via -r requirements.in, paramiko
+cryptography==3.2.1       # via -r requirements.in, paramiko
 datadog==0.37.1           # via -r requirements.in
 decorator==4.4.2          # via datadog
 docutils==0.15.2          # via botocore
