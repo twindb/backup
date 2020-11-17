@@ -20,4 +20,4 @@ def share(twindb_config, s3_url):
     try:
         print(twindb_config.destination().share(s3_url))
     except NotImplementedError as err:
-        raise TwinDBBackupInternalError(err)
+        raise TwinDBBackupInternalError(err) from err

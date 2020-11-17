@@ -119,7 +119,7 @@ def restore_from_mysql_full(
     except OSError as err:
         raise TwinDBBackupError(
             "Failed to prepare backup in %s: %s" % (dst_dir, err)
-        )
+        ) from err
 
 
 def _extract_xbstream(
@@ -152,7 +152,7 @@ def _extract_xbstream(
         return ret == 0
 
     except OSError as err:
-        raise TwinDBBackupError("Failed to extract xbstream: %s" % err)
+        raise TwinDBBackupError("Failed to extract xbstream: %s" % err) from err
 
 
 # pylint: disable=too-many-locals,too-many-branches,too-many-statements

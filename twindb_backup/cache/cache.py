@@ -66,7 +66,7 @@ class Cache:
         try:
             shutil.copytree(path, dst)
         except OSError as err:
-            raise CacheException(err)
+            raise CacheException(err) from err
 
     def restore_in(self, item, path):
         """Restore backup copy item in path.

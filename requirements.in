@@ -10,9 +10,6 @@ datadog ~= 0.22
 # https://github.com/paramiko/paramiko/issues/1386
 # https://github.com/paramiko/paramiko/issues/1369
 paramiko ~= 2.4
-cryptography ~= 2.4
+cryptography ~= 3.2
 google ~= 2.0
 google-cloud-storage ~= 1.15.0
-
-# moto 1.3.14 requires idna < 2.9. Later on they loosened requirements, but didn't release a new version yet
-idna < 2.9
