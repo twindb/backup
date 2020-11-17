@@ -150,7 +150,7 @@ class TwinDBBackupConfig:
                         "Metric exported '%s' is not implemented" % transport
                     )
             except NoOptionError as err:
-                raise ConfigurationError(err)
+                raise ConfigurationError(err) from err
 
         except NoSectionError:
             return None
@@ -188,7 +188,7 @@ class TwinDBBackupConfig:
             return []
         except NoSectionError as err:
             LOG.error("Section 'source' is mandatory")
-            raise ConfigurationError(err)
+            raise ConfigurationError(err) from err
 
     @property
     def backup_mysql(self):
@@ -199,7 +199,7 @@ class TwinDBBackupConfig:
             return False
         except NoSectionError as err:
             LOG.error("Section 'source' is mandatory")
-            raise ConfigurationError(err)
+            raise ConfigurationError(err) from err
 
     def destination(self, backup_source=socket.gethostname()):
         """
@@ -241,11 +241,11 @@ class TwinDBBackupConfig:
                 raise ConfigurationError(
                     "Unsupported destination '%s'" % backup_destination
                 )
-        except NoSectionError:
+        except NoSectionError as err:
             raise ConfigurationError(
                 "%s is missing required section 'destination'"
                 % self._config_file
-            )
+            ) from err
 
     def _retention(self, section):
         kwargs = {}

@@ -57,7 +57,7 @@ class LessThanFilter(logging.Filter):  # pylint: disable=too-few-public-methods
     """Filters out log messages of a lower level."""
 
     def __init__(self, exclusive_maximum, name=""):
-        super(LessThanFilter, self).__init__(name)
+        super().__init__(name)
         self.max_level = exclusive_maximum
 
     def filter(self, record):
