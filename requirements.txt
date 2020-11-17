@@ -24,7 +24,7 @@ google-cloud-storage==1.15.2  # via -r requirements.in
 google-resumable-media==0.4.1  # via google-cloud-storage
 google==2.0.3             # via -r requirements.in
 googleapis-common-protos==1.52.0  # via google-api-core
-idna==2.8                 # via -r requirements.in, requests
+idna==2.10                # via requests
 jmespath==0.10.0          # via boto3, botocore
 paramiko==2.7.2           # via -r requirements.in
 protobuf==3.14.0          # via google-api-core, googleapis-common-protos

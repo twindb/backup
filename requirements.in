@@ -13,6 +13,3 @@ paramiko ~= 2.4
 cryptography ~= 3.2
 google ~= 2.0
 google-cloud-storage ~= 1.15.0
-
-# moto 1.3.14 requires idna < 2.9. Later on they loosened requirements, but didn't release a new version yet
-idna < 2.9
