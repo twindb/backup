@@ -54,7 +54,7 @@ packaging==20.4           # via pytest, sphinx
 pathspec==0.8.1           # via black, yamllint
 pbr==5.5.1                # via mock
 pluggy==0.13.1            # via pytest
-py==1.9.0                 # via pytest
+py==1.10.0                 # via pytest
 pyasn1==0.4.8             # via python-jose, rsa
 pycodestyle==2.6.0        # via -r requirements_dev.in
 pycparser==2.20           # via cffi
