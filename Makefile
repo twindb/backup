@@ -53,8 +53,8 @@ pip-tools:
 
 .PHONY: upgrade-requirements
 upgrade-requirements: pip-tools ## Upgrade requirements
-	pip-compile --upgrade --verbose --no-index --output-file requirements.txt requirements.in
-	pip-compile --upgrade --verbose --no-index --output-file requirements_dev.txt requirements_dev.in
+	pip-compile --upgrade --verbose --output-file requirements.txt requirements.in
+	pip-compile --upgrade --verbose --output-file requirements_dev.txt requirements_dev.in
 
 .PHONY: bootstrap
 bootstrap: pip-tools ## bootstrap the development environment
