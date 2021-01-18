@@ -39,7 +39,7 @@ jinja2==2.11.2            # via moto, sphinx
 jmespath==0.10.0          # via boto3, botocore
 jsondiff==1.2.0           # via moto
 jsonpatch==1.26           # via cfn-lint
-jsonpickle==1.4.1         # via aws-xray-sdk
+jsonpickle==1.5.0         # via aws-xray-sdk
 jsonpointer==2.0          # via jsonpatch
 jsonschema==3.2.0         # via aws-sam-translator, cfn-lint
 junit-xml==1.9            # via cfn-lint
