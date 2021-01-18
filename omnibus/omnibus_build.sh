@@ -5,7 +5,7 @@ set -ex
 #CACHE_REPO=${PLATFORM}-${OS_VERSION}
 
 cd /twindb-backup/omnibus
-
+gem install bundler:2.0.2
 bundle install --binstubs
 #bin/omnibus cache populate
 
