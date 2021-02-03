@@ -91,7 +91,7 @@ importlib-metadata==3.4.0
     #   pytest
 isort==5.7.0
     # via pylint
-jinja2==2.11.2
+jinja2==2.11.3
     # via
     #   moto
     #   sphinx
