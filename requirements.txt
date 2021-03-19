@@ -105,7 +105,7 @@ six==1.15.0
     #   python-dateutil
 soupsieve==2.1
     # via beautifulsoup4
-urllib3==1.26.2
+urllib3==1.26.3
     # via
     #   botocore
     #   requests
