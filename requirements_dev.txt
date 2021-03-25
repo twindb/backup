@@ -83,12 +83,6 @@ idna==2.10
     #   requests
 imagesize==1.2.0
     # via sphinx
-importlib-metadata==3.4.0
-    # via
-    #   jsonpickle
-    #   jsonschema
-    #   pluggy
-    #   pytest
 isort==5.7.0
     # via pylint
 jinja2==2.11.2
@@ -184,7 +178,7 @@ pytz==2020.5
     # via
     #   babel
     #   moto
-pyyaml==5.3.1
+pyyaml==5.4
     # via
     #   -r requirements_dev.in
     #   cfn-lint
@@ -246,11 +240,7 @@ toml==0.10.2
     #   black
     #   pylint
 typed-ast==1.4.2
-    # via
-    #   astroid
-    #   black
-typing-extensions==3.7.4.3
-    # via importlib-metadata
+    # via black
 urllib3==1.26.2
     # via
     #   botocore
@@ -271,9 +261,7 @@ xmltodict==0.12.0
 yamllint==1.25.0
     # via -r requirements_dev.in
 zipp==3.4.0
-    # via
-    #   importlib-metadata
-    #   moto
+    # via moto
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
