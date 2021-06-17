@@ -193,6 +193,9 @@ endif
 ifeq ($(OS_VERSION),7)
         PLATFORM = centos
 endif
+ifeq ($(OS_VERSION),focal)
+        PLATFORM = ubuntu
+endif
 ifeq ($(OS_VERSION),xenial)
         PLATFORM = ubuntu
 endif
@@ -203,9 +206,6 @@ ifeq ($(OS_VERSION),cosmic)
         PLATFORM = ubuntu
 endif
 
-ifeq ($(OS_VERSION),jessie)
-        PLATFORM = debian
-endif
 ifeq ($(OS_VERSION),stretch)
         PLATFORM = debian
 endif
