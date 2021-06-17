@@ -9,13 +9,13 @@ from twindb_backup import __version__
 
 OS_VERSIONS = [
     # centos
-    # "7",
+    "7",
     # # ubuntu
-    # "focal",
-    # "bionic",
-    # "xenial",
+    "focal",
+    "bionic",
+    "xenial",
     # debian
-    # "stretch",
+    "stretch",
 ]
 PKG_DIR = "omnibus/pkg"
 
