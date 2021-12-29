@@ -12,16 +12,16 @@ from twindb_backup.exporter.base_exporter import (
     ExportCategory,
     ExportMeasureType,
 )
-from twindb_backup.exporter.exceptions import DataDogExporterError, StatsdExporterError
+from twindb_backup.exporter.exceptions import StatsdExporterError
 
 
-class StatdExporter(BaseExporter):  # pylint: disable=too-few-public-methods
+class StatsdExporter(BaseExporter):  # pylint: disable=too-few-public-methods
     """
     StatD exporter class
     """
 
     def __init__(self, statsd_host, statsd_port):
-        super(StatdExporter, self).__init__()
+        super(StatsdExporter, self).__init__()
         self.client = statsd.StatsClient(statsd_host, statsd_port)
         self._suffix = "twindb."
 
