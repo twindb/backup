@@ -22,7 +22,7 @@ class StatsdExporter(BaseExporter):  # pylint: disable=too-few-public-methods
 
     def __init__(self, statsd_host, statsd_port):
         super(StatsdExporter, self).__init__()
-        self.client = statsd.StatsClient(statsd_host, statsd_port)
+        self._client = statsd.StatsClient(statsd_host, statsd_port)
         self._suffix = "twindb."
 
     def export(self, category, measure_type, data):
@@ -43,6 +43,6 @@ class StatsdExporter(BaseExporter):  # pylint: disable=too-few-public-methods
                 metric_name += "backup_time"
             else:
                 metric_name += "restore_time"
-            statsd.timing(metric_name, data)
+            self._client.timing(metric_name, data)
         else:
             raise StatsdExporterError("Invalid input data")
