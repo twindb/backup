@@ -17,7 +17,7 @@ from twindb_backup.exporter.exceptions import StatsdExporterError
 
 class StatsdExporter(BaseExporter):  # pylint: disable=too-few-public-methods
     """
-    StatD exporter class
+    Statsd exporter class
     """
 
     def __init__(self, statsd_host, statsd_port):

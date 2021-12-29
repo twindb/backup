@@ -147,9 +147,9 @@ class TwinDBBackupConfig:
                     api_key = self.__cfg.get("export", "api_key")
                     return DataDogExporter(app_key, api_key)
                 if transport == "statsd":
-                    statd_host = self.__cfg.get("export", "statd_host")
-                    statd_port = self.__cfg.get("export", "statd_port")
-                    return StatsdExporter(statd_host, statd_port)
+                    statsd_host = self.__cfg.get("export", "statsd_host")
+                    statsd_port = self.__cfg.get("export", "statsd_port")
+                    return StatsdExporter(statsd_host, statsd_port)
                 else:
                     raise ConfigurationError(
                         "Metric exported '%s' is not implemented" % transport
