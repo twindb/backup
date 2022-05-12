@@ -1,5 +1,5 @@
 #@IgnoreInspection BashAddShebang
-Click ~= 7.0
+Click ~= 8.1
 PyMySQL ~= 0.9
 boto3 ~= 1.7
 psutil ~= 5.4
@@ -10,7 +10,8 @@ datadog ~= 0.22
 # https://github.com/paramiko/paramiko/issues/1386
 # https://github.com/paramiko/paramiko/issues/1369
 paramiko ~= 2.4
-cryptography ~= 3.2
+cryptography ~= 37.0
 google ~= 2.0
 google-cloud-storage ~= 1.15.0
-statsd-tags==3.2.1.post1
+statsd ~= 3.3
+statsd-tags ~= 3.2

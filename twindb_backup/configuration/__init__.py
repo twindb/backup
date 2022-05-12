@@ -20,7 +20,7 @@ from twindb_backup.destination.s3 import S3
 from twindb_backup.destination.gcs import GCS
 from twindb_backup.destination.ssh import Ssh
 from twindb_backup.exporter.datadog_exporter import DataDogExporter
-from twindb_backup.exporter.stasd_exporter import StatsdExporter
+from twindb_backup.exporter.statsd_exporter import StatsdExporter
 
 DEFAULT_CONFIG_FILE_PATH = "/etc/twindb/twindb-backup.cfg"
 

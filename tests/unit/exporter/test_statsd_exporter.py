@@ -1,13 +1,12 @@
 import mock
-import pytest
+from statsd import StatsClient
 
-from twindb_backup.exporter.base_exporter import ExportCategory, ExportMeasureType
-from twindb_backup.exporter.stasd_exporter import StatsdExporter
-from twindb_backup.exporter.exceptions import StatsdExporterError
+from twindb_backup.exporter.statsd_exporter import StatsdExporter
 
 
-@mock.patch('twindb_backup.exporter.stasd_exporter.initialize')
-def test__stasd_exporter_constructor(mock_initialize):
-    exporter = StatsdExporter('localhost', 8125)
-    mock_initialize.assert_called_once_with(statsd_host='localhost', statsd_port=8125)
-    assert exporter._suffix == "twindb."
+def test_stasd_exporter_constructor():
+    with mock.patch.object(StatsClient, "__init__", return_value=None) as mock_StatsClient_init:
+        exporter = StatsdExporter('localhost', 8125)
+        assert exporter._suffix == "twindb."
+        assert isinstance(exporter._client, StatsClient)
+        mock_StatsClient_init.assert_called_once_with('localhost', 8125)
