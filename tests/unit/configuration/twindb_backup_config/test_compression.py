@@ -1,4 +1,3 @@
-from io import BytesIO
 from textwrap import dedent
 
 import mock
