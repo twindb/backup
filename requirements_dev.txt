@@ -6,19 +6,15 @@
 #
 alabaster==0.7.12
     # via sphinx
-appdirs==1.4.4
-    # via black
 astroid==2.11.5
     # via pylint
 atomicwrites==1.4.0
     # via pytest
 attrs==21.4.0
-    # via
-    #   black
-    #   pytest
+    # via pytest
 babel==2.10.1
     # via sphinx
-black==19.10b0
+black==22.3.0
     # via -r requirements_dev.in
 boto3==1.22.12
     # via moto
@@ -81,6 +77,8 @@ more-itertools==8.13.0
     # via pytest
 moto==3.1.8
     # via -r requirements_dev.in
+mypy-extensions==0.4.3
+    # via black
 packaging==21.3
     # via
     #   pytest
@@ -92,7 +90,9 @@ pathspec==0.9.0
 pbr==5.9.0
     # via mock
 platformdirs==2.5.2
-    # via pylint
+    # via
+    #   black
+    #   pylint
 pluggy==0.13.1
     # via pytest
 py==1.11.0
@@ -130,8 +130,6 @@ pyyaml==5.4.1
     # via
     #   -r requirements_dev.in
     #   yamllint
-regex==2022.4.24
-    # via black
 requests==2.27.1
     # via
     #   codecov
@@ -167,16 +165,15 @@ sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
 toml==0.10.2
+    # via pytest-cov
+tomli==2.0.1
     # via
     #   black
-    #   pytest-cov
-tomli==2.0.1
-    # via pylint
-typed-ast==1.5.3
-    # via black
+    #   pylint
 typing-extensions==4.2.0
     # via
     #   astroid
+    #   black
     #   pylint
 urllib3==1.26.9
     # via

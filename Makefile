@@ -93,6 +93,9 @@ clean-docker:
 clean-docs:
 	rm -rf docs/_build
 
+black: ## Fix code style errors
+	black --line-length 80 twindb_backup
+
 lint: ## check style with pylint
 	yamllint .
 	black --check --line-length 80 twindb_backup

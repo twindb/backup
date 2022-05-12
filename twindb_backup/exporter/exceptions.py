@@ -15,6 +15,7 @@ class DataDogExporterError(BaseExporterError):
 
     pass
 
+
 class StatsdExporterError(BaseExporterError):
     """Statsd exporters error"""
 

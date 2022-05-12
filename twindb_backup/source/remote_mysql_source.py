@@ -94,7 +94,7 @@ class RemoteMySQLSource(MySQLSource):
         self._save_cfg(dst, cfg_path)
 
     def _find_all_cnf(self, root_path):
-        """ Return list of embed cnf files
+        """Return list of embed cnf files
 
         :param root_path: Path to the originating my.cnf config.
             (/etc/my.cnf, or /etc/mysql/my.cnf)

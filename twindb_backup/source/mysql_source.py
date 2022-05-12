@@ -22,7 +22,7 @@ from twindb_backup.status.exceptions import StatusKeyNotFound
 
 
 class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
-    """MySQL connection details """
+    """MySQL connection details"""
 
     def __init__(
         self,
@@ -39,7 +39,7 @@ class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
 
 
 class MySQLMasterInfo(object):  # pylint: disable=too-few-public-methods
-    """MySQL master details """
+    """MySQL master details"""
 
     def __init__(
         self,
