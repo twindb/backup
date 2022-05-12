@@ -29,15 +29,16 @@ click==7.1.2
     # via -r requirements.in
 contextlib2==0.6.0.post1
     # via -r requirements.in
-cryptography==3.3.1
+cryptography==3.3.2
     # via
     #   -r requirements.in
     #   paramiko
 datadog==0.39.0
-statsd-tags==3.2.1.post1
     # via -r requirements.in
 decorator==4.4.2
     # via datadog
+google==2.0.3
+    # via -r requirements.in
 google-api-core==1.25.0
     # via
     #   google-cloud-core
@@ -50,8 +51,6 @@ google-cloud-storage==1.15.2
     # via -r requirements.in
 google-resumable-media==0.4.1
     # via google-cloud-storage
-google==2.0.3
-    # via -r requirements.in
 googleapis-common-protos==1.52.0
     # via google-api-core
 idna==2.10
@@ -68,13 +67,13 @@ protobuf==3.14.0
     #   googleapis-common-protos
 psutil==5.8.0
     # via -r requirements.in
-pyasn1-modules==0.2.8
-    # via google-auth
 pyasn1==0.4.8
     # via
     #   -r requirements.in
     #   pyasn1-modules
     #   rsa
+pyasn1-modules==0.2.8
+    # via google-auth
 pycparser==2.20
     # via cffi
 pymysql==0.10.1
@@ -106,6 +105,8 @@ six==1.15.0
     #   python-dateutil
 soupsieve==2.1
     # via beautifulsoup4
+statsd-tags==3.2.1.post1
+    # via -r requirements.in
 urllib3==1.26.2
     # via
     #   botocore
