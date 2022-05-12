@@ -9,7 +9,7 @@ class GPGConfig:
     def __init__(self, **kwargs):
 
         for arg in ["recipient", "keyring", "secret_keyring"]:
-            setattr(self, "_%s" % arg, kwargs.get(arg, None))
+            setattr(self, f"_{arg}", kwargs.get(arg, None))
 
     @property
     def recipient(self):

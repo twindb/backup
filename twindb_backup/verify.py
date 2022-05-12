@@ -3,13 +3,14 @@
 Module that verify backup copies.
 """
 import json
+from os import path as osp
 import shutil
 import time
 import tempfile
 import traceback
 from configparser import ConfigParser, NoOptionError
 
-from twindb_backup import LOG
+from twindb_backup import LOG, DEFAULT_FILE_ENCODING
 from twindb_backup.exceptions import TwinDBBackupError
 from twindb_backup.restore import restore_from_mysql
 from twindb_backup.status.mysql_status import MySQLStatus
@@ -17,7 +18,7 @@ from twindb_backup.status.mysql_status import MySQLStatus
 
 def edit_backup_my_cnf(dst_path):
     """Removed options from config(besides MySQL 5.7.8)"""
-    filename = "{dir}/backup-my.cnf".format(dir=dst_path)
+    filename = osp.join(dst_path, "backup-my.cnf")
     backup_cfg = ConfigParser()
     backup_cfg.read(filename)
     for option in [
@@ -29,7 +30,7 @@ def edit_backup_my_cnf(dst_path):
             backup_cfg.remove_option(section="mysqld", option=option)
         except NoOptionError:
             pass
-    with open(filename, "w") as backup_fp:
+    with open(filename, "w", encoding=DEFAULT_FILE_ENCODING) as backup_fp:
         backup_cfg.write(backup_fp)
 
 

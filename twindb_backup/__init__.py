@@ -49,6 +49,7 @@ MEDIA_TYPES = ["files", "mysql", "binlog"]
 XTRABACKUP_BINARY = "/opt/twindb-backup/embedded/bin/xtrabackup"
 XBSTREAM_BINARY = "/opt/twindb-backup/embedded/bin/xbstream"
 MY_CNF_COMMON_PATHS = ["/etc/my.cnf", "/etc/mysql/my.cnf"]
+DEFAULT_FILE_ENCODING = "utf-8"
 
 LOG = logging.getLogger(__name__)
 
@@ -164,7 +165,7 @@ def save_measures(start_time, end_time, log_path=LOG_FILE):
         "duration": end_time - start_time,
     }
     try:
-        with open(log_path, "r") as data_fp:
+        with open(log_path, "r", encoding=DEFAULT_FILE_ENCODING) as data_fp:
             log = json.load(data_fp)
             log["measures"].append(data)
             if len(log["measures"]) > 100:
@@ -172,5 +173,5 @@ def save_measures(start_time, end_time, log_path=LOG_FILE):
     except (IOError, ValueError):
         log = {"measures": [data]}
 
-    with open(log_path, "w") as file_pt:
+    with open(log_path, "w", encoding=DEFAULT_FILE_ENCODING) as file_pt:
         json.dump(log, file_pt)

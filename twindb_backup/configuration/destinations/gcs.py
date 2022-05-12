@@ -9,7 +9,7 @@ class GCSConfig:
     def __init__(self, **kwargs):
 
         for opt in self.__attr__:
-            setattr(self, "_%s" % opt, kwargs.get(opt))
+            setattr(self, f"_{opt}", kwargs.get(opt))
 
     @property
     def gc_credentials_file(self):

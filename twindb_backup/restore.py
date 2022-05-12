@@ -13,7 +13,12 @@ import errno
 import time
 import psutil
 
-from twindb_backup import LOG, XBSTREAM_BINARY, XTRABACKUP_BINARY
+from twindb_backup import (
+    LOG,
+    XBSTREAM_BINARY,
+    XTRABACKUP_BINARY,
+    DEFAULT_FILE_ENCODING,
+)
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
 from twindb_backup.exceptions import TwinDBBackupError
@@ -45,7 +50,7 @@ def get_my_cnf(status, key):
             yield path, status[key].config[path].decode("utf-8")
         else:
             raise TwinDBBackupError(
-                "Unexpected type of %r" % status[key].config[path]
+                f"Unexpected type of {status[key].config[path]}"
             )
 
 
@@ -101,7 +106,7 @@ def restore_from_mysql_full(
     try:
         xtrabackup_cmd = [
             xtrabackup_binary,
-            "--use-memory=%d" % (mem_usage.available / 2),
+            f"--use-memory={mem_usage.available / 2}",
             "--prepare",
         ]
         if redo_only:
@@ -110,15 +115,17 @@ def restore_from_mysql_full(
         xtrabackup_cmd += ["--target-dir", dst_dir]
 
         LOG.debug("Running %s", " ".join(xtrabackup_cmd))
-        xtrabackup_proc = Popen(xtrabackup_cmd, stdout=None, stderr=None)
-        xtrabackup_proc.communicate()
-        ret = xtrabackup_proc.returncode
-        if ret:
-            LOG.error("%s exited with code %d", " ".join(xtrabackup_cmd), ret)
-        return ret == 0
+        with Popen(xtrabackup_cmd, stdout=None, stderr=None) as xtrabackup_proc:
+            xtrabackup_proc.communicate()
+            ret = xtrabackup_proc.returncode
+            if ret:
+                LOG.error(
+                    "%s exited with code %d", " ".join(xtrabackup_cmd), ret
+                )
+            return ret == 0
     except OSError as err:
         raise TwinDBBackupError(
-            "Failed to prepare backup in %s: %s" % (dst_dir, err)
+            f"Failed to prepare backup in {dst_dir}: {err}"
         ) from err
 
 
@@ -138,21 +145,21 @@ def _extract_xbstream(
         LOG.debug("Running %s", " ".join(cmd))
         LOG.debug("Working directory: %s", working_dir)
         LOG.debug("Xbstream binary: %s", xbstream_binary)
-        proc = Popen(
+        with Popen(
             cmd, stdin=input_stream, stdout=PIPE, stderr=PIPE, cwd=working_dir
-        )
-        cout, cerr = proc.communicate()
-        ret = proc.returncode
-        if ret:
-            LOG.error("%s exited with code %d", " ".join(cmd), ret)
-            if cout:
-                LOG.error("STDOUT: %s", cout)
-            if cerr:
-                LOG.error("STDERR: %s", cerr)
-        return ret == 0
+        ) as proc:
+            cout, cerr = proc.communicate()
+            ret = proc.returncode
+            if ret:
+                LOG.error("%s exited with code %d", " ".join(cmd), ret)
+                if cout:
+                    LOG.error("STDOUT: %s", cout)
+                if cerr:
+                    LOG.error("STDERR: %s", cerr)
+            return ret == 0
 
     except OSError as err:
-        raise TwinDBBackupError("Failed to extract xbstream: %s" % err) from err
+        raise TwinDBBackupError(f"Failed to extract xbstream: {err}") from err
 
 
 # pylint: disable=too-many-locals,too-many-branches,too-many-statements
@@ -213,37 +220,41 @@ def restore_from_mysql_incremental(
         try:
             xtrabackup_cmd = [
                 xtrabackup_binary,
-                "--use-memory=%d" % (mem_usage.available / 2),
+                f"--use-memory={mem_usage.available / 2}",
                 "--prepare",
                 "--apply-log-only",
-                "--target-dir=%s" % dst_dir,
+                f"--target-dir={dst_dir}",
             ]
             LOG.debug("Running %s", " ".join(xtrabackup_cmd))
-            xtrabackup_proc = Popen(xtrabackup_cmd, stdout=None, stderr=None)
-            xtrabackup_proc.communicate()
-            ret = xtrabackup_proc.returncode
-            if ret:
-                LOG.error(
-                    "%s exited with code %d", " ".join(xtrabackup_cmd), ret
-                )
-                return False
+            with Popen(
+                xtrabackup_cmd, stdout=None, stderr=None
+            ) as xtrabackup_proc:
+                xtrabackup_proc.communicate()
+                ret = xtrabackup_proc.returncode
+                if ret:
+                    LOG.error(
+                        "%s exited with code %d", " ".join(xtrabackup_cmd), ret
+                    )
+                    return False
 
             xtrabackup_cmd = [
                 xtrabackup_binary,
-                "--use-memory=%d" % (mem_usage.available / 2),
+                f"--use-memory={mem_usage.available / 2}",
                 "--prepare",
-                "--target-dir=%s" % dst_dir,
-                "--incremental-dir=%s" % inc_dir,
+                f"--target-dir={dst_dir}",
+                f"--incremental-dir={inc_dir}",
             ]
             LOG.debug("Running %s", " ".join(xtrabackup_cmd))
-            xtrabackup_proc = Popen(xtrabackup_cmd, stdout=None, stderr=None)
-            xtrabackup_proc.communicate()
-            ret = xtrabackup_proc.returncode
-            if ret:
-                LOG.error(
-                    "%s exited with code %d", " ".join(xtrabackup_cmd), ret
-                )
-            return ret == 0
+            with Popen(
+                xtrabackup_cmd, stdout=None, stderr=None
+            ) as xtrabackup_proc:
+                xtrabackup_proc.communicate()
+                ret = xtrabackup_proc.returncode
+                if ret:
+                    LOG.error(
+                        "%s exited with code %d", " ".join(xtrabackup_cmd), ret
+                    )
+                return ret == 0
         except OSError as err:
             LOG.error("Failed to prepare backup in %s: %s", dst_dir, err)
             return False
@@ -264,16 +275,14 @@ def gen_grastate(path, version, uuid, seqno):
     :param uuid: UUID from grastate.dat.
     :param seqno: seqno from grastate.dat.
     """
-    with open(path, "w") as file_desc:
+    with open(path, "w", encoding=DEFAULT_FILE_ENCODING) as file_desc:
         file_desc.write(
-            """# GALERA saved state
+            f"""# GALERA saved state
 version: {version}
 uuid:    {uuid}
 seqno:   {seqno}
 cert_index:
-""".format(
-                version=version, uuid=uuid, seqno=seqno
-            )
+"""
         )
 
 
@@ -289,10 +298,13 @@ def update_grastate(dst_dir, status, key):
     :param key: Backup name
     :type key: str
     """
-    if os.path.exists(dst_dir + "/xtrabackup_galera_info"):
+    if osp.exists(osp.join(dst_dir, "xtrabackup_galera_info")):
         version = status[key].wsrep_provider_version
 
-        with open(dst_dir + "/xtrabackup_galera_info") as galera_info:
+        with open(
+            osp.join(dst_dir, "xtrabackup_galera_info"),
+            encoding=DEFAULT_FILE_ENCODING,
+        ) as galera_info:
             galera_info = galera_info.read()
             uuid = galera_info.split(":")[0]
             seqno = galera_info.split(":")[1]
@@ -334,7 +346,7 @@ def restore_from_mysql(
         if not hostname:
             hostname = copy.host
             if not hostname:
-                raise DestinationError("Failed to get hostname from %s" % copy)
+                raise DestinationError(f"Failed to get hostname from {copy}")
         dst = twindb_config.destination(backup_source=hostname)
 
     key = copy.key
@@ -390,7 +402,9 @@ def restore_from_mysql(
         mkdir_p(config_sub_dir, mode=0o755)
 
         with open(
-            os.path.join(config_sub_dir, os.path.basename(path)), "w"
+            os.path.join(config_sub_dir, os.path.basename(path)),
+            "w",
+            encoding=DEFAULT_FILE_ENCODING,
         ) as mysql_config:
             mysql_config.write(content)
 
@@ -462,16 +476,16 @@ def restore_from_file(twindb_config, copy, dst_dir):
             LOG.debug("stream type: %s", type(stream))
             cmd = ["tar", "zvxf", "-"]
             LOG.debug("Running %s", " ".join(cmd))
-            proc = Popen(cmd, stdin=handler, cwd=dst_dir)
-            cout, cerr = proc.communicate()
-            ret = proc.returncode
-            if ret:
-                LOG.error("%s exited with code %d", cmd, ret)
-                if cout:
-                    LOG.error("STDOUT: %s", cout)
-                if cerr:
-                    LOG.error("STDERR: %s", cerr)
-                return
+            with Popen(cmd, stdin=handler, cwd=dst_dir) as proc:
+                cout, cerr = proc.communicate()
+                ret = proc.returncode
+                if ret:
+                    LOG.error("%s exited with code %d", cmd, ret)
+                    if cout:
+                        LOG.error("STDOUT: %s", cout)
+                    if cerr:
+                        LOG.error("STDERR: %s", cerr)
+                    return
             LOG.info("Successfully restored %s in %s", copy.key, dst_dir)
         except (OSError, DestinationError) as err:
             LOG.error("Failed to decompress %s: %s", copy.key, err)

@@ -21,7 +21,7 @@ class CompressionConfig:
         )
         if self.program not in COMPRESSION_MODIFIERS:
             raise ConfigurationError(
-                "Unsupported compression tool %s" % self.program
+                f"Unsupported compression tool {self.program}"
             )
 
         self._threads = (
