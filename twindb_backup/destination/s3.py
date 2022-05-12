@@ -31,7 +31,7 @@ S3_READ_TIMEOUT = 600
 
 # The transfer size threshold for which multipart uploads to S3/Ceph RGW will
 # automatically be triggered
-S3_UPLOAD_CHUNK_SIZE_BYTES = 256 * 1024 ** 2
+S3_UPLOAD_CHUNK_SIZE_BYTES = 256 * 1024**2
 
 # The maximum number of threads that will be making requests to perform a
 # transfer.
@@ -525,7 +525,7 @@ class S3(BaseDestination):
     def _get_file_content(self, path):
         attempts = 10  # up to 1024 seconds
         sleep_time = 2
-        while sleep_time <= 2 ** attempts:
+        while sleep_time <= 2**attempts:
             try:
                 response = self.s3_client.get_object(
                     Bucket=self._bucket, Key=path

@@ -1,5 +1,5 @@
 #@IgnoreInspection BashAddShebang
-black ~= 19.10b0
+black ~= 22.3
 Sphinx ~= 3.0
 bumpversion ~= 0.5, <0.6.0
 codecov ~= 2.0

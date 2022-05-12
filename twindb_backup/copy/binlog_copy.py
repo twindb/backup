@@ -30,7 +30,10 @@ class BinlogCopy(BaseCopy):  # pylint: disable=too-few-public-methods
         :return:
         """
         return all(
-            (self.created_at == other.created_at, self.key == other.key,)
+            (
+                self.created_at == other.created_at,
+                self.key == other.key,
+            )
         )
 
     def __str__(self):
