@@ -24,7 +24,7 @@ class Cache:
         if os.path.exists(path):
             self.path = path
         else:
-            raise CacheException("Cache directory %s doesn't exist" % path)
+            raise CacheException(f"Cache directory {path} doesn't exist")
 
     def __contains__(self, item):
         return item in os.listdir(self.path)

@@ -63,7 +63,7 @@ class TwinDBBackupConfig:
         kwargs = {}
         try:
             kwargs = {
-                i: self.__cfg.getboolean("intervals", "run_%s" % i)
+                i: self.__cfg.getboolean("intervals", f"run_{i}")
                 for i in INTERVALS
             }
 
@@ -152,7 +152,7 @@ class TwinDBBackupConfig:
                     return StatsdExporter(statsd_host, statsd_port)
                 else:
                     raise ConfigurationError(
-                        "Metric exported '%s' is not implemented" % transport
+                        f"Metric exported '{transport}' is not implemented"
                     )
             except NoOptionError as err:
                 raise ConfigurationError(err) from err
@@ -244,18 +244,17 @@ class TwinDBBackupConfig:
 
             else:
                 raise ConfigurationError(
-                    "Unsupported destination '%s'" % backup_destination
+                    f"Unsupported destination '{backup_destination}'"
                 )
         except NoSectionError as err:
             raise ConfigurationError(
-                "%s is missing required section 'destination'"
-                % self._config_file
+                f"{self._config_file} is missing required section 'destination'"
             ) from err
 
     def _retention(self, section):
         kwargs = {}
         for i in INTERVALS:
-            option = "%s_copies" % i
+            option = f"{i}_copies"
             try:
                 kwargs[i] = self.__cfg.getint(section, option)
             except (NoOptionError, NoSectionError):
@@ -271,4 +270,4 @@ class TwinDBBackupConfig:
         }
 
     def __repr__(self):
-        return "%s: %s" % (self.__class__.__name__, self._config_file)
+        return f"{self.__class__.__name__}: {self._config_file}"
