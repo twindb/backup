@@ -99,7 +99,7 @@ Other features:
 - Retention policy defines how many hourly/daily/weekly/monthly/yearly copies to keep
 - Separate retention policy for remote and local backup copies
 - Email notifications
-- Datadog integration
+- Datadog/StatsD integration
 - cron configuration comes with a package
 
 

@@ -13,3 +13,4 @@ paramiko ~= 2.4
 cryptography ~= 3.2
 google ~= 2.0
 google-cloud-storage ~= 1.15.0
+statsd-tags==3.2.1.post1

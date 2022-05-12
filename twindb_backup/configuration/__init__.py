@@ -20,6 +20,7 @@ from twindb_backup.destination.s3 import S3
 from twindb_backup.destination.gcs import GCS
 from twindb_backup.destination.ssh import Ssh
 from twindb_backup.exporter.datadog_exporter import DataDogExporter
+from twindb_backup.exporter.stasd_exporter import StatsdExporter
 
 DEFAULT_CONFIG_FILE_PATH = "/etc/twindb/twindb-backup.cfg"
 
@@ -145,6 +146,10 @@ class TwinDBBackupConfig:
                     app_key = self.__cfg.get("export", "app_key")
                     api_key = self.__cfg.get("export", "api_key")
                     return DataDogExporter(app_key, api_key)
+                if transport == "statsd":
+                    statsd_host = self.__cfg.get("export", "statsd_host")
+                    statsd_port = self.__cfg.get("export", "statsd_port")
+                    return StatsdExporter(statsd_host, statsd_port)
                 else:
                     raise ConfigurationError(
                         "Metric exported '%s' is not implemented" % transport
