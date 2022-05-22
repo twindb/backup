@@ -47,9 +47,17 @@ help:
 virtualenv: ## create virtual environment typically used for development purposes
 	virtualenv env --setuptools --prompt='(twindb_backup)'
 
+.PHONY: pip
+pip:
+	pip install -U "pip ~= 22.0.0"
+
 .PHONY: pip-tools
-pip-tools:
-	pip install -U "pip-tools ~= 5.1"
+pip-tools: pip
+	pip install -U "pip-tools ~= 6.6"
+
+.PHONY: setuptools
+setuptools: pip
+	pip install -U "setuptools ~= 62.3.2"
 
 .PHONY: upgrade-requirements
 upgrade-requirements: pip-tools ## Upgrade requirements
@@ -57,9 +65,7 @@ upgrade-requirements: pip-tools ## Upgrade requirements
 	pip-compile --upgrade --verbose --output-file requirements_dev.txt requirements_dev.in
 
 .PHONY: bootstrap
-bootstrap: pip-tools ## bootstrap the development environment
-	pip install -U "pip ~= 20.0"
-	pip install -U "setuptools ~= 45.0"
+bootstrap: pip pip-tools setuptools ## bootstrap the development environment
 	pip-sync requirements.txt requirements_dev.txt
 	pip install --editable .
 
