@@ -156,7 +156,7 @@ def status_raw_empty():
                 "daily": {},
                 "weekly": {},
                 "monthly": {},
-                "yearly": {}
+                "yearly": {},
             }
         ).encode("utf-8")
     )
@@ -165,33 +165,33 @@ def status_raw_empty():
 @pytest.fixture
 def status_raw_content():
     """
-    Return raw content of status
-    Status is:
-{
-    "hourly": {
-      "master1/hourly/mysql/mysql-2018-03-28_04_11_16.xbstream.gz": {
-        "backup_finished": 1522210295,
-        "binlog": "mysql-bin.000001",
-        "parent": "master1/daily/mysql/mysql-2018-03-28_04_09_53.xbstream.gz",
-        "lsn": 19903207,
-        "galera": false,
-        "config": [
-          {
-            "/etc/my.cnf": "W215c3FsZF0KZGF0YWRpcj0vdmFyL2xpYi9teXNxbApzb2NrZXQ9L3Zhci9saWIvbXlzcWwvbXlzcWwuc29jawp1c2VyPW15c3FsCiMgRGlzYWJsaW5nIHN5bWJvbGljLWxpbmtzIGlzIHJlY29tbWVuZGVkIHRvIHByZXZlbnQgYXNzb3J0ZWQgc2VjdXJpdHkgcmlza3MKc3ltYm9saWMtbGlua3M9MAoKc2VydmVyX2lkPTEwMApndGlkX21vZGU9T04KbG9nLWJpbj1teXNxbC1iaW4KbG9nLXNsYXZlLXVwZGF0ZXMKZW5mb3JjZS1ndGlkLWNvbnNpc3RlbmN5CgpbbXlzcWxkX3NhZmVdCmxvZy1lcnJvcj0vdmFyL2xvZy9teXNxbGQubG9nCnBpZC1maWxlPS92YXIvcnVuL215c3FsZC9teXNxbGQucGlkCg=="
+        Return raw content of status
+        Status is:
+    {
+        "hourly": {
+          "master1/hourly/mysql/mysql-2018-03-28_04_11_16.xbstream.gz": {
+            "backup_finished": 1522210295,
+            "binlog": "mysql-bin.000001",
+            "parent": "master1/daily/mysql/mysql-2018-03-28_04_09_53.xbstream.gz",
+            "lsn": 19903207,
+            "galera": false,
+            "config": [
+              {
+                "/etc/my.cnf": "W215c3FsZF0KZGF0YWRpcj0vdmFyL2xpYi9teXNxbApzb2NrZXQ9L3Zhci9saWIvbXlzcWwvbXlzcWwuc29jawp1c2VyPW15c3FsCiMgRGlzYWJsaW5nIHN5bWJvbGljLWxpbmtzIGlzIHJlY29tbWVuZGVkIHRvIHByZXZlbnQgYXNzb3J0ZWQgc2VjdXJpdHkgcmlza3MKc3ltYm9saWMtbGlua3M9MAoKc2VydmVyX2lkPTEwMApndGlkX21vZGU9T04KbG9nLWJpbj1teXNxbC1iaW4KbG9nLXNsYXZlLXVwZGF0ZXMKZW5mb3JjZS1ndGlkLWNvbnNpc3RlbmN5CgpbbXlzcWxkX3NhZmVdCmxvZy1lcnJvcj0vdmFyL2xvZy9teXNxbGQubG9nCnBpZC1maWxlPS92YXIvcnVuL215c3FsZC9teXNxbGQucGlkCg=="
+              }
+            ],
+            "backup_started": 1522210276,
+            "position": 46855,
+            "type": "incremental",
+            "wsrep_provider_version": null
           }
-        ],
-        "backup_started": 1522210276,
-        "position": 46855,
-        "type": "incremental",
-        "wsrep_provider_version": null
-      }
-    },
-    "daily": {},
-    "weekly": {},
-    "monthly": {},
-    "yearly": {}
-}
-    :return:
+        },
+        "daily": {},
+        "weekly": {},
+        "monthly": {},
+        "yearly": {}
+    }
+        :return:
     """
     return """
     {
@@ -205,33 +205,33 @@ def status_raw_content():
 @pytest.fixture
 def status_raw_content_with_invalid_hash():
     """
-    Return raw content of status
-    Status is:
-{
-    "hourly": {
-      "master1/hourly/mysql/mysql-2018-03-28_04_11_16.xbstream.gz": {
-        "backup_finished": 1522210295,
-        "binlog": "mysql-bin.000001",
-        "parent": "master1/daily/mysql/mysql-2018-03-28_04_09_53.xbstream.gz",
-        "lsn": 19903207,
-        "galera": false,
-        "config": [
-          {
-            "/etc/my.cnf": "W215c3FsZF0KZGF0YWRpcj0vdmFyL2xpYi9teXNxbApzb2NrZXQ9L3Zhci9saWIvbXlzcWwvbXlzcWwuc29jawp1c2VyPW15c3FsCiMgRGlzYWJsaW5nIHN5bWJvbGljLWxpbmtzIGlzIHJlY29tbWVuZGVkIHRvIHByZXZlbnQgYXNzb3J0ZWQgc2VjdXJpdHkgcmlza3MKc3ltYm9saWMtbGlua3M9MAoKc2VydmVyX2lkPTEwMApndGlkX21vZGU9T04KbG9nLWJpbj1teXNxbC1iaW4KbG9nLXNsYXZlLXVwZGF0ZXMKZW5mb3JjZS1ndGlkLWNvbnNpc3RlbmN5CgpbbXlzcWxkX3NhZmVdCmxvZy1lcnJvcj0vdmFyL2xvZy9teXNxbGQubG9nCnBpZC1maWxlPS92YXIvcnVuL215c3FsZC9teXNxbGQucGlkCg=="
+        Return raw content of status
+        Status is:
+    {
+        "hourly": {
+          "master1/hourly/mysql/mysql-2018-03-28_04_11_16.xbstream.gz": {
+            "backup_finished": 1522210295,
+            "binlog": "mysql-bin.000001",
+            "parent": "master1/daily/mysql/mysql-2018-03-28_04_09_53.xbstream.gz",
+            "lsn": 19903207,
+            "galera": false,
+            "config": [
+              {
+                "/etc/my.cnf": "W215c3FsZF0KZGF0YWRpcj0vdmFyL2xpYi9teXNxbApzb2NrZXQ9L3Zhci9saWIvbXlzcWwvbXlzcWwuc29jawp1c2VyPW15c3FsCiMgRGlzYWJsaW5nIHN5bWJvbGljLWxpbmtzIGlzIHJlY29tbWVuZGVkIHRvIHByZXZlbnQgYXNzb3J0ZWQgc2VjdXJpdHkgcmlza3MKc3ltYm9saWMtbGlua3M9MAoKc2VydmVyX2lkPTEwMApndGlkX21vZGU9T04KbG9nLWJpbj1teXNxbC1iaW4KbG9nLXNsYXZlLXVwZGF0ZXMKZW5mb3JjZS1ndGlkLWNvbnNpc3RlbmN5CgpbbXlzcWxkX3NhZmVdCmxvZy1lcnJvcj0vdmFyL2xvZy9teXNxbGQubG9nCnBpZC1maWxlPS92YXIvcnVuL215c3FsZC9teXNxbGQucGlkCg=="
+              }
+            ],
+            "backup_started": 1522210276,
+            "position": 46855,
+            "type": "incremental",
+            "wsrep_provider_version": null
           }
-        ],
-        "backup_started": 1522210276,
-        "position": 46855,
-        "type": "incremental",
-        "wsrep_provider_version": null
-      }
-    },
-    "daily": {},
-    "weekly": {},
-    "monthly": {},
-    "yearly": {}
-}
-    :return:
+        },
+        "daily": {},
+        "weekly": {},
+        "monthly": {},
+        "yearly": {}
+    }
+        :return:
     """
     return """
     {

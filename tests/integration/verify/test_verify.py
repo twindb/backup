@@ -5,7 +5,12 @@ from twindb_backup import LOG
 
 
 def test_verify_on_master(
-    master1, slave, storage_server, config_content_ssh, docker_client, rsa_private_key
+    master1,
+    slave,
+    storage_server,
+    config_content_ssh,
+    docker_client,
+    rsa_private_key,
 ):
 
     twindb_config_guest = "/etc/twindb/twindb-backup-1.cfg"

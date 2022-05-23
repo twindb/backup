@@ -23,8 +23,6 @@ skip_transitive_dependency_licensing true
 
 dependency 'libyaml'
 dependency 'pip'
-dependency 'python3'
-dependency 'setuptools'
 dependency 'libpcap'
 
 source path: '/twindb-backup'
@@ -39,8 +37,8 @@ build do
   command "#{install_dir}/embedded/bin/pip install -I" \
           " --build #{project_dir} .", env: env
   # support files
-  copy 'support/twindb-backup.cfg', "#{install_dir}/"
-  copy 'support/twindb-backup.cron', "#{install_dir}/"
+  command "cp support/twindb-backup.cfg #{install_dir}/"
+  command "cp support/twindb-backup.cron #{install_dir}/"
 
   # Remove the .pyc and .pyo files from the package and list them in a file
   # so that the prerm script knows which compiled files to remove

@@ -65,34 +65,18 @@ dependency 'preparation'
 
 runtime_dependency 'libtool'
 runtime_dependency 'nmap'
-dependency 'xtrabackup'
+runtime_dependency 'logrotate'
 
 # Debian
 if debian?
-    dependency 'libyaml'
-    runtime_dependency 'openssh-client'
     runtime_dependency 'cron'
-    runtime_dependency 'libev-dev'
-    runtime_dependency 'libgcrypt11-dev'
-    runtime_dependency 'libaio-dev'
 end
 
 # RHEL/CentOS
 if redhat?
-    runtime_dependency 'openssh-clients'
-    runtime_dependency 'initscripts'
     runtime_dependency 'cronie'
-    runtime_dependency 'logrotate'
-    runtime_dependency 'libaio-devel'
-    runtime_dependency 'libgcrypt-devel'
-    runtime_dependency 'libev-devel'
-    runtime_dependency 'libcurl-devel'
 end
 
-override :openssl, version: '1.1.1g'
-override :xtrabackup, version: '2.4.21'
-override :libyaml, version: '0.2.5'
-override :libffi, version: '3.3'
 
 # twindb-backup
 dependency 'twindb-backup'

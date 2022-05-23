@@ -11,7 +11,7 @@ pylint ~= 2.13
 pytest ~= 4.6
 pytest-cov ~= 2.5
 pytest-timeout ~= 1.3
-python-magic ~= 0.4
+python-magic == 0.4.18
 
 # https://nvd.nist.gov/vuln/detail/CVE-2017-18342
 pyyaml ~= 5.1

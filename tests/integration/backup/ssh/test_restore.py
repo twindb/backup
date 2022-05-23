@@ -1,6 +1,10 @@
 import os
 
-from tests.integration.conftest import get_twindb_config_dir, docker_execute, assert_and_pause
+from tests.integration.conftest import (
+    get_twindb_config_dir,
+    docker_execute,
+    assert_and_pause,
+)
 from twindb_backup import LOG
 
 
@@ -46,7 +50,7 @@ password=qwerty
         "daily",
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "bash",
@@ -56,7 +60,7 @@ password=qwerty
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     url = cout.strip()
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     dst_dir = "/tmp/ssh_dest_restore/"
     cmd = [
@@ -71,37 +75,36 @@ password=qwerty
         dst_dir,
     ]
 
-
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     cmd = ["find", dst_dir]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     cmd = ["test", "-f", "%s/backup-my.cnf" % dst_dir]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     cmd = ["test", "-f", "%s/ibdata1" % dst_dir]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     cmd = ["test", "-f", "%s/ib_logfile0" % dst_dir]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     cmd = ["test", "-f", "%s/ib_logfile1" % dst_dir]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     cmd = ["test", "-f", "%s/mysql/user.MYD" % dst_dir]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     cmd = ["test", "-f", "%s/xtrabackup_logfile" % dst_dir]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "bash",
@@ -110,4 +113,4 @@ password=qwerty
         % (dst_dir, dst_dir),
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
