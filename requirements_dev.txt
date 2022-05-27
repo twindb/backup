@@ -16,7 +16,7 @@ black==22.3.0
     # via -r requirements_dev.in
 boto3==1.23.9
     # via moto
-botocore==1.26.9
+botocore==1.26.10
     # via
     #   boto3
     #   moto
@@ -43,10 +43,8 @@ cryptography==37.0.2
     # via moto
 dill==0.3.5.1
     # via pylint
-docker==3.7.3
+docker==5.0.3
     # via -r requirements_dev.in
-docker-pycreds==0.4.0
-    # via docker
 docutils==0.17.1
     # via sphinx
 idna==3.3
@@ -140,10 +138,7 @@ responses==0.21.0
 s3transfer==0.5.2
     # via boto3
 six==1.16.0
-    # via
-    #   docker
-    #   docker-pycreds
-    #   python-dateutil
+    # via python-dateutil
 snowballstemmer==2.2.0
     # via sphinx
 sphinx==4.5.0
