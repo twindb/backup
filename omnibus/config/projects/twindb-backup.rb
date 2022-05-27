@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-# require "./lib/ostools.rb"
+require "./lib/ostools.rb"
 
 name 'twindb-backup'
 maintainer 'TwinDB Packager (TwinDB packager key) <packager@twindb.com>'
@@ -64,17 +64,26 @@ dependency 'preparation'
 # twindb-backup dependencies/components
 
 runtime_dependency 'libtool'
-runtime_dependency 'nmap'
 runtime_dependency 'logrotate'
+runtime_dependency 'net-tools'
+runtime_dependency 'sudo'
 
 # Debian
 if debian?
     runtime_dependency 'cron'
 end
 
+if focal?
+    runtime_dependency 'ncat'
+end
+if bionic?
+    runtime_dependency 'nmap'
+end
+
 # RHEL/CentOS
 if redhat?
     runtime_dependency 'cronie'
+    runtime_dependency 'nmap-ncat'
 end
 
 

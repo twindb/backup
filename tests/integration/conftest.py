@@ -3,6 +3,7 @@ from textwrap import dedent
 
 import docker
 import os
+from os import path as osp
 import pytest
 import time
 from docker.errors import DockerException, APIError
@@ -14,11 +15,8 @@ from twindb_backup.util import mkdir_p
 
 SUPPORTED_IMAGES = [
     "twindb/backup-test:centos-7",
-    "twindb/backup-test:centos-6",
-    "twindb/backup-test:jessie",
-    "twindb/backup-test:trusty",
-    "twindb/backup-test:xenial",
     "twindb/backup-test:bionic",
+    "twindb/backup-test:focal",
 ]
 
 
@@ -39,7 +37,12 @@ ensure_aws_creds()
 def get_platform_from_image(image):
     if "centos" in image:
         return "centos"
-    elif "jessie" in image:
+    elif any(
+        (
+            ("jessie" in image),
+            ("stretch" in image),
+        )
+    ):
         return "debian"
     elif any(
         (
@@ -258,8 +261,14 @@ def master1(docker_client, container_network, tmpdir_factory):
         else get_platform_from_image(os.environ["DOCKER_IMAGE"])
     )
 
-    bootstrap_script = (
-        "/twindb-backup/support/bootstrap/master/" "%s/master1.sh" % platform
+    bootstrap_script = osp.join(
+        osp.sep,
+        "twindb-backup",
+        "support",
+        "bootstrap",
+        "master",
+        platform,
+        "master1.sh",
     )
     datadir = tmpdir_factory.mktemp("mysql")
     twindb_config_dir = tmpdir_factory.mktemp("twindb")
@@ -283,15 +292,22 @@ def master1(docker_client, container_network, tmpdir_factory):
 
         LOG.info("Port TCP/3306 is ready")
 
-        privileges_file = (
-            "/twindb-backup/vagrant/environment/puppet/"
-            "modules/profile/files/mysql_grants.sql"
+        privileges_file = osp.join(
+            os.sep,
+            "twindb-backup",
+            "vagrant",
+            "environment",
+            "puppet",
+            "modules",
+            "profile",
+            "files",
+            "mysql_grants.sql",
         )
-        cmd = ["bash", "-c", "mysql -uroot mysql < %s" % privileges_file]
+        cmd = ["bash", "-c", f"mysql -uroot mysql < {privileges_file}"]
         ret, cout = docker_execute(docker_client, container["Id"], cmd)
 
         print(cout)
-        assert ret == 0
+        assert_and_pause((ret == 0,), cout)
 
         ret, _ = docker_execute(docker_client, container["Id"], ["ls"])
         assert ret == 0
@@ -300,7 +316,7 @@ def master1(docker_client, container_network, tmpdir_factory):
             docker_client, container["Id"], ["bash", bootstrap_script]
         )
         print(cout)
-        assert ret == 0
+        assert_and_pause((ret == 0,), cout)
 
         yield container
 
@@ -316,9 +332,16 @@ def master1(docker_client, container_network, tmpdir_factory):
 @pytest.yield_fixture(scope="module")
 def slave(docker_client, container_network, tmpdir_factory):
     platform = get_platform_from_image(os.environ["DOCKER_IMAGE"])
-    bootstrap_script = (
-        "/twindb-backup/support/bootstrap/master/" "%s/slave.sh" % platform
+    bootstrap_script = osp.join(
+        osp.sep,
+        "twindb-backup",
+        "support",
+        "bootstrap",
+        "master",
+        platform,
+        "slave.sh",
     )
+
     separator_pos = NODE_IMAGE.find(":")
     image_name = (
         NODE_IMAGE[: separator_pos + 1]
@@ -346,14 +369,14 @@ def slave(docker_client, container_network, tmpdir_factory):
             time.sleep(1)
             LOG.info("Still waiting")
         LOG.info("Port TCP/22 is ready")
-        ret, _ = docker_execute(docker_client, container["Id"], ["ls"])
-        assert ret == 0
+        ret, cout = docker_execute(docker_client, container["Id"], ["ls"])
+        assert_and_pause((ret == 0,), cout)
 
         ret, cout = docker_execute(
             docker_client, container["Id"], ["bash", bootstrap_script]
         )
         print(cout)
-        assert ret == 0
+        assert_and_pause((ret == 0,), cout)
 
         yield container
 
@@ -369,8 +392,14 @@ def slave(docker_client, container_network, tmpdir_factory):
 @pytest.yield_fixture(scope="module")
 def runner(docker_client, container_network, tmpdir_factory):
     platform = get_platform_from_image(os.environ["DOCKER_IMAGE"])
-    bootstrap_script = (
-        "/twindb-backup/support/bootstrap/master/" "%s/master1.sh" % platform
+    bootstrap_script = osp.join(
+        osp.sep,
+        "twindb-backup",
+        "support",
+        "bootstrap",
+        "master",
+        platform,
+        "master1.sh",
     )
 
     datadir = tmpdir_factory.mktemp("mysql")
@@ -392,7 +421,7 @@ def runner(docker_client, container_network, tmpdir_factory):
             docker_client, container["Id"], ["bash", bootstrap_script]
         )
         print(cout)
-        assert ret == 0
+        assert_and_pause((ret == 0,), cout)
 
         yield container
 
@@ -419,7 +448,8 @@ def docker_execute(client, container_id, cmd, tty=False):
     :type tty: bool
     :rtype: tuple(int, str)
     """
-    LOG.debug("Running %s", " ".join(cmd))
+    cont = client.containers.get(container_id)
+    LOG.debug("Running(on %s) %s", cont.name, " ".join(cmd))
     api = client.api
     executor = api.exec_create(container_id, cmd, tty=tty)
     exec_id = executor["Id"]

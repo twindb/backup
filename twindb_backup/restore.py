@@ -29,7 +29,7 @@ from twindb_backup.exporter.base_exporter import (
 )
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.status.mysql_status import MySQLStatus
-from twindb_backup.util import mkdir_p, empty_dir
+from twindb_backup.util import mkdir_p
 
 
 def get_my_cnf(status, key):
@@ -55,7 +55,8 @@ def get_my_cnf(status, key):
 
 
 def get_free_memory():
-    """Return size of available memory in bytes. It calculates it as a half of available memory.
+    """Return size of available memory in bytes. It calculates it as a half
+    of available memory.
 
     :return: Size of free memory in bytes
     :rtype: int

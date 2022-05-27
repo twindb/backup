@@ -14,10 +14,7 @@ do
     wait_time=$((wait_time * 2))
 done
 
-apt-get -y install xtrabackup
-
-
-TB_VERSION=$(PYTHONPATH=/twindb-backup python -c "from twindb_backup import __version__; print __version__")
+TB_VERSION=$(PYTHONPATH=/twindb-backup python -c "from twindb_backup import __version__; print(__version__)")
 
 package="/twindb-backup/omnibus/pkg/twindb-backup_${TB_VERSION}-1_amd64.deb"
 

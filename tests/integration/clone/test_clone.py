@@ -52,6 +52,8 @@ def test_clone(
         twindb_config_guest,
         "clone",
         "mysql",
+        "--replication-password",
+        "qwerty",
         "%s:3306" % master1["ip"],
         "%s:3306" % slave["ip"],
     ]
@@ -86,4 +88,4 @@ def test_clone(
                     return
 
     LOG.error("Replication is not running after 30 seconds timeout")
-    assert False
+    pause_test("Replication is not running after 30 seconds timeout")

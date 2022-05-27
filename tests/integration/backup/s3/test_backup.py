@@ -611,7 +611,6 @@ def test_take_mysql_backup_aenc_restores_full(
         "ibdata1",
         "ib_logfile0",
         "ib_logfile1",
-        "mysql/user.MYD",
         "backup-my.cnf",
         "xtrabackup_logfile",
     ]
@@ -767,7 +766,6 @@ def test_take_mysql_backup_aenc_restores_inc(
         "ibdata1",
         "ib_logfile0",
         "ib_logfile1",
-        "mysql/user.MYD",
         "backup-my.cnf",
         "xtrabackup_logfile",
     ]:

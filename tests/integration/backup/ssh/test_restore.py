@@ -98,10 +98,6 @@ password=qwerty
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     assert_and_pause((ret == 0,), cout)
 
-    cmd = ["test", "-f", "%s/mysql/user.MYD" % dst_dir]
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0,), cout)
-
     cmd = ["test", "-f", "%s/xtrabackup_logfile" % dst_dir]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     assert_and_pause((ret == 0,), cout)

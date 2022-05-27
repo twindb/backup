@@ -220,7 +220,7 @@ endif
 ifeq ($(OS_VERSION),stretch)
         PLATFORM = debian
 endif
-package: ## Build package - OS_VERSION must be one of: 6, 7, jessie, stretch, xenial, bionic, cosmic.
+package: ## Build package - OS_VERSION must be one of: 7, bionic, focal.
 	@docker run \
 		-v ${pwd}:/twindb-backup \
 		--name builder_xtrabackup \

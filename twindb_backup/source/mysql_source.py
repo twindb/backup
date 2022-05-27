@@ -231,7 +231,8 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         except OSError as err:
             LOG.error("Failed to run %s: %s", " ".join(cmd), err)
             LOG.error(
-                "Make sure that xtrabackup package is installed and %s is available in $PATH",
+                "Make sure that xtrabackup package is installed and %s "
+                "is available in $PATH",
                 self._xtrabackup,
             )
             exit(1)
@@ -331,13 +332,15 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         with open(err_log_path) as error_log:
             for line in error_log:
                 pattern = (
-                    "xtrabackup: " "The latest check point (for incremental):"
+                    "xtrabackup: The latest check point (for incremental):"
                 )
                 if line.startswith(pattern):
                     lsn = line.split()[7].strip("'")
                     return int(lsn)
+                elif "The latest check point (for incremental):" in line:
+                    return int(line.split()[11].strip("'"))
         raise MySQLSourceError(
-            "Could not find LSN" " in XtraBackup error output %s" % err_log_path
+            "Could not find LSN in XtraBackup error output %s" % err_log_path
         )
 
     @property
