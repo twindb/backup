@@ -8,9 +8,9 @@ bcrypt==3.2.2
     # via paramiko
 beautifulsoup4==4.11.1
     # via google
-boto3==1.23.5
+boto3==1.23.9
     # via -r requirements.in
-botocore==1.26.5
+botocore==1.26.9
     # via
     #   boto3
     #   s3transfer
@@ -51,7 +51,7 @@ google-cloud-storage==1.15.2
     # via -r requirements.in
 google-resumable-media==0.4.1
     # via google-cloud-storage
-googleapis-common-protos==1.56.1
+googleapis-common-protos==1.56.2
     # via google-api-core
 idna==3.3
     # via requests
