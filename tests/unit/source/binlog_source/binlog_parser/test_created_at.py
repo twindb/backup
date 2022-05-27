@@ -10,6 +10,6 @@ def test_created_at(mysql_bin_000001):
 
 
 def test_created_at_raises():
-    bp = BinlogParser('foo')
+    bp = BinlogParser("foo")
     with pytest.raises(BinlogSourceError):
         assert bp.created_at

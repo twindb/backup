@@ -36,12 +36,7 @@ def test__clone_config(mock_get_root, mock_save):
 @pytest.mark.parametrize(
     "mycnfs, expected_result_template",
     [
-        (
-            {
-                "my.cnf": ""
-            },
-            ["my.cnf"]
-        ),
+        ({"my.cnf": ""}, ["my.cnf"]),
         (
             {
                 "my.cnf": dedent(
@@ -50,43 +45,43 @@ def test__clone_config(mock_get_root, mock_save):
                     """
                 )
             },
-            ["my.cnf"]
+            ["my.cnf"],
         ),
         (
             {
-                "my.cnf":
-                    dedent(
-                        """
+                "my.cnf": dedent(
+                    """
                         !includedir conf.d/
                         """
-                    ),
+                ),
                 "conf.d/1.cnf": "",
                 "conf.d/2.cnf": "",
                 "conf.d/3.cnf": "",
             },
-            ["my.cnf", "conf.d/1.cnf", "conf.d/2.cnf", "conf.d/3.cnf"]
+            ["my.cnf", "conf.d/1.cnf", "conf.d/2.cnf", "conf.d/3.cnf"],
         ),
         (
             {
-                "my.cnf":
-                    dedent(
-                        """
+                "my.cnf": dedent(
+                    """
                         !include conf.d/1.cnf
                         !include conf.d/2.cnf
                         !include conf.d/3.cnf
                         """
-                    ),
+                ),
                 "conf.d/1.cnf": "",
                 "conf.d/2.cnf": "",
                 "conf.d/3.cnf": "",
             },
-            ["my.cnf", "conf.d/1.cnf", "conf.d/2.cnf", "conf.d/3.cnf"]
-        )
+            ["my.cnf", "conf.d/1.cnf", "conf.d/2.cnf", "conf.d/3.cnf"],
+        ),
     ],
 )
 @mock.patch.object(SshClient, "list_files")
 @mock.patch.object(SshClient, "get_text_content")
-def test___find_all_cnf(mock_get_text_content, mock_list, tmpdir, mycnfs, expected_result_template):
+def test___find_all_cnf(
+    mock_get_text_content, mock_list, tmpdir, mycnfs, expected_result_template
+):
     mycnf_root = Path(tmpdir)
 
     # Prepare steps (writing config files with content)
@@ -101,9 +96,7 @@ def test___find_all_cnf(mock_get_text_content, mock_list, tmpdir, mycnfs, expect
         LOG.debug("Getting content of %s", full_path)
         # cut mysql_root prefix from the full path and lookup for content in the mycnfs dictionary.
         return mycnfs[
-            "/".join(
-                PurePath(full_path).parts[len(mycnf_root.parts):]
-            )
+            "/".join(PurePath(full_path).parts[len(mycnf_root.parts) :])
         ]
 
     def get_list(path, recursive=False, files_only=True):
@@ -112,21 +105,22 @@ def test___find_all_cnf(mock_get_text_content, mock_list, tmpdir, mycnfs, expect
     mock_get_text_content.side_effect = get_text_content
     mock_list.side_effect = get_list
     #
-    rmt_sql = RemoteMySQLSource({
-        "run_type": INTERVALS[0],
-        "backup_type": 'full',
-        "mysql_connect_info": MySQLConnectInfo("/"),
-        "ssh_connection_info": None
-    })
+    rmt_sql = RemoteMySQLSource(
+        {
+            "run_type": INTERVALS[0],
+            "backup_type": "full",
+            "mysql_connect_info": MySQLConnectInfo("/"),
+            "ssh_connection_info": None,
+        }
+    )
     expected_result = sorted(
-        [
-            osp.join(str(mycnf_root), item) for item in expected_result_template
-        ]
+        [osp.join(str(mycnf_root), item) for item in expected_result_template]
     )
     actual_result = sorted(rmt_sql._find_all_cnf(mycnf_root.joinpath("my.cnf")))
-    assert (
-        actual_result == expected_result
-    ), LOG.error("Expected: %s\nActual: %s" % (pformat(expected_result), pformat(actual_result)))
+    assert actual_result == expected_result, LOG.error(
+        "Expected: %s\nActual: %s"
+        % (pformat(expected_result), pformat(actual_result))
+    )
 
 
 def test___mem_available():

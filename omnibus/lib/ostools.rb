@@ -13,6 +13,20 @@ def debian?()
     return ohai['platform_family'] == 'debian'
 end
 
+def focal?()
+    if ohai['platform'] == 'ubuntu'
+        return ohai['lsb']['codename'] == 'focal'
+    end
+    return false
+end
+
+def bionic?()
+    if ohai['platform'] == 'ubuntu'
+        return ohai['lsb']['codename'] == 'bionic'
+    end
+    return false
+end
+
 def osx?()
     return ohai['platform_family'] == 'mac_os_x'
 end

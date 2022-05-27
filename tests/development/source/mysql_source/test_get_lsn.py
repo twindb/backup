@@ -3,9 +3,11 @@ import pytest
 from twindb_backup.source.mysql_source import MySQLSource
 
 
-@pytest.mark.parametrize('error_log,lsn', [
-    (
-        """
+@pytest.mark.parametrize(
+    "error_log,lsn",
+    [
+        (
+            """
 161122 13:37:09 Finished backing up non-InnoDB tables and files
 161122 13:37:09 Executing LOCK BINLOG FOR BACKUP...
 161122 13:37:09 Executing FLUSH NO_WRITE_TO_BINLOG ENGINE LOGS...
@@ -26,10 +28,10 @@ xtrabackup: Stopping log copying thread.
 xtrabackup: Transaction log of lsn (2510405091507) to (2512734474282) was copied.
 161122 13:37:09 completed OK!
         """,
-        2512733212975
-    ),
-    (
-        """
+            2512733212975,
+        ),
+        (
+            """
 161122 03:08:50 Executing FLUSH NO_WRITE_TO_BINLOG ENGINE LOGS...
 xtrabackup: The latest check point (for incremental): '19747438'
 xtrabackup: Stopping log copying thread.
@@ -47,12 +49,12 @@ MySQL binlog position: filename 'mysql-bin.000001', position '80960', GTID of th
 xtrabackup: Transaction log of lsn (19747438) to (19747446) was copied.
 161122 03:08:50 completed OK!
         """,
-        19747438
-
-    )
-])
+            19747438,
+        ),
+    ],
+)
 def test_get_lsn(error_log, lsn, tmpdir):
-    err_log = tmpdir.join('err.log')
+    err_log = tmpdir.join("err.log")
     err_log.write(error_log)
     # noinspection PyProtectedMember
     assert MySQLSource._get_lsn(str(err_log)) == lsn

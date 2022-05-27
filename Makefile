@@ -45,7 +45,8 @@ help:
 
 .PHONY: virtualenv
 virtualenv: ## create virtual environment typically used for development purposes
-	virtualenv env --setuptools --prompt='(twindb_backup)'
+	virtualenv -p python3.9 --prompt='(twindb_backup)' ~/.virtualenvs/twindb-backup
+	@printf "To activate run:\n\n. ~/.virtualenvs/twindb-backup/bin/activate\n\n"
 
 .PHONY: pip
 pip:
@@ -100,7 +101,7 @@ clean-docs:
 	rm -rf docs/_build
 
 black: ## Fix code style errors
-	black --line-length 80 twindb_backup
+	black --line-length 80 twindb_backup tests
 
 lint: ## check style with pylint
 	yamllint .
@@ -174,14 +175,15 @@ docker-test: ## Test twindb-backup in a docker container
 		-e "TRAVIS_TAG"=${TRAVIS_TAG} \
 		${DOCKER_IMAGE} /bin/bash /twindb-backup/support/docker-test-${PLATFORM}.sh
 
-
-docker-start:
+.PHONY: docker-start
+docker-start: ## Start a container with /twindb-backup for debugging packaging, etc.
 	@docker run \
 		-v ${pwd}:/twindb-backup \
 		-e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
 		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
 		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
 		-e "GC_CREDENTIALS_FILE=${GC_CREDENTIALS_FILE}" \
+		-w /twindb-backup/ \
 		-it \
 		--name builder_xtrabackup \
 		--rm \
@@ -218,7 +220,7 @@ endif
 ifeq ($(OS_VERSION),stretch)
         PLATFORM = debian
 endif
-package: ## Build package - OS_VERSION must be one of: 6, 7, jessie, stretch, xenial, bionic, cosmic.
+package: ## Build package - OS_VERSION must be one of: 7, bionic, focal.
 	@docker run \
 		-v ${pwd}:/twindb-backup \
 		--name builder_xtrabackup \

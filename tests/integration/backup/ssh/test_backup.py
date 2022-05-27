@@ -1,7 +1,11 @@
 import json
 import os
 
-from tests.integration.conftest import get_twindb_config_dir, docker_execute, assert_and_pause
+from tests.integration.conftest import (
+    get_twindb_config_dir,
+    docker_execute,
+    assert_and_pause,
+)
 
 
 def test_backup(
@@ -47,7 +51,7 @@ password=qwerty
     ]
 
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     cmd = ["twindb-backup", "--config", twindb_config_guest, "status"]
 
@@ -65,18 +69,18 @@ password=qwerty
         "hourly",
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     cmd = ["test", "-d", "/tmp/backup"]
 
     ret, cout = docker_execute(docker_client, storage_server["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     dir_path = "/var/backup/local/master1_1/hourly/mysql"
     cmd = ["bash", "-c", "ls %s | wc -l" % dir_path]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd, tty=True)
-    assert_and_pause((ret == 0, ), cout)
-    assert_and_pause(("1" in cout, ), cout)
+    assert_and_pause((ret == 0,), cout)
+    assert_and_pause(("1" in cout,), cout)
 
     cmd = [
         "twindb-backup",
@@ -87,7 +91,7 @@ password=qwerty
         "daily",
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "twindb-backup",
@@ -98,11 +102,11 @@ password=qwerty
         "daily",
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     dir_path = "/var/backup/local/master1_1/daily/mysql"
     cmd = ["bash", "-c", "ls %s | wc -l" % dir_path]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd, tty=True)
     print(cout)
-    assert_and_pause((ret == 0, ), cout)
-    assert_and_pause(("1" in cout, ), cout)
+    assert_and_pause((ret == 0,), cout)
+    assert_and_pause(("1" in cout,), cout)

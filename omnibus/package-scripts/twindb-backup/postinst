@@ -23,7 +23,7 @@ mkdir -p "${LOG_DIR}" || error_exit "Cannot create ${LOG_DIR}!"
 # setup config
 if [ ! -e "${CONFIG_DIR}/twindb-backup.cfg" ]; then
   mkdir -p ${CONFIG_DIR} || error_exit "Cannot create ${CONFIG_DIR}!"
-  mv "${INSTALL_DIR}/twindb-backup.cfg" "${CONFIG_DIR}/twindb-backup.cfg"
+  cp "${INSTALL_DIR}/twindb-backup.cfg" "${CONFIG_DIR}/twindb-backup.cfg"
   chmod 600 "${CONFIG_DIR}/twindb-backup.cfg"
 else
   echo "Skipping setting up of ${CONFIG_DIR}/twindb-backup.cfg as it already exists."
@@ -31,7 +31,7 @@ fi
 
 # setup cron
 if [ ! -e /etc/cron.d/twindb-backup ]; then
-  mv "${INSTALL_DIR}/twindb-backup.cron" /etc/cron.d/twindb-backup
+  cp "${INSTALL_DIR}/twindb-backup.cron" /etc/cron.d/twindb-backup
 else
   echo "Skipping setting up of /etc/cron.d/twindb-backup as it already exists."
 fi

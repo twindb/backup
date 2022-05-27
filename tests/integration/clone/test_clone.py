@@ -1,5 +1,10 @@
 import time
-from tests.integration.conftest import get_twindb_config_dir, docker_execute, pause_test, assert_and_pause
+from tests.integration.conftest import (
+    get_twindb_config_dir,
+    docker_execute,
+    pause_test,
+    assert_and_pause,
+)
 from twindb_backup import INTERVALS, LOG
 from twindb_backup.source.mysql_source import MySQLConnectInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
@@ -38,7 +43,7 @@ def test_clone(
     cmd = "/usr/sbin/sshd"
     LOG.info("Run SSH daemon on master1_1")
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "twindb-backup",
@@ -47,18 +52,22 @@ def test_clone(
         twindb_config_guest,
         "clone",
         "mysql",
+        "--replication-password",
+        "qwerty",
         "%s:3306" % master1["ip"],
         "%s:3306" % slave["ip"],
     ]
     ret, cout = docker_execute(docker_client, runner["Id"], cmd)
-    assert_and_pause((ret == 0, ), cout)
+    assert_and_pause((ret == 0,), cout)
 
     sql_master_2 = RemoteMySQLSource(
         {
             "ssh_host": slave["ip"],
             "ssh_user": "root",
             "ssh_key": private_key_guest,
-            "mysql_connect_info": MySQLConnectInfo(my_cnf_path, hostname=slave["ip"]),
+            "mysql_connect_info": MySQLConnectInfo(
+                my_cnf_path, hostname=slave["ip"]
+            ),
             "run_type": INTERVALS[0],
             "backup_type": "full",
         }
@@ -79,4 +88,4 @@ def test_clone(
                     return
 
     LOG.error("Replication is not running after 30 seconds timeout")
-    assert False
+    pause_test("Replication is not running after 30 seconds timeout")

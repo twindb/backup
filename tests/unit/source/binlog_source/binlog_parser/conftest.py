@@ -5,8 +5,8 @@ import pytest
 
 @pytest.fixture
 def mysql_bin_000001(tmpdir):
-    binlog_path = tmpdir.join('mysql-bin.000001')
-    with open(str(binlog_path), 'wb') as fp:
+    binlog_path = tmpdir.join("mysql-bin.000001")
+    with open(str(binlog_path), "wb") as fp:
         fp.write(
             b64decode(
                 """

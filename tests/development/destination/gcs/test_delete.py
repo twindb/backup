@@ -1,2 +1,2 @@
 def test_delete(gs):
-    gs.delete('master1/status1')
+    gs.delete("master1/status1")

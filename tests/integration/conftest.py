@@ -3,6 +3,7 @@ from textwrap import dedent
 
 import docker
 import os
+from os import path as osp
 import pytest
 import time
 from docker.errors import DockerException, APIError
@@ -12,25 +13,50 @@ from tests.integration import ensure_aws_creds
 from twindb_backup import setup_logging, LOG
 from twindb_backup.util import mkdir_p
 
+SUPPORTED_IMAGES = [
+    "twindb/backup-test:centos-7",
+    "twindb/backup-test:bionic",
+    "twindb/backup-test:focal",
+]
+
+
 try:
     NODE_IMAGE = os.environ["DOCKER_IMAGE"]
 except KeyError:
     raise EnvironmentError(
-        """You must define the DOCKER_IMAGE environment
-    variable. Valid values are:
-    * twindb/backup-test:centos-7
-    * twindb/backup-test:centos-6
-    * twindb/backup-test:jessie
-    * twindb/backup-test:trusty
-    * twindb/backup-test:xenial
-    * twindb/backup-test:bionic
-    """
+        f"You must define the DOCKER_IMAGE environment variable. "
+        f"Valid values are: \n{os.linesep.join(SUPPORTED_IMAGES)}"
     )
 
 NETWORK_NAME = "test_network"
 
 setup_logging(LOG, debug=True)
 ensure_aws_creds()
+
+
+def get_platform_from_image(image):
+    if "centos" in image:
+        return "centos"
+    elif any(
+        (
+            ("jessie" in image),
+            ("stretch" in image),
+        )
+    ):
+        return "debian"
+    elif any(
+        (
+            ("trusty" in image),
+            ("xenial" in image),
+            ("bionic" in image),
+            ("focal" in image),
+        )
+    ):
+        return "ubuntu"
+    else:
+        raise EnvironmentError(
+            f"Cannot guess platform from docker image name {image}"
+        )
 
 
 @pytest.fixture
@@ -83,7 +109,10 @@ def rsa_private_key():
 def docker_client():
     for _ in range(5):
         try:
-            return docker.DockerClient(version="auto", timeout=600,)
+            return docker.DockerClient(
+                version="auto",
+                timeout=600,
+            )
         except DockerException as err:
             LOG.error(err)
             time.sleep(5)
@@ -116,7 +145,11 @@ def _ipam_config():
 def container_network(docker_client):
     api = docker_client.api
     network = None
-    network_params = {"NAME": NETWORK_NAME, "subnet": None, "second_octet": None}
+    network_params = {
+        "NAME": NETWORK_NAME,
+        "subnet": None,
+        "second_octet": None,
+    }
     ipam_config = _ipam_config()
 
     subnet = ipam_config["Config"][0]["Subnet"]
@@ -125,7 +158,10 @@ def container_network(docker_client):
 
     try:
         network = api.create_network(
-            name=NETWORK_NAME, driver="bridge", ipam=ipam_config, check_duplicate=True
+            name=NETWORK_NAME,
+            driver="bridge",
+            ipam=ipam_config,
+            check_duplicate=True,
         )
         LOG.info("Created subnet %s", network_params["subnet"])
         LOG.debug(network)
@@ -156,7 +192,12 @@ def get_container(
     cwd = os.getcwd()
     LOG.debug("Current directory: %s", cwd)
 
-    binds = {cwd: {"bind": "/twindb-backup", "mode": "rw",}}
+    binds = {
+        cwd: {
+            "bind": "/twindb-backup",
+            "mode": "rw",
+        }
+    }
     if twindb_config_dir:
         LOG.debug("TwinDB config directory: %s", twindb_config_dir)
         mkdir_p(twindb_config_dir, mode=0o755)
@@ -214,20 +255,20 @@ def get_container(
 @pytest.yield_fixture(scope="module")
 def master1(docker_client, container_network, tmpdir_factory):
 
-    try:
-        platform = os.environ["PLATFORM"]
-    except KeyError:
-        raise EnvironmentError(
-            """The environment variable PLATFORM
-        must be defined. Allowed values are:
-        * centos
-        * debian
-        * ubuntu
-        """
-        )
+    platform = (
+        os.environ["PLATFORM"]
+        if "PLATFORM" in os.environ
+        else get_platform_from_image(os.environ["DOCKER_IMAGE"])
+    )
 
-    bootstrap_script = (
-        "/twindb-backup/support/bootstrap/master/" "%s/master1.sh" % platform
+    bootstrap_script = osp.join(
+        osp.sep,
+        "twindb-backup",
+        "support",
+        "bootstrap",
+        "master",
+        platform,
+        "master1.sh",
     )
     datadir = tmpdir_factory.mktemp("mysql")
     twindb_config_dir = tmpdir_factory.mktemp("twindb")
@@ -251,15 +292,22 @@ def master1(docker_client, container_network, tmpdir_factory):
 
         LOG.info("Port TCP/3306 is ready")
 
-        privileges_file = (
-            "/twindb-backup/vagrant/environment/puppet/"
-            "modules/profile/files/mysql_grants.sql"
+        privileges_file = osp.join(
+            os.sep,
+            "twindb-backup",
+            "vagrant",
+            "environment",
+            "puppet",
+            "modules",
+            "profile",
+            "files",
+            "mysql_grants.sql",
         )
-        cmd = ["bash", "-c", "mysql -uroot mysql < %s" % privileges_file]
+        cmd = ["bash", "-c", f"mysql -uroot mysql < {privileges_file}"]
         ret, cout = docker_execute(docker_client, container["Id"], cmd)
 
         print(cout)
-        assert ret == 0
+        assert_and_pause((ret == 0,), cout)
 
         ret, _ = docker_execute(docker_client, container["Id"], ["ls"])
         assert ret == 0
@@ -268,36 +316,37 @@ def master1(docker_client, container_network, tmpdir_factory):
             docker_client, container["Id"], ["bash", bootstrap_script]
         )
         print(cout)
-        assert ret == 0
+        assert_and_pause((ret == 0,), cout)
 
         yield container
 
     finally:
         if container:
             LOG.info("Removing container %s", container["Id"])
-            docker_client.api.remove_container(container=container["Id"], force=True)
+            docker_client.api.remove_container(
+                container=container["Id"], force=True
+            )
 
 
 # noinspection PyShadowingNames
 @pytest.yield_fixture(scope="module")
 def slave(docker_client, container_network, tmpdir_factory):
-    try:
-        platform = os.environ["PLATFORM"]
-    except KeyError:
-        raise EnvironmentError(
-            """The environment variable PLATFORM
-        must be defined. Allowed values are:
-        * centos
-        * debian
-        * ubuntu
-        """
-        )
-    bootstrap_script = (
-        "/twindb-backup/support/bootstrap/master/" "%s/slave.sh" % platform
+    platform = get_platform_from_image(os.environ["DOCKER_IMAGE"])
+    bootstrap_script = osp.join(
+        osp.sep,
+        "twindb-backup",
+        "support",
+        "bootstrap",
+        "master",
+        platform,
+        "slave.sh",
     )
+
     separator_pos = NODE_IMAGE.find(":")
     image_name = (
-        NODE_IMAGE[: separator_pos + 1] + "slave_" + NODE_IMAGE[separator_pos + 1 :]
+        NODE_IMAGE[: separator_pos + 1]
+        + "slave_"
+        + NODE_IMAGE[separator_pos + 1 :]
     )
     datadir = tmpdir_factory.mktemp("mysql")
     twindb_config_dir = tmpdir_factory.mktemp("twindb")
@@ -320,39 +369,37 @@ def slave(docker_client, container_network, tmpdir_factory):
             time.sleep(1)
             LOG.info("Still waiting")
         LOG.info("Port TCP/22 is ready")
-        ret, _ = docker_execute(docker_client, container["Id"], ["ls"])
-        assert ret == 0
+        ret, cout = docker_execute(docker_client, container["Id"], ["ls"])
+        assert_and_pause((ret == 0,), cout)
 
         ret, cout = docker_execute(
             docker_client, container["Id"], ["bash", bootstrap_script]
         )
         print(cout)
-        assert ret == 0
+        assert_and_pause((ret == 0,), cout)
 
         yield container
 
     finally:
 
         LOG.info("Removing container %s", container["Id"])
-        docker_client.api.remove_container(container=container["Id"], force=True)
+        docker_client.api.remove_container(
+            container=container["Id"], force=True
+        )
 
 
 # noinspection PyShadowingNames
 @pytest.yield_fixture(scope="module")
 def runner(docker_client, container_network, tmpdir_factory):
-    try:
-        platform = os.environ["PLATFORM"]
-    except KeyError:
-        raise EnvironmentError(
-            """The environment variable PLATFORM
-            must be defined. Allowed values are:
-            * centos
-            * debian
-            * ubuntu
-            """
-        )
-    bootstrap_script = (
-        "/twindb-backup/support/bootstrap/master/" "%s/master1.sh" % platform
+    platform = get_platform_from_image(os.environ["DOCKER_IMAGE"])
+    bootstrap_script = osp.join(
+        osp.sep,
+        "twindb-backup",
+        "support",
+        "bootstrap",
+        "master",
+        platform,
+        "master1.sh",
     )
 
     datadir = tmpdir_factory.mktemp("mysql")
@@ -374,14 +421,16 @@ def runner(docker_client, container_network, tmpdir_factory):
             docker_client, container["Id"], ["bash", bootstrap_script]
         )
         print(cout)
-        assert ret == 0
+        assert_and_pause((ret == 0,), cout)
 
         yield container
 
     finally:
 
         LOG.info("Removing container %s", container["Id"])
-        docker_client.api.remove_container(container=container["Id"], force=True)
+        docker_client.api.remove_container(
+            container=container["Id"], force=True
+        )
 
 
 def docker_execute(client, container_id, cmd, tty=False):
@@ -399,7 +448,8 @@ def docker_execute(client, container_id, cmd, tty=False):
     :type tty: bool
     :rtype: tuple(int, str)
     """
-    LOG.debug("Running %s", " ".join(cmd))
+    cont = client.containers.get(container_id)
+    LOG.debug("Running(on %s) %s", cont.name, " ".join(cmd))
     api = client.api
     executor = api.exec_create(container_id, cmd, tty=tty)
     exec_id = executor["Id"]
@@ -433,7 +483,7 @@ def get_twindb_config_dir(client, container_id):
 
 
 def pause_test(msg):
-    """Pause """
+    """Pause"""
     try:
         if os.environ["PAUSE_TEST"]:
             LOG.debug("Test paused")
@@ -442,7 +492,9 @@ def pause_test(msg):
 
             time.sleep(36000)
     except KeyError:
-        LOG.debug("Define the PAUSE_TEST environment variable if you'd like to pause the test")
+        LOG.debug(
+            "Define the PAUSE_TEST environment variable if you'd like to pause the test"
+        )
         LOG.debug("export PAUSE_TEST=1")
         pass
 

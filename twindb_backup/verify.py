@@ -19,7 +19,7 @@ from twindb_backup.status.mysql_status import MySQLStatus
 def edit_backup_my_cnf(dst_path):
     """Removed options from config(besides MySQL 5.7.8)"""
     filename = osp.join(dst_path, "backup-my.cnf")
-    backup_cfg = ConfigParser()
+    backup_cfg = ConfigParser(strict=False)
     backup_cfg.read(filename)
     for option in [
         "innodb_log_checksum_algorithm",

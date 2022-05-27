@@ -4,7 +4,12 @@ from io import StringIO
 
 import magic
 
-from tests.integration.conftest import docker_execute, get_twindb_config_dir, pause_test, assert_and_pause
+from tests.integration.conftest import (
+    docker_execute,
+    get_twindb_config_dir,
+    pause_test,
+    assert_and_pause,
+)
 from twindb_backup import LOG
 from twindb_backup.destination.s3 import S3
 
@@ -51,7 +56,9 @@ def test__take_file_backup(
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
 
     assert_and_pause((ret == 0,), cout)
-    assert_and_pause((s3_backup_path in cout,), "%s is not in %s" % (s3_backup_path, cout))
+    assert_and_pause(
+        (s3_backup_path in cout,), "%s is not in %s" % (s3_backup_path, cout)
+    )
 
     backup_to_restore = None
     for line in StringIO(cout):
@@ -82,7 +89,11 @@ def test__take_file_backup(
     assert_and_pause((ret == 0,), cout)
 
     # And content is same
-    cmd = ["diff", "/tmp/restore/etc/twindb/twindb-backup-1.cfg", twindb_config_guest]
+    cmd = [
+        "diff",
+        "/tmp/restore/etc/twindb/twindb-backup-1.cfg",
+        twindb_config_guest,
+    ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     # empty output
     assert_and_pause((not cout,), cout)
@@ -349,7 +360,9 @@ def test_take_file_backup_with_aenc(
     key = backup_to_restore.lstrip("s3://").lstrip(s3_client.bucket).lstrip("/")
     local_copy = "%s/backup_to_restore.tar.gz.gpg" % twindb_config_dir
     s3_client.s3_client.download_file(s3_client.bucket, key, local_copy)
-    assert magic.from_file(local_copy) == "data"
+    assert magic.from_file(local_copy) == "data" or magic.from_file(
+        local_copy
+    ).startswith("PGP RSA encrypted")
 
     dest_dir = "/tmp/simple_backup_aenc"
     cmd = ["mkdir", "-p", "/tmp/simple_backup_aenc"]
@@ -473,7 +486,9 @@ def test__take_mysql_backup_aenc_suffix_gpg(
     local_copy = "%s/mysql_backup.tar.gz.gpg" % twindb_config_dir
 
     s3_client.s3_client.download_file(s3_client.bucket, key, local_copy)
-    assert magic.from_file(local_copy) == "data"
+    assert magic.from_file(local_copy) == "data" or magic.from_file(
+        local_copy
+    ).startswith("PGP RSA encrypted")
 
 
 def test_take_mysql_backup_aenc_restores_full(
@@ -512,7 +527,7 @@ def test_take_mysql_backup_aenc_restores_full(
     cmd = ["rm", "-f", gpg_keyring, gpg_secret_keyring]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "gpg",
@@ -529,7 +544,7 @@ def test_take_mysql_backup_aenc_restores_full(
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     with open(twindb_config_host, "w") as fp:
         content = config_content_mysql_aenc.format(
@@ -553,12 +568,12 @@ def test_take_mysql_backup_aenc_restores_full(
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = ["twindb-backup", "--config", twindb_config_guest, "status"]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     key = list(json.loads(cout)["daily"].keys())[0]
 
@@ -568,7 +583,7 @@ def test_take_mysql_backup_aenc_restores_full(
         docker_client, master1["Id"], ["mkdir", "-p", str(dst_dir)]
     )
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "twindb-backup",
@@ -584,19 +599,18 @@ def test_take_mysql_backup_aenc_restores_full(
 
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     print("Files in restored datadir:")
     ret, cout = docker_execute(docker_client, master1["Id"], ["find", dst_dir])
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     files_to_test = []
     mysql_files = [
         "ibdata1",
         "ib_logfile0",
         "ib_logfile1",
-        "mysql/user.MYD",
         "backup-my.cnf",
         "xtrabackup_logfile",
     ]
@@ -607,7 +621,7 @@ def test_take_mysql_backup_aenc_restores_full(
     print(cmd)
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "bash",
@@ -617,7 +631,7 @@ def test_take_mysql_backup_aenc_restores_full(
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
 
 def test_take_mysql_backup_aenc_restores_inc(
@@ -655,7 +669,7 @@ def test_take_mysql_backup_aenc_restores_inc(
     cmd = ["rm", "-f", gpg_keyring, gpg_secret_keyring]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "gpg",
@@ -672,7 +686,7 @@ def test_take_mysql_backup_aenc_restores_inc(
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     with open(twindb_config_host, "w") as fp:
         content = config_content_mysql_aenc.format(
@@ -697,7 +711,7 @@ def test_take_mysql_backup_aenc_restores_inc(
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "twindb-backup",
@@ -709,12 +723,12 @@ def test_take_mysql_backup_aenc_restores_inc(
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = ["twindb-backup", "--config", twindb_config_guest, "status"]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     key = list(json.loads(cout)["hourly"].keys())[0]
 
@@ -724,7 +738,7 @@ def test_take_mysql_backup_aenc_restores_inc(
         docker_client, master1["Id"], ["mkdir", "-p", str(dst_dir)]
     )
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "twindb-backup",
@@ -740,19 +754,18 @@ def test_take_mysql_backup_aenc_restores_inc(
 
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     print("Files in restored datadir:")
     ret, cout = docker_execute(docker_client, master1["Id"], ["find", dst_dir])
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     files_to_test = []
     for datadir_file in [
         "ibdata1",
         "ib_logfile0",
         "ib_logfile1",
-        "mysql/user.MYD",
         "backup-my.cnf",
         "xtrabackup_logfile",
     ]:
@@ -762,7 +775,7 @@ def test_take_mysql_backup_aenc_restores_inc(
     print(cmd)
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "bash",
@@ -772,4 +785,4 @@ def test_take_mysql_backup_aenc_restores_inc(
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)

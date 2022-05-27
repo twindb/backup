@@ -1,5 +1,6 @@
 # noinspection PyPackageRequirements
 import mock
+
 # noinspection PyPackageRequirements
 import pytest
 

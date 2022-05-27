@@ -9,7 +9,7 @@ from twindb_backup.modifiers.gpg import Gpg
 
 def test_gpg_init(input_file, keyring_file):
 
-    recipient = 'a@a.com'
+    recipient = "a@a.com"
 
     with open(str(input_file)) as stream:
         gpg = Gpg(stream, recipient, str(keyring_file))
@@ -19,43 +19,45 @@ def test_gpg_init(input_file, keyring_file):
 
 
 def test_gpg_raises_exception_if_no_keyring(input_file, tmpdir):
-    keyring_file = tmpdir.join('does_not_exit')
+    keyring_file = tmpdir.join("does_not_exit")
 
     with open(str(input_file)) as stream:
         with pytest.raises(ModifierException):
-            Gpg(stream, 'foo@bar', str(keyring_file))
+            Gpg(stream, "foo@bar", str(keyring_file))
 
 
-@mock.patch('twindb_backup.modifiers.base.Popen')
+@mock.patch("twindb_backup.modifiers.base.Popen")
 def test_get_stream(mock_popen, input_file, keyring_file):
 
-    recipient = 'a@a.com'
+    recipient = "a@a.com"
 
     with open(str(input_file)) as stream:
         gpg = Gpg(stream, recipient, str(keyring_file))
         with gpg.get_stream():
             expected_cmd = [
-                'gpg', '--no-default-keyring',
-                '--trust-model', 'always',
-                '--keyring', gpg.keyring,
-                '--recipient', gpg.recipient,
-                '--encrypt',
-                '--yes',
-                '--batch'
+                "gpg",
+                "--no-default-keyring",
+                "--trust-model",
+                "always",
+                "--keyring",
+                gpg.keyring,
+                "--recipient",
+                gpg.recipient,
+                "--encrypt",
+                "--yes",
+                "--batch",
             ]
             mock_popen.assert_called_once_with(
-                expected_cmd,
-                stdin=gpg.input,
-                stdout=PIPE,
-                stderr=PIPE
+                expected_cmd, stdin=gpg.input, stdout=PIPE, stderr=PIPE
             )
 
 
-@mock.patch('twindb_backup.modifiers.base.Popen')
-def test_revert_stream(mock_popen, input_file, keyring_file,
-                       secret_keyring_file):
+@mock.patch("twindb_backup.modifiers.base.Popen")
+def test_revert_stream(
+    mock_popen, input_file, keyring_file, secret_keyring_file
+):
 
-    recipient = 'a@a.com'
+    recipient = "a@a.com"
     mock_proc = mock.Mock()
     mock_proc.communicate.return_value = (None, None)
     mock_proc.returncode = 0
@@ -67,23 +69,25 @@ def test_revert_stream(mock_popen, input_file, keyring_file,
             stream,
             recipient,
             str(keyring_file),
-            secret_keyring=str(secret_keyring_file)
+            secret_keyring=str(secret_keyring_file),
         )
 
         with gpg.revert_stream():
             expected_cmd = [
-                'gpg', '--no-default-keyring',
-                '--trust-model', 'always',
-                '--secret-keyring', gpg.secret_keyring,
-                '--keyring', gpg.keyring,
-                '--recipient', gpg.recipient,
-                '--decrypt',
-                '--yes',
-                '--batch'
+                "gpg",
+                "--no-default-keyring",
+                "--trust-model",
+                "always",
+                "--secret-keyring",
+                gpg.secret_keyring,
+                "--keyring",
+                gpg.keyring,
+                "--recipient",
+                gpg.recipient,
+                "--decrypt",
+                "--yes",
+                "--batch",
             ]
             mock_popen.assert_called_once_with(
-                expected_cmd,
-                stdin=gpg.input,
-                stdout=PIPE,
-                stderr=PIPE
+                expected_cmd, stdin=gpg.input, stdout=PIPE, stderr=PIPE
             )

@@ -229,7 +229,12 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
                 LOG.debug("Successfully streamed xtrabackup output")
             self._update_backup_info(stderr_file)
         except OSError as err:
-            LOG.error("Failed to run %s: %s", cmd, err)
+            LOG.error("Failed to run %s: %s", " ".join(cmd), err)
+            LOG.error(
+                "Make sure that xtrabackup package is installed and %s "
+                "is available in $PATH",
+                self._xtrabackup,
+            )
             exit(1)
         finally:
             if wsrep_desynced:
@@ -327,13 +332,15 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         with open(err_log_path) as error_log:
             for line in error_log:
                 pattern = (
-                    "xtrabackup: " "The latest check point (for incremental):"
+                    "xtrabackup: The latest check point (for incremental):"
                 )
                 if line.startswith(pattern):
                     lsn = line.split()[7].strip("'")
                     return int(lsn)
+                elif "The latest check point (for incremental):" in line:
+                    return int(line.split()[11].strip("'"))
         raise MySQLSourceError(
-            "Could not find LSN" " in XtraBackup error output %s" % err_log_path
+            "Could not find LSN in XtraBackup error output %s" % err_log_path
         )
 
     @property
@@ -472,7 +479,11 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
                     str(row["wsrep_on"]).lower() == "1"
                     or str(row["wsrep_on"]).lower() == "on"
                 )
-        except pymysql.InternalError as err:
+        except (
+            pymysql.InternalError,
+            OperationalError,
+            MySQLSourceError,
+        ) as err:
             error_code = err.args[0]
             error_message = err.args[1]
 
@@ -509,15 +520,12 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
             )
 
             yield connection
-        except OperationalError:
+        except OperationalError as err:
             LOG.error(
                 "Can't connect to MySQL server on %s",
                 self._connect_info.hostname,
             )
-            raise MySQLSourceError(
-                "Can't connect to MySQL server on %s"
-                % self._connect_info.hostname
-            )
+            raise MySQLSourceError(*err.args) from err
         finally:
             if connection:
                 connection.close()

@@ -46,8 +46,8 @@ LOCK_FILE = "/var/run/twindb-backup.lock"
 LOG_FILE = "/var/log/twindb-backup-measures.log"
 INTERVALS = ["hourly", "daily", "weekly", "monthly", "yearly"]
 MEDIA_TYPES = ["files", "mysql", "binlog"]
-XTRABACKUP_BINARY = "/opt/twindb-backup/embedded/bin/xtrabackup"
-XBSTREAM_BINARY = "/opt/twindb-backup/embedded/bin/xbstream"
+XTRABACKUP_BINARY = "xtrabackup"
+XBSTREAM_BINARY = "xbstream"
 MY_CNF_COMMON_PATHS = ["/etc/my.cnf", "/etc/mysql/my.cnf"]
 DEFAULT_FILE_ENCODING = "utf-8"
 

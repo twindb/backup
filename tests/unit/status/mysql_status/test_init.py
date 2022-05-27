@@ -19,18 +19,18 @@ def test_init_creates_empty():
 def test_init_creates_instance_from_old(deprecated_status_raw_content):
     status = MySQLStatus(deprecated_status_raw_content)
     assert status.version == STATUS_FORMAT_VERSION
-    key = 'master1/hourly/mysql/mysql-2018-03-28_04_11_16.xbstream.gz'
+    key = "master1/hourly/mysql/mysql-2018-03-28_04_11_16.xbstream.gz"
     copy = MySQLCopy(
-        'master1',
-        'hourly',
-        'mysql-2018-03-28_04_11_16.xbstream.gz',
+        "master1",
+        "hourly",
+        "mysql-2018-03-28_04_11_16.xbstream.gz",
         backup_started=1522210276,
         backup_finished=1522210295,
-        binlog='mysql-bin.000001',
-        parent='master1/daily/mysql/mysql-2018-03-28_04_09_53.xbstream.gz',
+        binlog="mysql-bin.000001",
+        parent="master1/daily/mysql/mysql-2018-03-28_04_09_53.xbstream.gz",
         lsn=19903207,
         config={
-                '/etc/my.cnf': """[mysqld]
+            "/etc/my.cnf": """[mysqld]
 datadir=/var/lib/mysql
 socket=/var/lib/mysql/mysql.sock
 user=mysql
@@ -49,8 +49,7 @@ pid-file=/var/run/mysqld/mysqld.pid
 """
         },
         position=46855,
-        type='incremental'
-
+        type="incremental",
     )
     assert key in status.hourly
     LOG.debug("Copy %s: %r", copy.key, copy)
@@ -61,18 +60,18 @@ pid-file=/var/run/mysqld/mysqld.pid
 def test_init_creates_instance_from_new(status_raw_content):
     status = MySQLStatus(status_raw_content)
     assert status.version == STATUS_FORMAT_VERSION
-    key = 'master1/hourly/mysql/mysql-2018-03-28_04_11_16.xbstream.gz'
+    key = "master1/hourly/mysql/mysql-2018-03-28_04_11_16.xbstream.gz"
     copy = MySQLCopy(
-        'master1',
-        'hourly',
-        'mysql-2018-03-28_04_11_16.xbstream.gz',
+        "master1",
+        "hourly",
+        "mysql-2018-03-28_04_11_16.xbstream.gz",
         backup_started=1522210276,
         backup_finished=1522210295,
-        binlog='mysql-bin.000001',
-        parent='master1/daily/mysql/mysql-2018-03-28_04_09_53.xbstream.gz',
+        binlog="mysql-bin.000001",
+        parent="master1/daily/mysql/mysql-2018-03-28_04_09_53.xbstream.gz",
         lsn=19903207,
         config={
-            '/etc/my.cnf': """[mysqld]
+            "/etc/my.cnf": """[mysqld]
 datadir=/var/lib/mysql
 socket=/var/lib/mysql/mysql.sock
 user=mysql
@@ -91,8 +90,7 @@ pid-file=/var/run/mysqld/mysqld.pid
 """
         },
         position=46855,
-        type='incremental'
-
+        type="incremental",
     )
     assert key in status.hourly
     LOG.debug("Copy %s: %r", copy.key, copy)
@@ -106,12 +104,13 @@ def test_init_raises_on_wrong_key():
             content=b64encode(
                 json.dumps(
                     {
-                        u'daily': {},
-                        u'hourly': {},
-                        u'monthly': {},
-                        u'weekly': {
-                            u'foo/weekly/some_file.txt': {u'type': u'full'}},
-                        u'yearly': {}
+                        "daily": {},
+                        "hourly": {},
+                        "monthly": {},
+                        "weekly": {
+                            "foo/weekly/some_file.txt": {"type": "full"}
+                        },
+                        "yearly": {},
                     }
                 ).encode("utf-8")
             )
@@ -123,12 +122,13 @@ def test_init_weekly_only():
         content=b64encode(
             json.dumps(
                 {
-                    u'daily': {},
-                    u'hourly': {},
-                    u'monthly': {},
-                    u'weekly': {
-                        u'foo/weekly/mysql/some_file.txt': {u'type': u'full'}},
-                    u'yearly': {}
+                    "daily": {},
+                    "hourly": {},
+                    "monthly": {},
+                    "weekly": {
+                        "foo/weekly/mysql/some_file.txt": {"type": "full"}
+                    },
+                    "yearly": {},
                 }
             ).encode("utf-8")
         )
@@ -150,7 +150,9 @@ def test_init_with_new_format(status_raw_content):
     assert status.version == 1
 
 
-def test_init_with_new_format_with_wrong_checksum(status_raw_content_with_invalid_hash):
+def test_init_with_new_format_with_wrong_checksum(
+    status_raw_content_with_invalid_hash,
+):
     with pytest.raises(CorruptedStatus):
         MySQLStatus(status_raw_content_with_invalid_hash)
 
@@ -159,42 +161,33 @@ def test_init_example_0():
     content = b64encode(
         json.dumps(
             {
-                'hourly': {
-                    'foo/hourly/mysql/some_file.txt': {
-                        'type': 'full'
-                    }
-                },
-                'daily': {},
-                'weekly': {},
-                'monthly': {},
-                'yearly': {}
+                "hourly": {"foo/hourly/mysql/some_file.txt": {"type": "full"}},
+                "daily": {},
+                "weekly": {},
+                "monthly": {},
+                "yearly": {},
             }
         ).encode("utf-8")
     )
     status = MySQLStatus(content=content)
     assert len(status.hourly) == 1
     assert len(status) == 1
-    assert type(status['foo/hourly/mysql/some_file.txt']) == MySQLCopy
+    assert type(status["foo/hourly/mysql/some_file.txt"]) == MySQLCopy
 
 
 def test_init_example_1():
     content = b64encode(
         json.dumps(
             {
-                'hourly': {},
-                'daily': {},
-                'weekly': {
-                    'foo/weekly/mysql/some_file.txt': {
-                        "type": "full"
-                    }
-                },
-                'monthly': {},
-                'yearly': {}
+                "hourly": {},
+                "daily": {},
+                "weekly": {"foo/weekly/mysql/some_file.txt": {"type": "full"}},
+                "monthly": {},
+                "yearly": {},
             }
         ).encode("utf-8")
     )
     status = MySQLStatus(content=content)
     assert len(status.weekly) == 1
     assert len(status) == 1
-    assert type(status['foo/weekly/mysql/some_file.txt']) == MySQLCopy
-
+    assert type(status["foo/weekly/mysql/some_file.txt"]) == MySQLCopy
