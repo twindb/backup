@@ -42,57 +42,42 @@ class profile::base {
     ensure => present,
     owner  => $profile::base::user,
     mode   => "0600",
-    content => "[client]
-user=dba
-password=qwerty
-"
+    source => 'puppet:///modules/profile/.my.cnf'
   }
 
   file { "/root/.my.cnf":
     ensure => present,
     owner  => 'root',
     mode   => "0600",
-    content => "[client]
-user=dba
-password=qwerty
-"
+    source => 'puppet:///modules/profile/.my.cnf'
   }
 
-  $packages = [ 'vim-enhanced', 'nmap-ncat',
-    'Percona-Server-client-56', 'Percona-Server-server-56',
-    'Percona-Server-devel-56', 'Percona-Server-shared-56', 'percona-toolkit',
+  $packages = [
+    'vim',
+    'netcat',
+    'percona-server-client-5.7',
+    'percona-server-server-5.7',
+    'percona-toolkit',
     'percona-xtrabackup-24',
-    'python3-devel', 'python3', 'python36-virtualenv',
-    'gcc', 'zlib-devel', 'openssl-devel',
-    'rpm-build','docker', 'strace', 'jq']
+    'python3.9-dev', 'python3.9', 'python', 'virtualenv',
+    'gcc',
+    'zlibc',
+    'openssl',
+    'docker.io',
+    'strace',
+    'jq',
+    'make'
+  ]
 
   package { $packages:
     ensure  => installed,
-    require => [
-      Yumrepo['Percona'],
-      Package['epel-release']
-    ]
-  }
-
-  yumrepo { 'Percona':
-    baseurl  => 'http://repo.percona.com/centos/$releasever/os/$basearch/',
-    enabled  => 1,
-    gpgcheck => 0,
-    descr    => 'Percona',
-    retries  => 3
-  }
-
-  package { 'epel-release':
-    ensure => installed
   }
 
   service { 'docker':
     ensure => running,
     enable => true,
     require => [
-      Package['docker'],
-      Exec['disable_selinux'],
-      File['/etc/sysconfig/docker'],
+      Package['docker.io'],
     ]
   }
 
@@ -114,17 +99,6 @@ password=qwerty
     mode    => "0600",
     source  => 'puppet:///modules/profile/twindb-backup.cfg',
     require => File['/etc/twindb']
-  }
-
-  file { "/etc/sysconfig/docker":
-    ensure  => present,
-    owner   => 'root',
-    mode    => "0644",
-    source  => 'puppet:///modules/profile/sysconfig_docker',
-  }
-
-  exec {'disable_selinux':
-    command => '/usr/sbin/setenforce 0'
   }
 
 }

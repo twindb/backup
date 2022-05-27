@@ -13,4 +13,3 @@ def test_retention_default():
 def test_retention():
     assert RetentionPolicy(hourly=7).hourly == 7
     assert RetentionPolicy(daily=8).daily == 8
-

@@ -6,12 +6,12 @@ from twindb_backup.destination.ssh import Ssh, SshConnectInfo
 def test_ssh_exec_command():
 
     connect_info = SshConnectInfo(
-        host='192.168.36.250',
-        key='/Users/aleks/src/backup/vagrant/.vagrant/machines/master1/virtualbox/private_key',
-        user='vagrant'
+        host="192.168.36.250",
+        key="/Users/aleks/src/backup/vagrant/.vagrant/machines/master1/virtualbox/private_key",
+        user="vagrant",
     )
-    ssh = Ssh(ssh_connect_info=connect_info, remote_path='/tmp/aaa')
-    _, stdout, stderr = ssh._execute_command(['/bin/ls', '/'])
+    ssh = Ssh(ssh_connect_info=connect_info, remote_path="/tmp/aaa")
+    _, stdout, stderr = ssh._execute_command(["/bin/ls", "/"])
     print(stdout.readlines())
 
 
@@ -38,4 +38,3 @@ def test_ssh_exec_command():
 #         print line
 #
 #
-

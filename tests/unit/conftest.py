@@ -7,7 +7,7 @@ setup_logging(LOG, debug=True)
 
 @pytest.fixture
 def cache_dir(tmpdir):
-    cache_path = tmpdir.mkdir('cache')
+    cache_path = tmpdir.mkdir("cache")
     return cache_path
 
 

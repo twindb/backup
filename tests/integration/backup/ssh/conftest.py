@@ -33,7 +33,9 @@ def storage_server(docker_client, container_network):
 
     if container:
         LOG.info("Removing container %s", container["Id"])
-        docker_client.api.remove_container(container=container["Id"], force=True)
+        docker_client.api.remove_container(
+            container=container["Id"], force=True
+        )
 
 
 @pytest.fixture

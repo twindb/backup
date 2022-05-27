@@ -2,12 +2,12 @@ from twindb_backup.copy.mysql_copy import MySQLCopy
 
 
 def test_repr():
-    copy = MySQLCopy('foo', 'daily', 'some_file.txt', type='full')
-    assert repr(copy) == 'MySQLCopy(foo/daily/mysql/some_file.txt)'
+    copy = MySQLCopy("foo", "daily", "some_file.txt", type="full")
+    assert repr(copy) == "MySQLCopy(foo/daily/mysql/some_file.txt)"
 
 
 def test_str():
-    copy = MySQLCopy('foo', 'daily', 'some_file.txt', type='full')
+    copy = MySQLCopy("foo", "daily", "some_file.txt", type="full")
 
     expected = """MySQLCopy(foo/daily/mysql/some_file.txt) = {
     "backup_finished": null,

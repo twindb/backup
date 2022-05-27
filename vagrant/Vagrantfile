@@ -3,12 +3,12 @@
 nodes = [
     { :hostname   => 'master1',
       :ip         => '192.168.36.250',
-      :box        => 'bento/centos-7',
+      :box        => 'ubuntu/focal64',
       :ram        => 3072
     },
     { :hostname   => 'master2',
       :ip         => '192.168.36.251',
-      :box        => 'bento/centos-7',
+      :box        => 'ubuntu/focal64',
       :ram        => 3072
     }
 ]
@@ -18,28 +18,29 @@ VAGRANTFILE_API_VERSION = '2'
 
 $script = <<SCRIPT
 
-if [[ $(cat /sys/class/net/enp0s8/operstate) != 'up' ]]; then
-    service network restart
-fi
-
 function install_package() {
 
-    yum clean all
+    apt-get update
 
     for i in 1 2 3
     do
-        yum -y install $1 && break
+        apt-get -y install $1 && break
     done
 }
 
 function install_puppet(){
 
-    rpm -Uvh https://yum.puppetlabs.com/puppetlabs-release-pc1-el-7.noarch.rpm
     install_package puppet
 
 }
 
 which puppet || install_puppet
+install_package gnupg2
+wget -O /tmp/percona-release_latest.$(lsb_release -sc)_all.deb \
+    https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb
+
+dpkg -i /tmp/percona-release_latest.$(lsb_release -sc)_all.deb
+apt-get update
 
 SCRIPT
 

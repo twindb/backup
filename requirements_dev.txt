@@ -120,7 +120,7 @@ python-dateutil==2.8.2
     # via
     #   botocore
     #   moto
-python-magic==0.4.25
+python-magic==0.4.18
     # via -r requirements_dev.in
 pytz==2022.1
     # via

@@ -5,7 +5,8 @@ gem 'omnibus', '~> 8.0'
 
 # Use Chef's software definitions. It is recommended that you write your own
 # software definitions, but you can clone/fork Chef's to get you started.
-gem 'omnibus-software', github: 'twindb/omnibus-software'
+# Using only local "softwares"
+# gem 'omnibus-software', github: 'twindb/omnibus-software'
 
 # gem 'ohai', '~> 14.8'
 # gem 'artifactory', '~> 3.0'

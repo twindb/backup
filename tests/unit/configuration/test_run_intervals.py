@@ -11,7 +11,7 @@ def test_run_intervals_default():
 def test_run_intervals():
     ri = RunIntervals(hourly=False)
     for i in INTERVALS:
-        if i == 'hourly':
+        if i == "hourly":
             assert getattr(ri, i) is False
         else:
             assert getattr(ri, i) is True

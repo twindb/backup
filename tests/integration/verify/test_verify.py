@@ -1,11 +1,20 @@
 from textwrap import dedent
 
-from tests.integration.conftest import get_twindb_config_dir, docker_execute
+from tests.integration.conftest import (
+    get_twindb_config_dir,
+    docker_execute,
+    assert_and_pause,
+)
 from twindb_backup import LOG
 
 
 def test_verify_on_master(
-    master1, slave, storage_server, config_content_ssh, docker_client, rsa_private_key
+    master1,
+    slave,
+    storage_server,
+    config_content_ssh,
+    docker_client,
+    rsa_private_key,
 ):
 
     twindb_config_guest = "/etc/twindb/twindb-backup-1.cfg"
@@ -54,8 +63,7 @@ def test_verify_on_master(
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     LOG.info(cout)
-
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "bash",
@@ -67,7 +75,7 @@ def test_verify_on_master(
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     url = cout.strip()
     LOG.info(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "twindb-backup",
@@ -81,7 +89,7 @@ def test_verify_on_master(
 
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     LOG.info(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "twindb-backup",
@@ -95,7 +103,7 @@ def test_verify_on_master(
 
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     LOG.info(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "twindb-backup",
@@ -111,4 +119,4 @@ def test_verify_on_master(
 
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     LOG.info(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)

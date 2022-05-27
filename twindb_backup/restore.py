@@ -29,7 +29,7 @@ from twindb_backup.exporter.base_exporter import (
 )
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.status.mysql_status import MySQLStatus
-from twindb_backup.util import mkdir_p, empty_dir
+from twindb_backup.util import mkdir_p
 
 
 def get_my_cnf(status, key):
@@ -52,6 +52,16 @@ def get_my_cnf(status, key):
             raise TwinDBBackupError(
                 f"Unexpected type of {status[key].config[path]}"
             )
+
+
+def get_free_memory():
+    """Return size of available memory in bytes. It calculates it as a half
+    of available memory.
+
+    :return: Size of free memory in bytes
+    :rtype: int
+    """
+    return int(psutil.virtual_memory().available / 2)
 
 
 def restore_from_mysql_full(
@@ -102,11 +112,10 @@ def restore_from_mysql_full(
         if not _extract_xbstream(handler, dst_dir, xbstream_binary):
             return False
 
-    mem_usage = psutil.virtual_memory()
     try:
         xtrabackup_cmd = [
             xtrabackup_binary,
-            f"--use-memory={mem_usage.available / 2}",
+            f"--use-memory={get_free_memory()}",
             "--prepare",
         ]
         if redo_only:
@@ -186,13 +195,7 @@ def restore_from_mysql_incremental(
     :return: If success, return True
     :rtype: bool
     """
-    if tmp_dir is None:
-        try:
-            inc_dir = tempfile.mkdtemp()
-        finally:
-            empty_dir(dst_dir)
-    else:
-        inc_dir = tmp_dir
+    inc_dir = tmp_dir or tempfile.mkdtemp()
     # GPG modifier
     if config.gpg:
         gpg = Gpg(
@@ -216,11 +219,10 @@ def restore_from_mysql_incremental(
             return False
 
     try:
-        mem_usage = psutil.virtual_memory()
         try:
             xtrabackup_cmd = [
                 xtrabackup_binary,
-                f"--use-memory={mem_usage.available / 2}",
+                f"--use-memory={get_free_memory()}",
                 "--prepare",
                 "--apply-log-only",
                 f"--target-dir={dst_dir}",
@@ -239,7 +241,7 @@ def restore_from_mysql_incremental(
 
             xtrabackup_cmd = [
                 xtrabackup_binary,
-                f"--use-memory={mem_usage.available / 2}",
+                f"--use-memory={get_free_memory()}",
                 "--prepare",
                 f"--target-dir={dst_dir}",
                 f"--incremental-dir={inc_dir}",
@@ -390,7 +392,6 @@ def restore_from_mysql(
             restore_from_mysql_full(
                 full_stream, dst_dir, twindb_config, redo_only=True
             )
-
         restore_from_mysql_incremental(stream, dst_dir, twindb_config, tmp_dir)
 
     config_dir = os.path.join(dst_dir, "_config")
