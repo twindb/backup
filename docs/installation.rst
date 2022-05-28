@@ -6,24 +6,23 @@ Installation
 
 Supported versions:
 
- * CentOS 6, 7
- * Ubuntu trusty, xenial, bionic, cosmic
- * Debian jessie and stretch
+ * CentOS 7
+ * Ubuntu bionic, focal
 
 **TwinDB Backup** can be installed from a DEB/RPM package.
+The packages are available in the `Releases <https://github.com/twindb/backup/releases>`_.
+
+How to build TwinDB Backup manually
+-----------------------------------
+
 The TwinDB Backup package can build on a machine with Docker service.
 
 ``make package`` will build the package for the operating system defined in the ``OS_VERSION`` environment variable.
 Possible ``OS_VERSION`` values:
 
- * 6
  * 7
- * jessie
- * stretch
- * trusty
- * xenial
  * bionic
- * cosmic.
+ * focal.
 
 .. code-block:: console
 
@@ -44,9 +43,11 @@ The package file will be generated in ``omnibus/pkg/``:
 Once the package is built you can install it with rpm/dpkg or upload it to your repository
 and install it with apt or yum.
 
-The package bundles TwinDB itself, Python, dependencies and tested version
-of Percona Xtrabackup. The installed package requires about 800MB of disk space.
+The package bundles TwinDB itself, Python, and dependencies. The installed package requires about 800MB of disk space.
 Make sure you have enough in ``/opt/``.
+
+Up to versiom 2.20.2 TwinDB Backup bunded Percona XtraBackup.
+In upcoming releases XtraBackup needs to be installed separately.
 
 Besides the TwinDB Backup software the package installs also the config file
 in ``/etc/twindb/twindb-backup.cfg`` and a cron configuration in
