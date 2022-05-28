@@ -3,9 +3,6 @@ TwinDB Backup
 =============
 
 
-.. image:: https://img.shields.io/travis/twindb/backup.svg
-    :target: https://travis-ci.com/twindb/backup
-
 .. image:: https://img.shields.io/codecov/c/github/twindb/backup.svg
     :target: https://codecov.io/gh/twindb/backup
 
@@ -54,9 +51,9 @@ backup destination. It can be:
 - Any server with SSH demon
 
 .. figure:: https://user-images.githubusercontent.com/1763754/56677794-20901b80-6676-11e9-8f71-8de0b0b6f066.png
-    :width: 400px
+    :width: 800px
     :align: center
-    :height: 300px
+    :height: 600px
     :alt: TwinDB Backup Architecture
     :figclass: align-center
 
@@ -107,19 +104,19 @@ How do I get set up?
 --------------------
 
 **TwinDB Backup** can be installed from a DEB/RPM package.
-The TwinDB Backup package can build on a machine with Docker service.
 
+The packages are available in the `Releases <https://github.com/twindb/backup/releases>`_.
+
+How to build TwinDB Backup manually
+-----------------------------------
+
+The TwinDB Backup package can build on a machine with Docker service.
 ``make package`` will build the package for the operating system defined in the ``OS_VERSION`` environment variable.
 Possible ``OS_VERSION`` values:
 
- * 6
  * 7
- * jessie
- * stretch
- * trusty
- * xenial
  * bionic
- * cosmic.
+ * focal.
 
 .. code-block:: console
 
