@@ -125,12 +125,12 @@ Install TwinDB Backup.
 .. code-block:: console
 
     # # Download the package
-    # wget https://twindb-release.s3.amazonaws.com/twindb-backup/2.20.2/bionic/twindb-backup_2.20.2-1_amd64.deb
+    # wget https://twindb-release.s3.amazonaws.com/twindb-backup/3.0.0/bionic/twindb-backup_3.0.0-1_amd64.deb
     # # Install TwinDB Backup
-    # apt install ./twindb-backup_2.20.2-1_amd64.deb
+    # apt install ./twindb-backup_3.0.0-1_amd64.deb
 
-Installing TwinDB Backup on CetOS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Installing TwinDB Backup on CentOS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Install appropriate Percona XtraBackup version (2.4 for MySQL 5.6, 5.7 or 8.0 for MySQL 8.0).
 
@@ -142,7 +142,7 @@ Install TwinDB Backup.
 
 .. code-block:: console
 
-    # yum install https://twindb-release.s3.amazonaws.com/twindb-backup/2.20.2/7/twindb-backup-2.20.2-1.x86_64.rpm
+    # yum install https://twindb-release.s3.amazonaws.com/twindb-backup/3.0.0/7/twindb-backup-3.0.0-1.x86_64.rpm
 
 Configuring TwinDB Backup
 ~~~~~~~~~~~~~~~~~~~~~~~~~

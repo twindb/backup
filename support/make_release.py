@@ -13,9 +13,6 @@ OS_VERSIONS = [
     # # ubuntu
     "focal",
     "bionic",
-    "xenial",
-    # debian
-    "stretch",
 ]
 PKG_DIR = "omnibus/pkg"
 
@@ -31,14 +28,6 @@ OS_DETAILS = {
     "bionic": {
         "flavor": "Ubuntu",
         "name": "Ubuntu bionic"
-    },
-    "xenial": {
-        "flavor": "Ubuntu",
-        "name": "Ubuntu xenial"
-    },
-    "stretch": {
-        "flavor": "Debian",
-        "name": "Debian stretch"
     },
 }
 
