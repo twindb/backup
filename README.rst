@@ -18,7 +18,7 @@ TwinDB Backup
     :target: https://pyup.io/repos/github/twindb/backup/
     :alt: Updates
 
-TwinDB Backup is a multipurpose tool for backing up MySQL and file system.
+TwinDB Backup is a multipurpose tool for backing up MySQL database and regulare files/directories on the file system.
 It can store backup copies on a remote SSH server, Amazon S3 or
 Google Cloud Storage.
 
@@ -43,7 +43,7 @@ Encryption options:
 Because TwinDB Backup encrypts the stream itself it ensures transfer encryption
 as well as encryption at rest.
 
-After the stream passed all modifiers it is sent to one of configured
+After the stream passed all modifiers it is sent to one of the configured
 backup destination. It can be:
 
 - Amazon S3 bucket
@@ -106,6 +106,48 @@ How do I get set up?
 **TwinDB Backup** can be installed from a DEB/RPM package.
 
 The packages are available in the `Releases <https://github.com/twindb/backup/releases>`_.
+
+
+Installing TwinDB Backup on Ubuntu
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install appropriate Percona XtraBackup version (2.4 for MySQL 5.6, 5.7 or 8.0 for MySQL 8.0).
+
+.. code-block:: console
+
+    # # Download the package
+    # wget https://downloads.percona.com/downloads/Percona-XtraBackup-2.4/Percona-XtraBackup-2.4.26/binary/debian/bionic/x86_64/percona-xtrabackup-24_2.4.26-1.bionic_amd64.deb
+    # # Install XtraBackup
+    # apt install ./percona-xtrabackup-24_2.4.26-1.bionic_amd64.deb
+
+Install TwinDB Backup.
+
+.. code-block:: console
+
+    # # Download the package
+    # wget https://twindb-release.s3.amazonaws.com/twindb-backup/2.20.2/bionic/twindb-backup_2.20.2-1_amd64.deb
+    # # Install TwinDB Backup
+    # apt install ./twindb-backup_2.20.2-1_amd64.deb
+
+Installing TwinDB Backup on CetOS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install appropriate Percona XtraBackup version (2.4 for MySQL 5.6, 5.7 or 8.0 for MySQL 8.0).
+
+.. code-block:: console
+
+    # yum install https://downloads.percona.com/downloads/Percona-XtraBackup-2.4/Percona-XtraBackup-2.4.26/binary/redhat/7/x86_64/percona-xtrabackup-24-2.4.26-1.el7.x86_64.rpm
+
+Install TwinDB Backup.
+
+.. code-block:: console
+
+    # yum install https://twindb-release.s3.amazonaws.com/twindb-backup/2.20.2/7/twindb-backup-2.20.2-1.x86_64.rpm
+
+Configuring TwinDB Backup
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TwinDB Backup is configured in ``/etc/twindb/twindb-backup.cfg``. See :ref:`usage` for details.
 
 How to build TwinDB Backup manually
 -----------------------------------
