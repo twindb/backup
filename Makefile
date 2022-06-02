@@ -104,7 +104,7 @@ black: ## Fix code style errors
 	black --line-length 80 twindb_backup tests
 
 lint: ## check style with pylint
-	yamllint .
+	yamllint -f parsable .
 	black --check --line-length 80 twindb_backup
 	pycodestyle --max-line-length=80 twindb_backup
 	pylint twindb_backup
