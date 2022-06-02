@@ -1,27 +1,29 @@
-name: Makefile CI
+---
+name: "Makefile CI"
 
 on:
   push:
-    branches: [ master ]
+    branches: ["master"]
   pull_request:
-    branches: [ master ]
+    branches: ["master"]
 
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: "actions/checkout@v3"
 
-    - name: Setup Python env
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
+      - name: "Setup Python env"
+        uses: "actions/setup-python@v2"
+        with:
+          python-version: 3.9
 
-    - name: Run tests
-      run: |
-        pip install -U "pip ~= 22.0.0"
-        python -m venv env
-        source env/bin/activate
-        make bootstrap lint test
+      - name: "Run tests"
+        run: |
+          pip install -U "pip ~= 22.0.0"
+          python -m venv env
+          source env/bin/activate
+          make bootstrap lint test
+...
