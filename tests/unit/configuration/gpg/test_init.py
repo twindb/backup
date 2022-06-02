@@ -8,3 +8,4 @@ def test_init():
     )
     assert gpg.recipient == "bob"
     assert gpg.keyring == "/dev/null"
+    assert gpg.secret_keyring is None
