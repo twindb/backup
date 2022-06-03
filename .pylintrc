@@ -43,7 +43,7 @@ extension-pkg-whitelist=
 # and it will be removed in Pylint 2.0.
 optimize-ast=no
 
-
+unrecognised-option = no
 [MESSAGES CONTROL]
 
 # Only show warnings with the listed confidence levels. Leave empty to show
@@ -69,7 +69,7 @@ confidence=
 # It sounds like there is a common agreement that shound't be an error
 # and black's formatting is favorable.
 # See https://github.com/PyCQA/pylint/issues/2944 for details.
-disable=import-star-module-level,old-octal-literal,oct-method,print-statement,unpacking-in-except,parameter-unpacking,backtick,old-raise-syntax,old-ne-operator,long-suffix,dict-view-method,dict-iter-method,metaclass-assignment,next-method-called,raising-string,indexing-exception,raw_input-builtin,long-builtin,file-builtin,execfile-builtin,coerce-builtin,cmp-builtin,buffer-builtin,basestring-builtin,apply-builtin,filter-builtin-not-iterating,using-cmp-argument,useless-suppression,range-builtin-not-iterating,suppressed-message,no-absolute-import,old-division,cmp-method,reload-builtin,zip-builtin-not-iterating,intern-builtin,unichr-builtin,reduce-builtin,standarderror-builtin,unicode-builtin,xrange-builtin,coerce-method,delslice-method,getslice-method,setslice-method,input-builtin,round-builtin,hex-method,nonzero-method,map-builtin-not-iterating,no-else-return,bad-continuation
+disable=useless-suppression,suppressed-message,no-else-return,unrecognized-option
 
 
 [REPORTS]

@@ -419,7 +419,7 @@ def restore_from_mysql(
     )
     LOG.info("Successfully restored %s in %s.", copy.key, dst_dir)
     LOG.info(
-        "Now copy content of %s to MySQL datadir: " "cp -R %s /var/lib/mysql/",
+        "Now copy content of %s to MySQL datadir: cp -R %s /var/lib/mysql/",
         dst_dir,
         osp.join(dst_dir, "*"),
     )
