@@ -5,9 +5,9 @@ import socket
 from contextlib import contextmanager
 
 from paramiko import (
-    SSHClient,
-    AutoAddPolicy,
     AuthenticationException,
+    AutoAddPolicy,
+    SSHClient,
     SSHException,
 )
 

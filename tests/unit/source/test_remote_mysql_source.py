@@ -1,7 +1,6 @@
 import os
 from os import path as osp
-
-from pathlib import PurePath, Path
+from pathlib import Path, PurePath
 from pprint import pformat
 from textwrap import dedent
 

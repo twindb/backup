@@ -1,7 +1,7 @@
 import json
 import os
 
-from tests.integration.conftest import get_twindb_config_dir, docker_execute
+from tests.integration.conftest import docker_execute, get_twindb_config_dir
 
 
 def test__restore_mysql_inc_creates_log_files(

@@ -3,7 +3,7 @@ from base64 import b64encode
 
 import pytest
 
-from twindb_backup import INTERVALS, STATUS_FORMAT_VERSION, LOG
+from twindb_backup import INTERVALS, LOG, STATUS_FORMAT_VERSION
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.status.exceptions import CorruptedStatus
 from twindb_backup.status.mysql_status import MySQLStatus

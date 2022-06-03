@@ -1,12 +1,10 @@
 """
 Module defines MySQL binlog source class for backing them up.
 """
+import struct
 from contextlib import contextmanager
 from os import path as osp
-
-from subprocess import Popen, PIPE
-
-import struct
+from subprocess import PIPE, Popen
 
 from twindb_backup import LOG
 from twindb_backup.source.base_source import BaseSource

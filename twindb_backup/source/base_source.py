@@ -3,13 +3,12 @@
 Module defines base source class.
 """
 import configparser
-from os import path as osp
 import socket
-
 import time
 from abc import abstractmethod
+from os import path as osp
 
-from twindb_backup import delete_local_files, INTERVALS, LOG
+from twindb_backup import INTERVALS, LOG, delete_local_files
 
 
 class BaseSource(object):

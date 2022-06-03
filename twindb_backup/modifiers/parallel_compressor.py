@@ -3,6 +3,7 @@
 Module defines modifier that compresses a stream with pigz
 """
 from psutil import cpu_count
+
 from twindb_backup.modifiers.base import Modifier
 
 DEFAULT_THREADS = cpu_count() - 1

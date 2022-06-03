@@ -1,9 +1,10 @@
 import time
+
 from tests.integration.conftest import (
-    get_twindb_config_dir,
-    docker_execute,
-    pause_test,
     assert_and_pause,
+    docker_execute,
+    get_twindb_config_dir,
+    pause_test,
 )
 from twindb_backup import INTERVALS, LOG
 from twindb_backup.source.mysql_source import MySQLConnectInfo

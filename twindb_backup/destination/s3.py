@@ -5,24 +5,21 @@ Module for S3 destination.
 import os
 import re
 import socket
-
+import time
 from contextlib import contextmanager
 from multiprocessing import Process
-
-import time
 from urllib.parse import urlparse
-
-from botocore.exceptions import ClientError
-from botocore.client import Config
 
 import boto3
 from boto3.s3.transfer import TransferConfig
+from botocore.client import Config
+from botocore.exceptions import ClientError
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import (
-    S3DestinationError,
     FileNotFound,
+    S3DestinationError,
 )
 from twindb_backup.exceptions import OperationError
 

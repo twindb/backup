@@ -35,7 +35,6 @@ import glob
 import json
 import logging
 import os
-
 import sys
 
 __author__ = "TwinDB Development Team"

@@ -5,10 +5,10 @@ from io import StringIO
 import magic
 
 from tests.integration.conftest import (
+    assert_and_pause,
     docker_execute,
     get_twindb_config_dir,
     pause_test,
-    assert_and_pause,
 )
 from twindb_backup import LOG
 from twindb_backup.destination.s3 import S3

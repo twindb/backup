@@ -1,8 +1,7 @@
 import ConfigParser
-import StringIO
-
 import mock
 import pytest
+import StringIO
 
 from twindb_backup import INTERVALS
 from twindb_backup.destination.ssh import Ssh

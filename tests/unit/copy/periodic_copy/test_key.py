@@ -1,7 +1,7 @@
 import pytest
 
-from twindb_backup.copy.periodic_copy import PeriodicCopy
 from twindb_backup.copy.exceptions import UnknownSourceType
+from twindb_backup.copy.periodic_copy import PeriodicCopy
 
 
 def test_key_raises():

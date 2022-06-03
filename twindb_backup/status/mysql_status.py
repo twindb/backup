@@ -4,10 +4,8 @@ from __future__ import print_function
 import json
 from base64 import b64decode, b64encode
 
-
 from twindb_backup import INTERVALS, LOG
 from twindb_backup.copy.mysql_copy import MySQLCopy
-
 
 # For backward compatibility content of my.cnf files is base64 encoded.
 from twindb_backup.status.exceptions import CorruptedStatus

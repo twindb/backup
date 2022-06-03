@@ -2,12 +2,12 @@
 """
 Module for GCS destination.
 """
+import os
+import re
 from contextlib import contextmanager
 from functools import partial
 from multiprocessing import Process
-import os
 from os import path as osp
-import re
 
 from google.api_core.exceptions import GoogleAPIError, NotFound
 from google.auth.exceptions import GoogleAuthError
@@ -16,8 +16,8 @@ from google.cloud.storage import Client
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import (
-    GCSDestinationError,
     FileNotFound,
+    GCSDestinationError,
 )
 
 GCS_CONNECT_TIMEOUT = 60

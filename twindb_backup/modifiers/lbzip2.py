@@ -3,6 +3,7 @@
 Module defines modifier that compresses a stream with lbzip2
 """
 from psutil import cpu_count
+
 from twindb_backup.modifiers.parallel_compressor import ParallelCompressor
 
 DEFAULT_THREADS = cpu_count() - 1

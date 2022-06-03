@@ -1,16 +1,16 @@
+import os
 import socket
+import time
+from os import path as osp
 from textwrap import dedent
 
 import docker
-import os
-from os import path as osp
 import pytest
-import time
-from docker.errors import DockerException, APIError
-from docker.types import IPAMPool, IPAMConfig
+from docker.errors import APIError, DockerException
+from docker.types import IPAMConfig, IPAMPool
 
 from tests.integration import ensure_aws_creds
-from twindb_backup import setup_logging, LOG
+from twindb_backup import LOG, setup_logging
 from twindb_backup.util import mkdir_p
 
 SUPPORTED_IMAGES = [

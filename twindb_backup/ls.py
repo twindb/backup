@@ -3,7 +3,8 @@
 Module that works with list of backup copies
 """
 from __future__ import print_function
-from twindb_backup import LOG, INTERVALS, MEDIA_TYPES
+
+from twindb_backup import INTERVALS, LOG, MEDIA_TYPES
 from twindb_backup.destination.local import Local
 
 

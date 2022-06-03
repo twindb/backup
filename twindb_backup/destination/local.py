@@ -2,13 +2,12 @@
 """
 Module defines Local destination.
 """
-from subprocess import Popen
-
 from os import path as osp
+from subprocess import Popen
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.util import run_command, mkdir_p
+from twindb_backup.util import mkdir_p, run_command
 
 
 class Local(BaseDestination):

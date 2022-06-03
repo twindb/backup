@@ -4,7 +4,7 @@ import mock
 import pytest
 from pymysql import InternalError, OperationalError
 
-from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
+from twindb_backup.source.mysql_source import MySQLConnectInfo, MySQLSource
 
 
 @mock.patch.object(MySQLSource, "get_connection")

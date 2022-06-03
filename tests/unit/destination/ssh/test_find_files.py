@@ -3,7 +3,6 @@ import mock
 
 from twindb_backup.destination.ssh import Ssh
 
-
 # noinspection PyUnresolvedReferences
 # @mock.patch.object(Ssh, '__init__')
 # def test_find_files(mock_init):

@@ -3,20 +3,18 @@
 Module for SSH destination.
 """
 import os
-from os import path as osp
 import socket
-
+import time
 from contextlib import contextmanager
 from errno import ENOENT
 from multiprocessing import Process
-
-import time
+from os import path as osp
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import (
-    SshDestinationError,
     FileNotFound,
+    SshDestinationError,
 )
 from twindb_backup.ssh.client import SshClient
 from twindb_backup.ssh.exceptions import SshClientException

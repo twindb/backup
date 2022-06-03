@@ -3,19 +3,19 @@
 Module defines MySQL source class for backing up local MySQL.
 """
 from __future__ import print_function
+
 import os
-from os import path as osp
+import sys
 import tempfile
 import time
-
 from contextlib import contextmanager
-from subprocess import Popen, PIPE
-import sys
+from os import path as osp
+from subprocess import PIPE, Popen
 
 import pymysql
 from pymysql import OperationalError
 
-from twindb_backup import LOG, get_files_to_delete, INTERVALS, XTRABACKUP_BINARY
+from twindb_backup import INTERVALS, LOG, XTRABACKUP_BINARY, get_files_to_delete
 from twindb_backup.source.base_source import BaseSource
 from twindb_backup.source.exceptions import MySQLSourceError
 from twindb_backup.status.exceptions import StatusKeyNotFound
