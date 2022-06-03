@@ -3,14 +3,14 @@
 Module that verify backup copies.
 """
 import json
-from os import path as osp
 import shutil
-import time
 import tempfile
+import time
 import traceback
 from configparser import ConfigParser, NoOptionError
+from os import path as osp
 
-from twindb_backup import LOG, DEFAULT_FILE_ENCODING
+from twindb_backup import DEFAULT_FILE_ENCODING, LOG
 from twindb_backup.exceptions import TwinDBBackupError
 from twindb_backup.restore import restore_from_mysql
 from twindb_backup.status.mysql_status import MySQLStatus

@@ -1,7 +1,7 @@
 import mock
 
 from twindb_backup import INTERVALS
-from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
+from twindb_backup.source.mysql_source import MySQLConnectInfo, MySQLSource
 
 
 def test_suffix():

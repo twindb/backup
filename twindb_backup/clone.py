@@ -2,9 +2,8 @@
 """
 Module defines clone feature
 """
-from multiprocessing import Process
-
 import time
+from multiprocessing import Process
 
 from twindb_backup import INTERVALS, LOG
 from twindb_backup.destination.ssh import Ssh

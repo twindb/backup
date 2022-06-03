@@ -5,7 +5,6 @@ Module defines Statsd exporter class.
 """
 import statsd
 
-
 from twindb_backup.exporter.base_exporter import (
     BaseExporter,
     ExportCategory,

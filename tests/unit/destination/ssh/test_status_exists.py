@@ -8,7 +8,6 @@ from twindb_backup.destination.exceptions import SshDestinationError
 from twindb_backup.destination.ssh import Ssh
 from twindb_backup.ssh.client import SshClient
 
-
 # # noinspection PyUnresolvedReferences
 # @pytest.mark.parametrize('out, result', [
 #     (

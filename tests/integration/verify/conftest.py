@@ -1,7 +1,7 @@
 import socket
+import time
 
 import pytest
-import time
 
 from tests.integration.conftest import get_container
 from twindb_backup import LOG

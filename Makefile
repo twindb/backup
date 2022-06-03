@@ -100,12 +100,18 @@ clean-docker:
 clean-docs:
 	rm -rf docs/_build
 
+.PHONY: black
 black: ## Fix code style errors
-	black --line-length 80 twindb_backup tests
+	black twindb_backup tests
+
+.PHONY: isort
+isort: ## Fix import order errors
+	isort twindb_backup tests
 
 lint: ## check style with pylint
 	yamllint -f parsable .
-	black --check --line-length 80 twindb_backup
+	isort --check-only twindb_backup tests
+	black --check twindb_backup tests
 	pycodestyle --max-line-length=80 twindb_backup
 	pylint twindb_backup
 

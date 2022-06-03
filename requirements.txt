@@ -8,13 +8,13 @@ bcrypt==3.2.2
     # via paramiko
 beautifulsoup4==4.11.1
     # via google
-boto3==1.23.9
+boto3==1.24.2
     # via -r requirements.in
-botocore==1.26.10
+botocore==1.27.2
     # via
     #   boto3
     #   s3transfer
-cachetools==5.1.0
+cachetools==5.2.0
     # via google-auth
 certifi==2022.5.18.1
     # via requests
@@ -91,7 +91,7 @@ requests==2.27.1
     #   google-cloud-storage
 rsa==4.8
     # via google-auth
-s3transfer==0.5.2
+s3transfer==0.6.0
     # via boto3
 six==1.16.0
     # via

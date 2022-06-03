@@ -1,4 +1,4 @@
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 
 
 def test_create_bucket(gs):

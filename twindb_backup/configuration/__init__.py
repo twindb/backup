@@ -6,18 +6,18 @@ import socket
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from shlex import split
 
-from twindb_backup import LOG, INTERVALS
-from twindb_backup.configuration.destinations.s3 import S3Config
+from twindb_backup import INTERVALS, LOG
+from twindb_backup.configuration.compression import CompressionConfig
 from twindb_backup.configuration.destinations.gcs import GCSConfig
+from twindb_backup.configuration.destinations.s3 import S3Config
 from twindb_backup.configuration.destinations.ssh import SSHConfig
 from twindb_backup.configuration.exceptions import ConfigurationError
 from twindb_backup.configuration.gpg import GPGConfig
 from twindb_backup.configuration.mysql import MySQLConfig
 from twindb_backup.configuration.retention import RetentionPolicy
-from twindb_backup.configuration.compression import CompressionConfig
 from twindb_backup.configuration.run_intervals import RunIntervals
-from twindb_backup.destination.s3 import S3
 from twindb_backup.destination.gcs import GCS
+from twindb_backup.destination.s3 import S3
 from twindb_backup.destination.ssh import Ssh
 from twindb_backup.exporter.datadog_exporter import DataDogExporter
 from twindb_backup.exporter.statsd_exporter import StatsdExporter

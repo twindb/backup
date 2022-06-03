@@ -3,7 +3,7 @@ import pytest
 from pymysql import OperationalError
 
 from twindb_backup.source.exceptions import MySQLSourceError
-from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
+from twindb_backup.source.mysql_source import MySQLConnectInfo, MySQLSource
 
 
 @mock.patch("twindb_backup.source.mysql_source.pymysql.connect")

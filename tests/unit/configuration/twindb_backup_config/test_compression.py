@@ -4,7 +4,7 @@ import mock
 import pytest
 
 from twindb_backup.configuration import TwinDBBackupConfig
-from twindb_backup.modifiers import Gzip, Bzip2, Lbzip2, Pigz
+from twindb_backup.modifiers import Bzip2, Gzip, Lbzip2, Pigz
 
 
 def test_default(config_file):

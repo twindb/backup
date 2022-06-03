@@ -2,7 +2,7 @@ import mock
 import pytest
 
 from twindb_backup.source.exceptions import MySQLSourceError
-from twindb_backup.source.mysql_source import MySQLSource, MySQLConnectInfo
+from twindb_backup.source.mysql_source import MySQLConnectInfo, MySQLSource
 
 
 def test_mysql_source_has_methods():

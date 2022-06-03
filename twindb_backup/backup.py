@@ -5,26 +5,26 @@ backup jobs.
 import configparser
 import errno
 import fcntl
-from os import path as osp
-import traceback
 import signal
 import time
+import traceback
 from contextlib import contextmanager
-from resource import getrlimit, RLIMIT_NOFILE, setrlimit
+from os import path as osp
+from resource import RLIMIT_NOFILE, getrlimit, setrlimit
 
 from pymysql import InternalError
 
 from twindb_backup import (
-    LOG,
-    get_timeout,
     LOCK_FILE,
-    save_measures,
+    LOG,
     MY_CNF_COMMON_PATHS,
+    get_timeout,
+    save_measures,
 )
 from twindb_backup.copy.binlog_copy import BinlogCopy
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.destination.exceptions import DestinationError
-from twindb_backup.exceptions import OperationError, LockWaitTimeoutError
+from twindb_backup.exceptions import LockWaitTimeoutError, OperationError
 from twindb_backup.export import export_info
 from twindb_backup.exporter.base_exporter import (
     ExportCategory,
@@ -32,13 +32,13 @@ from twindb_backup.exporter.base_exporter import (
 )
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.keeplocal import KeepLocal
-from twindb_backup.source.binlog_source import BinlogSource, BinlogParser
+from twindb_backup.source.binlog_source import BinlogParser, BinlogSource
 from twindb_backup.source.exceptions import SourceError
 from twindb_backup.source.file_source import FileSource
 from twindb_backup.source.mysql_source import (
-    MySQLSource,
-    MySQLConnectInfo,
     MySQLClient,
+    MySQLConnectInfo,
+    MySQLSource,
 )
 from twindb_backup.ssh.exceptions import SshClientException
 from twindb_backup.status.binlog_status import BinlogStatus

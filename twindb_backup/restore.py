@@ -4,20 +4,21 @@ Module that restores backup copies.
 """
 from __future__ import print_function
 
-import sys
-from subprocess import Popen, PIPE
-import os
-from os import path as osp
-import tempfile
 import errno
+import os
+import sys
+import tempfile
 import time
+from os import path as osp
+from subprocess import PIPE, Popen
+
 import psutil
 
 from twindb_backup import (
+    DEFAULT_FILE_ENCODING,
     LOG,
     XBSTREAM_BINARY,
     XTRABACKUP_BINARY,
-    DEFAULT_FILE_ENCODING,
 )
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local

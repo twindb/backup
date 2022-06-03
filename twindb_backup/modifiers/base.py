@@ -3,8 +3,7 @@
 Module defines Modifier() base class and its errors.
 """
 from contextlib import contextmanager
-
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 
 from twindb_backup import LOG
 from twindb_backup.modifiers.exceptions import ModifierException

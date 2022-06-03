@@ -1,8 +1,8 @@
 """Class to describe MySQL backup copy"""
 import json
 
-from twindb_backup.copy.periodic_copy import PeriodicCopy
 from twindb_backup.copy.exceptions import WrongInputData
+from twindb_backup.copy.periodic_copy import PeriodicCopy
 
 
 class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes

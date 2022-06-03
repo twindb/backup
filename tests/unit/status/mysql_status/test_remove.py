@@ -1,7 +1,7 @@
 import pytest
 
 from twindb_backup.copy.mysql_copy import MySQLCopy
-from twindb_backup.status.exceptions import StatusKeyNotFound, StatusError
+from twindb_backup.status.exceptions import StatusError, StatusKeyNotFound
 from twindb_backup.status.mysql_status import MySQLStatus
 
 

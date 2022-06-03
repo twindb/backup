@@ -1,9 +1,9 @@
+from os.path import dirname
 from textwrap import dedent
 
 import pytest
-from os.path import dirname
 
-from twindb_backup.util import my_cnfs, mkdir_p
+from twindb_backup.util import mkdir_p, my_cnfs
 
 
 @pytest.mark.parametrize(

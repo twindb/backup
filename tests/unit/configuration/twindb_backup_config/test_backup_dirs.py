@@ -1,7 +1,8 @@
 from textwrap import dedent
 
 import pytest
-from twindb_backup.configuration import TwinDBBackupConfig, ConfigurationError
+
+from twindb_backup.configuration import ConfigurationError, TwinDBBackupConfig
 
 
 def test_backup_dirs(config_file):

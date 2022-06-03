@@ -3,16 +3,16 @@
 Module defines MySQL source class for backing up remote MySQL.
 """
 import configparser
+import re
 import socket
 import struct
-import re
-from contextlib import contextmanager
-
 import time
+from contextlib import contextmanager
 from errno import ENOENT
 from pathlib import Path
 
 import pymysql
+
 from twindb_backup import LOG, MY_CNF_COMMON_PATHS
 from twindb_backup.source.exceptions import RemoteMySQLSourceError
 from twindb_backup.source.mysql_source import MySQLSource

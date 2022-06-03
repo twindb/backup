@@ -1,13 +1,13 @@
 """Base status is a class for a general purpose status.
 """
+import hashlib
+import json
+import socket
 from abc import abstractmethod, abstractproperty
 from base64 import b64decode
-import json
-import hashlib
 from os import path as osp
-import socket
 
-from twindb_backup import STATUS_FORMAT_VERSION, LOG
+from twindb_backup import LOG, STATUS_FORMAT_VERSION
 from twindb_backup.destination.exceptions import FileNotFound
 from twindb_backup.status.exceptions import CorruptedStatus, StatusKeyNotFound
 

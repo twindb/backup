@@ -1,9 +1,9 @@
 import os
 
 from tests.integration.conftest import (
-    get_twindb_config_dir,
-    docker_execute,
     assert_and_pause,
+    docker_execute,
+    get_twindb_config_dir,
 )
 from twindb_backup import LOG
 

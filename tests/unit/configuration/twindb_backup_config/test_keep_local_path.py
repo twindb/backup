@@ -1,6 +1,7 @@
 from textwrap import dedent
 
 import pytest
+
 from twindb_backup.configuration import TwinDBBackupConfig
 
 

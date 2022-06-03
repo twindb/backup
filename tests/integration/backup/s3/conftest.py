@@ -1,10 +1,9 @@
-import pytest
 import os
 import random
-
+import time
 from subprocess import call
 
-import time
+import pytest
 
 from twindb_backup import LOG, setup_logging
 from twindb_backup.destination.s3 import S3

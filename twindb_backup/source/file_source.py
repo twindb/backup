@@ -4,7 +4,8 @@ Module defines File source class for backing up local directories.
 """
 import shlex
 from contextlib import contextmanager
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
+
 from twindb_backup import LOG, get_files_to_delete
 from twindb_backup.source.base_source import BaseSource
 

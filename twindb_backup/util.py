@@ -8,11 +8,11 @@ import os
 import shutil
 import sys
 from contextlib import contextmanager
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 
 import psutil
 
-from twindb_backup import LOG, DEFAULT_FILE_ENCODING
+from twindb_backup import DEFAULT_FILE_ENCODING, LOG
 from twindb_backup.exceptions import OperationError
 
 

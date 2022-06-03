@@ -1,5 +1,5 @@
 """MySQL instance configuration"""
-from twindb_backup import INTERVALS, XTRABACKUP_BINARY, XBSTREAM_BINARY
+from twindb_backup import INTERVALS, XBSTREAM_BINARY, XTRABACKUP_BINARY
 
 
 class MySQLConfig:

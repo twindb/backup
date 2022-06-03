@@ -1,7 +1,7 @@
 import pytest
-from twindb_backup.configuration.exceptions import ConfigurationError
 
 from twindb_backup.configuration import CompressionConfig
+from twindb_backup.configuration.exceptions import ConfigurationError
 
 
 def test_init_default():

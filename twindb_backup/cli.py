@@ -4,21 +4,21 @@ Entry points for twindb-backup tool
 """
 from __future__ import print_function
 
+import os
 import shutil
 import socket
 import tempfile
 import traceback
-import os
 
 import click
 
 from twindb_backup import (
-    setup_logging,
-    LOG,
-    __version__,
-    LOCK_FILE,
     INTERVALS,
+    LOCK_FILE,
+    LOG,
     MEDIA_TYPES,
+    __version__,
+    setup_logging,
 )
 from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
@@ -28,7 +28,7 @@ from twindb_backup.copy.file_copy import FileCopy
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.exceptions import TwinDBBackupError
 from twindb_backup.ls import list_available_backups
-from twindb_backup.restore import restore_from_mysql, restore_from_file
+from twindb_backup.restore import restore_from_file, restore_from_mysql
 from twindb_backup.share import share
 from twindb_backup.status.binlog_status import BinlogStatus
 from twindb_backup.status.mysql_status import MySQLStatus
