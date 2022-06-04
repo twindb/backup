@@ -4,6 +4,13 @@ import pytest
 from twindb_backup.ssh.client import SshClient
 
 
+def _format_expected_output(patterns, root):
+    check_result = []
+    for x in patterns:
+        check_result.append(x.format(root=root))
+    return check_result
+
+
 @pytest.mark.parametrize(
     "exec_return, expected",
     [
@@ -17,14 +24,11 @@ from twindb_backup.ssh.client import SshClient
 def test_list_files(mock_execute, exec_return, expected, tmpdir):
 
     root_dir = tmpdir.mkdir("foo")
-
     mock_execute.return_value = (exec_return.format(root=str(root_dir)), "")
-    ssh = SshClient()
-    check_result = []
-    for x in expected:
-        check_result.append(x.format(root=str(root_dir)))
 
-    assert ssh.list_files(root_dir) == check_result
+    assert SshClient().list_files(root_dir) == _format_expected_output(
+        expected, str(root_dir)
+    )
 
 
 @pytest.mark.parametrize(
@@ -43,21 +47,18 @@ def test_list_files_files_only_with_result(
     root_dir = tmpdir.mkdir("foo")
 
     mock_execute.return_value = (exec_return.format(root=str(root_dir)), "")
-    ssh = SshClient()
-    check_result = []
-    for x in expected:
-        check_result.append(x.format(root=str(root_dir)))
-
-    assert ssh.list_files(root_dir, files_only=True) == check_result
+    assert SshClient().list_files(
+        root_dir, files_only=True
+    ) == _format_expected_output(expected, str(root_dir))
 
 
 @pytest.mark.parametrize(
     "recursive, cmd",
     [
-        (True, "bash -c 'if test -d {root} ; then find {root}; fi'"),
+        (True, 'bash -c \'if test -d "{root}" ; then find "{root}"; fi\''),
         (
             False,
-            "bash -c 'if test -d {root} ; then find {root} -maxdepth 1; fi'",
+            'bash -c \'if test -d "{root}" ; then find "{root}" -maxdepth 1; fi\'',
         ),
     ],
 )
@@ -75,8 +76,11 @@ def test_list_files_recursive(mock_execute, recursive, cmd, tmpdir):
 @pytest.mark.parametrize(
     "files_only, cmd",
     [
-        (True, "bash -c 'if test -d {root} ; then find {root} -type f; fi'"),
-        (False, "bash -c 'if test -d {root} ; then find {root}; fi'"),
+        (
+            True,
+            'bash -c \'if test -d "{root}" ; then find "{root}" -type f; fi\'',
+        ),
+        (False, 'bash -c \'if test -d "{root}" ; then find "{root}"; fi\''),
     ],
 )
 @mock.patch.object(SshClient, "execute")
