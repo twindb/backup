@@ -13,7 +13,9 @@ def test_list_files(ssh_client, tmpdir):
     print(ssh_client.list_files("blah"))
 
     ssh_client.execute("mkdir -p '%s'" % osp.join(root_dir, "subdir"))
-    ssh_client.execute("touch '%s'" % osp.join(root_dir, "subdir", "sub_bar.txt"))
+    ssh_client.execute(
+        "touch '%s'" % osp.join(root_dir, "subdir", "sub_bar.txt")
+    )
 
     print("subdir with dirs")
     print(ssh_client.list_files(root_dir, recursive=True))

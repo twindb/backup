@@ -197,15 +197,13 @@ class SshClient(object):
         :return: List of files
         :rtype: list
         """
-        find_cmd = [
-            "find", f'"{path}"'
-        ]
+        find_cmd = ["find", f'"{path}"']
         if not recursive:
             find_cmd.append("-maxdepth 1")
         if files_only:
             find_cmd.append("-type f")
         cmd = (
-            f"bash -c 'if test -d \"{path}\" ; "
+            f'bash -c \'if test -d "{path}" ; '
             f"then {' '.join(find_cmd)}; fi'"
         )
         cout, cerr = self.execute(cmd)

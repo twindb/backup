@@ -1,5 +1,3 @@
-
-
 def test_write_content(ssh_client):
     path = "/tmp/foo"
     content = "foo"

@@ -55,10 +55,10 @@ def test_list_files_files_only_with_result(
 @pytest.mark.parametrize(
     "recursive, cmd",
     [
-        (True, "bash -c 'if test -d \"{root}\" ; then find \"{root}\"; fi'"),
+        (True, 'bash -c \'if test -d "{root}" ; then find "{root}"; fi\''),
         (
             False,
-            "bash -c 'if test -d \"{root}\" ; then find \"{root}\" -maxdepth 1; fi'",
+            'bash -c \'if test -d "{root}" ; then find "{root}" -maxdepth 1; fi\'',
         ),
     ],
 )
@@ -76,8 +76,11 @@ def test_list_files_recursive(mock_execute, recursive, cmd, tmpdir):
 @pytest.mark.parametrize(
     "files_only, cmd",
     [
-        (True, "bash -c 'if test -d \"{root}\" ; then find \"{root}\" -type f; fi'"),
-        (False, "bash -c 'if test -d \"{root}\" ; then find \"{root}\"; fi'"),
+        (
+            True,
+            'bash -c \'if test -d "{root}" ; then find "{root}" -type f; fi\'',
+        ),
+        (False, 'bash -c \'if test -d "{root}" ; then find "{root}"; fi\''),
     ],
 )
 @mock.patch.object(SshClient, "execute")
