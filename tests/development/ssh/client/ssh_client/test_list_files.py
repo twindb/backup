@@ -1,29 +1,21 @@
-from twindb_backup.ssh.client import SshClient
+from os import path as osp
 
 
-def test_list_files(tmpdir):
+def test_list_files(ssh_client, tmpdir):
 
-    ssh = SshClient(
-        host="192.168.36.250",
-        key="/vagrant/.vagrant/machines/master1/virtualbox/private_key",
-        user="vagrant",
-    )
-    root_dir = tmpdir.mkdir("foo")
-    print(str(root_dir))
-    files = ssh.list_files(str(root_dir))
-    print(files)
+    root_dir = osp.join("/home", ssh_client.user, "tmp", "foo")
+    print(root_dir)
+    ssh_client.execute(f"mkdir -p '{root_dir}'")
+    print(ssh_client.list_files(root_dir))
 
-    with open(str(root_dir.join("bar.txt")), "w") as fp:
-        fp.write("xxx")
+    ssh_client.execute("touch '%s'" % osp.join(root_dir, "bar.txt"))
+    print(ssh_client.list_files(root_dir))
+    print(ssh_client.list_files("blah"))
 
-    print(ssh.list_files(str(root_dir)))
+    ssh_client.execute("mkdir -p '%s'" % osp.join(root_dir, "subdir"))
+    ssh_client.execute("touch '%s'" % osp.join(root_dir, "subdir", "sub_bar.txt"))
 
-    print("blah")
-    print(ssh.list_files("blah"))
-
-    subdir = root_dir.mkdir("subdir")
-    with open(str(subdir.join("sub_bar.txt")), "w") as fp:
-        fp.write("xxx")
-
-    print("subdir")
-    print(ssh.list_files(str(root_dir), recursive=True))
+    print("subdir with dirs")
+    print(ssh_client.list_files(root_dir, recursive=True))
+    print("subdir without dirs")
+    print(ssh_client.list_files(root_dir, recursive=True, files_only=True))

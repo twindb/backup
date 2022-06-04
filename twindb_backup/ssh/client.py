@@ -20,11 +20,11 @@ class SshClient(object):
     SSH client class. Allows to connect to a remote SSH server and execute
     commands on it.
 
-    :param host: Destination host to connect to. Detaults to '127.0.0.1'.
+    :param host: Destination host to connect to. Defaults to '127.0.0.1'.
     :type host: str
     :param port: Destination port to connect to. Default is 22.
     :type port: int
-    :param key: SSH client key for passwordless authentication.
+    :param key: SSH client key for password-less authentication.
         Default is '/root/.id_rsa'.
     :type key: str
     :param user: SSH client username. Default is 'root'.
@@ -82,7 +82,6 @@ class SshClient(object):
         except FileNotFoundError:
             raise
         except (AuthenticationException, SSHException, socket.error) as err:
-            # print(type(err))
             raise SshClientException(err)
         finally:
             shell.close()
@@ -198,14 +197,17 @@ class SshClient(object):
         :return: List of files
         :rtype: list
         """
-        rec_cond = "" if recursive else " -maxdepth 1"
-        fil_cond = " -type f" if files_only else ""
-
+        find_cmd = [
+            "find", f'"{path}"'
+        ]
+        if not recursive:
+            find_cmd.append("-maxdepth 1")
+        if files_only:
+            find_cmd.append("-type f")
         cmd = (
-            "bash -c 'if test -d {path} ; "
-            "then find {path}{recursive}{files_only}; fi'"
+            f"bash -c 'if test -d \"{path}\" ; "
+            f"then {' '.join(find_cmd)}; fi'"
         )
-        cmd = cmd.format(path=path, recursive=rec_cond, files_only=fil_cond)
         cout, cerr = self.execute(cmd)
         LOG.debug("COUT:\n%s", cout)
         LOG.debug("CERR:\n%s", cerr)
