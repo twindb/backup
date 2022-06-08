@@ -1,6 +1,6 @@
 from mock.mock import Mock
 
-from twindb_backup import MARIABACKUP_BINARY, INTERVALS
+from twindb_backup import INTERVALS, MARIABACKUP_BINARY
 from twindb_backup.source.mysql_source import MySQLConnectInfo
 from twindb_backup.source.remote_mariadb_source import RemoteMariaDBSource
 
