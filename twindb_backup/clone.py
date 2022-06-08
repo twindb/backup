@@ -65,6 +65,26 @@ def _mysql_service(dst, action):
         raise OperationError("Failed to %s MySQL on %r" % (action, dst))
 
 
+def get_src_by_vendor(
+    vendor: MySQLFlavor,
+    ssh_host: str,
+    ssh_user: str,
+    ssh_key_path: str,
+    mysql_connect_info: MySQLConnectInfo,
+    run_type: str,
+):
+    return MYSQL_SRC_MAP[vendor](
+        {
+            "ssh_host": ssh_host,
+            "ssh_user": ssh_user,
+            "ssh_key": ssh_key_path,
+            "mysql_connect_info": mysql_connect_info,
+            "run_type": run_type,
+            "backup_type": "full",
+        }
+    )
+
+
 def clone_mysql(
     cfg,
     source,
@@ -86,17 +106,15 @@ def clone_mysql(
     mysql_client = MySQLClient(
         cfg.mysql.defaults_file, hostname=split_host_port(source)[0]
     )
-    src = MYSQL_SRC_MAP[mysql_client.server_vendor](
-        {
-            "ssh_host": split_host_port(source)[0],
-            "ssh_user": cfg.ssh.user,
-            "ssh_key": cfg.ssh.key,
-            "mysql_connect_info": MySQLConnectInfo(
-                cfg.mysql.defaults_file, hostname=split_host_port(source)[0]
-            ),
-            "run_type": INTERVALS[0],
-            "backup_type": "full",
-        }
+    src = get_src_by_vendor(
+        mysql_client.server_vendor,
+        split_host_port(source)[0],
+        cfg.ssh.user,
+        cfg.ssh.key,
+        MySQLConnectInfo(
+            cfg.mysql.defaults_file, hostname=split_host_port(source)[0]
+        ),
+        INTERVALS[0],
     )
     xbstream_binary = cfg.mysql.xbstream_binary or (
         MBSTREAM_BINARY
