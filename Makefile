@@ -118,7 +118,7 @@ lint: ## check style with pylint
 
 test: ## Run tests quickly with the default Python
 	pytest -xv --cov-report term-missing --cov=./twindb_backup tests/unit
-
+	codecov
 
 test-integration: ## Run integration tests. Must be run in vagrant
 	py.test -xsv tests/integration/
