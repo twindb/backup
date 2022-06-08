@@ -47,6 +47,8 @@ INTERVALS = ["hourly", "daily", "weekly", "monthly", "yearly"]
 MEDIA_TYPES = ["files", "mysql", "binlog"]
 XTRABACKUP_BINARY = "xtrabackup"
 XBSTREAM_BINARY = "xbstream"
+MARIABACKUP_BINARY = "mariabackup"
+MBSTREAM_BINARY = "mbstream"
 MY_CNF_COMMON_PATHS = ["/etc/my.cnf", "/etc/mysql/my.cnf"]
 DEFAULT_FILE_ENCODING = "utf-8"
 

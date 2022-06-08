@@ -8,8 +8,8 @@ def test_mysql(config_file):
     assert tbc.mysql.full_backup == "daily"
     assert tbc.mysql.defaults_file == "/etc/twindb/my.cnf"
     assert tbc.mysql.expire_log_days == 8
-    assert tbc.mysql.xtrabackup_binary == "xtrabackup"
-    assert tbc.mysql.xbstream_binary == "xbstream"
+    assert tbc.mysql.xtrabackup_binary is None
+    assert tbc.mysql.xbstream_binary is None
 
 
 def test_no_mysql_section(tmpdir):

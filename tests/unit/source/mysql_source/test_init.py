@@ -17,6 +17,7 @@ def test_mysql_source_has_methods():
 
 def test_mysql_source_raises_on_wrong_connect_info():
     with pytest.raises(MySQLSourceError):
+        # noinspection PyTypeChecker
         MySQLSource("/foo/bar", "hourly", "full", dst=mock.Mock())
 
 

@@ -3,12 +3,13 @@
 Module defines MySQL source class for backing up remote MySQL.
 """
 import configparser
+import os
 import re
 import socket
 import struct
-import time
 from contextlib import contextmanager
 from errno import ENOENT
+from os import path as osp
 from pathlib import Path
 
 import pymysql
@@ -50,37 +51,51 @@ class RemoteMySQLSource(MySQLSource):
         :type compress: bool
         :raise RemoteMySQLSourceError: if any error
         """
-        retry = 1
-        retry_time = 2
-        error_log = "/tmp/{src}_{src_port}-{dst}_{dst_port}.log".format(
-            src=self._ssh_client.host,
-            src_port=self._ssh_client.port,
-            dst=dest_host,
-            dst_port=port,
+        error_log = osp.join(
+            os.sep,
+            "tmp",
+            f"{self._ssh_client.host}_{self._ssh_client.port}-"
+            f"{dest_host}_{port}-error.log",
         )
-        if compress:
-            compress_cmd = "| gzip -c - "
-        else:
-            compress_cmd = ""
+        xb_cmd = [
+            self._xtrabackup,
+        ]
+        local_defaults = osp.expanduser(self._connect_info.defaults_file)
+        remote_defaults = None
+        try:
+            if osp.exists(local_defaults):
+                with open(local_defaults) as fp:
+                    remote_defaults = self._ssh_client.execute("mktemp")[
+                        0
+                    ].strip()
+                    LOG.debug(
+                        "Writing content of %s to %s.",
+                        local_defaults,
+                        remote_defaults,
+                    )
+                    self._ssh_client.write_content(remote_defaults, fp.read())
+                xb_cmd.append(f"--defaults-file={remote_defaults}")
+            xb_cmd.extend(
+                [
+                    "--stream=xbstream",
+                    "--host=127.0.0.1",
+                    "--backup",
+                    "--target-dir",
+                    "./",
+                ]
+            )
+            cmd = [" ".join(xb_cmd) + f" 2> {error_log}"]
+            if compress:
+                cmd.append("gzip -c -")
 
-        cmd = (
-            'bash -c "sudo %s '
-            "--stream=xbstream "
-            "--host=127.0.0.1 "
-            "--backup "
-            "--target-dir ./ 2> %s"
-            ' %s | ncat %s %d --send-only"'
-            % (self._xtrabackup, error_log, compress_cmd, dest_host, port)
-        )
-        while retry < 3:
-            try:
-                return self._ssh_client.execute(cmd)
-            except SshClientException as err:
-                LOG.warning(err)
-                LOG.info("Will try again in after %d seconds", retry_time)
-                time.sleep(retry_time)
-                retry_time *= 2
-                retry += 1
+            cmd.append(f"ncat {dest_host} {port} --send-only")
+            cmd_line = "|".join(cmd)
+            remote_cmd = f"bash -c 'set -o pipefail; sudo {cmd_line}'"
+            return self._ssh_client.execute(remote_cmd)
+
+        finally:
+            if remote_defaults:
+                self._ssh_client.execute(f"rm -f '{remote_defaults}'")
 
     def clone_config(self, dst):
         """
@@ -108,7 +123,7 @@ class RemoteMySQLSource(MySQLSource):
             if "!includedir" in line:
                 rel_path = line.split()[1]
                 file_list = self._ssh_client.list_files(
-                    root_path.parent.joinpath(rel_path),
+                    str(root_path.parent.joinpath(rel_path)),
                     recursive=False,
                     files_only=True,
                 )
@@ -195,7 +210,7 @@ class RemoteMySQLSource(MySQLSource):
         try:
             cmd = "cat %s" % cfg_path
             with self._ssh_client.get_remote_handlers(cmd) as (_, cout, _):
-                cfg.readfp(cout)
+                cfg.read_string(cout.read().decode())
         except configparser.ParsingError as err:
             LOG.error(err)
             raise
@@ -267,8 +282,9 @@ class RemoteMySQLSource(MySQLSource):
             self._ssh_client.execute("sudo chown -R mysql %s" % datadir)
             return self._get_binlog_info(datadir)
         except SshClientException as err:
-            LOG.debug("Logfile is:")
+            LOG.debug("###### Logfile BEGIN.")
             LOG.debug(self._ssh_client.get_text_content(logfile_path))
+            LOG.debug("###### Logfile END.")
             raise RemoteMySQLSourceError(err)
 
     def _mem_available(self):

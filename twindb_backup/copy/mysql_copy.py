@@ -1,8 +1,15 @@
 """Class to describe MySQL backup copy"""
 import json
 
+from twindb_backup import (
+    MARIABACKUP_BINARY,
+    MBSTREAM_BINARY,
+    XBSTREAM_BINARY,
+    XTRABACKUP_BINARY,
+)
 from twindb_backup.copy.exceptions import WrongInputData
 from twindb_backup.copy.periodic_copy import PeriodicCopy
+from twindb_backup.source.mysql_source import MySQLFlavor
 
 
 class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
@@ -34,6 +41,7 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
         "backup_started",
         "backup_finished",
         "type",
+        "server_vendor",
     ]
 
     def __init__(self, *args, **kwargs):
@@ -59,6 +67,9 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
         self._position = kwargs.get("position", None)
         self._lsn = kwargs.get("lsn", None)
         self._parent = kwargs.get("parent", None)
+        self._server_vendor = MySQLFlavor(
+            kwargs.get("server_vendor", MySQLFlavor.ORACLE)
+        )
 
         if "wsrep_provider_version" in kwargs:
             self._wsrep_provider_version = kwargs.get("wsrep_provider_version")
@@ -94,15 +105,10 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
         return not self.__eq__(other)
 
     def __str__(self):
-
-        # There is a bug https://bugs.python.org/issue16333
-        # dumps() leaves trailing whitespaces
         return "%s(%s) = %s" % (
             self.__class__.__name__,
             self.key,
-            json.dumps(self.as_dict(), sort_keys=True, indent=4).replace(
-                " \n", "\n"
-            ),
+            json.dumps(self.as_dict(), sort_keys=True, indent=4),
         )
 
     @property
@@ -161,13 +167,33 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
         return self._galera
 
     @property
-    def wsrep_provider_version(self):
-        """If it was Galera, value of wsrep_provider_version"""
-        return self._wsrep_provider_version
+    def server_vendor(self):
+        return self._server_vendor
 
     @property
     def sort_key(self):
         return self.created_at or 0
+
+    @property
+    def xbstream_binary(self):
+        return (
+            MBSTREAM_BINARY
+            if self.server_vendor is MySQLFlavor.MARIADB
+            else XBSTREAM_BINARY
+        )
+
+    @property
+    def xtrabackup_binary(self):
+        return (
+            MARIABACKUP_BINARY
+            if self.server_vendor is MySQLFlavor.MARIADB
+            else XTRABACKUP_BINARY
+        )
+
+    @property
+    def wsrep_provider_version(self):
+        """If it was Galera, value of wsrep_provider_version"""
+        return self._wsrep_provider_version
 
     def as_dict(self):
         """Return representation of the class instance for output purposes."""

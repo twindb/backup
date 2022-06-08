@@ -105,6 +105,7 @@ class MySQLStatus(PeriodicStatus):
                         "lsn",
                         "position",
                         "wsrep_provider_version",
+                        "server_vendor",
                     ]
                     for copy_key in keys:
                         if copy_key in value:

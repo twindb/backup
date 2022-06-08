@@ -113,7 +113,7 @@ def test_init_raises_on_wrong_key():
                         "yearly": {},
                     }
                 ).encode("utf-8")
-            )
+            ).decode()
         )
 
 
@@ -130,8 +130,8 @@ def test_init_weekly_only():
                     },
                     "yearly": {},
                 }
-            ).encode("utf-8")
-        )
+            ).encode()
+        ).decode()
     )
     assert not status.daily
     assert not status.hourly
@@ -168,7 +168,7 @@ def test_init_example_0():
                 "yearly": {},
             }
         ).encode("utf-8")
-    )
+    ).decode()
     status = MySQLStatus(content=content)
     assert len(status.hourly) == 1
     assert len(status) == 1
@@ -186,7 +186,7 @@ def test_init_example_1():
                 "yearly": {},
             }
         ).encode("utf-8")
-    )
+    ).decode()
     status = MySQLStatus(content=content)
     assert len(status.weekly) == 1
     assert len(status) == 1

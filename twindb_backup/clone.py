@@ -5,13 +5,25 @@ Module defines clone feature
 import time
 from multiprocessing import Process
 
-from twindb_backup import INTERVALS, LOG
+from twindb_backup import INTERVALS, LOG, MBSTREAM_BINARY, XBSTREAM_BINARY
 from twindb_backup.destination.ssh import Ssh
 from twindb_backup.exceptions import OperationError
-from twindb_backup.source.mysql_source import MySQLConnectInfo, MySQLMasterInfo
+from twindb_backup.source.mysql_source import (
+    MySQLClient,
+    MySQLConnectInfo,
+    MySQLFlavor,
+    MySQLMasterInfo,
+)
+from twindb_backup.source.remote_mariadb_source import RemoteMariaDBSource
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
 from twindb_backup.ssh.exceptions import SshClientException
 from twindb_backup.util import split_host_port
+
+MYSQL_SRC_MAP = {
+    MySQLFlavor.MARIADB: RemoteMariaDBSource,
+    MySQLFlavor.ORACLE: RemoteMySQLSource,
+    MySQLFlavor.PERCONA: RemoteMySQLSource,
+}
 
 
 def _mysql_service(dst, action):
@@ -71,7 +83,10 @@ def clone_mysql(
     LOG.debug("MySQL defaults: %s", cfg.mysql.defaults_file)
     LOG.debug("SSH username: %s", cfg.ssh.user)
     LOG.debug("SSH key: %s", cfg.ssh.key)
-    src = RemoteMySQLSource(
+    mysql_client = MySQLClient(
+        cfg.mysql.defaults_file, hostname=split_host_port(source)[0]
+    )
+    src = MYSQL_SRC_MAP[mysql_client.server_vendor](
         {
             "ssh_host": split_host_port(source)[0],
             "ssh_user": cfg.ssh.user,
@@ -83,7 +98,11 @@ def clone_mysql(
             "backup_type": "full",
         }
     )
-    xbstream_binary = cfg.mysql.xbstream_binary
+    xbstream_binary = cfg.mysql.xbstream_binary or (
+        MBSTREAM_BINARY
+        if mysql_client.server_vendor is MySQLFlavor.MARIADB
+        else XBSTREAM_BINARY
+    )
     LOG.debug("SSH destination: %s", split_host_port(destination)[0])
     LOG.debug("SSH username: %s", cfg.ssh.user)
     LOG.debug("SSH key: %s", cfg.ssh.key)
@@ -111,7 +130,7 @@ def clone_mysql(
     LOG.debug("SSH username: %s", cfg.ssh.user)
     LOG.debug("SSH key: %s", cfg.ssh.key)
 
-    dst_mysql = RemoteMySQLSource(
+    dst_mysql = MYSQL_SRC_MAP[mysql_client.server_vendor](
         {
             "ssh_host": split_host_port(destination)[0],
             "ssh_user": cfg.ssh.user,
@@ -158,34 +177,34 @@ def _run_remote_netcat(
     src,
     xbstream_path,
 ):
-    netcat_cmd = "{xbstream_binary} -x -C {datadir}".format(
-        xbstream_binary=xbstream_path, datadir=datadir
-    )
-    if compress:
-        netcat_cmd = "gunzip -c - | %s" % netcat_cmd
-
-    # find unused port
+    LOG.debug("Looking for an available TCP port for netcat.")
     while netcat_port < 64000:
-        if dst.ensure_tcp_port_listening(netcat_port, wait_timeout=1):
+        if dst.ensure_tcp_port_listening(netcat_port, wait=False):
             netcat_port += 1
         else:
-            LOG.debug("Will use port %d for streaming", netcat_port)
+            LOG.debug("Will use port %d for streaming.", netcat_port)
             break
+
+    netcat_cmd = f"{xbstream_path} -x -C {datadir} 2> /tmp/xbstream.err"
+    if compress:
+        netcat_cmd = f"gunzip -c - | {netcat_cmd}"
+
     proc_netcat = Process(
         target=dst.netcat, args=(netcat_cmd,), kwargs={"port": netcat_port}
     )
-    LOG.debug("Starting netcat on the destination")
+    LOG.debug("Starting netcat on the destination.")
     proc_netcat.start()
     nc_wait_timeout = 10
     if not dst.ensure_tcp_port_listening(
         netcat_port, wait_timeout=nc_wait_timeout
     ):
         LOG.error(
-            "netcat on the destination " "is not ready after %d seconds",
+            "netcat on the destination is not ready after %d seconds.",
             nc_wait_timeout,
         )
         proc_netcat.terminate()
         exit(1)
+    LOG.debug("netcat on the destination is ready.")
     src.clone(
         dest_host=split_host_port(destination)[0],
         port=netcat_port,

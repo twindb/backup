@@ -20,6 +20,7 @@ from twindb_backup import (
     XBSTREAM_BINARY,
     XTRABACKUP_BINARY,
 )
+from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
 from twindb_backup.exceptions import TwinDBBackupError
@@ -91,6 +92,7 @@ def restore_from_mysql_full(
     :return: If success, return True
     :rtype: bool
     """
+    LOG.debug("Restore tools: %s/%s", xtrabackup_binary, xbstream_binary)
     # GPG modifier
     if config.gpg:
         gpg = Gpg(
@@ -317,7 +319,12 @@ def update_grastate(dst_dir, status, key):
 
 # pylint: disable=too-many-locals,too-many-branches,too-many-statements
 def restore_from_mysql(
-    twindb_config, copy, dst_dir, tmp_dir=None, cache=None, hostname=None
+    twindb_config,
+    copy: MySQLCopy,
+    dst_dir,
+    tmp_dir=None,
+    cache=None,
+    hostname=None,
 ):
     """
     Restore MySQL datadir in a given directory
@@ -337,6 +344,7 @@ def restore_from_mysql(
 
     """
     LOG.info("Restoring %s in %s", copy, dst_dir)
+    LOG.debug("Server vendor: %s", copy.server_vendor)
     mkdir_p(dst_dir)
 
     dst = None
@@ -371,7 +379,12 @@ def restore_from_mysql(
                 cache.add(dst_dir, cache_key)
         else:
             restore_from_mysql_full(
-                stream, dst_dir, twindb_config, redo_only=False
+                stream,
+                dst_dir,
+                twindb_config,
+                redo_only=False,
+                xbstream_binary=copy.xbstream_binary,
+                xtrabackup_binary=copy.xtrabackup_binary,
             )
 
     else:
@@ -391,9 +404,21 @@ def restore_from_mysql(
                 cache.add(dst_dir, cache_key)
         else:
             restore_from_mysql_full(
-                full_stream, dst_dir, twindb_config, redo_only=True
+                full_stream,
+                dst_dir,
+                twindb_config,
+                redo_only=True,
+                xtrabackup_binary=copy.xtrabackup_binary,
+                xbstream_binary=copy.xbstream_binary,
             )
-        restore_from_mysql_incremental(stream, dst_dir, twindb_config, tmp_dir)
+        restore_from_mysql_incremental(
+            stream,
+            dst_dir,
+            twindb_config,
+            tmp_dir,
+            xtrabackup_binary=copy.xtrabackup_binary,
+            xbstream_binary=copy.xbstream_binary,
+        )
 
     config_dir = os.path.join(dst_dir, "_config")
 

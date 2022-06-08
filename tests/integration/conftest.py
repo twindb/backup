@@ -17,6 +17,7 @@ SUPPORTED_IMAGES = [
     "twindb/backup-test:centos-7",
     "twindb/backup-test:bionic",
     "twindb/backup-test:focal",
+    "twindb/backup-test:focal-mariadb-10",
 ]
 
 
@@ -141,7 +142,7 @@ def _ipam_config():
 
 
 # noinspection PyShadowingNames
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def container_network(docker_client):
     api = docker_client.api
     network = None
@@ -252,7 +253,7 @@ def get_container(
 
 
 # noinspection PyShadowingNames
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def master1(docker_client, container_network, tmpdir_factory):
 
     platform = (
@@ -329,7 +330,7 @@ def master1(docker_client, container_network, tmpdir_factory):
 
 
 # noinspection PyShadowingNames
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def slave(docker_client, container_network, tmpdir_factory):
     platform = get_platform_from_image(os.environ["DOCKER_IMAGE"])
     bootstrap_script = osp.join(
@@ -389,7 +390,7 @@ def slave(docker_client, container_network, tmpdir_factory):
 
 
 # noinspection PyShadowingNames
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def runner(docker_client, container_network, tmpdir_factory):
     platform = get_platform_from_image(os.environ["DOCKER_IMAGE"])
     bootstrap_script = osp.join(
@@ -449,7 +450,7 @@ def docker_execute(client, container_id, cmd, tty=False):
     :rtype: tuple(int, str)
     """
     cont = client.containers.get(container_id)
-    LOG.debug("Running(on %s) %s", cont.name, " ".join(cmd))
+    LOG.debug("%s: %s", cont.name, " ".join(cmd))
     api = client.api
     executor = api.exec_create(container_id, cmd, tty=tty)
     exec_id = executor["Id"]

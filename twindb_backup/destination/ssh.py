@@ -95,7 +95,7 @@ class Ssh(BaseDestination):
         cmd = "rm %s" % remote_name
         self.execute_command(cmd)
 
-    def ensure_tcp_port_listening(self, port, wait_timeout=10):
+    def ensure_tcp_port_listening(self, port, wait_timeout=10, wait=True):
         """
         Check that tcp port is open and ready to accept connections.
         Keep checking up to ``wait_timeout`` seconds.
@@ -104,24 +104,31 @@ class Ssh(BaseDestination):
         :type port: int
         :param wait_timeout: Wait this many seconds until the port is ready.
         :type wait_timeout: int
+        :param wait: Wait a wait_timeout of seconds until the TCP port
+            become available. If set to False the method will return
+            after the first check.
+        :type wait: bool
         :return: ``True`` if the TCP port is listening.
         :rtype: bool
         """
         stop_waiting_at = time.time() + wait_timeout
         while time.time() < stop_waiting_at:
             try:
-
-                cmd = (
-                    "netstat -ln | grep -w 0.0.0.0:%d 2>&1 "
-                    "> /dev/null" % port
+                self.execute_command(
+                    f"netstat -ln | grep -w 0.0.0.0:{port} 2>&1 > /dev/null"
                 )
-                cout, cerr = self.execute_command(cmd)
-                LOG.debug("stdout: %s", cout)
-                LOG.debug("stderr: %s", cerr)
+                LOG.debug(
+                    "TCP/%d is ready to accept connections on %s.",
+                    port,
+                    self.host,
+                )
                 return True
             except SshClientException as err:
                 LOG.debug(err)
-                time.sleep(1)
+                if wait:
+                    time.sleep(1)
+                else:
+                    return False
 
         return False
 
@@ -137,8 +144,7 @@ class Ssh(BaseDestination):
         :return: stdin, stdout and stderr handlers.
         :rtype: tuple
         """
-        LOG.debug("Executing: %s", cmd)
-
+        LOG.debug("Executing(%s): %s", self.host, cmd)
         return self._ssh_client.execute(cmd, quiet=quiet, background=background)
 
     @contextmanager
@@ -217,7 +223,7 @@ class Ssh(BaseDestination):
         """
         try:
             return self.execute_command(
-                "ncat -l %d --recv-only | " "%s" % (port, command)
+                "ncat -l %d --recv-only 2> /tmp/ncat.err | %s" % (port, command)
             )
         except SshDestinationError as err:
             LOG.error(err)

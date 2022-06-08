@@ -1,4 +1,5 @@
 import time
+from os import path as osp
 
 from tests.integration.conftest import (
     assert_and_pause,
@@ -22,27 +23,31 @@ def test_clone(
 ):
 
     twindb_config_dir = get_twindb_config_dir(docker_client, runner["Id"])
-    twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
+    twindb_config_host = osp.join(twindb_config_dir, "twindb-backup-1.cfg")
     twindb_config_guest = "/etc/twindb/twindb-backup-1.cfg"
-    my_cnf_path = "%s/my.cnf" % twindb_config_dir
+    my_cnf_path = osp.join(twindb_config_dir, "my.cnf")
 
-    private_key_host = "%s/private_key" % twindb_config_dir
+    private_key_host = osp.join(twindb_config_dir, "private_key")
     private_key_guest = "/etc/twindb/private_key"
 
+    # Write config files locally. They're available on the guest
+    # via a mounted /etc/twindb/
     with open(my_cnf_path, "w") as my_cnf:
+        LOG.debug("Saving my.cnf in %s", my_cnf_path)
         my_cnf.write(client_my_cnf)
 
     with open(private_key_host, "w") as key_fd:
+        LOG.debug("Saving private key in %s", private_key_host)
         key_fd.write(rsa_private_key)
 
     with open(twindb_config_host, "w") as fp:
+        LOG.debug("Saving twindb config in %s", twindb_config_host)
         content = config_content_clone.format(
             PRIVATE_KEY=private_key_guest, MY_CNF="/etc/twindb/my.cnf"
         )
         fp.write(content)
 
-    cmd = "/usr/sbin/sshd"
-    LOG.info("Run SSH daemon on master1_1")
+    cmd = ["/usr/sbin/sshd"]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     assert_and_pause((ret == 0,), cout)
 
@@ -87,6 +92,6 @@ def test_clone(
 
                     LOG.info("Replication is up and running")
                     return
-
-    LOG.error("Replication is not running after 30 seconds timeout")
-    pause_test("Replication is not running after 30 seconds timeout")
+    assert_and_pause(
+        (False,), "Replication is not running after 30 seconds timeout"
+    )

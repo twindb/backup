@@ -119,7 +119,7 @@ class SshClient(object):
         try:
             with self._shell() as shell:
                 if not background:
-                    LOG.debug("Executing command: %s", cmd)
+                    LOG.debug("%s: %s", self.host, cmd)
                     stdin_, stdout_, _ = shell.exec_command(cmd)
                     channel = stdout_.channel
                     stdin_.close()
@@ -146,13 +146,17 @@ class SshClient(object):
                     if exit_code != 0:
                         if not quiet:
                             LOG.error("Failed to execute command %s", cmd)
+                            LOG.error("stderr:")
                             LOG.error("".join(stderr_chunks))
+                            LOG.error("eof stderr.")
                         raise SshClientException(
-                            "%s exited with code %d" % (cmd, exit_code)
+                            f"{cmd} exited with code {exit_code}"
                         )
                     return "".join(stdout_chunks), "".join(stderr_chunks)
                 else:
-                    LOG.debug("Executing in background: %s", cmd)
+                    LOG.debug(
+                        "Executing in background (%s): %s", self.host, cmd
+                    )
                     transport = shell.get_transport()
                     channel = transport.open_session()
                     channel.exec_command(cmd)
@@ -207,8 +211,8 @@ class SshClient(object):
             f"then {' '.join(find_cmd)}; fi'"
         )
         cout, cerr = self.execute(cmd)
-        LOG.debug("COUT:\n%s", cout)
-        LOG.debug("CERR:\n%s", cerr)
+        LOG.debug("stdout:\n%s\neof stdout.", cout)
+        LOG.debug("stderr:\n%s\neof stderr.", cerr)
 
         if files_only:
             return cout.split()

@@ -1,9 +1,14 @@
 import json
 import os
 from io import StringIO
+from os import path as osp
 
 import magic
 
+from tests.integration.backup.conftest import (
+    check_either_file,
+    check_files_if_xtrabackup,
+)
 from tests.integration.conftest import (
     assert_and_pause,
     docker_execute,
@@ -610,28 +615,28 @@ def test_take_mysql_backup_aenc_restores_full(
     mysql_files = [
         "ibdata1",
         "ib_logfile0",
-        "ib_logfile1",
         "backup-my.cnf",
-        "xtrabackup_logfile",
     ]
     for datadir_file in mysql_files:
-        files_to_test += ["test -f %s/%s" % (dst_dir, datadir_file)]
-    cmd = ["bash", "-c", " && ".join(files_to_test)]
+        cmd = ["bash", "-c", f"test -f {osp.join(dst_dir, datadir_file)}"]
 
-    print(cmd)
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert_and_pause((ret == 0,), cout)
+        print(cmd)
+        ret, cout = docker_execute(docker_client, master1["Id"], cmd)
+        print(cout)
+        assert_and_pause((ret == 0,), cout)
 
-    cmd = [
-        "bash",
-        "-c",
-        "test -f {datadir}/_config/etc/my.cnf "
-        "|| test -f {datadir}/_config/etc/mysql/my.cnf".format(datadir=dst_dir),
-    ]
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert_and_pause((ret == 0,), cout)
+    check_files_if_xtrabackup(
+        docker_client,
+        master1["Id"],
+        dst_dir,
+        ["ib_logfile1", "xtrabackup_logfile"],
+    )
+    check_either_file(
+        docker_client,
+        master1["Id"],
+        dst_dir,
+        ["_config/etc/my.cnf", "_config/etc/mysql/my.cnf"],
+    )
 
 
 def test_take_mysql_backup_aenc_restores_inc(
@@ -761,28 +766,28 @@ def test_take_mysql_backup_aenc_restores_inc(
     print(cout)
     assert_and_pause((ret == 0,), cout)
 
-    files_to_test = []
     for datadir_file in [
         "ibdata1",
         "ib_logfile0",
-        "ib_logfile1",
         "backup-my.cnf",
-        "xtrabackup_logfile",
     ]:
-        files_to_test += ["test -f %s/%s" % (dst_dir, datadir_file)]
-    cmd = ["bash", "-c", " && ".join(files_to_test)]
+        cmd = ["bash", "-c", f"test -f {osp.join(dst_dir, datadir_file)}"]
 
-    print(cmd)
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert_and_pause((ret == 0,), cout)
+        print(cmd)
+        ret, cout = docker_execute(docker_client, master1["Id"], cmd)
+        print(cout)
+        assert_and_pause((ret == 0,), cout)
 
-    cmd = [
-        "bash",
-        "-c",
-        "test -f {datadir}/_config/etc/my.cnf "
-        "|| test -f {datadir}/_config/etc/mysql/my.cnf".format(datadir=dst_dir),
-    ]
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert_and_pause((ret == 0,), cout)
+    check_files_if_xtrabackup(
+        docker_client,
+        master1["Id"],
+        dst_dir,
+        ["ib_logfile1", "xtrabackup_logfile"],
+    )
+
+    check_either_file(
+        docker_client,
+        master1["Id"],
+        dst_dir,
+        ["_config/etc/my.cnf", "_config/etc/mysql/my.cnf"],
+    )
