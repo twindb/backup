@@ -50,13 +50,9 @@ def test__take_file_backup(
     assert_and_pause((ret == 0,), cout)
 
     # Check that backup copy is in "twindb-backup ls" output
-    hostname = "master1_1"
-    s3_backup_path = "s3://%s/%s/hourly/files/%s" % (
-        s3_client.bucket,
-        hostname,
-        backup_dir.replace("/", "_"),
-    )
-    cmd = ["twindb-backup", "--debug", "--config", twindb_config_guest, "ls"]
+    hostname = docker_client.containers.get(master1["Id"]).name
+    s3_backup_path = f"s3://{s3_client.bucket}/{hostname}/hourly/files/{backup_dir.replace('/', '_')}"
+    cmd = ["twindb-backup", "--config", twindb_config_guest, "ls"]
 
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
 
@@ -249,7 +245,7 @@ def test__s3_find_files_returns_sorted(
         ret, cout = docker_execute(docker_client, master1["Id"], cmd)
         print(cout)
         assert ret == 0
-    hostname = "master1_1"
+    hostname = docker_client.containers.get(master1["Id"]).name
     dst = S3(
         bucket=s3_client.bucket,
         aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
@@ -264,8 +260,8 @@ def test__s3_find_files_returns_sorted(
             remote_path=dst.remote_path, hostname=hostname, run_type="daily"
         )
         files = dst.list_files(prefix)
-        assert len(files) == n_runs
-        assert files == sorted(files)
+        assert_and_pause((len(files) == n_runs,), "\n".join(files))
+        assert_and_pause((files == sorted(files),), "\n".join(files))
 
 
 def test_take_file_backup_with_aenc(
@@ -331,13 +327,8 @@ def test_take_file_backup_with_aenc(
     with open(os.path.join(twindb_config_dir, "file"), "w") as f:
         f.write("Hello world.")
 
-    hostname = "master1_1"
-    s3_backup_path = "s3://%s/%s/hourly/files/%s" % (
-        s3_client.bucket,
-        hostname,
-        backup_dir.replace("/", "_"),
-    )
-
+    hostname = docker_client.containers.get(master1["Id"]).name
+    s3_backup_path = f"s3://{s3_client.bucket}/{hostname}/hourly/files/{backup_dir.replace('/', '_')}"
     cmd = [
         "twindb-backup",
         "--debug",

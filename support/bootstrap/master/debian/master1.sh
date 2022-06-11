@@ -4,8 +4,6 @@ set -exu
 
 
 wait_time=2
-# Install repo.mysql.com GPG key
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 467B942D3A79BD29
 for _ in $(seq 5)
 do
     apt-get -qq update && break

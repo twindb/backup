@@ -5,7 +5,7 @@ yum clean all
 
 function install_package() {
 
-    for i in 1 2 3
+    for _ in 1 2 3
     do
         yum -y install $@ && break
         sleep 5

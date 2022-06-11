@@ -2,9 +2,6 @@
 
 set -exu
 
-# Install repo.mysql.com GPG key
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 467B942D3A79BD29
-
 wait_time=2
 for _ in $(seq 5)
 do
@@ -21,6 +18,9 @@ TB_VERSION=$(PYTHONPATH=/twindb-backup python -c "from twindb_backup import __ve
 package="/twindb-backup/omnibus/pkg/twindb-backup_${TB_VERSION}-1_amd64.deb"
 
 apt -y install "$package"
+
+rm -rf /var/lib/mysql
+mkdir /var/lib/mysql
 
 set +u
 if ! test -z "${DEV}"; then

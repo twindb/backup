@@ -8,6 +8,7 @@ from tests.integration.conftest import (
     pause_test,
 )
 from twindb_backup import INTERVALS, LOG
+from twindb_backup.backup import timeout
 from twindb_backup.source.mysql_source import MySQLConnectInfo
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
 
@@ -47,10 +48,6 @@ def test_clone(
         )
         fp.write(content)
 
-    cmd = ["/usr/sbin/sshd"]
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0,), cout)
-
     cmd = [
         "twindb-backup",
         "--debug",
@@ -79,19 +76,20 @@ def test_clone(
         }
     )
 
-    timeout = time.time() + 30
-    while time.time() < timeout:
-        with sql_master_2.get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("SHOW SLAVE STATUS")
-                row = cursor.fetchone()
-                if (
-                    row["Slave_IO_Running"] == "Yes"
-                    and row["Slave_SQL_Running"] == "Yes"
-                ):
+    with timeout(30):
+        while True:
+            with sql_master_2.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("SHOW SLAVE STATUS")
+                    row = cursor.fetchone()
+                    if (
+                        row["Slave_IO_Running"] == "Yes"
+                        and row["Slave_SQL_Running"] == "Yes"
+                    ):
 
-                    LOG.info("Replication is up and running")
-                    return
+                        LOG.info("Replication is up and running")
+                        return
+    # noinspection PyUnreachableCode
     assert_and_pause(
         (False,), "Replication is not running after 30 seconds timeout"
     )

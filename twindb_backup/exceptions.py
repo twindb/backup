@@ -6,11 +6,11 @@ class TwinDBBackupError(Exception):
 
 
 class OperationError(TwinDBBackupError):
-    """High level exceptions of twindb_backup package"""
+    """Exceptions that prevent normal TwinDB Backup operation"""
 
 
 class LockWaitTimeoutError(TwinDBBackupError):
-    """Class that describes exception of lock wait timeout"""
+    """Timeout expired while waiting for a lock"""
 
 
 class TwinDBBackupInternalError(TwinDBBackupError):

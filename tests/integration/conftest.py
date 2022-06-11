@@ -11,6 +11,7 @@ from docker.types import IPAMConfig, IPAMPool
 
 from tests.integration import ensure_aws_creds
 from twindb_backup import LOG, setup_logging
+from twindb_backup.backup import timeout
 from twindb_backup.util import mkdir_p
 
 SUPPORTED_IMAGES = [
@@ -181,11 +182,10 @@ def get_container(
     name,
     client,
     network,
-    datadir=None,
-    bootstrap_script=None,
     last_n=1,
     twindb_config_dir=None,
     image=NODE_IMAGE,
+    command=None,
 ):
     api = client.api
 
@@ -197,7 +197,8 @@ def get_container(
         cwd: {
             "bind": "/twindb-backup",
             "mode": "rw",
-        }
+        },
+        "/sys/fs/cgroup": {"bind": "/sys/fs/cgroup", "mode": "ro"},
     }
     if twindb_config_dir:
         LOG.debug("TwinDB config directory: %s", twindb_config_dir)
@@ -206,13 +207,11 @@ def get_container(
             "bind": "/etc/twindb",
             "mode": "rw",
         }
-    if datadir:
-        binds[datadir] = {
-            "bind": "/var/lib/mysql",
-            "mode": "rw",
-        }
     host_config = api.create_host_config(
-        binds=binds, dns=["8.8.8.8", "208.67.222.222", "208.67.220.220"]
+        binds=binds,
+        dns=["8.8.8.8", "208.67.222.222", "208.67.220.220"],
+        tmpfs=["/tmp", "/run"],
+        privileged=True,
     )
 
     ip = "172.%d.3.%d" % (network["second_octet"], last_n)
@@ -222,7 +221,7 @@ def get_container(
 
     LOG.debug(networking_config)
 
-    container_hostname = "%s_%d" % (name, last_n)
+    container_hostname = "%s-%d" % (name, last_n)
     kwargs = {
         "image": image,
         "name": container_hostname,
@@ -233,19 +232,25 @@ def get_container(
         "volumes": ["/twindb-backup"],
         "environment": {},
     }
-    try:
+    if command:
+        LOG.debug("Container's command: %r", command)
+        kwargs["command"] = command
+    if "DEV" in os.environ:
         kwargs["environment"] = {"DEV": os.environ["DEV"]}
-    except KeyError:
-        pass
-    if bootstrap_script:
-        kwargs["command"] = "bash %s" % bootstrap_script
+
     container = api.create_container(**kwargs)
     container["ip"] = ip
+
     LOG.info("Created container %r", container)
     try:
         api.start(container["Id"])
         LOG.info("Started %r", container)
-
+        with timeout(10):
+            while (
+                docker_execute(client, container["Id"], ["ls", "/tmp"])[0] != 0
+            ):
+                LOG.info("Waiting for /tmp")
+                time.sleep(1)
         return container
     except APIError as err:
         LOG.error(err)
@@ -271,25 +276,26 @@ def master1(docker_client, container_network, tmpdir_factory):
         platform,
         "master1.sh",
     )
-    datadir = tmpdir_factory.mktemp("mysql")
     twindb_config_dir = tmpdir_factory.mktemp("twindb")
     container = get_container(
         "master1",
         docker_client,
         container_network,
-        str(datadir),
-        twindb_config_dir=str(twindb_config_dir),
         last_n=1,
+        twindb_config_dir=str(twindb_config_dir),
     )
     try:
-        timeout = time.time() + 30 * 60
+        for cmd in [["ls"], ["bash", bootstrap_script]]:
+            ret, cout = docker_execute(docker_client, container["Id"], cmd)
+            print(cout)
+            assert_and_pause((ret == 0,), cout)
+
         LOG.info("Waiting until port TCP/3306 becomes available")
-        while time.time() < timeout:
+        with timeout(30 * 60):
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            if sock.connect_ex((container["ip"], 3306)) == 0:
-                break
-            time.sleep(1)
-            LOG.info("Still waiting")
+            while sock.connect_ex((container["ip"], 3306)) != 0:
+                time.sleep(1)
+                LOG.info("Still waiting")
 
         LOG.info("Port TCP/3306 is ready")
 
@@ -306,16 +312,6 @@ def master1(docker_client, container_network, tmpdir_factory):
         )
         cmd = ["bash", "-c", f"mysql -uroot mysql < {privileges_file}"]
         ret, cout = docker_execute(docker_client, container["Id"], cmd)
-
-        print(cout)
-        assert_and_pause((ret == 0,), cout)
-
-        ret, _ = docker_execute(docker_client, container["Id"], ["ls"])
-        assert ret == 0
-
-        ret, cout = docker_execute(
-            docker_client, container["Id"], ["bash", bootstrap_script]
-        )
         print(cout)
         assert_and_pause((ret == 0,), cout)
 
@@ -349,15 +345,13 @@ def slave(docker_client, container_network, tmpdir_factory):
         + "slave_"
         + NODE_IMAGE[separator_pos + 1 :]
     )
-    datadir = tmpdir_factory.mktemp("mysql")
     twindb_config_dir = tmpdir_factory.mktemp("twindb")
     container = get_container(
         "slave",
         docker_client,
         container_network,
-        str(datadir),
-        twindb_config_dir=str(twindb_config_dir),
         last_n=2,
+        twindb_config_dir=str(twindb_config_dir),
         image=image_name,
     )
     try:
@@ -389,6 +383,34 @@ def slave(docker_client, container_network, tmpdir_factory):
         )
 
 
+@pytest.yield_fixture
+def storage_server(docker_client, container_network):
+
+    bootstrap_script = "/twindb-backup/support/bootstrap/storage_server.sh"
+    container = get_container(
+        "storage_server",
+        docker_client,
+        container_network,
+        last_n=3,
+        image="centos:centos7",
+        command=["bash", bootstrap_script],
+    )
+    # docker_execute(docker_client, container["id"], ["bash", bootstrap_script])
+
+    with timeout(30 * 60):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        while sock.connect_ex((container["ip"], 22)) != 0:
+            time.sleep(1)
+
+    yield container
+
+    if container:
+        LOG.info("Removing container %s", container["Id"])
+        docker_client.api.remove_container(
+            container=container["Id"], force=True
+        )
+
+
 # noinspection PyShadowingNames
 @pytest.fixture(scope="module")
 def runner(docker_client, container_network, tmpdir_factory):
@@ -403,31 +425,23 @@ def runner(docker_client, container_network, tmpdir_factory):
         "master1.sh",
     )
 
-    datadir = tmpdir_factory.mktemp("mysql")
     twindb_config_dir = tmpdir_factory.mktemp("twindb")
     container = get_container(
         name="runner",
         client=docker_client,
         network=container_network,
-        bootstrap_script=bootstrap_script,
         last_n=3,
         twindb_config_dir=str(twindb_config_dir),
-        datadir=datadir,
     )
     try:
-        ret, _ = docker_execute(docker_client, container["Id"], ["ls"])
-        assert ret == 0
-
-        ret, cout = docker_execute(
-            docker_client, container["Id"], ["bash", bootstrap_script]
-        )
-        print(cout)
-        assert_and_pause((ret == 0,), cout)
+        for cmd in [["ls"], ["bash", bootstrap_script]]:
+            ret, cout = docker_execute(docker_client, container["Id"], cmd)
+            print(cout)
+            assert_and_pause((ret == 0,), cout)
 
         yield container
 
     finally:
-
         LOG.info("Removing container %s", container["Id"])
         docker_client.api.remove_container(
             container=container["Id"], force=True
@@ -507,3 +521,48 @@ def assert_and_pause(condition, msg):
         LOG.error(err)
         pause_test(msg)
         raise err
+
+
+@pytest.fixture
+def config_content_ssh():
+    return dedent(
+        """
+        [source]
+        backup_mysql=yes
+
+        [destination]
+        backup_destination=ssh
+        keep_local_path=/var/backup/local
+
+        [mysql]
+        mysql_defaults_file={MY_CNF}
+        full_backup=daily
+
+        [ssh]
+        ssh_user=root
+        ssh_key={PRIVATE_KEY}
+        backup_host={HOST_IP}
+        backup_dir=/tmp/backup
+
+        [intervals]
+        run_hourly=yes
+        run_daily=yes
+        run_weekly=yes
+        run_monthly=no
+        run_yearly=yes
+
+        [retention]
+        hourly_copies=24
+        daily_copies=7
+        weekly_copies=1
+        monthly_copies=1
+        yearly_copies=1
+
+        [retention_local]
+        hourly_copies=1
+        daily_copies=1
+        weekly_copies=0
+        monthly_copies=0
+        yearly_copies=0
+        """
+    )
