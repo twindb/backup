@@ -1,7 +1,15 @@
 import json
 import os
 
-from tests.integration.conftest import docker_execute, get_twindb_config_dir
+from tests.integration.backup.conftest import (
+    check_either_file,
+    check_files_if_xtrabackup,
+)
+from tests.integration.conftest import (
+    assert_and_pause,
+    docker_execute,
+    get_twindb_config_dir,
+)
 
 
 def test__restore_mysql_inc_creates_log_files(
@@ -28,8 +36,7 @@ def test__restore_mysql_inc_creates_log_files(
         fp.write(content)
     cmd = ["ls", "-la", "/var/lib/mysql"]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "twindb-backup",
@@ -40,8 +47,7 @@ def test__restore_mysql_inc_creates_log_files(
         "hourly",
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = [
         "twindb-backup",
@@ -52,20 +58,19 @@ def test__restore_mysql_inc_creates_log_files(
         "daily",
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
 
     cmd = ["twindb-backup", "--config", twindb_config_guest, "status"]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
+
     status = json.loads(cout)
     key = list(status["hourly"].keys())[0]
     backup_copy = "s3://" + s3_client.bucket + "/" + key
     dst_dir = "/tmp/dst_full_log_files"
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
+
     cmd = [
         "twindb-backup",
         "--debug",
@@ -78,44 +83,30 @@ def test__restore_mysql_inc_creates_log_files(
         dst_dir,
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
+
     cmd = ["find", dst_dir]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
+
     cmd = ["test", "-f", "/tmp/dst_full_log_files/backup-my.cnf"]
-    print(cmd)
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert ret == 0
-    cmd = ["test", "-f", "/tmp/dst_full_log_files/ibdata1"]
-    print(cmd)
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
+
     cmd = ["test", "-f", "/tmp/dst_full_log_files/ib_logfile0"]
-    print(cmd)
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert ret == 0
-    cmd = ["test", "-f", "/tmp/dst_full_log_files/ib_logfile1"]
-    print(cmd)
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert ret == 0
-    cmd = ["test", "-f", "/tmp/dst_full_log_files/xtrabackup_logfile"]
-    print(cmd)
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert ret == 0
-    cmd = [
-        "bash",
-        "-c",
-        "test -f /tmp/dst_full_log_files/_config/etc/my.cnf "
-        "|| test -f /tmp/dst_full_log_files/_config/etc/mysql/my.cnf",
-    ]
-    print(cmd)
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
+
+    check_files_if_xtrabackup(
+        docker_client,
+        master1["Id"],
+        "/tmp/dst_full_log_files",
+        ["ib_logfile1", "xtrabackup_logfile"],
+    )
+
+    check_either_file(
+        docker_client,
+        master1["Id"],
+        "/tmp/dst_full_log_files",
+        ["_config/etc/my.cnf", "_config/etc/mysql/my.cnf"],
+    )

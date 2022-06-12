@@ -39,7 +39,7 @@ import sys
 
 __author__ = "TwinDB Development Team"
 __email__ = "dev@twindb.com"
-__version__ = "3.0.0"
+__version__ = "3.1.0"
 STATUS_FORMAT_VERSION = 1
 LOCK_FILE = "/var/run/twindb-backup.lock"
 LOG_FILE = "/var/log/twindb-backup-measures.log"
@@ -47,6 +47,8 @@ INTERVALS = ["hourly", "daily", "weekly", "monthly", "yearly"]
 MEDIA_TYPES = ["files", "mysql", "binlog"]
 XTRABACKUP_BINARY = "xtrabackup"
 XBSTREAM_BINARY = "xbstream"
+MARIABACKUP_BINARY = "mariabackup"
+MBSTREAM_BINARY = "mbstream"
 MY_CNF_COMMON_PATHS = ["/etc/my.cnf", "/etc/mysql/my.cnf"]
 DEFAULT_FILE_ENCODING = "utf-8"
 

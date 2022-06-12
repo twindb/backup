@@ -35,15 +35,23 @@ from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.binlog_source import BinlogParser, BinlogSource
 from twindb_backup.source.exceptions import SourceError
 from twindb_backup.source.file_source import FileSource
+from twindb_backup.source.mariadb_source import MariaDBSource
 from twindb_backup.source.mysql_source import (
     MySQLClient,
     MySQLConnectInfo,
+    MySQLFlavor,
     MySQLSource,
 )
 from twindb_backup.ssh.exceptions import SshClientException
 from twindb_backup.status.binlog_status import BinlogStatus
 from twindb_backup.status.mysql_status import MySQLStatus
 from twindb_backup.util import my_cnfs
+
+MYSQL_SRC_MAP = {
+    MySQLFlavor.MARIADB: MariaDBSource,
+    MySQLFlavor.ORACLE: MySQLSource,
+    MySQLFlavor.PERCONA: MySQLSource,
+}
 
 
 def _backup_stream(config, src, dst, callbacks=None):
@@ -124,17 +132,13 @@ def backup_mysql(run_type, config):
         return
 
     dst = config.destination()
-
-    try:
-        full_backup = config.mysql.full_backup
-    except configparser.NoOptionError:
-        full_backup = "daily"
     backup_start = time.time()
-
     status = MySQLStatus(dst=dst)
 
     kwargs = {
-        "backup_type": status.next_backup_type(full_backup, run_type),
+        "backup_type": status.next_backup_type(
+            config.mysql.full_backup, run_type
+        ),
         "dst": dst,
         "xtrabackup_binary": config.mysql.xtrabackup_binary,
     }
@@ -144,7 +148,8 @@ def backup_mysql(run_type, config):
         kwargs["parent_lsn"] = parent.lsn
 
     LOG.debug("Creating source %r", kwargs)
-    src = MySQLSource(
+    mysql_client = MySQLClient(config.mysql.defaults_file)
+    src = MYSQL_SRC_MAP[mysql_client.server_vendor](
         MySQLConnectInfo(config.mysql.defaults_file), run_type, **kwargs
     )
 
@@ -163,6 +168,7 @@ def backup_mysql(run_type, config):
         "backup_started": backup_start,
         "backup_finished": time.time(),
         "config_files": my_cnfs(MY_CNF_COMMON_PATHS),
+        "server_vendor": src.server_vendor,
     }
     if src.incremental:
         kwargs["parent"] = parent.key
@@ -203,6 +209,10 @@ def backup_binlogs(run_type, config):  # pylint: disable=too-many-locals
     dst = config.destination()
     status = BinlogStatus(dst=dst)
     mysql_client = MySQLClient(defaults_file=config.mysql.defaults_file)
+    log_bin_basename = mysql_client.variable("log_bin_basename")
+    if log_bin_basename is None:
+        return
+    binlog_dir = osp.dirname(log_bin_basename)
 
     # last_copy = status.latest_backup
     LOG.debug("Latest copied binlog %s", status.latest_backup)
@@ -214,12 +224,6 @@ def backup_binlogs(run_type, config):  # pylint: disable=too-many-locals
             if status.latest_backup
             else None,
         )
-        cur.execute("SELECT @@log_bin_basename")
-        row = cur.fetchone()
-        if row["@@log_bin_basename"]:
-            binlog_dir = osp.dirname(row["@@log_bin_basename"])
-        else:
-            return
 
     for binlog_name in backup_set:
         src = BinlogSource(run_type, mysql_client, binlog_name)

@@ -1,5 +1,5 @@
 """MySQL instance configuration"""
-from twindb_backup import INTERVALS, XBSTREAM_BINARY, XTRABACKUP_BINARY
+from twindb_backup import INTERVALS
 
 
 class MySQLConfig:
@@ -12,10 +12,8 @@ class MySQLConfig:
         self._defaults_file = kwargs.get("mysql_defaults_file", "/root/.my.cnf")
         self._full_backup = kwargs.get("full_backup", INTERVALS[1])
         self._expire_log_days = int(kwargs.get("expire_log_days", 7))
-        self._xtrabackup_binary = kwargs.get(
-            "xtrabackup_binary", XTRABACKUP_BINARY
-        )
-        self._xbstream_binary = kwargs.get("xbstream_binary", XBSTREAM_BINARY)
+        self._xtrabackup_binary = kwargs.get("xtrabackup_binary")
+        self._xbstream_binary = kwargs.get("xbstream_binary")
 
     @property
     def defaults_file(self):

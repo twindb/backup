@@ -1,14 +1,17 @@
+from textwrap import dedent
+
 import pytest
 
 
 @pytest.fixture
 def config_content_clone():
-    return """
+    return dedent(
+        """
+        [ssh]
+        ssh_user=root
+        ssh_key={PRIVATE_KEY}
 
-[ssh]
-ssh_user=root
-ssh_key={PRIVATE_KEY}
-
-[mysql]
-mysql_defaults_file={MY_CNF}
-"""
+        [mysql]
+        mysql_defaults_file={MY_CNF}
+        """
+    )

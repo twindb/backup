@@ -109,7 +109,7 @@ isort: ## Fix import order errors
 	isort twindb_backup tests
 
 lint: ## check style with pylint
-	yamllint -f parsable .
+	yamllint --no-warnings -f parsable .
 	isort --check-only twindb_backup tests
 	black --check twindb_backup tests
 	pycodestyle --max-line-length=80 twindb_backup
@@ -119,7 +119,6 @@ lint: ## check style with pylint
 test: ## Run tests quickly with the default Python
 	pytest -xv --cov-report term-missing --cov=./twindb_backup tests/unit
 	codecov
-
 
 test-integration: ## Run integration tests. Must be run in vagrant
 	py.test -xsv tests/integration/

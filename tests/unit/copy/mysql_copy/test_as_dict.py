@@ -17,4 +17,5 @@ def test_as_dict():
         "run_type": "daily",
         "galera": False,
         "wsrep_provider_version": None,
+        "server_vendor": "oracle",
     }

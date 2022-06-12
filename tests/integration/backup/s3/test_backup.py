@@ -1,9 +1,14 @@
 import json
 import os
 from io import StringIO
+from os import path as osp
 
 import magic
 
+from tests.integration.backup.conftest import (
+    check_either_file,
+    check_files_if_xtrabackup,
+)
 from tests.integration.conftest import (
     assert_and_pause,
     docker_execute,
@@ -45,13 +50,9 @@ def test__take_file_backup(
     assert_and_pause((ret == 0,), cout)
 
     # Check that backup copy is in "twindb-backup ls" output
-    hostname = "master1_1"
-    s3_backup_path = "s3://%s/%s/hourly/files/%s" % (
-        s3_client.bucket,
-        hostname,
-        backup_dir.replace("/", "_"),
-    )
-    cmd = ["twindb-backup", "--debug", "--config", twindb_config_guest, "ls"]
+    hostname = docker_client.containers.get(master1["Id"]).name
+    s3_backup_path = f"s3://{s3_client.bucket}/{hostname}/hourly/files/{backup_dir.replace('/', '_')}"
+    cmd = ["twindb-backup", "--config", twindb_config_guest, "ls"]
 
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
 
@@ -244,7 +245,7 @@ def test__s3_find_files_returns_sorted(
         ret, cout = docker_execute(docker_client, master1["Id"], cmd)
         print(cout)
         assert ret == 0
-    hostname = "master1_1"
+    hostname = docker_client.containers.get(master1["Id"]).name
     dst = S3(
         bucket=s3_client.bucket,
         aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
@@ -259,8 +260,8 @@ def test__s3_find_files_returns_sorted(
             remote_path=dst.remote_path, hostname=hostname, run_type="daily"
         )
         files = dst.list_files(prefix)
-        assert len(files) == n_runs
-        assert files == sorted(files)
+        assert_and_pause((len(files) == n_runs,), "\n".join(files))
+        assert_and_pause((files == sorted(files),), "\n".join(files))
 
 
 def test_take_file_backup_with_aenc(
@@ -326,13 +327,8 @@ def test_take_file_backup_with_aenc(
     with open(os.path.join(twindb_config_dir, "file"), "w") as f:
         f.write("Hello world.")
 
-    hostname = "master1_1"
-    s3_backup_path = "s3://%s/%s/hourly/files/%s" % (
-        s3_client.bucket,
-        hostname,
-        backup_dir.replace("/", "_"),
-    )
-
+    hostname = docker_client.containers.get(master1["Id"]).name
+    s3_backup_path = f"s3://{s3_client.bucket}/{hostname}/hourly/files/{backup_dir.replace('/', '_')}"
     cmd = [
         "twindb-backup",
         "--debug",
@@ -610,28 +606,28 @@ def test_take_mysql_backup_aenc_restores_full(
     mysql_files = [
         "ibdata1",
         "ib_logfile0",
-        "ib_logfile1",
         "backup-my.cnf",
-        "xtrabackup_logfile",
     ]
     for datadir_file in mysql_files:
-        files_to_test += ["test -f %s/%s" % (dst_dir, datadir_file)]
-    cmd = ["bash", "-c", " && ".join(files_to_test)]
+        cmd = ["bash", "-c", f"test -f {osp.join(dst_dir, datadir_file)}"]
 
-    print(cmd)
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert_and_pause((ret == 0,), cout)
+        print(cmd)
+        ret, cout = docker_execute(docker_client, master1["Id"], cmd)
+        print(cout)
+        assert_and_pause((ret == 0,), cout)
 
-    cmd = [
-        "bash",
-        "-c",
-        "test -f {datadir}/_config/etc/my.cnf "
-        "|| test -f {datadir}/_config/etc/mysql/my.cnf".format(datadir=dst_dir),
-    ]
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert_and_pause((ret == 0,), cout)
+    check_files_if_xtrabackup(
+        docker_client,
+        master1["Id"],
+        dst_dir,
+        ["ib_logfile1", "xtrabackup_logfile"],
+    )
+    check_either_file(
+        docker_client,
+        master1["Id"],
+        dst_dir,
+        ["_config/etc/my.cnf", "_config/etc/mysql/my.cnf"],
+    )
 
 
 def test_take_mysql_backup_aenc_restores_inc(
@@ -761,28 +757,28 @@ def test_take_mysql_backup_aenc_restores_inc(
     print(cout)
     assert_and_pause((ret == 0,), cout)
 
-    files_to_test = []
     for datadir_file in [
         "ibdata1",
         "ib_logfile0",
-        "ib_logfile1",
         "backup-my.cnf",
-        "xtrabackup_logfile",
     ]:
-        files_to_test += ["test -f %s/%s" % (dst_dir, datadir_file)]
-    cmd = ["bash", "-c", " && ".join(files_to_test)]
+        cmd = ["bash", "-c", f"test -f {osp.join(dst_dir, datadir_file)}"]
 
-    print(cmd)
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert_and_pause((ret == 0,), cout)
+        print(cmd)
+        ret, cout = docker_execute(docker_client, master1["Id"], cmd)
+        print(cout)
+        assert_and_pause((ret == 0,), cout)
 
-    cmd = [
-        "bash",
-        "-c",
-        "test -f {datadir}/_config/etc/my.cnf "
-        "|| test -f {datadir}/_config/etc/mysql/my.cnf".format(datadir=dst_dir),
-    ]
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    print(cout)
-    assert_and_pause((ret == 0,), cout)
+    check_files_if_xtrabackup(
+        docker_client,
+        master1["Id"],
+        dst_dir,
+        ["ib_logfile1", "xtrabackup_logfile"],
+    )
+
+    check_either_file(
+        docker_client,
+        master1["Id"],
+        dst_dir,
+        ["_config/etc/my.cnf", "_config/etc/mysql/my.cnf"],
+    )

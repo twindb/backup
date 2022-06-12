@@ -2,6 +2,7 @@ import pytest
 
 from twindb_backup.copy.exceptions import WrongInputData
 from twindb_backup.copy.mysql_copy import MySQLCopy
+from twindb_backup.source.mysql_source import MySQLFlavor
 
 
 def test_init_raises_if_name_is_not_relative():
@@ -28,6 +29,7 @@ def test_init_set_defaults():
     assert copy.run_type == "daily"
     assert copy.galera is False
     assert copy.wsrep_provider_version is None
+    assert copy.server_vendor == MySQLFlavor.ORACLE
 
 
 def test_init_set_galera():
@@ -40,6 +42,32 @@ def test_init_set_galera():
     )
     assert copy.galera is True
     assert copy.wsrep_provider_version == "123"
+
+
+@pytest.mark.parametrize(
+    "value, vendor",
+    [
+        (
+            "percona",
+            MySQLFlavor.PERCONA,
+        ),
+        (
+            MySQLFlavor.PERCONA,
+            MySQLFlavor.PERCONA,
+        ),
+        (
+            "percona",
+            "percona",
+        ),
+    ],
+)
+def test_init_set_vendor(value, vendor):
+    assert (
+        MySQLCopy(
+            "foo", "daily", "some_file.txt", type="full", server_vendor=value
+        ).server_vendor
+        == vendor
+    )
 
 
 def test_init_created_at():

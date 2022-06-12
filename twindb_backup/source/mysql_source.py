@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Module defines MySQL source class for backing up local MySQL.
 """
@@ -9,11 +8,13 @@ import sys
 import tempfile
 import time
 from contextlib import contextmanager
+from enum import Enum
 from os import path as osp
 from subprocess import PIPE, Popen
 
 import pymysql
 from pymysql import OperationalError
+from pymysql.cursors import DictCursor
 
 from twindb_backup import INTERVALS, LOG, XTRABACKUP_BINARY, get_files_to_delete
 from twindb_backup.source.base_source import BaseSource
@@ -22,13 +23,13 @@ from twindb_backup.status.exceptions import StatusKeyNotFound
 
 
 class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
-    """MySQL connection details"""
+    """MySQL connection's details"""
 
     def __init__(
         self,
         defaults_file,
         connect_timeout=10,
-        cursor=pymysql.cursors.DictCursor,
+        cursor=DictCursor,
         hostname="127.0.0.1",
     ):
 
@@ -36,6 +37,16 @@ class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
         self.connect_timeout = connect_timeout
         self.defaults_file = defaults_file
         self.hostname = hostname
+
+    def __eq__(self, other):
+        return all(
+            (
+                (self.cursor == other.cursor),
+                (self.connect_timeout == other.connect_timeout),
+                (self.defaults_file == other.defaults_file),
+                (self.hostname == other.hostname),
+            )
+        )
 
 
 class MySQLMasterInfo(object):  # pylint: disable=too-few-public-methods
@@ -55,16 +66,36 @@ class MySQLMasterInfo(object):  # pylint: disable=too-few-public-methods
         self.password = password
         self.binlog = binlog
         self.binlog_position = binlog_pos
-        self.port = 3306 if port is None else port
+        self.port = port or 3306
 
 
-class MySQLClient(object):
+class MySQLFlavor(str, Enum):
+    ORACLE = "oracle"
+    PERCONA = "percona"
+    MARIADB = "mariadb"
+
+    def __eq__(self, other):
+        return self.value == other
+
+    def __hash__(self):
+        return hash(self.value)
+
+
+class MySQLClient:
     """Class to send queries to MySQL"""
 
     def __init__(self, defaults_file, connect_timeout=10, hostname="127.0.0.1"):
         self.connect_timeout = connect_timeout
         self.defaults_file = defaults_file
         self.hostname = hostname
+
+    @property
+    def server_vendor(self) -> MySQLFlavor:
+        if "mariadb" in self.variable("version").lower():
+            return MySQLFlavor.MARIADB
+        elif "percona" in self.variable("version_comment").lower():
+            return MySQLFlavor.PERCONA
+        return MySQLFlavor.ORACLE
 
     @contextmanager
     def get_connection(self):
@@ -80,7 +111,7 @@ class MySQLClient(object):
                 host=self.hostname,
                 read_default_file=self.defaults_file,
                 connect_timeout=self.connect_timeout,
-                cursorclass=pymysql.cursors.DictCursor,
+                cursorclass=DictCursor,
             )
 
             yield connection
@@ -151,8 +182,13 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         self._media_type = "mysql"
         self._file_name_prefix = "mysql"
         self.dst = kwargs.get("dst", None)
-        self._xtrabackup = kwargs.get("xtrabackup_binary", XTRABACKUP_BINARY)
+        self._xtrabackup = kwargs.get("xtrabackup_binary") or XTRABACKUP_BINARY
         super(MySQLSource, self).__init__(run_type)
+
+    @property
+    def backup_tool(self):
+        """The tool binary that is used for backups"""
+        return self._xtrabackup
 
     @property
     def binlog_coordinate(self):
@@ -213,7 +249,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
             proc_xtrabackup.communicate()
             if proc_xtrabackup.returncode:
                 LOG.error(
-                    "Failed to run xtrabackup. " "Check error output in %s",
+                    "Failed to run xtrabackup. Check error output in %s",
                     stderr_file.name,
                 )
                 try:
@@ -338,7 +374,8 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
                     lsn = line.split()[7].strip("'")
                     return int(lsn)
                 elif "The latest check point (for incremental):" in line:
-                    return int(line.split()[11].strip("'"))
+                    idx = 10 if "mariabackup" in line else 11
+                    return int(line.split()[idx].strip("'"))
         raise MySQLSourceError(
             "Could not find LSN in XtraBackup error output %s" % err_log_path
         )
@@ -371,8 +408,6 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         :rtype: str
         """
         return self._type
-        # status = self.dst.status()
-        # return status.get_backup_type(self.full_backup, self.run_type)
 
     @property
     def status(self):
@@ -502,13 +537,21 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
             row = cursor.fetchone()
             return row["datadir"]
 
+    @property
+    def server_vendor(self) -> MySQLFlavor:
+        return MySQLClient(
+            self._connect_info.defaults_file,
+            connect_timeout=self._connect_info.connect_timeout,
+            hostname=self._connect_info.hostname,
+        ).server_vendor
+
     @contextmanager
     def get_connection(self):
         """
         Connect to MySQL host and yield a connection.
 
         :return: MySQL connection
-        :raise MySQLSourceError: if can't connect to server
+        :raise MySQLSourceError: if it can't connect to server
         """
         connection = None
         try:

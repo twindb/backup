@@ -1,5 +1,10 @@
 import os
+from os import path as osp
 
+from tests.integration.backup.conftest import (
+    check_either_file,
+    check_files_if_xtrabackup,
+)
 from tests.integration.conftest import (
     assert_and_pause,
     docker_execute,
@@ -82,31 +87,20 @@ password=qwerty
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     assert_and_pause((ret == 0,), cout)
 
-    cmd = ["test", "-f", "%s/backup-my.cnf" % dst_dir]
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0,), cout)
+    for fl in ["backup-my.cnf", "ibdata1", "ib_logfile0"]:
+        cmd = ["test", "-f", osp.join(dst_dir, fl)]
+        ret, cout = docker_execute(docker_client, master1["Id"], cmd)
+        assert_and_pause((ret == 0,), cout)
 
-    cmd = ["test", "-f", "%s/ibdata1" % dst_dir]
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0,), cout)
-
-    cmd = ["test", "-f", "%s/ib_logfile0" % dst_dir]
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0,), cout)
-
-    cmd = ["test", "-f", "%s/ib_logfile1" % dst_dir]
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0,), cout)
-
-    cmd = ["test", "-f", "%s/xtrabackup_logfile" % dst_dir]
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0,), cout)
-
-    cmd = [
-        "bash",
-        "-c",
-        "test -f %s/_config/etc/my.cnf || test -f %s/_config/etc/mysql/my.cnf"
-        % (dst_dir, dst_dir),
-    ]
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0,), cout)
+    check_files_if_xtrabackup(
+        docker_client,
+        master1["Id"],
+        dst_dir,
+        ["ib_logfile1", "xtrabackup_logfile"],
+    )
+    check_either_file(
+        docker_client,
+        master1["Id"],
+        dst_dir,
+        ["_config/etc/my.cnf", "_config/etc/mysql/my.cnf"],
+    )

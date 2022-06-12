@@ -21,6 +21,7 @@ def test_str():
     "parent": null,
     "position": null,
     "run_type": "daily",
+    "server_vendor": "oracle",
     "type": "full",
     "wsrep_provider_version": null
 }"""
