@@ -38,6 +38,16 @@ class MySQLConnectInfo(object):  # pylint: disable=too-few-public-methods
         self.defaults_file = defaults_file
         self.hostname = hostname
 
+    def __eq__(self, other):
+        return all(
+            (
+                (self.cursor == other.cursor),
+                (self.connect_timeout == other.connect_timeout),
+                (self.defaults_file == other.defaults_file),
+                (self.hostname == other.hostname),
+            )
+        )
+
 
 class MySQLMasterInfo(object):  # pylint: disable=too-few-public-methods
     """MySQL master details"""

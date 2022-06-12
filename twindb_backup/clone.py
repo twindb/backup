@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 Module defines clone feature
 """
 import hashlib
-import os
 from contextlib import contextmanager
 from multiprocessing import Process
 from typing import Union
@@ -49,6 +47,71 @@ def get_src_by_vendor(
     )
 
 
+def detect_xbstream(cfg: TwinDBBackupConfig, mysql_client: MySQLClient) -> str:
+    """Guess what xbtream tool should be used.
+
+    If a user specifies the xbstream via the config, it will be used.
+    Otherwise, use appropriate tool for the MySQL flavor.
+
+    :param cfg: TwinDB config instance.
+    :type cfg: TwinDBBackupConfig
+    :param mysql_client: MySQL client instance connected to the source.
+    :type mysql_client: MySQLClient
+    :return: String, a path to xbstream that will be run on the destination
+        to accept and extract XtraBackup stream.
+    :rtype: str
+    """
+    return cfg.mysql.xbstream_binary or (
+        MBSTREAM_BINARY
+        if mysql_client.server_vendor is MySQLFlavor.MARIADB
+        else XBSTREAM_BINARY
+    )
+
+
+def get_dst(cfg: TwinDBBackupConfig, destination: str) -> Ssh:
+    """Prepare destination object.
+
+    :param cfg: TwinDB Backup config.
+    :type cfg: TwinDBBackupConfig
+    :param destination: A host:port couple e.g. ``slave:3306``, the recipient.
+    :type destination: str
+    :return: Destination Ssh object.
+    :rtype: Ssh
+    """
+    return Ssh(
+        "/tmp",
+        ssh_host=split_host_port(destination)[0],
+        ssh_user=cfg.ssh.user,
+        ssh_key=cfg.ssh.key,
+    )
+
+
+def get_src(
+    cfg: TwinDBBackupConfig, mysql_client: MySQLClient, source: str
+) -> Union[RemoteMariaDBSource, RemoteMySQLSource]:
+    """Prepare source object.
+
+    :param cfg: TwinDB Backup config.
+    :type cfg: TwinDBBackupConfig
+    :param mysql_client: MySQL client connected to the source.
+    :type mysql_client: MySQLClient
+    :param source: A host:port couple e.g. ``slave:3306``, the recipient.
+    :type source: str
+    :return: Source object
+    :rtype: RemoteMariaDBSource, RemoteMySQLSource
+    """
+    return get_src_by_vendor(
+        mysql_client.server_vendor,
+        split_host_port(source)[0],
+        cfg.ssh.user,
+        cfg.ssh.key,
+        MySQLConnectInfo(
+            cfg.mysql.defaults_file, hostname=split_host_port(source)[0]
+        ),
+        INTERVALS[0],
+    )
+
+
 def clone_mysql(
     cfg: TwinDBBackupConfig,
     source: str,
@@ -85,30 +148,13 @@ def clone_mysql(
     mysql_client = MySQLClient(
         cfg.mysql.defaults_file, hostname=split_host_port(source)[0]
     )
-    src = get_src_by_vendor(
-        mysql_client.server_vendor,
-        split_host_port(source)[0],
-        cfg.ssh.user,
-        cfg.ssh.key,
-        MySQLConnectInfo(
-            cfg.mysql.defaults_file, hostname=split_host_port(source)[0]
-        ),
-        INTERVALS[0],
-    )
-    xbstream_binary = cfg.mysql.xbstream_binary or (
-        MBSTREAM_BINARY
-        if mysql_client.server_vendor is MySQLFlavor.MARIADB
-        else XBSTREAM_BINARY
-    )
+    src = get_src(cfg, mysql_client, source)
+    xbstream_binary = detect_xbstream(cfg, mysql_client)
+
     LOG.debug("SSH destination: %s", split_host_port(destination)[0])
     LOG.debug("SSH username: %s", cfg.ssh.user)
     LOG.debug("SSH key: %s", cfg.ssh.key)
-    dst = Ssh(
-        "/tmp",
-        ssh_host=split_host_port(destination)[0],
-        ssh_user=cfg.ssh.user,
-        ssh_key=cfg.ssh.key,
-    )
+    dst = get_dst(cfg, destination)
     datadir = src.datadir
     # STEP 1: Ensure a destination directory is empty
     LOG.debug("MySQL datadir: %s", datadir)
