@@ -36,6 +36,7 @@ import json
 import logging
 import os
 import sys
+from collections import namedtuple
 
 __author__ = "TwinDB Development Team"
 __email__ = "dev@twindb.com"
@@ -51,8 +52,15 @@ MARIABACKUP_BINARY = "mariabackup"
 MBSTREAM_BINARY = "mbstream"
 MY_CNF_COMMON_PATHS = ["/etc/my.cnf", "/etc/mysql/my.cnf"]
 DEFAULT_FILE_ENCODING = "utf-8"
+GLOBAL_INIT_LOG_LEVEL = logging.DEBUG
 
 LOG = logging.getLogger(__name__)
+LOG.setLevel(GLOBAL_INIT_LOG_LEVEL)
+
+dest_types = namedtuple("DestinationTypes", "ssh,local,s3,gcs,azure")
+query_types = namedtuple("QueryTypes", ["mysql"])
+SUPPORTED_DESTINATION_TYPES = dest_types("ssh", "local", "s3", "gcs", "azure")
+SUPPORTED_QUERY_LANGUAGES = query_types("mysql")
 
 
 class LessThanFilter(logging.Filter):  # pylint: disable=too-few-public-methods
