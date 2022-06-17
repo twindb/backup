@@ -116,9 +116,15 @@ lint: ## check style with pylint
 	pylint twindb_backup
 
 
-test: ## Run tests quickly with the default Python
+test: ## Run tests quickly with the default Python and generate code coverage report
 	pytest -xv --cov-report term-missing --cov=./twindb_backup tests/unit
 	codecov
+
+test-including-azure-blob: ## Like 'make test' but includes tests for azure blob destination
+	coverage run --source=twindb_backup -m pytest -xv tests/unit
+	coverage run -a --source=twindb_backup -m unittest -cvf --locals tests/unittests/azblob_testing/environment_access_tests/test_remote_data_generation.py
+	coverage run -a --source=twindb_backup -m unittest -cvf --locals tests/unittests/azblob_testing/destination_tests/test_AzureBlob_functions.py
+	coverage report
 
 test-integration: ## Run integration tests. Must be run in vagrant
 	py.test -xsv tests/integration/
