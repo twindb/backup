@@ -8,9 +8,7 @@ def check_either_file(docker_client, container_id, dst_dir, files_to_check):
     cmd = [
         "bash",
         "-c",
-        "||".join(
-            [f"test -f {osp.join(dst_dir, fl)}" for fl in files_to_check]
-        ),
+        "||".join([f"test -f {osp.join(dst_dir, fl)}" for fl in files_to_check]),
     ]
 
     ret, cout = docker_execute(docker_client, container_id, cmd)
@@ -18,9 +16,7 @@ def check_either_file(docker_client, container_id, dst_dir, files_to_check):
     assert_and_pause((ret == 0,), cout)
 
 
-def check_files_if_xtrabackup(
-    docker_client, container_id, dst_dir, files_to_check
-):
+def check_files_if_xtrabackup(docker_client, container_id, dst_dir, files_to_check):
     # MariaDB and Percona Server work with redo logs differently
     # If it's xtrabackup both ib_logfile1 must exist.
     for datadir_file in files_to_check:

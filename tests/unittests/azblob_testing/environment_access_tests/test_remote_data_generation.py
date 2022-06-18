@@ -4,9 +4,7 @@ import unittest
 
 class CustomLocalEnvTestCase(unittest.TestCase):
     def test_set_osenvs(self):
-        from tests.unittests.excluded_env_config.build_out_dummy_env import (
-            set_osenvs,
-        )
+        from tests.unittests.excluded_env_config.build_out_dummy_env import set_osenvs
 
         def single_equality(a, b):
             return a == b
@@ -37,7 +35,9 @@ class CustomLocalEnvTestCase(unittest.TestCase):
             "fname_prefix",
             "fname",
         )
-        expected_test_complete_remote_path_template = "{protocol}://{host_name}/{container_name}/{interval}/{media_type}/{fname_prefix}{fname}"
+        expected_test_complete_remote_path_template = (
+            "{protocol}://{host_name}/{container_name}/{interval}/{media_type}/{fname_prefix}{fname}"
+        )
         env_vars = [
             ("test_intervals".upper(), ";", sequence_equality),
             ("test_path_parts".upper(), ";", sequence_equality),
@@ -55,9 +55,7 @@ class CustomLocalEnvTestCase(unittest.TestCase):
         dead_tests = []
         for i, (name, *_) in enumerate(env_vars):
             with self.subTest(
-                objective="check if '{}' variable is in os.environ".format(
-                    name
-                ),
+                objective="check if '{}' variable is in os.environ".format(name),
                 environment_var=name,
             ):
                 try:

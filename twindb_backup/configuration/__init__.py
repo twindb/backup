@@ -62,10 +62,7 @@ class TwinDBBackupConfig:
         """
         kwargs = {}
         try:
-            kwargs = {
-                i: self.__cfg.getboolean("intervals", f"run_{i}")
-                for i in INTERVALS
-            }
+            kwargs = {i: self.__cfg.getboolean("intervals", f"run_{i}") for i in INTERVALS}
 
         except (NoOptionError, NoSectionError) as err:
             LOG.debug(err)
@@ -81,9 +78,7 @@ class TwinDBBackupConfig:
         """
         if self.__mysql is None:
             try:
-                self.__mysql = MySQLConfig(
-                    **self.__read_options_from_section("mysql")
-                )
+                self.__mysql = MySQLConfig(**self.__read_options_from_section("mysql"))
 
             except NoSectionError:
                 return None
@@ -151,9 +146,7 @@ class TwinDBBackupConfig:
                     statsd_port = self.__cfg.get("export", "statsd_port")
                     return StatsdExporter(statsd_host, statsd_port)
                 else:
-                    raise ConfigurationError(
-                        f"Metric exported '{transport}' is not implemented"
-                    )
+                    raise ConfigurationError(f"Metric exported '{transport}' is not implemented")
             except NoOptionError as err:
                 raise ConfigurationError(err) from err
 
@@ -167,9 +160,7 @@ class TwinDBBackupConfig:
         :rtype: CompressionConfig
         """
         try:
-            return CompressionConfig(
-                **self.__read_options_from_section("compression")
-            )
+            return CompressionConfig(**self.__read_options_from_section("compression"))
 
         except NoSectionError:
             return CompressionConfig()
@@ -214,9 +205,7 @@ class TwinDBBackupConfig:
         :rtype: BaseDestination
         """
         try:
-            backup_destination = self.__cfg.get(
-                "destination", "backup_destination"
-            )
+            backup_destination = self.__cfg.get("destination", "backup_destination")
             if backup_destination == "ssh":
                 return Ssh(
                     self.ssh.path,
@@ -243,13 +232,9 @@ class TwinDBBackupConfig:
                 )
 
             else:
-                raise ConfigurationError(
-                    f"Unsupported destination '{backup_destination}'"
-                )
+                raise ConfigurationError(f"Unsupported destination '{backup_destination}'")
         except NoSectionError as err:
-            raise ConfigurationError(
-                f"{self._config_file} is missing required section 'destination'"
-            ) from err
+            raise ConfigurationError(f"{self._config_file} is missing required section 'destination'") from err
 
     def _retention(self, section):
         kwargs = {}
@@ -258,16 +243,11 @@ class TwinDBBackupConfig:
             try:
                 kwargs[i] = self.__cfg.getint(section, option)
             except (NoOptionError, NoSectionError):
-                LOG.warning(
-                    "Option %s is not defined in section %s", option, section
-                )
+                LOG.warning("Option %s is not defined in section %s", option, section)
         return RetentionPolicy(**kwargs)
 
     def __read_options_from_section(self, section):
-        return {
-            opt: self.__cfg.get(section, opt).strip("\"'")
-            for opt in self.__cfg.options(section)
-        }
+        return {opt: self.__cfg.get(section, opt).strip("\"'") for opt in self.__cfg.options(section)}
 
     def __repr__(self):
         return f"{self.__class__.__name__}: {self._config_file}"

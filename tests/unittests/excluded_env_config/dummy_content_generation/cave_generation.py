@@ -11,9 +11,7 @@ biome = (
     ("hill", "top ", "y "),
     ("valley", "-", "_floor "),
 )
-biome = tuple(
-    v for tpl in zip(biome, (("", "") for _ in range(len(biome)))) for v in tpl
-)
+biome = tuple(v for tpl in zip(biome, (("", "") for _ in range(len(biome)))) for v in tpl)
 feel = (
     "cozy ",
     "damp ",
@@ -27,9 +25,7 @@ feel = (
     "dirty ",
     "clean ",
 )
-look = "open ,hidden ,exposed ,recessed ,majestic ,underwhelming ,high ,low ,deep ,shallow ".split(
-    ","
-)
+look = "open ,hidden ,exposed ,recessed ,majestic ,underwhelming ,high ,low ,deep ,shallow ".split(",")
 
 
 def cave_gen(result_len: int):

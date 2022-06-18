@@ -72,9 +72,7 @@ def run_all(build, pause, docker_image, version):
                 check=True,
             )
         finally:
-            LOG.info(
-                "Cleaning up containers. If you see Error messages - they're expected."
-            )
+            LOG.info("Cleaning up containers. If you see Error messages - they're expected.")
             for container in ["master1_1", "slave_2", "runner_3"]:
                 run(["docker", "rm", container, "--force"])
 

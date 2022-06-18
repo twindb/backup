@@ -29,11 +29,7 @@ colors = (
     ("ruber", "red"),
     ("roseus", "rose-red"),
 )
-colors = tuple(
-    pair
-    for tpl in zip(colors, (("", "") for _ in range(len(colors))))
-    for pair in tpl
-)
+colors = tuple(pair for tpl in zip(colors, (("", "") for _ in range(len(colors)))) for pair in tpl)
 physical_descriptors1 = (
     ("rhyncho", "Beak"),
     ("chelo", "Claw"),
@@ -258,18 +254,10 @@ abstract_descriptors2 = (
 )
 
 colors = [(v1.strip(), v2.strip()) for v1, v2 in colors]
-physical_descriptors1 = [
-    (v1.strip(), v2.strip()) for v1, v2 in physical_descriptors1
-]
-physical_descriptors2 = [
-    (v1.strip(), v2.strip()) for v1, v2 in physical_descriptors2
-]
-abstract_descriptors1 = [
-    (v1.strip(), v2.strip()) for v1, v2 in abstract_descriptors1
-]
-abstract_descriptors2 = [
-    (v1.strip(), v2.strip()) for v1, v2 in abstract_descriptors2
-]
+physical_descriptors1 = [(v1.strip(), v2.strip()) for v1, v2 in physical_descriptors1]
+physical_descriptors2 = [(v1.strip(), v2.strip()) for v1, v2 in physical_descriptors2]
+abstract_descriptors1 = [(v1.strip(), v2.strip()) for v1, v2 in abstract_descriptors1]
+abstract_descriptors2 = [(v1.strip(), v2.strip()) for v1, v2 in abstract_descriptors2]
 
 
 def combination_gen(_colors):
@@ -290,9 +278,7 @@ def combination_gen(_colors):
             for lp1, p1 in phys:
                 for lp2, p2 in abst:
                     if a + p1 + p2:
-                        yield "".join(
-                            v for v in (la, lp1, lp2) if v
-                        ) + " " + " ".join(v for v in (a, p1, p2) if v)
+                        yield "".join(v for v in (la, lp1, lp2) if v) + " " + " ".join(v for v in (a, p1, p2) if v)
         for l1, l2, l3, l4, l5 in combos:
             for lp1, p1 in l1:
                 for lp2, p2 in l2:
@@ -300,11 +286,7 @@ def combination_gen(_colors):
                         for lp4, p4 in l4:
                             for lp5, p5 in l5:
                                 if p1 + p2 + p3 + p4 + p5:
-                                    yield "".join(
-                                        v
-                                        for v in (lp1, lp2, lp3, lp4, lp5)
-                                        if v
-                                    ) + " " + " ".join(
+                                    yield "".join(v for v in (lp1, lp2, lp3, lp4, lp5) if v) + " " + " ".join(
                                         v for v in (p1, p2, p3, p4, p5) if v
                                     )
 

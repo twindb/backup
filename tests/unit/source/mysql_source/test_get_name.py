@@ -12,11 +12,6 @@ def test_get_name(mock_time, mock_socket):
     timestamp = "2017-02-13_15_40_29"
     mock_time.strftime.return_value = timestamp
 
-    src = MySQLSource(
-        MySQLConnectInfo("/foo/bar"), "daily", "full", dst=mock.Mock()
-    )
+    src = MySQLSource(MySQLConnectInfo("/foo/bar"), "daily", "full", dst=mock.Mock())
 
-    assert (
-        src.get_name()
-        == "some-host/daily/mysql/mysql-2017-02-13_15_40_29.xbstream"
-    )
+    assert src.get_name() == "some-host/daily/mysql/mysql-2017-02-13_15_40_29.xbstream"

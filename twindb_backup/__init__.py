@@ -57,10 +57,10 @@ GLOBAL_INIT_LOG_LEVEL = logging.DEBUG
 LOG = logging.getLogger(__name__)
 LOG.setLevel(GLOBAL_INIT_LOG_LEVEL)
 
-dest_types = namedtuple("DestinationTypes", "ssh,local,s3,gcs,azure")
-query_types = namedtuple("QueryTypes", ["mysql"])
-SUPPORTED_DESTINATION_TYPES = dest_types("ssh", "local", "s3", "gcs", "azure")
-SUPPORTED_QUERY_LANGUAGES = query_types("mysql")
+DestTypes = namedtuple("DestinationTypes", "ssh,local,s3,gcs,azure")
+QueryTypes = namedtuple("QueryTypes", ["mysql"])
+SUPPORTED_DESTINATION_TYPES = DestTypes("ssh", "local", "s3", "gcs", "azure")
+SUPPORTED_QUERY_LANGUAGES = QueryTypes("mysql")
 
 
 class LessThanFilter(logging.Filter):  # pylint: disable=too-few-public-methods
@@ -78,10 +78,7 @@ class LessThanFilter(logging.Filter):  # pylint: disable=too-few-public-methods
 def setup_logging(logger, debug=False):  # pragma: no cover
     """Configures logging for the module"""
 
-    fmt_str = (
-        "%(asctime)s: %(levelname)s:"
-        " %(module)s.%(funcName)s():%(lineno)d: %(message)s"
-    )
+    fmt_str = "%(asctime)s: %(levelname)s: %(module)s.%(funcName)s():%(lineno)d: %(message)s"
 
     console_handler = logging.StreamHandler(stream=sys.stdout)
     console_handler.addFilter(LessThanFilter(logging.WARNING))

@@ -24,9 +24,7 @@ def test_list_available_backups_ssh():
             recursive=True,
             files_only=True,
         ),
-        mock.call(
-            "/foo/bar", pattern="/daily/files/", recursive=True, files_only=True
-        ),
+        mock.call("/foo/bar", pattern="/daily/files/", recursive=True, files_only=True),
         mock.call(
             "/foo/bar",
             pattern="/weekly/files/",
@@ -51,9 +49,7 @@ def test_list_available_backups_ssh():
             recursive=True,
             files_only=True,
         ),
-        mock.call(
-            "/foo/bar", pattern="/daily/mysql/", recursive=True, files_only=True
-        ),
+        mock.call("/foo/bar", pattern="/daily/mysql/", recursive=True, files_only=True),
         mock.call(
             "/foo/bar",
             pattern="/weekly/mysql/",
@@ -72,8 +68,6 @@ def test_list_available_backups_ssh():
             recursive=True,
             files_only=True,
         ),
-        mock.call(
-            "/foo/bar", files_only=True, pattern="/binlog/", recursive=True
-        ),
+        mock.call("/foo/bar", files_only=True, pattern="/binlog/", recursive=True),
     ]
     mock_dst.list_files.assert_has_calls(calls)

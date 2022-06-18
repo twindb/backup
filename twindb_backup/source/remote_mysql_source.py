@@ -54,8 +54,7 @@ class RemoteMySQLSource(MySQLSource):
         error_log = osp.join(
             os.sep,
             "tmp",
-            f"{self._ssh_client.host}_{self._ssh_client.port}-"
-            f"{dest_host}_{port}-error.log",
+            f"{self._ssh_client.host}_{self._ssh_client.port}-" f"{dest_host}_{port}-error.log",
         )
         xb_cmd = [
             self._xtrabackup,
@@ -65,9 +64,7 @@ class RemoteMySQLSource(MySQLSource):
         try:
             if osp.exists(local_defaults):
                 with open(local_defaults) as fp:
-                    remote_defaults = self._ssh_client.execute("mktemp")[
-                        0
-                    ].strip()
+                    remote_defaults = self._ssh_client.execute("mktemp")[0].strip()
                     LOG.debug(
                         "Writing content of %s to %s.",
                         local_defaults,
@@ -129,18 +126,10 @@ class RemoteMySQLSource(MySQLSource):
                 )
                 LOG.debug(file_list)
                 for sub_file in file_list:
-                    files.extend(
-                        self._find_all_cnf(
-                            root_path.parent.joinpath(rel_path).joinpath(
-                                sub_file
-                            )
-                        )
-                    )
+                    files.extend(self._find_all_cnf(root_path.parent.joinpath(rel_path).joinpath(sub_file)))
             elif "!include" in line:
                 rel_path = line.split()[1]
-                files.extend(
-                    self._find_all_cnf(root_path.parent.joinpath(rel_path))
-                )
+                files.extend(self._find_all_cnf(root_path.parent.joinpath(rel_path)))
         return files
 
     @staticmethod
@@ -216,9 +205,7 @@ class RemoteMySQLSource(MySQLSource):
             raise
         return cfg
 
-    def setup_slave(
-        self, master_info
-    ):  # noqa # pylint: disable=too-many-arguments
+    def setup_slave(self, master_info):  # noqa # pylint: disable=too-many-arguments
         """
         Change master
 
@@ -331,8 +318,6 @@ class RemoteMySQLSource(MySQLSource):
         :return: Tuple with binlog coordinates - (file_name, pos)
         :rtype: tuple
         """
-        stdout_, _ = self._ssh_client.execute(
-            "sudo cat %s/xtrabackup_binlog_info" % backup_path
-        )
+        stdout_, _ = self._ssh_client.execute("sudo cat %s/xtrabackup_binlog_info" % backup_path)
         binlog_info = re.split(r"\t+", stdout_.rstrip())
         return binlog_info[0], int(binlog_info[1])

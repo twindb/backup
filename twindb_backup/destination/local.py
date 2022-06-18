@@ -65,13 +65,8 @@ class Local(BaseDestination):
         rec_cond = "" if recursive else " -maxdepth 1"
         fil_cond = " -type f" if files_only else ""
 
-        cmd_str = (
-            "bash -c 'if test -d {prefix} ; "
-            "then find {prefix}{recursive}{files_only}; fi'"
-        )
-        cmd_str = cmd_str.format(
-            prefix=prefix, recursive=rec_cond, files_only=fil_cond
-        )
+        cmd_str = "bash -c 'if test -d {prefix} ; " "then find {prefix}{recursive}{files_only}; fi'"
+        cmd_str = cmd_str.format(prefix=prefix, recursive=rec_cond, files_only=fil_cond)
         cmd = ["bash", "-c", cmd_str]
         with run_command(cmd) as cout:
 

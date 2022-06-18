@@ -10,12 +10,7 @@ from twindb_backup import INTERVALS, LOG, MBSTREAM_BINARY, XBSTREAM_BINARY
 from twindb_backup.configuration import TwinDBBackupConfig
 from twindb_backup.destination.ssh import Ssh
 from twindb_backup.exceptions import OperationError
-from twindb_backup.source.mysql_source import (
-    MySQLClient,
-    MySQLConnectInfo,
-    MySQLFlavor,
-    MySQLMasterInfo,
-)
+from twindb_backup.source.mysql_source import MySQLClient, MySQLConnectInfo, MySQLFlavor, MySQLMasterInfo
 from twindb_backup.source.remote_mariadb_source import RemoteMariaDBSource
 from twindb_backup.source.remote_mysql_source import RemoteMySQLSource
 from twindb_backup.util import split_host_port
@@ -62,9 +57,7 @@ def detect_xbstream(cfg: TwinDBBackupConfig, mysql_client: MySQLClient) -> str:
     :rtype: str
     """
     return cfg.mysql.xbstream_binary or (
-        MBSTREAM_BINARY
-        if mysql_client.server_vendor is MySQLFlavor.MARIADB
-        else XBSTREAM_BINARY
+        MBSTREAM_BINARY if mysql_client.server_vendor is MySQLFlavor.MARIADB else XBSTREAM_BINARY
     )
 
 
@@ -105,9 +98,7 @@ def get_src(
         split_host_port(source)[0],
         cfg.ssh.user,
         cfg.ssh.key,
-        MySQLConnectInfo(
-            cfg.mysql.defaults_file, hostname=split_host_port(source)[0]
-        ),
+        MySQLConnectInfo(cfg.mysql.defaults_file, hostname=split_host_port(source)[0]),
         INTERVALS[0],
     )
 
@@ -145,9 +136,7 @@ def clone_mysql(
     LOG.debug("MySQL defaults: %s", cfg.mysql.defaults_file)
     LOG.debug("SSH username: %s", cfg.ssh.user)
     LOG.debug("SSH key: %s", cfg.ssh.key)
-    mysql_client = MySQLClient(
-        cfg.mysql.defaults_file, hostname=split_host_port(source)[0]
-    )
+    mysql_client = MySQLClient(cfg.mysql.defaults_file, hostname=split_host_port(source)[0])
     src = get_src(cfg, mysql_client, source)
     xbstream_binary = detect_xbstream(cfg, mysql_client)
 
@@ -161,14 +150,10 @@ def clone_mysql(
     step_ensure_empty_directory(dst, datadir)
 
     # STEP 2: Start netcat on the destination
-    with step_run_remote_netcat(
-        compress, datadir, dst, netcat_port, xbstream_binary
-    ) as port_final:
+    with step_run_remote_netcat(compress, datadir, dst, netcat_port, xbstream_binary) as port_final:
         # STEP 3: Start XtraBackup on the source
         # and stream it to the destination
-        step_clone_source(
-            src, split_host_port(destination)[0], port_final, compress
-        )
+        step_clone_source(src, split_host_port(destination)[0], port_final, compress)
 
     # STEP 4: Copy a MySQL configuration to the destination
     step_clone_mysql_config(src, dst)
@@ -261,15 +246,11 @@ def step_run_remote_netcat(
     if compress:
         netcat_cmd = f"gunzip -c - | {netcat_cmd}"
 
-    proc_netcat = Process(
-        target=dst.netcat, args=(netcat_cmd,), kwargs={"port": netcat_port}
-    )
+    proc_netcat = Process(target=dst.netcat, args=(netcat_cmd,), kwargs={"port": netcat_port})
     LOG.debug("Starting netcat on the destination.")
     proc_netcat.start()
     nc_wait_timeout = 10
-    if not dst.ensure_tcp_port_listening(
-        netcat_port, wait_timeout=nc_wait_timeout
-    ):
+    if not dst.ensure_tcp_port_listening(netcat_port, wait_timeout=nc_wait_timeout):
         LOG.error(
             "netcat on the destination is not ready after %d seconds.",
             nc_wait_timeout,
@@ -302,9 +283,7 @@ def step_clone_source(
     )
 
 
-def step_clone_mysql_config(
-    source: Union[RemoteMariaDBSource, RemoteMySQLSource], destination: Ssh
-):
+def step_clone_mysql_config(source: Union[RemoteMariaDBSource, RemoteMySQLSource], destination: Ssh):
     """
     Copy MySQL config from the source MySQL server to the destination server.
     """
@@ -354,12 +333,9 @@ def _get_mysql_service_name(remote_server: Ssh) -> str:
     for candidate in ["mysql", "mysqld", "mariadb"]:
         count = int(
             remote_server.execute_command(
-                f"systemctl list-units --full -all "
-                f"| grep -F '{candidate}.service' | wc -l"
+                f"systemctl list-units --full -all " f"| grep -F '{candidate}.service' | wc -l"
             )[0].strip()
         )
         if count == 1:
             return candidate
-    raise OperationError(
-        f"Could not detect name of the MySQL service on {remote_server.host}"
-    )
+    raise OperationError(f"Could not detect name of the MySQL service on {remote_server.host}")

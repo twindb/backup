@@ -43,9 +43,7 @@ def foo_bar_dir(tmpdir):
 
     assert call("rm -rf %s" % str(test_dir), shell=True) == 0
     assert call("mkdir -p %s" % str(test_dir), shell=True) == 0
-    assert (
-        call("echo $RANDOM > %s" % str(test_dir.join("file")), shell=True) == 0
-    )
+    assert call("echo $RANDOM > %s" % str(test_dir.join("file")), shell=True) == 0
 
     return str(test_dir)
 

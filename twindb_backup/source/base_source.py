@@ -61,9 +61,7 @@ class BaseSource(object):
         self._name = osp.join(
             self.get_prefix(),
             self._media_type,
-            "{file}-{time}.{suffix}".format(
-                file=filename_prefix, time=self._created_at, suffix=self._suffix
-            ),
+            "{file}-{time}.{suffix}".format(file=filename_prefix, time=self._created_at, suffix=self._suffix),
         )
         return self._name
 

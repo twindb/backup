@@ -16,9 +16,4 @@ from twindb_backup.source.mysql_source import MySQLFlavor
     ],
 )
 def test_xbstream_binary(vendor, binary):
-    assert (
-        MySQLCopy(
-            "foo", "daily", "some_file.txt", type="full", server_vendor=vendor
-        ).xbstream_binary
-        == binary
-    )
+    assert MySQLCopy("foo", "daily", "some_file.txt", type="full", server_vendor=vendor).xbstream_binary == binary

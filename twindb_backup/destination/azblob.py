@@ -15,17 +15,7 @@ from functools import wraps
 from multiprocessing.connection import Connection as mpConn
 from pathlib import Path
 from textwrap import indent
-from typing import (
-    AnyStr,
-    Callable,
-    Dict,
-    Generator,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import AnyStr, Callable, Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 # Third party module imports
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
@@ -44,9 +34,7 @@ from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import AzureBlobDestinationError
 
-IterableClientType = Iterable[
-    Union[BlobServiceClient, ContainerClient, BlobClient]
-]
+IterableClientType = Iterable[Union[BlobServiceClient, ContainerClient, BlobClient]]
 DEFAULT_AVAILABLE_CPU = os.cpu_count()
 GC_TOGGLE_DEPTH = 0
 """GC_TOGGLE_DEPTH is used as a reference counter for managing when the _gc_toggle function should call gc.enable()."""
@@ -83,9 +71,7 @@ class ClientWrapper:
 
     """
 
-    def __init__(
-        self, name: str = None, props: Optional[ContainerProperties] = None
-    ) -> None:
+    def __init__(self, name: str = None, props: Optional[ContainerProperties] = None) -> None:
         self._name = name or None
         if not self._name and props is not None:
             self._name = props.name
@@ -127,24 +113,18 @@ def _gc_toggle():
 
 def _client_name_gen(obj: Union[StrOrHasName, IterableStrOrHasName]) -> str:
     if obj:
-        if isinstance(
-            obj, (str, ClientWrapper, BlobProperties, ContainerProperties)
-        ):
+        if isinstance(obj, (str, ClientWrapper, BlobProperties, ContainerProperties)):
             obj = (obj,)
         for elem in obj:
             if isinstance(elem, str):
                 yield elem
-            elif isinstance(
-                elem, (ClientWrapper, BlobProperties, ContainerProperties)
-            ):
+            elif isinstance(elem, (ClientWrapper, BlobProperties, ContainerProperties)):
                 yield elem.name
             else:
                 yield from _client_name_gen(elem)
 
 
-def _ensure_containers_exist(
-    conn_str: str, container: Union[StrOrHasName, IterableStrOrHasName]
-):
+def _ensure_containers_exist(conn_str: str, container: Union[StrOrHasName, IterableStrOrHasName]):
     """
     If we have been given a container name (or an iterable of container names) we should ensure they
     exist and are ready to be acted upon before returning them to the caller.
@@ -162,20 +142,14 @@ def _ensure_containers_exist(
     while True:
         unfinished = []
         for cont in gen:
-            _client: ContainerClient = ContainerClient.from_connection_string(
-                conn_str, cont
-            )
+            _client: ContainerClient = ContainerClient.from_connection_string(conn_str, cont)
             try:
-                cprop: ContainerProperties = _client.get_container_properties(
-                    timeout=2
-                )
+                cprop: ContainerProperties = _client.get_container_properties(timeout=2)
                 # getting etag confirms container is fully created
                 etag = getattr(cprop, "etag", cprop["etag"])
             except ResourceNotFoundError:
                 try:
-                    cprop: ContainerProperties = _client.create_container(
-                        timeout=2
-                    )
+                    cprop: ContainerProperties = _client.create_container(timeout=2)
                     # getting etag confirms container is fully created
                     etag = getattr(cprop, "etag", cprop["etag"])
                 except ResourceExistsError:
@@ -194,9 +168,7 @@ def _ensure_containers_exist(
         delay = min(delay_max, delay + delay)
 
 
-def flatten_client_iters(
-    clients: List[Union[ContainerClient, List[BlobClient]]]
-):
+def flatten_client_iters(clients: List[Union[ContainerClient, List[BlobClient]]]):
     errs: Dict[str, List[Dict[str, str]]] = {}
     for cclient in clients:
         if isinstance(cclient, list):
@@ -227,20 +199,14 @@ def flatten_client_iters(
                     }
                 )
     if errs:
-        err = AzureClientManagerError(
-            f"There were {len(errs)} errors while accessing the flattened clients iterable."
-        )
+        err = AzureClientManagerError(f"There were {len(errs)} errors while accessing the flattened clients iterable.")
         err.aggregated_traceback = []
         for e, lst in errs.items():
             agg_tb = []
             for args in lst:
                 args: dict
                 oe: BaseException = args["original"]
-                tb = "".join(
-                    traceback.format_exception(
-                        args["exc_type"], args["exc_value"], oe.__traceback__
-                    )
-                )
+                tb = "".join(traceback.format_exception(args["exc_type"], args["exc_value"], oe.__traceback__))
                 agg_tb.append(indent(tb, "\t"))
             agg_tb = "\n\n".join(agg_tb)
             agg_tb = f"\n{'=' * 120}\n{agg_tb}{'-' * 120}"
@@ -258,9 +224,7 @@ def client_generator(
     prefix: Optional[str] = None,
     blob: Optional[Union[StrOrHasName, IterableStrOrHasName]] = None,
     recurse: bool = False,
-) -> Generator[
-    Union[str, BlobServiceClient, ContainerClient, BlobClient], None, None
-]:
+) -> Generator[Union[str, BlobServiceClient, ContainerClient, BlobClient], None, None]:
     # forward declared type hints
     bprop: BlobProperties
     cprop: ContainerProperties
@@ -273,27 +237,21 @@ def client_generator(
     def client_iter(container_iterable):
         nonlocal blobs_yielded, containers_yielded
         for c in container_iterable:
-            with ContainerClient.from_connection_string(
-                conn_str, c
-            ) as container_client:
+            with ContainerClient.from_connection_string(conn_str, c) as container_client:
                 container_client: ContainerClient
                 if prefix is not None or blob is not None:
                     for bprop in container_client.list_blobs(prefix):
                         bname: str = bprop.name
                         _name = bname.rpartition("/")[2]
                         if check_blob(_name):
-                            with container_client.get_blob_client(
-                                bprop.name
-                            ) as blob_client:
+                            with container_client.get_blob_client(bprop.name) as blob_client:
                                 if not blobs_yielded:
                                     yield BC_LABEL
                                 blobs_yielded = True
                                 yield blob_client
                 elif recurse:
                     for bprop in container_client.list_blobs():
-                        with container_client.get_blob_client(
-                            bprop.name
-                        ) as blob_client:
+                        with container_client.get_blob_client(bprop.name) as blob_client:
                             if not blobs_yielded:
                                 yield BC_LABEL
                             blobs_yielded = True
@@ -305,9 +263,7 @@ def client_generator(
                     yield container_client
         if not (blobs_yielded or containers_yielded):
             for c in _client_name_gen(container):
-                with ContainerClient.from_connection_string(
-                    conn_str, c
-                ) as container_client:
+                with ContainerClient.from_connection_string(conn_str, c) as container_client:
                     container_client: ContainerClient
                     if recurse:
                         for bprop in container_client.list_blobs():
@@ -327,21 +283,15 @@ def client_generator(
     # second of the inner functions for client iteration strategies
     def bsc_iter():
         nonlocal service_clients_yielded, containers_yielded, blobs_yielded
-        with BlobServiceClient.from_connection_string(
-            conn_str
-        ) as service_client:
+        with BlobServiceClient.from_connection_string(conn_str) as service_client:
             service_client: BlobServiceClient
             if (prefix or blob) and not (blobs_yielded or containers_yielded):
                 yield from client_iter(service_client.list_containers())
             elif recurse:
                 for c in service_client.list_containers():
-                    with service_client.get_container_client(
-                        c
-                    ) as container_client:
+                    with service_client.get_container_client(c) as container_client:
                         for b in container_client.list_blobs():
-                            with container_client.get_blob_client(
-                                b
-                            ) as blob_client:
+                            with container_client.get_blob_client(b) as blob_client:
                                 if not blobs_yielded:
                                     yield BC_LABEL
                                 blobs_yielded = True
@@ -368,12 +318,19 @@ def client_generator(
             except KeyError:
                 _pref = None  # to ensure it's not an empty string
             prefix = _pref
+
+    def _check_name(name):
+        return name in blob_set
+
+    def _always_true(*args):
+        return True
+
     if blob:
         blob_set = set(_client_name_gen(blob))
-        check_blob = lambda name: name in blob_set
+        check_blob = _check_name
     else:
         blob = None
-        check_blob = lambda *args: True
+        check_blob = _always_true
     if container:
         _ensure_containers_exist(conn_str, container)
         yield from client_iter(_client_name_gen(container))
@@ -384,9 +341,7 @@ def client_generator(
         yield from (NONE_LABEL,)
 
 
-def _client_ctx_mgr_wrapper(
-    conn_str: str, gen_func: Callable = client_generator
-) -> contextmanager:
+def _client_ctx_mgr_wrapper(conn_str: str, gen_func: Callable = client_generator) -> contextmanager:
     @contextmanager
     @wraps(gen_func)
     def context_manager(*args, **kwargs):
@@ -413,9 +368,7 @@ def _ensure_str(obj: Union[AnyStr, Union[List[AnyStr], Tuple[AnyStr]]]):
     return str(obj)
 
 
-def _ensure_list_of_str(
-    obj: Union[List[AnyStr], AnyStr]
-) -> List[Union[str, List[str]]]:
+def _ensure_list_of_str(obj: Union[List[AnyStr], AnyStr]) -> List[Union[str, List[str]]]:
     """
     A helper function that allows us to ensure that a given argument parameter is a list of strings.
 
@@ -440,9 +393,7 @@ def _ensure_list_of_str(
             obj = obj.decode("utf-8")
         obj = [obj]
     else:
-        raise AzureBlobInitError(
-            f"Our attempted to ensure obj is a list of strings failed,\n\tgiven {obj=}"
-        )
+        raise AzureBlobInitError(f"Our attempted to ensure obj is a list of strings failed,\n\tgiven {obj=}")
     for i, elem in enumerate(obj):
         if isinstance(elem, str):
             continue
@@ -523,10 +474,7 @@ class AzureBlob(BaseDestination):
 
     def __getstate__(self):
         """utility function that allows an instance of this class to be pickled"""
-        return {
-            k: v if k != "_connection_manager" else None
-            for k, v in self.__dict__.items()
-        }
+        return {k: v if k != "_connection_manager" else None for k, v in self.__dict__.items()}
 
     def __init__(
         self,
@@ -621,14 +569,7 @@ class AzureBlob(BaseDestination):
             fname_prefix = default_fname_prefix or ""
             if fname_prefix and not fname_prefix.endswith("/"):
                 fname_prefix += "/"
-            path = (
-                protocol
-                + host
-                + container
-                + interval
-                + media_type
-                + fname_prefix
-            )
+            path = protocol + host + container + interval + media_type + fname_prefix
         super(AzureBlob, self).__init__(path)
         connection_string = _ensure_str(connection_string)
         self._connection_string = connection_string
@@ -637,41 +578,24 @@ class AzureBlob(BaseDestination):
         self._max_mem_bytes = max_mem_bytes
         self._max_mem_pipe = min(MAX_PIPE_CHUNK_BYTES, max_mem_bytes)
         default_protocol = _ensure_str(default_protocol or parts[0]).strip(":/")
-        default_host_name = _ensure_str(default_host_name or parts[1]).strip(
-            ":/"
-        )
-        default_container_name = _ensure_str(
-            default_container_name or parts[2]
-        ).strip(":/")
+        default_host_name = _ensure_str(default_host_name or parts[1]).strip(":/")
+        default_container_name = _ensure_str(default_container_name or parts[2]).strip(":/")
         default_interval = _ensure_str(default_interval or parts[3]).strip(":/")
-        default_media_type = _ensure_str(default_media_type or parts[4]).strip(
-            ":/"
-        )
-        default_fname_prefix = _ensure_str(
-            default_fname_prefix or parts[5]
-        ).strip(":/")
+        default_media_type = _ensure_str(default_media_type or parts[4]).strip(":/")
+        default_fname_prefix = _ensure_str(default_fname_prefix or parts[5]).strip(":/")
         self._protocol = default_protocol
         self._host_name = default_host_name
         self._container_name = default_container_name
         self._interval = default_interval
         self._media_type = default_media_type
         self._fname_prefix = default_fname_prefix
-        self._part_names = "protocol,host,container,interval,media_type,fname_prefix,fname".split(
-            ","
-        )
+        self._part_names = "protocol,host,container,interval,media_type,fname_prefix,fname".split(",")
         self._parts_list = [
-            (name, parts[i] if i < len(parts) and parts[i] else "")
-            for i, name in enumerate(self._part_names)
+            (name, parts[i] if i < len(parts) and parts[i] else "") for i, name in enumerate(self._part_names)
         ]
-        self._default_parts: Dict[str, str] = {
-            k: v if v != "" else None for k, v in self._parts_list
-        }
-        self._default_parts["interval"] = (
-            self._default_parts["interval"] or "yearly"
-        )
-        self._default_parts["media_type"] = (
-            self._default_parts["media_type"] or "mysql"
-        )
+        self._default_parts: Dict[str, str] = {k: v if v != "" else None for k, v in self._parts_list}
+        self._default_parts["interval"] = self._default_parts["interval"] or "yearly"
+        self._default_parts["media_type"] = self._default_parts["media_type"] or "mysql"
         self._part_names = self._part_names[::-1]
         self._connection_manager: Optional[contextmanager] = None
 
@@ -726,9 +650,7 @@ class AzureBlob(BaseDestination):
     @property
     def connection_manager(self):
         if self._connection_manager is None:
-            self._connection_manager = _client_ctx_mgr_wrapper(
-                self._connection_string, client_generator
-            )
+            self._connection_manager = _client_ctx_mgr_wrapper(self._connection_string, client_generator)
         return self._connection_manager
 
     @staticmethod
@@ -767,9 +689,7 @@ class AzureBlob(BaseDestination):
     def _path_parse(self, path: str, split_fname: bool = False):
         """Called in multiple places where we need to decompose a path string in order to access specific parts by name."""
         if not path:
-            return self.remote_path, {
-                k: v for k, v in self._default_parts.items()
-            }
+            return self.remote_path, {k: v for k, v in self._default_parts.items()}
         # noinspection PyTupleAssignmentBalance
         (
             protocol,
@@ -781,53 +701,17 @@ class AzureBlob(BaseDestination):
             *fname,
         ) = self._path2parts(path, split_fname)
         fname: list
-        protocol = (
-            protocol
-            if protocol and protocol != "..."
-            else self.default_protocol
-        )
+        protocol = protocol if protocol and protocol != "..." else self.default_protocol
         host = host if host and host != "..." else self.default_host_name
-        container = (
-            container
-            if container and container != "..."
-            else self.default_container_name
-        )
+        container = container if container and container != "..." else self.default_container_name
         if container != self.default_container_name:
-            interval = (
-                self.default_interval
-                if interval and interval == "..."
-                else interval
-                if interval
-                else ""
-            )
-            media = (
-                self.default_media_type
-                if media and media == "..."
-                else media
-                if media
-                else ""
-            )
-            prefix = (
-                self.default_fname_prefix
-                if prefix and prefix == "..."
-                else prefix
-                if prefix
-                else ""
-            )
+            interval = self.default_interval if interval and interval == "..." else interval if interval else ""
+            media = self.default_media_type if media and media == "..." else media if media else ""
+            prefix = self.default_fname_prefix if prefix and prefix == "..." else prefix if prefix else ""
         else:
-            interval = (
-                interval
-                if interval and interval != "..."
-                else self.default_interval
-            )
-            media = (
-                media if media and media != "..." else self.default_media_type
-            )
-            prefix = (
-                prefix
-                if prefix and prefix != "..."
-                else self.default_fname_prefix
-            )
+            interval = interval if interval and interval != "..." else self.default_interval
+            media = media if media and media != "..." else self.default_media_type
+            prefix = prefix if prefix and prefix != "..." else self.default_fname_prefix
         if fname:
             _fname = list(fname)
             while _fname:
@@ -838,16 +722,12 @@ class AzureBlob(BaseDestination):
         else:
             # noinspection PyTypeChecker
             fname = None
-        parts: str = "/".join(
-            (s for s in (host, container, interval, media, prefix, fname) if s)
-        )
+        parts: str = "/".join((s for s in (host, container, interval, media, prefix, fname) if s))
         relative_depth = 0
         while parts and parts.startswith("../"):
             relative_depth += 1
             _, _, parts = parts.partition("/")
-        base_parts = "/".join(
-            tpl[1] for tpl in self._parts_list[1:-relative_depth]
-        )
+        base_parts = "/".join(tpl[1] for tpl in self._parts_list[1:-relative_depth])
         base_parts += "/" if base_parts else ""
         path = base_parts + parts.lstrip("/")
         _parts = path.split("/", 4)[::-1]
@@ -942,9 +822,7 @@ class AzureBlob(BaseDestination):
                                 break
                         else:
                             c: ContainerClient
-                            cprop: ContainerProperties = (
-                                c.get_container_properties()
-                            )
+                            cprop: ContainerProperties = c.get_container_properties()
                             if cprop.deleted:
                                 break
                         time.sleep(delay)
@@ -961,17 +839,9 @@ class AzureBlob(BaseDestination):
         def err_assembly():
             bad_path = "{protocol}://{parts}".format(
                 protocol=self._part_names[0],
-                parts="/".join(
-                    (
-                        f"{{{s}}}"
-                        for s in self._part_names[1:]
-                        if path_parts_dict.get(s, None)
-                    )
-                ),
+                parts="/".join((f"{{{s}}}" for s in self._part_names[1:] if path_parts_dict.get(s, None))),
             ).format(**path_parts_dict)
-            return AzureClientIterationError(
-                f"Unable to find downloadable content files on path : {bad_path}"
-            )
+            return AzureClientIterationError(f"Unable to find downloadable content files on path : {bad_path}")
 
         # noinspection PyShadowingNames
         def configure_chunking(bsize: int, pipe_chunk_size: int):
@@ -1005,22 +875,14 @@ class AzureBlob(BaseDestination):
                 num_chunks = 1
             return num_mem_chunks, mem_chunk_size, num_chunks, _chunk_size
 
-        chunk_size = (
-            self.max_bytes_per_pipe_message
-            if chunk_size is None
-            else chunk_size
-        )
+        chunk_size = self.max_bytes_per_pipe_message if chunk_size is None else chunk_size
         max_threads = min(32, self._max_mem_bytes)
         with pout:
-            with os.fdopen(
-                pout.fileno(), "wb", buffering=chunk_size, closefd=False
-            ) as pipe_out:
+            with os.fdopen(pout.fileno(), "wb", buffering=chunk_size, closefd=False) as pipe_out:
                 container = path_parts_dict.get("container", None)
                 fname = path_parts_dict.pop("fname", None)
                 prefix = _assemble_fname(path_parts_dict) or None
-                with self.connection_manager(
-                    container, prefix, fname, recurse=True
-                ) as client_iter:
+                with self.connection_manager(container, prefix, fname, recurse=True) as client_iter:
                     iter_type = next(client_iter)
                     if iter_type != BC_LABEL:
                         raise err_assembly()
@@ -1036,12 +898,10 @@ class AzureBlob(BaseDestination):
                         with io.BytesIO(b"\x00" * mem_chunk_size) as bio:
                             for i in range(num_mem_chunks):
                                 ipos = i * mem_chunk_size
-                                dl: StorageStreamDownloader = (
-                                    client.download_blob(
-                                        ipos,
-                                        mem_chunk_size,
-                                        max_concurrency=max_threads,
-                                    )
+                                dl: StorageStreamDownloader = client.download_blob(
+                                    ipos,
+                                    mem_chunk_size,
+                                    max_concurrency=max_threads,
                                 )
                                 bio.seek(0)
                                 bytes_read = dl.readinto(bio)
@@ -1062,25 +922,19 @@ class AzureBlob(BaseDestination):
         has_fname = "." in _path.name and _path.name != "..."
         path, path_parts_dict = self._path_parse(path, has_fname)
         pipe_in, pipe_out = mp.Pipe(False)
-        proc = mp.Process(
-            target=self._blob_ospiper, args=(path_parts_dict, pipe_out)
-        )
+        proc = mp.Process(target=self._blob_ospiper, args=(path_parts_dict, pipe_out))
         try:
             with pipe_in:
                 proc.start()
                 pipe_out.close()
-                with os.fdopen(
-                    pipe_in.fileno(), "rb", closefd=False
-                ) as file_pipe_in:
+                with os.fdopen(pipe_in.fileno(), "rb", closefd=False) as file_pipe_in:
                     yield file_pipe_in
         finally:
             # pipe_out.close()
             proc.join()
             proc.close()
 
-    def read(
-        self, filepath: str, bytes_per_chunk: Optional[int] = None
-    ) -> bytes:
+    def read(self, filepath: str, bytes_per_chunk: Optional[int] = None) -> bytes:
         """
         Read content from destination at the end of given filepath.
 
@@ -1124,9 +978,7 @@ class AzureBlob(BaseDestination):
         with handler as f_src:
             self.write(f_src, filepath)
 
-    def write(
-        self, content: Union[AnyStr, io.BufferedIOBase], filepath: AnyStr
-    ):
+    def write(self, content: Union[AnyStr, io.BufferedIOBase], filepath: AnyStr):
         """
         Write ``content`` to a file.
 
@@ -1141,9 +993,7 @@ class AzureBlob(BaseDestination):
         path, path_dict = self._path_parse(filepath)
         container = path_dict["container"] or self.default_container_name
         blob_name = _assemble_fname(path_dict)
-        with self.connection_manager(
-            container, prefix=blob_name, blob=fname
-        ) as client_iter:
+        with self.connection_manager(container, prefix=blob_name, blob=fname) as client_iter:
             iter_type = next(client_iter)
             if iter_type == CC_LABEL:
                 blob_name += "/" + fname
@@ -1156,28 +1006,20 @@ class AzureBlob(BaseDestination):
                             overwrite=self.can_overwrite,
                         )
                 else:
-                    client.upload_blob(
-                        blob_name, content, overwrite=self.can_overwrite
-                    )
+                    client.upload_blob(blob_name, content, overwrite=self.can_overwrite)
             elif iter_type != BC_LABEL:
-                raise AzureClientIterationError(
-                    f"Failed to identify path to blob files given: {filepath}"
-                )
+                raise AzureClientIterationError(f"Failed to identify path to blob files given: {filepath}")
             else:
                 # Unless filepath used wildcards, client_iter is only going to produce
                 # a single client instance to upload to.
                 bclient: BlobClient = next(client_iter)
                 if isinstance(content, io.BufferedReader):
                     with content:
-                        bclient.upload_blob(
-                            content.read(), overwrite=self.can_overwrite
-                        )
+                        bclient.upload_blob(content.read(), overwrite=self.can_overwrite)
                 else:
                     bclient.upload_blob(content, overwrite=self.can_overwrite)
 
-    def _list_files(
-        self, prefix: str = None, **kwargs
-    ):  # , recursive=False, files_only=False):
+    def _list_files(self, prefix: str = None, **kwargs):  # , recursive=False, files_only=False):
         """
         A descendant class must implement this method.
         It should return a list of files already filtered out by prefix.
@@ -1193,9 +1035,7 @@ class AzureBlob(BaseDestination):
         if prefix:
             if prefix == "..." or prefix.startswith(".../"):
                 prefix = prefix.strip("/")
-                path_template = (
-                    f"{self._protocol}://{self.default_host_name}/{prefix}"
-                )
+                path_template = f"{self._protocol}://{self.default_host_name}/{prefix}"
                 _, path_dict = self._path_parse(path_template, True)
             else:
                 container, _, prefix = prefix.partition("/")
@@ -1205,17 +1045,11 @@ class AzureBlob(BaseDestination):
             path_dict = {"container": None}
         fname = path_dict.pop("fname", None) or None
         prefix = _assemble_fname(path_dict) or prefix or None
-        cont_starts, _, _ = (path_dict.get("container", "") or "").partition(
-            "*"
-        )
-        with BlobServiceClient.from_connection_string(
-            self.connection_string
-        ) as service_client:
+        cont_starts, _, _ = (path_dict.get("container", "") or "").partition("*")
+        with BlobServiceClient.from_connection_string(self.connection_string) as service_client:
             service_client: BlobServiceClient
             # service_client.
-            for container in service_client.list_containers(
-                cont_starts or None
-            ):
+            for container in service_client.list_containers(cont_starts or None):
                 with service_client.get_container_client(container) as cclient:
                     cclient: ContainerClient
                     if fname:

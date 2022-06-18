@@ -6,9 +6,7 @@ from twindb_backup.configuration import TwinDBBackupConfig
 
 @mock.patch("twindb_backup.backup.backup_everything")
 @mock.patch("twindb_backup.backup.get_timeout")
-def test_run_backup_job_gets_lock(
-    mock_get_timeout, mock_backup_everything, tmpdir
-):
+def test_run_backup_job_gets_lock(mock_get_timeout, mock_backup_everything, tmpdir):
     config_content = """
 [source]
 backup_dirs=/etc /root /home
@@ -29,6 +27,4 @@ run_yearly=yes
     mock_get_timeout.return_value = 1
 
     run_backup_job(cfg, "hourly", lock_file=lock_file)
-    mock_backup_everything.assert_called_once_with(
-        "hourly", cfg, binlogs_only=False
-    )
+    mock_backup_everything.assert_called_once_with("hourly", cfg, binlogs_only=False)

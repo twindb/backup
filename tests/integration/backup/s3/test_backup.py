@@ -5,23 +5,13 @@ from os import path as osp
 
 import magic
 
-from tests.integration.backup.conftest import (
-    check_either_file,
-    check_files_if_xtrabackup,
-)
-from tests.integration.conftest import (
-    assert_and_pause,
-    docker_execute,
-    get_twindb_config_dir,
-    pause_test,
-)
+from tests.integration.backup.conftest import check_either_file, check_files_if_xtrabackup
+from tests.integration.conftest import assert_and_pause, docker_execute, get_twindb_config_dir, pause_test
 from twindb_backup import LOG
 from twindb_backup.destination.s3 import S3
 
 
-def test__take_file_backup(
-    master1, docker_client, s3_client, config_content_files_only
-):
+def test__take_file_backup(master1, docker_client, s3_client, config_content_files_only):
     twindb_config_dir = get_twindb_config_dir(docker_client, master1["Id"])
 
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
@@ -57,9 +47,7 @@ def test__take_file_backup(
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
 
     assert_and_pause((ret == 0,), cout)
-    assert_and_pause(
-        (s3_backup_path in cout,), "%s is not in %s" % (s3_backup_path, cout)
-    )
+    assert_and_pause((s3_backup_path in cout,), "%s is not in %s" % (s3_backup_path, cout))
 
     backup_to_restore = None
     for line in StringIO(cout):
@@ -102,9 +90,7 @@ def test__take_file_backup(
     assert_and_pause((ret == 0,), "%s exited with %d" % (" ".join(cmd), ret))
 
 
-def test__take_mysql_backup(
-    master1, docker_client, s3_client, config_content_mysql_only, client_my_cnf
-):
+def test__take_mysql_backup(master1, docker_client, s3_client, config_content_mysql_only, client_my_cnf):
     twindb_config_dir = get_twindb_config_dir(docker_client, master1["Id"])
 
     twindb_config_host = "%s/twindb-backup-1.cfg" % twindb_config_dir
@@ -144,9 +130,7 @@ def test__take_mysql_backup(
     assert_and_pause((key.endswith(".xbstream.gz"),), key)
 
 
-def test__take_mysql_backup_retention(
-    master1, docker_client, s3_client, config_content_mysql_only, client_my_cnf
-):
+def test__take_mysql_backup_retention(master1, docker_client, s3_client, config_content_mysql_only, client_my_cnf):
 
     twindb_config_dir = get_twindb_config_dir(docker_client, master1["Id"])
 
@@ -205,9 +189,7 @@ def test__take_mysql_backup_retention(
     assert_and_pause((len(status["hourly"].keys()) == 2,), status)
 
 
-def test__s3_find_files_returns_sorted(
-    master1, docker_client, s3_client, config_content_mysql_only, client_my_cnf
-):
+def test__s3_find_files_returns_sorted(master1, docker_client, s3_client, config_content_mysql_only, client_my_cnf):
     # cleanup the bucket first
     s3_client.delete_all_objects()
 
@@ -356,9 +338,7 @@ def test_take_file_backup_with_aenc(
     key = backup_to_restore.lstrip("s3://").lstrip(s3_client.bucket).lstrip("/")
     local_copy = "%s/backup_to_restore.tar.gz.gpg" % twindb_config_dir
     s3_client.s3_client.download_file(s3_client.bucket, key, local_copy)
-    assert magic.from_file(local_copy) == "data" or magic.from_file(
-        local_copy
-    ).startswith("PGP RSA encrypted")
+    assert magic.from_file(local_copy) == "data" or magic.from_file(local_copy).startswith("PGP RSA encrypted")
 
     dest_dir = "/tmp/simple_backup_aenc"
     cmd = ["mkdir", "-p", "/tmp/simple_backup_aenc"]
@@ -482,9 +462,7 @@ def test__take_mysql_backup_aenc_suffix_gpg(
     local_copy = "%s/mysql_backup.tar.gz.gpg" % twindb_config_dir
 
     s3_client.s3_client.download_file(s3_client.bucket, key, local_copy)
-    assert magic.from_file(local_copy) == "data" or magic.from_file(
-        local_copy
-    ).startswith("PGP RSA encrypted")
+    assert magic.from_file(local_copy) == "data" or magic.from_file(local_copy).startswith("PGP RSA encrypted")
 
 
 def test_take_mysql_backup_aenc_restores_full(
@@ -575,9 +553,7 @@ def test_take_mysql_backup_aenc_restores_full(
 
     backup_copy = "s3://" + s3_client.bucket + "/" + key
     dst_dir = str(tmpdir.mkdir("dst"))
-    ret, cout = docker_execute(
-        docker_client, master1["Id"], ["mkdir", "-p", str(dst_dir)]
-    )
+    ret, cout = docker_execute(docker_client, master1["Id"], ["mkdir", "-p", str(dst_dir)])
     print(cout)
     assert_and_pause((ret == 0,), cout)
 
@@ -730,9 +706,7 @@ def test_take_mysql_backup_aenc_restores_inc(
 
     backup_copy = "s3://" + s3_client.bucket + "/" + key
     dst_dir = str(tmpdir.mkdir("dst"))
-    ret, cout = docker_execute(
-        docker_client, master1["Id"], ["mkdir", "-p", str(dst_dir)]
-    )
+    ret, cout = docker_execute(docker_client, master1["Id"], ["mkdir", "-p", str(dst_dir)])
     print(cout)
     assert_and_pause((ret == 0,), cout)
 

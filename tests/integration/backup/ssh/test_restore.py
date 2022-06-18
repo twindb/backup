@@ -1,21 +1,12 @@
 import os
 from os import path as osp
 
-from tests.integration.backup.conftest import (
-    check_either_file,
-    check_files_if_xtrabackup,
-)
-from tests.integration.conftest import (
-    assert_and_pause,
-    docker_execute,
-    get_twindb_config_dir,
-)
+from tests.integration.backup.conftest import check_either_file, check_files_if_xtrabackup
+from tests.integration.conftest import assert_and_pause, docker_execute, get_twindb_config_dir
 from twindb_backup import LOG
 
 
-def test_restore(
-    master1, storage_server, config_content_ssh, docker_client, rsa_private_key
-):
+def test_restore(master1, storage_server, config_content_ssh, docker_client, rsa_private_key):
 
     twindb_config_dir = get_twindb_config_dir(docker_client, master1["Id"])
 
@@ -60,8 +51,7 @@ password=qwerty
     cmd = [
         "bash",
         "-c",
-        "twindb-backup --config %s ls | grep /tmp/backup "
-        "| grep mysql | sort | tail -1" % twindb_config_guest,
+        "twindb-backup --config %s ls | grep /tmp/backup " "| grep mysql | sort | tail -1" % twindb_config_guest,
     ]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     url = cout.strip()

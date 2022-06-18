@@ -1,9 +1,7 @@
 from itertools import combinations
 from random import randint
 
-descriptors = "simple,busy,abstract,obvious,pretty,scary,large,small,relatable,detailed,complex".split(
-    ","
-)
+descriptors = "simple,busy,abstract,obvious,pretty,scary,large,small,relatable,detailed,complex".split(",")
 combos = tuple(tuple(combinations(descriptors, i)) for i in range(1, 5))
 combo_len = len(combos) - 1
 lens = tuple(len(c) - 1 for c in combos)

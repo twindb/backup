@@ -107,9 +107,7 @@ def test_init_raises_on_wrong_key():
                         "daily": {},
                         "hourly": {},
                         "monthly": {},
-                        "weekly": {
-                            "foo/weekly/some_file.txt": {"type": "full"}
-                        },
+                        "weekly": {"foo/weekly/some_file.txt": {"type": "full"}},
                         "yearly": {},
                     }
                 ).encode("utf-8")
@@ -125,9 +123,7 @@ def test_init_weekly_only():
                     "daily": {},
                     "hourly": {},
                     "monthly": {},
-                    "weekly": {
-                        "foo/weekly/mysql/some_file.txt": {"type": "full"}
-                    },
+                    "weekly": {"foo/weekly/mysql/some_file.txt": {"type": "full"}},
                     "yearly": {},
                 }
             ).encode()

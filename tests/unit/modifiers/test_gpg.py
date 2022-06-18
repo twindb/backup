@@ -47,15 +47,11 @@ def test_get_stream(mock_popen, input_file, keyring_file):
                 "--yes",
                 "--batch",
             ]
-            mock_popen.assert_called_once_with(
-                expected_cmd, stdin=gpg.input, stdout=PIPE, stderr=PIPE
-            )
+            mock_popen.assert_called_once_with(expected_cmd, stdin=gpg.input, stdout=PIPE, stderr=PIPE)
 
 
 @mock.patch("twindb_backup.modifiers.base.Popen")
-def test_revert_stream(
-    mock_popen, input_file, keyring_file, secret_keyring_file
-):
+def test_revert_stream(mock_popen, input_file, keyring_file, secret_keyring_file):
 
     recipient = "a@a.com"
     mock_proc = mock.Mock()
@@ -88,6 +84,4 @@ def test_revert_stream(
                 "--yes",
                 "--batch",
             ]
-            mock_popen.assert_called_once_with(
-                expected_cmd, stdin=gpg.input, stdout=PIPE, stderr=PIPE
-            )
+            mock_popen.assert_called_once_with(expected_cmd, stdin=gpg.input, stdout=PIPE, stderr=PIPE)

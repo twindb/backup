@@ -23,9 +23,7 @@ class BaseDestination(object):
 
     def __init__(self, remote_path):
         if not remote_path:
-            raise DestinationError(
-                "remote path must be defined and cannot be %r" % remote_path
-            )
+            raise DestinationError("remote path must be defined and cannot be %r" % remote_path)
         self.remote_path = remote_path.rstrip("/")
 
     @abstractmethod
@@ -47,9 +45,7 @@ class BaseDestination(object):
         :return: Standard output.
         """
 
-    def list_files(
-        self, prefix=None, recursive=False, pattern=None, files_only=False
-    ):
+    def list_files(self, prefix=None, recursive=False, pattern=None, files_only=False):
         """
         Get list of file by prefix.
 
@@ -66,9 +62,7 @@ class BaseDestination(object):
         """
         return sorted(
             self._match_files(
-                self._list_files(
-                    prefix=prefix, recursive=recursive, files_only=files_only
-                ),
+                self._list_files(prefix=prefix, recursive=recursive, files_only=files_only),
                 pattern=pattern,
             )
         )
@@ -83,9 +77,7 @@ class BaseDestination(object):
         :return: Content of the file.
         :rtype: str
         """
-        raise TwinDBBackupInternalError(
-            "Method read() is not implemented in %s" % self.__class__
-        )
+        raise TwinDBBackupInternalError("Method read() is not implemented in %s" % self.__class__)
 
     @abstractmethod
     def save(self, handler, filepath):
@@ -97,9 +89,7 @@ class BaseDestination(object):
         :param filepath: Save stream as this name.
         :type filepath: str
         """
-        raise TwinDBBackupInternalError(
-            "Method save() is not implemented in %s" % self.__class__
-        )
+        raise TwinDBBackupInternalError("Method save() is not implemented in %s" % self.__class__)
 
     @abstractmethod
     def write(self, content, filepath):
@@ -111,9 +101,7 @@ class BaseDestination(object):
         :param filepath: Relative path to file.
         :type filepath: str
         """
-        raise TwinDBBackupInternalError(
-            "Method write() is not implemented in %s" % self.__class__
-        )
+        raise TwinDBBackupInternalError("Method write() is not implemented in %s" % self.__class__)
 
     @abstractmethod
     def _list_files(self, prefix=None, recursive=False, files_only=False):

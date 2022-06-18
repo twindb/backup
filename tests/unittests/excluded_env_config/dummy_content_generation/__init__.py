@@ -1,12 +1,6 @@
-from tests.unittests.excluded_env_config.dummy_content_generation.cave_generation import (
-    cave_gen,
-)
-from tests.unittests.excluded_env_config.dummy_content_generation.cave_painting_desc import (
-    painting_gen,
-)
-from tests.unittests.excluded_env_config.dummy_content_generation.dino_namegen import (
-    dino_gen,
-)
+from tests.unittests.excluded_env_config.dummy_content_generation.cave_generation import cave_gen
+from tests.unittests.excluded_env_config.dummy_content_generation.cave_painting_desc import painting_gen
+from tests.unittests.excluded_env_config.dummy_content_generation.dino_namegen import dino_gen
 
 
 def manual_dummy_file_creation(out_target: str, fsize: int):
@@ -35,9 +29,7 @@ if __name__ == "__main__":
     with cf.ProcessPoolExecutor(os.cpu_count()) as ppe:
         args = []
         for i, mult in enumerate([4] * 5 + [9] * 5):
-            size = int(
-                oneg * mult + (oneg * random()) * round(random() * 2.0 - 1.0)
-            )
+            size = int(oneg * mult + (oneg * random()) * round(random() * 2.0 - 1.0))
             name = f"./big_dummies/{size//oneg}_{i}.txt"
             args.append((name, size))
         args.sort(key=lambda s: s[1])
