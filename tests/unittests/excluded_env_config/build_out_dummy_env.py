@@ -1,23 +1,28 @@
-import os
 import concurrent.futures as cf
 import gc
 import json
-from contextlib import contextmanager
-from typing import Any, List, Union
-from pathlib import Path
 import logging
+import os
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Any, List, Union
+
 from azure.storage.blob import (
-    BlobServiceClient,
     BlobClient,
+    BlobProperties,
+    BlobServiceClient,
     ContainerClient,
     StorageStreamDownloader,
-    BlobProperties,
 )
 
 logging.getLogger("azure.core.pipeline.policies.http_logging_policy").setLevel(logging.WARNING)
 logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
 
-from tests.unittests.excluded_env_config.dummy_content_generation import dino_gen, cave_gen, painting_gen
+from tests.unittests.excluded_env_config.dummy_content_generation import (
+    cave_gen,
+    dino_gen,
+    painting_gen,
+)
 from twindb_backup import LOG
 
 PATH_HERE = Path(__file__).parent
@@ -313,14 +318,14 @@ def populate_remote_containers(vars_dict, be_silent: bool, use_multi_proc: bool)
 
 def generate_cli_config(container: str, blobs: List[str]):
     from configparser import ConfigParser
-    from twindb_backup.configuration import DEFAULT_CONFIG_FILE_PATH
-    from twindb_backup.configuration import RetentionPolicy
-    from twindb_backup import (
-        INTERVALS,
-        XTRABACKUP_BINARY,
-        XBSTREAM_BINARY,
-        SUPPORTED_DESTINATION_TYPES as SDT,
-        SUPPORTED_QUERY_LANGUAGES as SQ,
+
+    from twindb_backup import INTERVALS
+    from twindb_backup import SUPPORTED_DESTINATION_TYPES as SDT
+    from twindb_backup import SUPPORTED_QUERY_LANGUAGES as SQ
+    from twindb_backup import XBSTREAM_BINARY, XTRABACKUP_BINARY
+    from twindb_backup.configuration import (
+        DEFAULT_CONFIG_FILE_PATH,
+        RetentionPolicy,
     )
     cache_location = get_local_cache_location()
     config_root = cache_location.parent.joinpath("configs").resolve()

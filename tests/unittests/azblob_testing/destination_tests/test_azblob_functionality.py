@@ -1,25 +1,32 @@
-import unittest
 import io
-import time
+import logging
 import os
 import sys
-import logging
+import time
 import types
-from typing import Optional, List, Tuple, Dict
-from pathlib import Path
+import unittest
 from contextlib import contextmanager
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 # third-party imports
 import coverage
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 
 # azure imports (also a third-party import) ;)
-from azure.storage.blob import BlobClient, ContainerClient, BlobProperties
-from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
-from azure.storage.blob._shared.response_handlers import PartialBatchErrorException
+from azure.storage.blob import BlobClient, BlobProperties, ContainerClient
+from azure.storage.blob._shared.response_handlers import (
+    PartialBatchErrorException,
+)
+
+from tests.unittests.azblob_testing import (
+    PART_NAMES,
+    SAMPLE_TARGETS,
+    do_set_osenvs,
+)
 
 # local project imports
 from twindb_backup import LOG
-from tests.unittests.azblob_testing import do_set_osenvs, SAMPLE_TARGETS, PART_NAMES
 
 DO_TEST_SKIPPING = False
 
@@ -91,7 +98,9 @@ class AzureBlobBaseCase(unittest.TestCase):
         except ImportError as ie:
             pass
         if "PRIMARY_TEST_CONN_STR" not in os.environ:
-            from tests.unittests.excluded_env_config.build_out_dummy_env import set_osenvs
+            from tests.unittests.excluded_env_config.build_out_dummy_env import (
+                set_osenvs,
+            )
 
             logging.getLogger("azure.core.pipeline.policies.http_logging_policy").setLevel(logging.WARNING)
             do_set_osenvs(set_osenvs)
@@ -464,7 +473,9 @@ class TC_000_ImportsTestCase(unittest.TestCase):
         from twindb_backup.destination.azblob import AzureBlob
 
     def test_01_correct_os_environs(self):
-        from tests.unittests.excluded_env_config.build_out_dummy_env import set_osenvs
+        from tests.unittests.excluded_env_config.build_out_dummy_env import (
+            set_osenvs,
+        )
 
         do_set_osenvs(set_osenvs)
 
@@ -666,14 +677,18 @@ class TC_004_DeleteTestCase(AzureBlobBaseCase):
         with dest.connection_manager(dest.default_container_name) as cont_iter:
             iter_type = next(cont_iter)
             if iter_type != "ContainerClient":
-                from twindb_backup.destination.azblob import AzureClientManagerError
+                from twindb_backup.destination.azblob import (
+                    AzureClientManagerError,
+                )
 
                 raise AzureClientManagerError("Failed to get the right type of blob iterator")
             dst_client: ContainerClient = next(cont_iter)
             with src.connection_manager(src.default_container_name, blob=blob_names) as client_iterator:
                 iter_type = next(client_iterator)
                 if iter_type != "BlobClient":
-                    from twindb_backup.destination.azblob import AzureClientManagerError
+                    from twindb_backup.destination.azblob import (
+                        AzureClientManagerError,
+                    )
 
                     raise AzureClientManagerError("Failed to get the right type of blob iterator")
                 copy_polls = []
@@ -695,7 +710,9 @@ class TC_004_DeleteTestCase(AzureBlobBaseCase):
         with self.azure_source.connection_manager(self.test_container) as cont_iter:
             iter_type = next(cont_iter)
             if iter_type != "ContainerClient":
-                from twindb_backup.destination.azblob import AzureClientManagerError
+                from twindb_backup.destination.azblob import (
+                    AzureClientManagerError,
+                )
 
                 raise AzureClientManagerError("Failed to get the right type of blob iterator")
             for client in cont_iter:

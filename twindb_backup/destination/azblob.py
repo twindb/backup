@@ -15,7 +15,17 @@ from functools import wraps
 from multiprocessing.connection import Connection as mpConn
 from pathlib import Path
 from textwrap import indent
-from typing import AnyStr, Callable, Dict, Generator, Iterable, List, Optional, Tuple, Union
+from typing import (
+    AnyStr,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 # Third party module imports
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError

@@ -4,7 +4,9 @@ import unittest
 
 class CustomLocalEnvTestCase(unittest.TestCase):
     def test_set_osenvs(self):
-        from tests.unittests.excluded_env_config.build_out_dummy_env import set_osenvs
+        from tests.unittests.excluded_env_config.build_out_dummy_env import (
+            set_osenvs,
+        )
 
         def single_equality(a, b):
             return a == b

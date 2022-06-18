@@ -1,6 +1,5 @@
 from random import randint
 
-
 biome = (("swamp","-","y ","ed "),
          ("desert","-","ed "),
          ("savanna","-",),

@@ -1,10 +1,10 @@
 """Filler content generator.
 code inspired by that used to create the site: https://www.fantasynamegenerators.com/dinosaur-names.php"""
-from random import sample
-from itertools import combinations
 import multiprocessing as mp
+from itertools import combinations
 from multiprocessing import Queue
 from queue import Empty
+from random import sample
 from time import perf_counter
 
 colors = (
