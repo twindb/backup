@@ -14,21 +14,13 @@ from subprocess import PIPE, Popen
 
 import psutil
 
-from twindb_backup import (
-    DEFAULT_FILE_ENCODING,
-    LOG,
-    XBSTREAM_BINARY,
-    XTRABACKUP_BINARY,
-)
+from twindb_backup import DEFAULT_FILE_ENCODING, LOG, XBSTREAM_BINARY, XTRABACKUP_BINARY
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.destination.local import Local
 from twindb_backup.exceptions import TwinDBBackupError
 from twindb_backup.export import export_info
-from twindb_backup.exporter.base_exporter import (
-    ExportCategory,
-    ExportMeasureType,
-)
+from twindb_backup.exporter.base_exporter import ExportCategory, ExportMeasureType
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.status.mysql_status import MySQLStatus
 from twindb_backup.util import mkdir_p
@@ -51,9 +43,7 @@ def get_my_cnf(status, key):
         elif isinstance(status[key].config[path], bytes):
             yield path, status[key].config[path].decode("utf-8")
         else:
-            raise TwinDBBackupError(
-                f"Unexpected type of {status[key].config[path]}"
-            )
+            raise TwinDBBackupError(f"Unexpected type of {status[key].config[path]}")
 
 
 def get_free_memory():
@@ -131,19 +121,13 @@ def restore_from_mysql_full(
             xtrabackup_proc.communicate()
             ret = xtrabackup_proc.returncode
             if ret:
-                LOG.error(
-                    "%s exited with code %d", " ".join(xtrabackup_cmd), ret
-                )
+                LOG.error("%s exited with code %d", " ".join(xtrabackup_cmd), ret)
             return ret == 0
     except OSError as err:
-        raise TwinDBBackupError(
-            f"Failed to prepare backup in {dst_dir}: {err}"
-        ) from err
+        raise TwinDBBackupError(f"Failed to prepare backup in {dst_dir}: {err}") from err
 
 
-def _extract_xbstream(
-    input_stream, working_dir, xbstream_binary=XBSTREAM_BINARY
-):
+def _extract_xbstream(input_stream, working_dir, xbstream_binary=XBSTREAM_BINARY):
     """
     Extract xbstream stream in directory
 
@@ -157,9 +141,7 @@ def _extract_xbstream(
         LOG.debug("Running %s", " ".join(cmd))
         LOG.debug("Working directory: %s", working_dir)
         LOG.debug("Xbstream binary: %s", xbstream_binary)
-        with Popen(
-            cmd, stdin=input_stream, stdout=PIPE, stderr=PIPE, cwd=working_dir
-        ) as proc:
+        with Popen(cmd, stdin=input_stream, stdout=PIPE, stderr=PIPE, cwd=working_dir) as proc:
             cout, cerr = proc.communicate()
             ret = proc.returncode
             if ret:
@@ -231,15 +213,11 @@ def restore_from_mysql_incremental(
                 f"--target-dir={dst_dir}",
             ]
             LOG.debug("Running %s", " ".join(xtrabackup_cmd))
-            with Popen(
-                xtrabackup_cmd, stdout=None, stderr=None
-            ) as xtrabackup_proc:
+            with Popen(xtrabackup_cmd, stdout=None, stderr=None) as xtrabackup_proc:
                 xtrabackup_proc.communicate()
                 ret = xtrabackup_proc.returncode
                 if ret:
-                    LOG.error(
-                        "%s exited with code %d", " ".join(xtrabackup_cmd), ret
-                    )
+                    LOG.error("%s exited with code %d", " ".join(xtrabackup_cmd), ret)
                     return False
 
             xtrabackup_cmd = [
@@ -250,15 +228,11 @@ def restore_from_mysql_incremental(
                 f"--incremental-dir={inc_dir}",
             ]
             LOG.debug("Running %s", " ".join(xtrabackup_cmd))
-            with Popen(
-                xtrabackup_cmd, stdout=None, stderr=None
-            ) as xtrabackup_proc:
+            with Popen(xtrabackup_cmd, stdout=None, stderr=None) as xtrabackup_proc:
                 xtrabackup_proc.communicate()
                 ret = xtrabackup_proc.returncode
                 if ret:
-                    LOG.error(
-                        "%s exited with code %d", " ".join(xtrabackup_cmd), ret
-                    )
+                    LOG.error("%s exited with code %d", " ".join(xtrabackup_cmd), ret)
                 return ret == 0
         except OSError as err:
             LOG.error("Failed to prepare backup in %s: %s", dst_dir, err)
@@ -373,9 +347,7 @@ def restore_from_mysql(
                 # restore from cache
                 cache.restore_in(cache_key, dst_dir)
             else:
-                restore_from_mysql_full(
-                    stream, dst_dir, twindb_config, redo_only=False
-                )
+                restore_from_mysql_full(stream, dst_dir, twindb_config, redo_only=False)
                 cache.add(dst_dir, cache_key)
         else:
             restore_from_mysql_full(
@@ -398,9 +370,7 @@ def restore_from_mysql(
                 # restore from cache
                 cache.restore_in(cache_key, dst_dir)
             else:
-                restore_from_mysql_full(
-                    full_stream, dst_dir, twindb_config, redo_only=True
-                )
+                restore_from_mysql_full(full_stream, dst_dir, twindb_config, redo_only=True)
                 cache.add(dst_dir, cache_key)
         else:
             restore_from_mysql_full(
@@ -423,9 +393,7 @@ def restore_from_mysql(
     config_dir = os.path.join(dst_dir, "_config")
 
     for path, content in get_my_cnf(status, key):
-        config_sub_dir = os.path.join(
-            config_dir, os.path.dirname(path).lstrip("/")
-        )
+        config_sub_dir = os.path.join(config_dir, os.path.dirname(path).lstrip("/"))
         mkdir_p(config_sub_dir, mode=0o755)
 
         with open(

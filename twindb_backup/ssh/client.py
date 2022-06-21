@@ -4,12 +4,7 @@ Module that implements SSH client.
 import socket
 from contextlib import contextmanager
 
-from paramiko import (
-    AuthenticationException,
-    AutoAddPolicy,
-    SSHClient,
-    SSHException,
-)
+from paramiko import AuthenticationException, AutoAddPolicy, SSHClient, SSHException
 
 from twindb_backup import LOG
 from twindb_backup.ssh.exceptions import SshClientException
@@ -31,9 +26,7 @@ class SshClient(object):
     :type user: str
     """
 
-    def __init__(
-        self, host="127.0.0.1", port=22, key="/root/.id_rsa", user="root"
-    ):
+    def __init__(self, host="127.0.0.1", port=22, key="/root/.id_rsa", user="root"):
 
         self._host = host
         self._port = port
@@ -126,21 +119,11 @@ class SshClient(object):
                     channel.shutdown_write()
                     stdout_chunks = []
                     stderr_chunks = []
-                    while (
-                        not channel.closed
-                        or channel.recv_ready()
-                        or channel.recv_stderr_ready()
-                    ):
+                    while not channel.closed or channel.recv_ready() or channel.recv_stderr_ready():
                         if channel.recv_ready():
-                            stdout_chunks.append(
-                                channel.recv(max_chunk_size).decode("utf-8")
-                            )
+                            stdout_chunks.append(channel.recv(max_chunk_size).decode("utf-8"))
                         if channel.recv_stderr_ready():
-                            stderr_chunks.append(
-                                channel.recv_stderr(max_chunk_size).decode(
-                                    "utf-8"
-                                )
-                            )
+                            stderr_chunks.append(channel.recv_stderr(max_chunk_size).decode("utf-8"))
 
                     exit_code = channel.recv_exit_status()
                     if exit_code != 0:
@@ -149,14 +132,10 @@ class SshClient(object):
                             LOG.error("stderr:")
                             LOG.error("".join(stderr_chunks))
                             LOG.error("eof stderr.")
-                        raise SshClientException(
-                            f"{cmd} exited with code {exit_code}"
-                        )
+                        raise SshClientException(f"{cmd} exited with code {exit_code}")
                     return "".join(stdout_chunks), "".join(stderr_chunks)
                 else:
-                    LOG.debug(
-                        "Executing in background (%s): %s", self.host, cmd
-                    )
+                    LOG.debug("Executing in background (%s): %s", self.host, cmd)
                     transport = shell.get_transport()
                     channel = transport.open_session()
                     channel.exec_command(cmd)
@@ -206,10 +185,7 @@ class SshClient(object):
             find_cmd.append("-maxdepth 1")
         if files_only:
             find_cmd.append("-type f")
-        cmd = (
-            f'bash -c \'if test -d "{path}" ; '
-            f"then {' '.join(find_cmd)}; fi'"
-        )
+        cmd = f'bash -c \'if test -d "{path}" ; ' f"then {' '.join(find_cmd)}; fi'"
         cout, cerr = self.execute(cmd)
         LOG.debug("stdout:\n%s\neof stdout.", cout)
         LOG.debug("stderr:\n%s\neof stderr.", cerr)

@@ -36,4 +36,5 @@ class SshDestinationError(DestinationError):
 
 class AzureBlobDestinationError(DestinationError):
     """Azure-blob destination errors"""
+
     pass

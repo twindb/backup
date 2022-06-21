@@ -18,9 +18,7 @@ def test__delete_can_delete_an_object(path, key, s3):
     twindb_s3 = s3
     twindb_s3.create_bucket()
 
-    twindb_s3.s3_client.put_object(
-        Body="hello world", Bucket="test-bucket", Key=key
-    )
+    twindb_s3.s3_client.put_object(Body="hello world", Bucket="test-bucket", Key=key)
 
     assert twindb_s3.delete(path)
     with pytest.raises(ClientError):

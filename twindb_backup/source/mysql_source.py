@@ -117,9 +117,7 @@ class MySQLClient:
             yield connection
         except OperationalError:
             LOG.error("Can't connect to MySQL server on %s", self.hostname)
-            raise MySQLSourceError(
-                "Can't connect to MySQL server on %s" % self.hostname
-            )
+            raise MySQLSourceError("Can't connect to MySQL server on %s" % self.hostname)
         finally:
             if connection:
                 connection.close()
@@ -166,9 +164,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
 
         # MySQL
         if not isinstance(mysql_connect_info, MySQLConnectInfo):
-            raise MySQLSourceError(
-                "mysql_connect_info must be " "instance of MySQLConnectInfo"
-            )
+            raise MySQLSourceError("mysql_connect_info must be " "instance of MySQLConnectInfo")
 
         self._connect_info = mysql_connect_info
 
@@ -267,8 +263,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         except OSError as err:
             LOG.error("Failed to run %s: %s", " ".join(cmd), err)
             LOG.error(
-                "Make sure that xtrabackup package is installed and %s "
-                "is available in $PATH",
+                "Make sure that xtrabackup package is installed and %s " "is available in $PATH",
                 self._xtrabackup,
             )
             exit(1)
@@ -291,9 +286,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
 
         LOG.debug("xtrabackup error log file %s", stderr_file.name)
         self._backup_info.lsn = self._get_lsn(stderr_file.name)
-        self._backup_info.binlog_coordinate = self.get_binlog_coordinates(
-            stderr_file.name
-        )
+        self._backup_info.binlog_coordinate = self.get_binlog_coordinates(stderr_file.name)
         os.unlink(stderr_file.name)
 
     def get_name(self):
@@ -367,18 +360,14 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         """
         with open(err_log_path) as error_log:
             for line in error_log:
-                pattern = (
-                    "xtrabackup: The latest check point (for incremental):"
-                )
+                pattern = "xtrabackup: The latest check point (for incremental):"
                 if line.startswith(pattern):
                     lsn = line.split()[7].strip("'")
                     return int(lsn)
                 elif "The latest check point (for incremental):" in line:
                     idx = 10 if "mariabackup" in line else 11
                     return int(line.split()[idx].strip("'"))
-        raise MySQLSourceError(
-            "Could not find LSN in XtraBackup error output %s" % err_log_path
-        )
+        raise MySQLSourceError("Could not find LSN in XtraBackup error output %s" % err_log_path)
 
     @property
     def full(self):
@@ -443,21 +432,12 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
             with self.get_connection() as connection:
                 with connection.cursor() as cursor:
                     while time.time() < max_time:
-                        cursor.execute(
-                            "SHOW GLOBAL STATUS LIKE "
-                            "'wsrep_local_recv_queue'"
-                        )
+                        cursor.execute("SHOW GLOBAL STATUS LIKE " "'wsrep_local_recv_queue'")
 
-                        res = {
-                            r["Variable_name"].lower(): r["Value"].lower()
-                            for r in cursor.fetchall()
-                        }
+                        res = {r["Variable_name"].lower(): r["Value"].lower() for r in cursor.fetchall()}
 
                         if not res.get("wsrep_local_recv_queue"):
-                            raise Exception(
-                                "Unknown status variable "
-                                '"wsrep_local_recv_queue"'
-                            )
+                            raise Exception("Unknown status variable " '"wsrep_local_recv_queue"')
 
                         if int(res["wsrep_local_recv_queue"]) == 0:
                             break
@@ -480,10 +460,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         with self._cursor() as cursor:
             cursor.execute("SHOW STATUS LIKE 'wsrep_provider_version'")
 
-            res = {
-                row["Variable_name"].lower(): row["Value"].lower()
-                for row in cursor.fetchall()
-            }
+            res = {row["Variable_name"].lower(): row["Value"].lower() for row in cursor.fetchall()}
 
         if res.get("wsrep_provider_version"):
             return res["wsrep_provider_version"].split("(")[0]
@@ -510,10 +487,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
                 cursor.execute("SELECT @@wsrep_on as wsrep_on")
                 row = cursor.fetchone()
 
-                return (
-                    str(row["wsrep_on"]).lower() == "1"
-                    or str(row["wsrep_on"]).lower() == "on"
-                )
+                return str(row["wsrep_on"]).lower() == "1" or str(row["wsrep_on"]).lower() == "on"
         except (
             pymysql.InternalError,
             OperationalError,

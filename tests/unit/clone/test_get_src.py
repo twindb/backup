@@ -2,22 +2,12 @@ import mock
 
 from twindb_backup import INTERVALS
 from twindb_backup.clone import get_src
-from twindb_backup.configuration import (
-    MySQLConfig,
-    SSHConfig,
-    TwinDBBackupConfig,
-)
-from twindb_backup.source.mysql_source import (
-    MySQLClient,
-    MySQLConnectInfo,
-    MySQLFlavor,
-)
+from twindb_backup.configuration import MySQLConfig, SSHConfig, TwinDBBackupConfig
+from twindb_backup.source.mysql_source import MySQLClient, MySQLConnectInfo, MySQLFlavor
 
 
 def test_get_src():
-    with mock.patch(
-        "twindb_backup.clone.get_src_by_vendor"
-    ) as mock_get_src_by_vendor, mock.patch.object(
+    with mock.patch("twindb_backup.clone.get_src_by_vendor") as mock_get_src_by_vendor, mock.patch.object(
         TwinDBBackupConfig,
         "ssh",
         new_callable=mock.PropertyMock,

@@ -18,9 +18,7 @@ class MySQLStatus(PeriodicStatus):
     """
 
     def __init__(self, content=None, dst=None, status_directory=None):
-        super(MySQLStatus, self).__init__(
-            content=content, dst=dst, status_directory=status_directory
-        )
+        super(MySQLStatus, self).__init__(content=content, dst=dst, status_directory=status_directory)
 
     @property
     def basename(self):
@@ -82,10 +80,7 @@ class MySQLStatus(PeriodicStatus):
         try:
             status_as_obj = json.loads(status_as_json)
         except ValueError:
-            raise CorruptedStatus(
-                "Could not load status from a bad JSON string %s"
-                % (status_as_json,)
-            )
+            raise CorruptedStatus("Could not load status from a bad JSON string %s" % (status_as_json,))
 
         for run_type in INTERVALS:
             for key, value in status_as_obj[run_type].items():
@@ -123,9 +118,7 @@ class MySQLStatus(PeriodicStatus):
         def _serialize_config_dict(cfg):
             config_serialized = []
             for key, value in cfg.items():
-                config_serialized.append(
-                    {key: b64encode(value.encode("utf-8")).decode("utf-8")}
-                )
+                config_serialized.append({key: b64encode(value.encode("utf-8")).decode("utf-8")})
             return config_serialized
 
         status = {}
@@ -135,9 +128,7 @@ class MySQLStatus(PeriodicStatus):
             for _, copy in copies.items():
 
                 status[interval][copy.key] = copy.as_dict()
-                status[interval][copy.key]["config"] = _serialize_config_dict(
-                    status[interval][copy.key]["config"]
-                )
+                status[interval][copy.key]["config"] = _serialize_config_dict(status[interval][copy.key]["config"])
 
         return b64encode(json.dumps(status).encode("utf-8")).decode("utf-8")
 
@@ -147,9 +138,7 @@ class MySQLStatus(PeriodicStatus):
         try:
             for cfg in copy["config"]:
                 for cfg_key, cfg_value in cfg.items():
-                    config[cfg_key] = b64decode(
-                        cfg_value.encode("utf-8")
-                    ).decode("utf-8")
+                    config[cfg_key] = b64decode(cfg_value.encode("utf-8")).decode("utf-8")
         except KeyError:
             config = {}
 

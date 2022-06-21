@@ -9,9 +9,7 @@ class PeriodicStatus(BaseStatus):
     """Periodic class for status."""
 
     def __init__(self, content=None, dst=None, status_directory=None):
-        super(PeriodicStatus, self).__init__(
-            content=content, dst=dst, status_directory=status_directory
-        )
+        super(PeriodicStatus, self).__init__(content=content, dst=dst, status_directory=status_directory)
 
     @property
     def basename(self):

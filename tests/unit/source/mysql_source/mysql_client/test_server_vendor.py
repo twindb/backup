@@ -21,7 +21,5 @@ from twindb_backup.source.mysql_source import MySQLClient, MySQLFlavor
     ],
 )
 def test_server_vendor(version, version_comment, vendor):
-    with mock.patch.object(
-        MySQLClient, "variable", side_effect=[version, version_comment]
-    ):
+    with mock.patch.object(MySQLClient, "variable", side_effect=[version, version_comment]):
         assert MySQLClient("foo").server_vendor == vendor

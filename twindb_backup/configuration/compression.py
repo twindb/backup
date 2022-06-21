@@ -15,17 +15,11 @@ class CompressionConfig:
     """
 
     def __init__(self, **kwargs):
-        self._program = kwargs.get(
-            "program", list(COMPRESSION_MODIFIERS.keys())[0]
-        )
+        self._program = kwargs.get("program", list(COMPRESSION_MODIFIERS.keys())[0])
         if self.program not in COMPRESSION_MODIFIERS:
-            raise ConfigurationError(
-                f"Unsupported compression tool {self.program}"
-            )
+            raise ConfigurationError(f"Unsupported compression tool {self.program}")
 
-        self._threads = (
-            int(kwargs.get("threads")) if "threads" in kwargs else None
-        )
+        self._threads = int(kwargs.get("threads")) if "threads" in kwargs else None
 
         self._level = int(kwargs.get("level")) if "level" in kwargs else None
 

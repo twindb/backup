@@ -12,10 +12,7 @@ from os import path as osp
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.destination.exceptions import (
-    FileNotFound,
-    SshDestinationError,
-)
+from twindb_backup.destination.exceptions import FileNotFound, SshDestinationError
 from twindb_backup.ssh.client import SshClient
 from twindb_backup.ssh.exceptions import SshClientException
 
@@ -114,9 +111,7 @@ class Ssh(BaseDestination):
         stop_waiting_at = time.time() + wait_timeout
         while time.time() < stop_waiting_at:
             try:
-                self.execute_command(
-                    f"netstat -ln | grep -w 0.0.0.0:{port} 2>&1 > /dev/null"
-                )
+                self.execute_command(f"netstat -ln | grep -w 0.0.0.0:{port} 2>&1 > /dev/null")
                 LOG.debug(
                     "TCP/%d is ready to accept connections on %s.",
                     port,
@@ -222,17 +217,13 @@ class Ssh(BaseDestination):
         :type port: int
         """
         try:
-            return self.execute_command(
-                "ncat -l %d --recv-only 2> /tmp/ncat.err | %s" % (port, command)
-            )
+            return self.execute_command("ncat -l %d --recv-only 2> /tmp/ncat.err | %s" % (port, command))
         except SshDestinationError as err:
             LOG.error(err)
 
     def read(self, filepath):
         try:
-            return self._ssh_client.get_text_content(
-                osp.join(self.remote_path, filepath)
-            )
+            return self._ssh_client.get_text_content(osp.join(self.remote_path, filepath))
         except IOError as err:
             if err.errno == ENOENT:
                 raise FileNotFound("File %s does not exist" % filepath)
@@ -267,9 +258,7 @@ class Ssh(BaseDestination):
         self._ssh_client.write_content(remote_name, content)
 
     def _list_files(self, prefix=None, recursive=False, files_only=False):
-        return self._ssh_client.list_files(
-            prefix, recursive=recursive, files_only=files_only
-        )
+        return self._ssh_client.list_files(prefix, recursive=recursive, files_only=files_only)
 
     def _mkdir_r(self, path):
         """

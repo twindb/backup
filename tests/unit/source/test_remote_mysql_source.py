@@ -78,9 +78,7 @@ def test__clone_config(mock_get_root, mock_save):
 )
 @mock.patch.object(SshClient, "list_files")
 @mock.patch.object(SshClient, "get_text_content")
-def test___find_all_cnf(
-    mock_get_text_content, mock_list, tmpdir, mycnfs, expected_result_template
-):
+def test___find_all_cnf(mock_get_text_content, mock_list, tmpdir, mycnfs, expected_result_template):
     mycnf_root = Path(tmpdir)
 
     # Prepare steps (writing config files with content)
@@ -94,9 +92,7 @@ def test___find_all_cnf(
     def get_text_content(full_path):
         LOG.debug("Getting content of %s", full_path)
         # cut mysql_root prefix from the full path and lookup for content in the mycnfs dictionary.
-        return mycnfs[
-            "/".join(PurePath(full_path).parts[len(mycnf_root.parts) :])
-        ]
+        return mycnfs["/".join(PurePath(full_path).parts[len(mycnf_root.parts) :])]
 
     def get_list(path, recursive=False, files_only=True):
         return os.listdir(path)
@@ -112,13 +108,10 @@ def test___find_all_cnf(
             "ssh_connection_info": None,
         }
     )
-    expected_result = sorted(
-        [osp.join(str(mycnf_root), item) for item in expected_result_template]
-    )
+    expected_result = sorted([osp.join(str(mycnf_root), item) for item in expected_result_template])
     actual_result = sorted(rmt_sql._find_all_cnf(mycnf_root.joinpath("my.cnf")))
     assert actual_result == expected_result, LOG.error(
-        "Expected: %s\nActual: %s"
-        % (pformat(expected_result), pformat(actual_result))
+        "Expected: %s\nActual: %s" % (pformat(expected_result), pformat(actual_result))
     )
 
 

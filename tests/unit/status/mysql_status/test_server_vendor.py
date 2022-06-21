@@ -69,10 +69,5 @@ from twindb_backup.status.mysql_status import MySQLStatus
 )
 def test_server_vendor(status, expected_server_vendor):
 
-    istatus = MySQLStatus(
-        content=b64encode(json.dumps(status).encode("utf-8")).decode("utf-8")
-    )
-    assert (
-        istatus.hourly["foo/hourly/mysql/some_file.txt"].server_vendor
-        == expected_server_vendor
-    )
+    istatus = MySQLStatus(content=b64encode(json.dumps(status).encode("utf-8")).decode("utf-8"))
+    assert istatus.hourly["foo/hourly/mysql/some_file.txt"].server_vendor == expected_server_vendor

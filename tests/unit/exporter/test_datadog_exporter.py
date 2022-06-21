@@ -1,10 +1,7 @@
 import mock
 import pytest
 
-from twindb_backup.exporter.base_exporter import (
-    ExportCategory,
-    ExportMeasureType,
-)
+from twindb_backup.exporter.base_exporter import ExportCategory, ExportMeasureType
 from twindb_backup.exporter.datadog_exporter import DataDogExporter
 from twindb_backup.exporter.exceptions import DataDogExporterError
 
@@ -42,9 +39,7 @@ def test__datadog_exporter_constructor(mock_initialize):
     ],
 )
 @mock.patch("twindb_backup.exporter.datadog_exporter.statsd")
-def test__datadog_exporter_export_int_agument(
-    mock_statsd, category, measure_type, metric_name
-):
+def test__datadog_exporter_export_int_agument(mock_statsd, category, measure_type, metric_name):
     exporter = DataDogExporter("foo", "bar")
     exporter.export(category, measure_type, 1)
     mock_statsd.gauge.assert_called_once_with(metric_name, 1)
@@ -76,9 +71,7 @@ def test__datadog_exporter_export_int_agument(
     ],
 )
 @mock.patch("twindb_backup.exporter.datadog_exporter.statsd")
-def test__datadog_exporter_export_float_agument(
-    mock_statsd, category, measure_type, metric_name
-):
+def test__datadog_exporter_export_float_agument(mock_statsd, category, measure_type, metric_name):
     exporter = DataDogExporter("foo", "bar")
     exporter.export(category, measure_type, 1.1)
     mock_statsd.gauge.assert_called_once_with(metric_name, 1.1)
@@ -110,9 +103,7 @@ def test__datadog_exporter_export_float_agument(
     ],
 )
 @mock.patch("twindb_backup.exporter.datadog_exporter.statsd")
-def test__datadog_exporter_export_string_agument(
-    mock_statsd, category, measure_type, metric_name
-):
+def test__datadog_exporter_export_string_agument(mock_statsd, category, measure_type, metric_name):
     exporter = DataDogExporter("foo", "bar")
     with pytest.raises(DataDogExporterError):
         exporter.export(category, measure_type, "str")

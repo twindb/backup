@@ -9,7 +9,5 @@ def test_step_configure_replication():
     mock_dst = mock.Mock(spec=RemoteMySQLSource)
     step_configure_replication(
         mock_dst,
-        MySQLMasterInfo(
-            "host_foo", 1234, "foo_user", "foo_password", "foo-1.1", 8873
-        ),
+        MySQLMasterInfo("host_foo", 1234, "foo_user", "foo_password", "foo-1.1", 8873),
     )

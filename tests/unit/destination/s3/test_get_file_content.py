@@ -10,9 +10,7 @@ def test_get_file_content(s3):
 
     # noinspection PyProtectedMember
     s3._get_file_content("foo")
-    s3.s3_client.get_object.assert_called_once_with(
-        Bucket="test-bucket", Key="foo"
-    )
+    s3.s3_client.get_object.assert_called_once_with(Bucket="test-bucket", Key="foo")
     s3.validate_client_response.assert_called_once_with({"Body": mock_body})
     mock_body.read.assert_called_once_with()
 

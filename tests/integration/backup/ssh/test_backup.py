@@ -1,16 +1,10 @@
 import json
 import os
 
-from tests.integration.conftest import (
-    assert_and_pause,
-    docker_execute,
-    get_twindb_config_dir,
-)
+from tests.integration.conftest import assert_and_pause, docker_execute, get_twindb_config_dir
 
 
-def test_backup(
-    master1, storage_server, config_content_ssh, docker_client, rsa_private_key
-):
+def test_backup(master1, storage_server, config_content_ssh, docker_client, rsa_private_key):
 
     twindb_config_dir = get_twindb_config_dir(docker_client, master1["Id"])
 

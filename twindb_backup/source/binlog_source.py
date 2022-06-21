@@ -50,9 +50,7 @@ class BinlogParser(object):
                 self.__read_magic_number(binlog_descriptor)
                 return self.__read_int(binlog_descriptor, 4)
         except IOError as err:
-            raise BinlogSourceError(
-                "Failed to read the 'created_at' attribute: %s" % err
-            )
+            raise BinlogSourceError("Failed to read the 'created_at' attribute: %s" % err)
 
     @property
     def start_position(self):
@@ -86,9 +84,7 @@ class BinlogParser(object):
         elif n_bytes == 1:
             return struct.unpack("b", fdesc.read(n_bytes))[0]
         else:
-            raise NotImplementedError(
-                "Reading %d bytes integer is unsupported" % n_bytes
-            )
+            raise NotImplementedError("Reading %d bytes integer is unsupported" % n_bytes)
 
     def __read_binlog_event(self, binlog_descriptor):
         """

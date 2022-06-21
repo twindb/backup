@@ -4,9 +4,7 @@ from copy import deepcopy
 from twindb_backup.status.mysql_status import MySQLStatus
 
 
-def test_serialize_doesnt_change_orignal(
-    status_raw_content, deprecated_status_raw_content
-):
+def test_serialize_doesnt_change_orignal(status_raw_content, deprecated_status_raw_content):
 
     status_original = MySQLStatus(content=deprecated_status_raw_content)
     status_original_before = deepcopy(status_original)

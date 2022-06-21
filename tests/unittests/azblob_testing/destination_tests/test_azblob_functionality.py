@@ -1,25 +1,26 @@
-import unittest
 import io
-import time
+import logging
 import os
 import sys
-import logging
+import time
 import types
-from typing import Optional, List, Tuple, Dict
-from pathlib import Path
+import unittest
 from contextlib import contextmanager
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 # third-party imports
 import coverage
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 
 # azure imports (also a third-party import) ;)
-from azure.storage.blob import BlobClient, ContainerClient, BlobProperties
-from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from azure.storage.blob import BlobClient, BlobProperties, ContainerClient
 from azure.storage.blob._shared.response_handlers import PartialBatchErrorException
+
+from tests.unittests.azblob_testing import PART_NAMES, SAMPLE_TARGETS, do_set_osenvs
 
 # local project imports
 from twindb_backup import LOG
-from tests.unittests.azblob_testing import do_set_osenvs, SAMPLE_TARGETS, PART_NAMES
 
 DO_TEST_SKIPPING = False
 
@@ -66,7 +67,10 @@ class AzureBlobBaseCase(unittest.TestCase):
                 tb = sys.exc_info()[2]
                 back_frame = tb.tb_frame.f_back
                 back_tb = types.TracebackType(
-                    tb_next=None, tb_frame=back_frame, tb_lasti=back_frame.f_lasti, tb_lineno=back_frame.f_lineno
+                    tb_next=None,
+                    tb_frame=back_frame,
+                    tb_lasti=back_frame.f_lasti,
+                    tb_lineno=back_frame.f_lineno,
                 )
                 immediate_err = ie.with_traceback(back_tb)
                 raise immediate_err
@@ -194,7 +198,11 @@ class AzureBlobBaseCase(unittest.TestCase):
             path_template = "{default_protocol}://{default_host_name}/{default_container_name}/{default_interval}/{default_media_type}/{default_fname_prefix}"
             self._complex_valid_remote_paths = {
                 "sub_all": [
-                    ("", {k: v for k, v in mutable_parts[name].items()}, self.structured_parts[name])
+                    (
+                        "",
+                        {k: v for k, v in mutable_parts[name].items()},
+                        self.structured_parts[name],
+                    )
                     for name in mutable_parts
                 ]
             }
@@ -292,33 +300,81 @@ class AzureBlobBaseCase(unittest.TestCase):
             blank_parts = self._blank_parts
             remote_host = self._remote_host
             self._simple_valid_remote_paths = [
-                (f"https://{remote_host}/barney-of-buffalo-lodge/hourly/mysql/backup/", {}, {}),
-                (f"https://{remote_host}/barney-of-buffalo-lodge/hourly/mysql/backup/", blank_parts, {}),
-                (f"https://{remote_host}/barney-of-buffalo-lodge/hourly/mysql/backup/", none_parts, {}),
+                (
+                    f"https://{remote_host}/barney-of-buffalo-lodge/hourly/mysql/backup/",
+                    {},
+                    {},
+                ),
+                (
+                    f"https://{remote_host}/barney-of-buffalo-lodge/hourly/mysql/backup/",
+                    blank_parts,
+                    {},
+                ),
+                (
+                    f"https://{remote_host}/barney-of-buffalo-lodge/hourly/mysql/backup/",
+                    none_parts,
+                    {},
+                ),
                 (
                     f"https://{remote_host}/barney-of-buffalo-lodge/hourly/mysql/backup/",
                     self.structured_parts["barney"],
                     {},
                 ),
-                (f"https://{remote_host}/wilma-of-impossibly-good-figure/daily/mysql/backup/", {}, {}),
-                (f"https://{remote_host}/wilma-of-impossibly-good-figure/daily/mysql/backup/", blank_parts, {}),
-                (f"https://{remote_host}/wilma-of-impossibly-good-figure/daily/mysql/backup/", none_parts, {}),
+                (
+                    f"https://{remote_host}/wilma-of-impossibly-good-figure/daily/mysql/backup/",
+                    {},
+                    {},
+                ),
+                (
+                    f"https://{remote_host}/wilma-of-impossibly-good-figure/daily/mysql/backup/",
+                    blank_parts,
+                    {},
+                ),
+                (
+                    f"https://{remote_host}/wilma-of-impossibly-good-figure/daily/mysql/backup/",
+                    none_parts,
+                    {},
+                ),
                 (
                     f"https://{remote_host}/wilma-of-impossibly-good-figure/daily/mysql/backup/",
                     self.structured_parts["wilma"],
                     {},
                 ),
-                (f"https://{remote_host}/betty-of-impossibly-good-figure/weekly/mysql/backup/", {}, {}),
-                (f"https://{remote_host}/betty-of-impossibly-good-figure/weekly/mysql/backup/", blank_parts, {}),
-                (f"https://{remote_host}/betty-of-impossibly-good-figure/weekly/mysql/backup/", none_parts, {}),
+                (
+                    f"https://{remote_host}/betty-of-impossibly-good-figure/weekly/mysql/backup/",
+                    {},
+                    {},
+                ),
+                (
+                    f"https://{remote_host}/betty-of-impossibly-good-figure/weekly/mysql/backup/",
+                    blank_parts,
+                    {},
+                ),
+                (
+                    f"https://{remote_host}/betty-of-impossibly-good-figure/weekly/mysql/backup/",
+                    none_parts,
+                    {},
+                ),
                 (
                     f"https://{remote_host}/betty-of-impossibly-good-figure/weekly/mysql/backup/",
                     self.structured_parts["betty"],
                     {},
                 ),
-                (f"https://{remote_host}/fred-of-buffalo-lodge/monthly/mysql/backup/", {}, {}),
-                (f"https://{remote_host}/fred-of-buffalo-lodge/monthly/mysql/backup/", blank_parts, {}),
-                (f"https://{remote_host}/fred-of-buffalo-lodge/monthly/mysql/backup/", none_parts, {}),
+                (
+                    f"https://{remote_host}/fred-of-buffalo-lodge/monthly/mysql/backup/",
+                    {},
+                    {},
+                ),
+                (
+                    f"https://{remote_host}/fred-of-buffalo-lodge/monthly/mysql/backup/",
+                    blank_parts,
+                    {},
+                ),
+                (
+                    f"https://{remote_host}/fred-of-buffalo-lodge/monthly/mysql/backup/",
+                    none_parts,
+                    {},
+                ),
                 (
                     f"https://{remote_host}/fred-of-buffalo-lodge/monthly/mysql/backup/",
                     self.structured_parts["fred"],
@@ -513,7 +569,11 @@ class TC_001_AzureBlobInstantiationTestCase(AzureBlobBaseCase):
             for attr, val in expected.items():
                 with self.subTest(
                     objective="checks if dest's computed properties match expectations, where dest is an instance of the twindb_backup.destinations.azblob.AzureBlob class",
-                    remote_path=remote_path, kwargs=kwargs, expected=expected, attr=attr, expected_val=val
+                    remote_path=remote_path,
+                    kwargs=kwargs,
+                    expected=expected,
+                    attr=attr,
+                    expected_val=val,
                 ):
                     self.assertEqual(getattr(dest, attr), val)
 
@@ -547,14 +607,20 @@ class TC_002_ListFilesTestCase(AzureBlobBaseCase):
         retrieved = [
             f
             for f in self.remote_source.list_files(
-                prefix=self.remote_source.default_container_name, recursive=True, files_only=True
+                prefix=self.remote_source.default_container_name,
+                recursive=True,
+                files_only=True,
             )
             if not f.endswith("sticker.png")
         ]
         expected = [name for cname, names in self.expected.items() for name in names]
         for retrieved_f in retrieved:
             path_f = Path(retrieved_f)
-            with self.subTest(objective="confirm that retrieved_f is among our expected files list.", retrieved_f=retrieved_f, expected=expected):
+            with self.subTest(
+                objective="confirm that retrieved_f is among our expected files list.",
+                retrieved_f=retrieved_f,
+                expected=expected,
+            ):
                 self.assertIn(retrieved_f, expected, f"\n\t{retrieved_f=}\n\t{expected=}")
 
     @unittest.skipUnless(not DO_TEST_SKIPPING, "slow test case, skipping for now")
@@ -577,9 +643,17 @@ class TC_002_ListFilesTestCase(AzureBlobBaseCase):
             ("barney*/", 6),
             ("barney-of-buffalo-lodge/hourly/mysql", 6),
         ]
-        tf_patterns = [(False, False), (True, False), (True, True), (False, True)]
+        tf_patterns = [
+            (False, False),
+            (True, False),
+            (True, True),
+            (False, True),
+        ]
         testable_prefixes = [
-            (dict(prefix=prefix, recursive=recursive, files_only=files_only), expected_res_len)
+            (
+                dict(prefix=prefix, recursive=recursive, files_only=files_only),
+                expected_res_len,
+            )
             for prefix, expected_res_len in pref_expected
             for recursive, files_only in tf_patterns
         ]
@@ -599,7 +673,12 @@ class TC_002_ListFilesTestCase(AzureBlobBaseCase):
                 f"\n\tkwargs=\n\t\t{kwarg_str}"
                 f"\n\tretrieved=\n\t\t{ret_str}"
             )
-            with self.subTest(objective="ensure that the number of returned files for given prefixes matches expectations", ret_len=ret_len, expected_ret_len=expected_ret_len, _kwargs=_kwargs):
+            with self.subTest(
+                objective="ensure that the number of returned files for given prefixes matches expectations",
+                ret_len=ret_len,
+                expected_ret_len=expected_ret_len,
+                _kwargs=_kwargs,
+            ):
                 self.assertEqual(ret_len, expected_ret_len, failure_msg)
 
 
@@ -617,12 +696,23 @@ class TC_003_ReadTestCase(AzureBlobBaseCase):
             for bpath in cpath.rglob("**/*.txt"):
                 ref[bpath.name] = bpath.read_text()
                 flist.append(bpath)
-        smallest_file = min(filter(lambda p: self.remote_source.default_container_name in p.parts, flist), key=lambda p: p.stat().st_size)
+        smallest_file = min(
+            filter(
+                lambda p: self.remote_source.default_container_name in p.parts,
+                flist,
+            ),
+            key=lambda p: p.stat().st_size,
+        )
         self.smallest_file = str(smallest_file).split(self.remote_source.default_container_name)[1].lstrip("/")
         self.expected_data = expected_data
 
     def test_read(self):
-        targets = tuple(filter(lambda s: self.smallest_file in s, self.remote_source.list_files()))
+        targets = tuple(
+            filter(
+                lambda s: self.smallest_file in s,
+                self.remote_source.list_files(),
+            )
+        )
         containers = tuple(self.expected_data.keys())
         for f in targets:
             _, _, path = f.partition("://")
@@ -710,10 +800,19 @@ class TC_004_DeleteTestCase(AzureBlobBaseCase):
         self.azure_del_target.delete(del_target)
         remaining_files = self.azure_del_target.list_files(".../.../.../")
         readable_remaining = [f.split(self.test_container)[1] for f in remaining_files]
-        with self.subTest(objective="ensure that once a file is deleted, it does not a member of the updated list of remaining_files", del_target=del_target, remaining_files=readable_remaining):
+        with self.subTest(
+            objective="ensure that once a file is deleted, it does not a member of the updated list of remaining_files",
+            del_target=del_target,
+            remaining_files=readable_remaining,
+        ):
             self.assertNotIn(del_target, remaining_files)
         for _, _, should_remain in self.participating_files[1:]:
-            with self.subTest(objective="ensure that files not specified for deletion still remain", should_remain=should_remain, del_target=del_target, remaining_files=readable_remaining):
+            with self.subTest(
+                objective="ensure that files not specified for deletion still remain",
+                should_remain=should_remain,
+                del_target=del_target,
+                remaining_files=readable_remaining,
+            ):
                 self.assertIn(should_remain, remaining_files)
 
     @unittest.skipUnless(not DO_TEST_SKIPPING, "slow test case, skipping for now")
@@ -761,13 +860,22 @@ class TC_005_WriteTestCase(AzureBlobBaseCase):
         self.dst_kwargs["default_container_name"] = self.test_container
 
         self.local_copy_location = self._sample_resource_folder.joinpath("remote_example")
-        container_paths = tuple(p for p in self.local_copy_location.iterdir() if p.name == self.src_kwargs["default_container_name"])
-        smallest_file = min((p for c in container_paths for p in c.rglob("**/*.txt")), key=lambda p: p.stat().st_size)
+        container_paths = tuple(
+            p for p in self.local_copy_location.iterdir() if p.name == self.src_kwargs["default_container_name"]
+        )
+        smallest_file = min(
+            (p for c in container_paths for p in c.rglob("**/*.txt")),
+            key=lambda p: p.stat().st_size,
+        )
         self.smallest_file = str(smallest_file).split(self.src_kwargs["default_container_name"], 1)[1].lstrip("/")
 
     def test_00_write_generated_data_overwrite_fail(self):
         test_str_content = "This is a simple and small bit of text to write to the destination_tests endpoint"
-        dest = self.AzureBlob(self.basic_remote_dest_path.format(**self.dst_kwargs), self.connection_string, can_do_overwrites=False)
+        dest = self.AzureBlob(
+            self.basic_remote_dest_path.format(**self.dst_kwargs),
+            self.connection_string,
+            can_do_overwrites=False,
+        )
         pstr = dest.remote_path + "/overwrite.target.txt"
         with self.subTest(content=test_str_content, path=pstr):
             err = None
@@ -783,7 +891,11 @@ class TC_005_WriteTestCase(AzureBlobBaseCase):
     @unittest.skipUnless(not DO_TEST_SKIPPING, "slow test case, skipping for now")
     def test_01_write_generated_data_overwrite_ok(self):
         test_str_content = "This is a simple and small bit of text to write to the destination_tests endpoint"
-        dest = self.AzureBlob(self.basic_remote_dest_path.format(**self.dst_kwargs), self.connection_string, can_do_overwrites=True)
+        dest = self.AzureBlob(
+            self.basic_remote_dest_path.format(**self.dst_kwargs),
+            self.connection_string,
+            can_do_overwrites=True,
+        )
         pstr = dest.remote_path + "/overwrite.target.txt"
         with self.subTest(content=test_str_content, path=pstr):
             try:
@@ -794,8 +906,15 @@ class TC_005_WriteTestCase(AzureBlobBaseCase):
     @unittest.skipUnless(not DO_TEST_SKIPPING, "slow test case, skipping for now")
     def test_02_write_from_remote_overwrite_ok(self):
 
-        source = self.AzureBlob(self.basic_remote_source_path.format(**self.src_kwargs), self.connection_string)
-        dest = self.AzureBlob(self.basic_remote_dest_path.format(**self.dst_kwargs), self.connection_string, can_do_overwrites=True)
+        source = self.AzureBlob(
+            self.basic_remote_source_path.format(**self.src_kwargs),
+            self.connection_string,
+        )
+        dest = self.AzureBlob(
+            self.basic_remote_dest_path.format(**self.dst_kwargs),
+            self.connection_string,
+            can_do_overwrites=True,
+        )
         src_flist = tuple(filter(self.smallest_file_filter, source.list_files(".../")))
         for spath in src_flist:
             parts = spath.partition("://")[2].split("/")
@@ -816,8 +935,15 @@ class TC_005_WriteTestCase(AzureBlobBaseCase):
 
     @unittest.skipUnless(not DO_TEST_SKIPPING, "slow test case, skipping for now")
     def test_03_write_from_remote_overwrite_fail(self):
-        source = self.AzureBlob(self.basic_remote_source_path.format(**self.src_kwargs), self.connection_string)
-        dest = self.AzureBlob(self.basic_remote_dest_path.format(**self.dst_kwargs), self.connection_string, can_do_overwrites=False)
+        source = self.AzureBlob(
+            self.basic_remote_source_path.format(**self.src_kwargs),
+            self.connection_string,
+        )
+        dest = self.AzureBlob(
+            self.basic_remote_dest_path.format(**self.dst_kwargs),
+            self.connection_string,
+            can_do_overwrites=False,
+        )
         src_flist = tuple(filter(self.smallest_file_filter, source.list_files(".../")))
         for spath in src_flist:
             parts = spath.partition("://")[2].split("/")
@@ -879,7 +1005,11 @@ class TC_006_SaveTestCase(AzureBlobBaseCase):
                 pass
         self.local_target_files = sorted(self.local_target_files, key=lambda p: p.name)
         self.remote_blob_names = sorted(self.remote_blob_names, key=lambda s: s.rpartition("/")[2])
-        self.smallest_file = str(min(self.local_target_files, key=lambda p: p.stat().st_size)).split(self.source.default_container_name)[1].strip("/")
+        self.smallest_file = (
+            str(min(self.local_target_files, key=lambda p: p.stat().st_size))
+            .split(self.source.default_container_name)[1]
+            .strip("/")
+        )
 
     def tearDown(self) -> None:
         cclient: ContainerClient = ContainerClient.from_connection_string(self.connection_string, self.dest_container)
@@ -901,7 +1031,11 @@ class TC_006_SaveTestCase(AzureBlobBaseCase):
                 except ResourceExistsError:
                     self.fail("attempting to save to destination that already exists is a known failure condition.")
             results = self.dest.read(remote_p)
-            with self.subTest(objective="ensure that round-trip data transfer, starting in a local file, does not change or lose the data", local_path=local_p, remote_path=remote_p):
+            with self.subTest(
+                objective="ensure that round-trip data transfer, starting in a local file, does not change or lose the data",
+                local_path=local_p,
+                remote_path=remote_p,
+            ):
                 self.assertEqual(
                     results,
                     expected,
@@ -911,12 +1045,21 @@ class TC_006_SaveTestCase(AzureBlobBaseCase):
 
     @unittest.skipUnless(not DO_TEST_SKIPPING, "slow test case, skipping for now")
     def test_01_save_from_remote_stream(self):
-        source_file_urls = self.source.list_files(".../.../.../", True, str(self.local_target_files[0]).split(self.source.default_container_name)[1].lstrip("/"), True)
+        source_file_urls = self.source.list_files(
+            ".../.../.../",
+            True,
+            str(self.local_target_files[0]).split(self.source.default_container_name)[1].lstrip("/"),
+            True,
+        )
         for p in source_file_urls:
             if self.smallest_file not in p:
                 continue
             dpath = ".../.../.../" + p.split(self.source.default_container_name)[1].lstrip("/")
-            with self.subTest(objective="ensure that round-trip data transfer, starting in a remote blob, does not change or lose the data", src_path=p, dst_path=dpath):
+            with self.subTest(
+                objective="ensure that round-trip data transfer, starting in a remote blob, does not change or lose the data",
+                src_path=p,
+                dst_path=dpath,
+            ):
                 with self.source.get_stream(p) as stream_in:
                     with self.subTest(stream_in=stream_in.fileno()):
                         try:
@@ -929,7 +1072,10 @@ class TC_007_StreamTestCase(AzureBlobBaseCase):
     @unittest.skipUnless(not DO_TEST_SKIPPING, "slow test case, skipping for now")
     def test_00_acquire_pipe_per_file(self):
         src_kwargs = self.structured_parts["fred"]
-        source = self.AzureBlob(self.basic_remote_source_path.format(**src_kwargs), self.connection_string)
+        source = self.AzureBlob(
+            self.basic_remote_source_path.format(**src_kwargs),
+            self.connection_string,
+        )
         sample_content_relative_path = (
             "backup/sample_resources/remote_example/fred-of-buffalo-lodge/monthly/mysql".split("/")
         )
@@ -964,15 +1110,27 @@ class TC_007_StreamTestCase(AzureBlobBaseCase):
                 except EOFError:
                     pass
             for dtype in dtypes:
-                with self.subTest(objective="Ensure that the data type (bytes/str/int) sent over pipe connection match expectations", expected_output_type=expected_type, actual_output_type=dtype, path=p):
+                with self.subTest(
+                    objective="Ensure that the data type (bytes/str/int) sent over pipe connection match expectations",
+                    expected_output_type=expected_type,
+                    actual_output_type=dtype,
+                    path=p,
+                ):
                     self.assertEqual(dtype, expected_type)
-        with self.subTest(objective="Ensure that all of the data sent into the pipe is was collected on the other side.", expected_total_bytes=expected_total_bytes, bytes_recieved=bytes_recieved):
+        with self.subTest(
+            objective="Ensure that all of the data sent into the pipe is was collected on the other side.",
+            expected_total_bytes=expected_total_bytes,
+            bytes_recieved=bytes_recieved,
+        ):
             self.assertEqual(expected_total_bytes, bytes_recieved)
 
     @unittest.skipUnless(not DO_TEST_SKIPPING, "slow test case, skipping for now")
     def test_01_acquire_pipe_per_container(self):
         src_kwargs = self.structured_parts["fred"]
-        source = self.AzureBlob(self.basic_remote_source_path.format(**src_kwargs), self.connection_string)
+        source = self.AzureBlob(
+            self.basic_remote_source_path.format(**src_kwargs),
+            self.connection_string,
+        )
         sample_content_relative_path = "backup/sample_resources/remote_example".split("/")
         here = Path(__file__).parent.resolve()
         while here.name and here.name != sample_content_relative_path[0]:
@@ -1004,9 +1162,17 @@ class TC_007_StreamTestCase(AzureBlobBaseCase):
             except EOFError:
                 pass
         for dtype in dtypes:
-            with self.subTest(objective="Ensure that the data type (bytes/str/int) sent over pipe connection match expectations", expected_output_type=expected_type, actual_output_type=dtype):
+            with self.subTest(
+                objective="Ensure that the data type (bytes/str/int) sent over pipe connection match expectations",
+                expected_output_type=expected_type,
+                actual_output_type=dtype,
+            ):
                 self.assertEqual(dtype, expected_type)
-        with self.subTest(objective="Ensure that no data was mishandled or lost when passed through the pipe.", expected_total_bytes=expected_total_bytes, bytes_recieved=bytes_recieved):
+        with self.subTest(
+            objective="Ensure that no data was mishandled or lost when passed through the pipe.",
+            expected_total_bytes=expected_total_bytes,
+            bytes_recieved=bytes_recieved,
+        ):
             self.assertEqual(expected_total_bytes, bytes_recieved)
 
 

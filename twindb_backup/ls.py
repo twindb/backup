@@ -39,9 +39,7 @@ def _print_mysql(dst):
 def _print_media_type(dst, media_type):
     for run_type in INTERVALS:
         pattern = f"/{run_type}/{media_type}/"
-        dst_files = dst.list_files(
-            dst.remote_path, pattern=pattern, recursive=True, files_only=True
-        )
+        dst_files = dst.list_files(dst.remote_path, pattern=pattern, recursive=True, files_only=True)
         if dst_files:
             LOG.info("%s %s copies:", media_type, run_type)
             for copy in dst_files:
@@ -49,9 +47,7 @@ def _print_media_type(dst, media_type):
 
 
 def _print_binlog(dst):
-    dst_files = dst.list_files(
-        dst.remote_path, pattern="/binlog/", recursive=True, files_only=True
-    )
+    dst_files = dst.list_files(dst.remote_path, pattern="/binlog/", recursive=True, files_only=True)
     if dst_files:
         LOG.info("Binary logs:")
         for copy in dst_files:

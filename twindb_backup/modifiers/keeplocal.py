@@ -27,9 +27,7 @@ class KeepLocal(Modifier):
         try:
             mkdir_p(local_dir)
         except OSError as err:
-            raise ModifierException(
-                "Failed to create directory %s: %s" % (local_dir, err)
-            )
+            raise ModifierException("Failed to create directory %s: %s" % (local_dir, err))
 
     def callback(self, **kwargs):
         local_dst = Local(kwargs["keep_local_path"])

@@ -17,14 +17,8 @@ from twindb_backup.destination.ssh import Ssh
     ],
 )
 def test_get_mysql_service_name(side_effect, expected_name):
-    with mock.patch.object(
-        Ssh, "execute_command", side_effect=side_effect
-    ) as mock_execute:
+    with mock.patch.object(Ssh, "execute_command", side_effect=side_effect) as mock_execute:
         assert _get_mysql_service_name(Ssh("foo")) == expected_name
         mock_execute.assert_has_calls(
-            [
-                call(
-                    f"systemctl list-units --full -all | grep -F '{expected_name}.service' | wc -l"
-                )
-            ]
+            [call(f"systemctl list-units --full -all | grep -F '{expected_name}.service' | wc -l")]
         )

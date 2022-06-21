@@ -38,7 +38,7 @@ IterableClientType = Iterable[Union[BlobServiceClient, ContainerClient, BlobClie
 DEFAULT_AVAILABLE_CPU = os.cpu_count()
 GC_TOGGLE_DEPTH = 0
 """GC_TOGGLE_DEPTH is used as a reference counter for managing when the _gc_toggle function should call gc.enable()."""
-ONE_MiB = 2 ** 20
+ONE_MiB = 2**20
 MAX_PIPE_CHUNK_BYTES = 8 * ONE_MiB
 MAX_SYS_MEM_USE = 512 * ONE_MiB
 """MAX_PIPE_CHUNK_BYTES is a conservatively safe upper bound on the number of bytes we send through
@@ -138,7 +138,7 @@ def _ensure_containers_exist(conn_str: str, container: Union[StrOrHasName, Itera
     """
     gen = _client_name_gen(container)
     delay_max = 10
-    delay = .1
+    delay = 0.1
     while True:
         unfinished = []
         for cont in gen:
@@ -165,7 +165,7 @@ def _ensure_containers_exist(conn_str: str, container: Union[StrOrHasName, Itera
         gen = _client_name_gen(unfinished)
         # added delay to ensure we don't jackhammer requests to remote service.
         time.sleep(delay)
-        delay = min(delay_max, delay+delay)
+        delay = min(delay_max, delay + delay)
 
 
 def flatten_client_iters(clients: List[Union[ContainerClient, List[BlobClient]]]):
@@ -178,14 +178,26 @@ def flatten_client_iters(clients: List[Union[ContainerClient, List[BlobClient]]]
                 except BaseException as be:
                     exc_type, exc_value, exc_traceback = sys.exc_info()
                     be.with_traceback(exc_traceback)
-                    errs.setdefault(exc_type, []).append({"original": be, "exc_type": exc_type, "exc_value": exc_value})
+                    errs.setdefault(exc_type, []).append(
+                        {
+                            "original": be,
+                            "exc_type": exc_type,
+                            "exc_value": exc_value,
+                        }
+                    )
         else:
             try:
                 yield cclient
             except BaseException as be:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 be.with_traceback(exc_traceback)
-                errs.setdefault(exc_type, []).append({"original": be, "exc_type": exc_type, "exc_value": exc_value})
+                errs.setdefault(exc_type, []).append(
+                    {
+                        "original": be,
+                        "exc_type": exc_type,
+                        "exc_value": exc_value,
+                    }
+                )
     if errs:
         err = AzureClientManagerError(f"There were {len(errs)} errors while accessing the flattened clients iterable.")
         err.aggregated_traceback = []
@@ -306,12 +318,19 @@ def client_generator(
             except KeyError:
                 _pref = None  # to ensure it's not an empty string
             prefix = _pref
+
+    def _check_name(name):
+        return name in blob_set
+
+    def _always_true(*args):
+        return True
+
     if blob:
         blob_set = set(_client_name_gen(blob))
-        check_blob = lambda name: name in blob_set
+        check_blob = _check_name
     else:
         blob = None
-        check_blob = lambda *args: True
+        check_blob = _always_true
     if container:
         _ensure_containers_exist(conn_str, container)
         yield from client_iter(_client_name_gen(container))
@@ -672,7 +691,15 @@ class AzureBlob(BaseDestination):
         if not path:
             return self.remote_path, {k: v for k, v in self._default_parts.items()}
         # noinspection PyTupleAssignmentBalance
-        protocol, host, container, interval, media, prefix, *fname = self._path2parts(path, split_fname)
+        (
+            protocol,
+            host,
+            container,
+            interval,
+            media,
+            prefix,
+            *fname,
+        ) = self._path2parts(path, split_fname)
         fname: list
         protocol = protocol if protocol and protocol != "..." else self.default_protocol
         host = host if host and host != "..." else self.default_host_name
@@ -764,7 +791,7 @@ class AzureBlob(BaseDestination):
         else:
             label = CC_LABEL
             client_type = "container"
-            args = container,
+            args = (container,)
         with self.connection_manager(*args) as client_iter:
             iter_type = next(client_iter)
             if iter_type != label:
@@ -779,7 +806,7 @@ class AzureBlob(BaseDestination):
                 to_check.append(client)
                 getattr(client, del_call)()
             for c in to_check:
-                delay = .01
+                delay = 0.01
                 max_delay = 2
                 t0 = time.perf_counter()
                 while (time.perf_counter() - t0) < 5:
@@ -799,11 +826,16 @@ class AzureBlob(BaseDestination):
                             if cprop.deleted:
                                 break
                         time.sleep(delay)
-                        delay = min(max_delay, delay+delay)
+                        delay = min(max_delay, delay + delay)
                     except ResourceNotFoundError:
                         break
 
-    def _blob_ospiper(self, path_parts_dict: Dict[str, str], pout: mpConn, chunk_size: int = None) -> None:
+    def _blob_ospiper(
+        self,
+        path_parts_dict: Dict[str, str],
+        pout: mpConn,
+        chunk_size: int = None,
+    ) -> None:
         def err_assembly():
             bad_path = "{protocol}://{parts}".format(
                 protocol=self._part_names[0],
@@ -857,11 +889,20 @@ class AzureBlob(BaseDestination):
                     for client in client_iter:
                         client: BlobClient
                         size = client.get_blob_properties().size
-                        num_mem_chunks, mem_chunk_size, num_chunks, _chunk_size = configure_chunking(size, chunk_size)
+                        (
+                            num_mem_chunks,
+                            mem_chunk_size,
+                            num_chunks,
+                            _chunk_size,
+                        ) = configure_chunking(size, chunk_size)
                         with io.BytesIO(b"\x00" * mem_chunk_size) as bio:
                             for i in range(num_mem_chunks):
                                 ipos = i * mem_chunk_size
-                                dl: StorageStreamDownloader = client.download_blob(ipos, mem_chunk_size, max_concurrency=max_threads)
+                                dl: StorageStreamDownloader = client.download_blob(
+                                    ipos,
+                                    mem_chunk_size,
+                                    max_concurrency=max_threads,
+                                )
                                 bio.seek(0)
                                 bytes_read = dl.readinto(bio)
                                 bio.seek(0)
@@ -959,7 +1000,11 @@ class AzureBlob(BaseDestination):
                 client: ContainerClient = next(client_iter)
                 if isinstance(content, io.BufferedReader):
                     with content:
-                        client.upload_blob(blob_name, content.read(), overwrite=self.can_overwrite)
+                        client.upload_blob(
+                            blob_name,
+                            content.read(),
+                            overwrite=self.can_overwrite,
+                        )
                 else:
                     client.upload_blob(blob_name, content, overwrite=self.can_overwrite)
             elif iter_type != BC_LABEL:

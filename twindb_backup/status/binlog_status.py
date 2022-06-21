@@ -11,18 +11,14 @@ class BinlogStatus(BaseStatus):
     """Binlog class for status"""
 
     def __init__(self, content=None, dst=None, status_directory=None):
-        super(BinlogStatus, self).__init__(
-            content=content, dst=dst, status_directory=status_directory
-        )
+        super(BinlogStatus, self).__init__(content=content, dst=dst, status_directory=status_directory)
 
     @property
     def basename(self):
         return "binlog-status"
 
     def _status_serialize(self):
-        return b64encode(json.dumps(self._as_dict()).encode("utf-8")).decode(
-            "utf-8"
-        )
+        return b64encode(json.dumps(self._as_dict()).encode("utf-8")).decode("utf-8")
 
     def _load(self, status_as_json):
 

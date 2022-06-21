@@ -28,7 +28,4 @@ def test_detect_xbstream(given_xbstream, vendor, expected_xbstream):
         new_callable=mock.PropertyMock,
         return_value=MySQLConfig(xbstream_binary=given_xbstream),
     ):
-        assert (
-            detect_xbstream(TwinDBBackupConfig(), MySQLClient("foo_path"))
-            == expected_xbstream
-        )
+        assert detect_xbstream(TwinDBBackupConfig(), MySQLClient("foo_path")) == expected_xbstream

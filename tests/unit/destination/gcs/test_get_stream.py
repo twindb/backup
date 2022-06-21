@@ -14,6 +14,4 @@ def test_get_stream_calls_popen(mock_os, mock_process):
     with gs.get_stream(mock_copy):
         pass
 
-    mock_process.assert_called_once_with(
-        target=gs._download_to_pipe, args=("foo-key", 100, 200)
-    )
+    mock_process.assert_called_once_with(target=gs._download_to_pipe, args=("foo-key", 100, 200))

@@ -1,12 +1,7 @@
 import time
 from os import path as osp
 
-from tests.integration.conftest import (
-    assert_and_pause,
-    docker_execute,
-    get_twindb_config_dir,
-    pause_test,
-)
+from tests.integration.conftest import assert_and_pause, docker_execute, get_twindb_config_dir, pause_test
 from twindb_backup import INTERVALS, LOG
 from twindb_backup.backup import timeout
 from twindb_backup.source.mysql_source import MySQLConnectInfo
@@ -43,9 +38,7 @@ def test_clone(
 
     with open(twindb_config_host, "w") as fp:
         LOG.debug("Saving twindb config in %s", twindb_config_host)
-        content = config_content_clone.format(
-            PRIVATE_KEY=private_key_guest, MY_CNF="/etc/twindb/my.cnf"
-        )
+        content = config_content_clone.format(PRIVATE_KEY=private_key_guest, MY_CNF="/etc/twindb/my.cnf")
         fp.write(content)
 
     cmd = [
@@ -68,9 +61,7 @@ def test_clone(
             "ssh_host": slave["ip"],
             "ssh_user": "root",
             "ssh_key": private_key_guest,
-            "mysql_connect_info": MySQLConnectInfo(
-                my_cnf_path, hostname=slave["ip"]
-            ),
+            "mysql_connect_info": MySQLConnectInfo(my_cnf_path, hostname=slave["ip"]),
             "run_type": INTERVALS[0],
             "backup_type": "full",
         }
@@ -82,14 +73,9 @@ def test_clone(
                 with conn.cursor() as cursor:
                     cursor.execute("SHOW SLAVE STATUS")
                     row = cursor.fetchone()
-                    if (
-                        row["Slave_IO_Running"] == "Yes"
-                        and row["Slave_SQL_Running"] == "Yes"
-                    ):
+                    if row["Slave_IO_Running"] == "Yes" and row["Slave_SQL_Running"] == "Yes":
 
                         LOG.info("Replication is up and running")
                         return
     # noinspection PyUnreachableCode
-    assert_and_pause(
-        (False,), "Replication is not running after 30 seconds timeout"
-    )
+    assert_and_pause((False,), "Replication is not running after 30 seconds timeout")

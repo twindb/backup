@@ -17,6 +17,4 @@ def test_get_stream(mock_popen):
 
     m = Bzip2(mock_stream, level=3)
     with m.get_stream():
-        mock_popen.assert_called_once_with(
-            ["bzip2", "-3", "-c", "-"], stdin=None, stdout=PIPE, stderr=PIPE
-        )
+        mock_popen.assert_called_once_with(["bzip2", "-3", "-c", "-"], stdin=None, stdout=PIPE, stderr=PIPE)
