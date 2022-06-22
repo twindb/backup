@@ -21,7 +21,7 @@ bundle install --binstubs
 #        /var/cache/omnibus/cache/git_cache/opt/twindb-backup
 #fi
 
-bin/omnibus build twindb-backup
+ruby bin/omnibus build twindb-backup
 
 #if ! test -f cache/${CACHE_REPO}; then
 #    git --git-dir=/var/cache/omnibus/cache/git_cache/opt/twindb-backup \
