@@ -103,9 +103,7 @@ def test_init_reads_deprecated(mock_load, deprecated_status_raw_content):
 
 
 @mock.patch.object(BaseStatus, "_load")
-def test_init_reads_deprecated_invalid(
-    mock_load, invalid_deprecated_status_raw_content
-):
+def test_init_reads_deprecated_invalid(mock_load, invalid_deprecated_status_raw_content):
 
     BaseStatus(content=invalid_deprecated_status_raw_content)
     mock_load.assert_called_once_with(

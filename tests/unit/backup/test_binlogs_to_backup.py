@@ -47,15 +47,11 @@ def test_binlogs_to_backup(binlog_names, last_binlog, to_backup):
 
 def test_binlog_returns_empty():
     mock_cursor = mock.Mock()
-    mock_cursor.execute.side_effect = InternalError(
-        1381, "You are not using binary logging"
-    )
+    mock_cursor.execute.side_effect = InternalError(1381, "You are not using binary logging")
     assert binlogs_to_backup(mock_cursor) == []
 
 
-@pytest.mark.parametrize(
-    "side_effect", [InternalError, InternalError(123, "Some other error")]
-)
+@pytest.mark.parametrize("side_effect", [InternalError, InternalError(123, "Some other error")])
 def test_binlog_raises(side_effect):
     mock_cursor = mock.Mock()
     mock_cursor.execute.side_effect = side_effect

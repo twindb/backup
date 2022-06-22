@@ -62,18 +62,11 @@ def test_init_set_galera():
     ],
 )
 def test_init_set_vendor(value, vendor):
-    assert (
-        MySQLCopy(
-            "foo", "daily", "some_file.txt", type="full", server_vendor=value
-        ).server_vendor
-        == vendor
-    )
+    assert MySQLCopy("foo", "daily", "some_file.txt", type="full", server_vendor=value).server_vendor == vendor
 
 
 def test_init_created_at():
-    copy = MySQLCopy(
-        "foo", "daily", "some_file.txt", type="full", backup_started=123
-    )
+    copy = MySQLCopy("foo", "daily", "some_file.txt", type="full", backup_started=123)
     assert copy.backup_started == 123
     assert copy.created_at == 123
 

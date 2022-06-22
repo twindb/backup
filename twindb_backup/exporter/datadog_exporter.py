@@ -5,11 +5,7 @@ Module defines DataDog exporter class.
 """
 from datadog import initialize, statsd
 
-from twindb_backup.exporter.base_exporter import (
-    BaseExporter,
-    ExportCategory,
-    ExportMeasureType,
-)
+from twindb_backup.exporter.base_exporter import BaseExporter, ExportCategory, ExportMeasureType
 from twindb_backup.exporter.exceptions import DataDogExporterError
 
 

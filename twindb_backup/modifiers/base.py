@@ -39,9 +39,7 @@ class Modifier(object):
         """
         with self._input as input_stream:
             LOG.debug("Running %s", " ".join(self._modifier_cmd))
-            proc = Popen(
-                self._modifier_cmd, stdin=input_stream, stdout=PIPE, stderr=PIPE
-            )
+            proc = Popen(self._modifier_cmd, stdin=input_stream, stdout=PIPE, stderr=PIPE)
             yield proc.stdout
             proc.communicate()
 
@@ -66,9 +64,7 @@ class Modifier(object):
 
             _, cerr = proc.communicate()
             if proc.returncode:
-                msg = "%s exited with non-zero code." % " ".join(
-                    self._unmodifier_cmd
-                )
+                msg = "%s exited with non-zero code." % " ".join(self._unmodifier_cmd)
                 LOG.error(msg)
                 LOG.error(cerr)
                 raise ModifierException(msg)

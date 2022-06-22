@@ -26,9 +26,7 @@ def test_list_files(mock_execute, exec_return, expected, tmpdir):
     root_dir = tmpdir.mkdir("foo")
     mock_execute.return_value = (exec_return.format(root=str(root_dir)), "")
 
-    assert SshClient().list_files(root_dir) == _format_expected_output(
-        expected, str(root_dir)
-    )
+    assert SshClient().list_files(root_dir) == _format_expected_output(expected, str(root_dir))
 
 
 @pytest.mark.parametrize(
@@ -40,16 +38,12 @@ def test_list_files(mock_execute, exec_return, expected, tmpdir):
     ],
 )
 @mock.patch.object(SshClient, "execute")
-def test_list_files_files_only_with_result(
-    mock_execute, exec_return, expected, tmpdir
-):
+def test_list_files_files_only_with_result(mock_execute, exec_return, expected, tmpdir):
 
     root_dir = tmpdir.mkdir("foo")
 
     mock_execute.return_value = (exec_return.format(root=str(root_dir)), "")
-    assert SshClient().list_files(
-        root_dir, files_only=True
-    ) == _format_expected_output(expected, str(root_dir))
+    assert SshClient().list_files(root_dir, files_only=True) == _format_expected_output(expected, str(root_dir))
 
 
 @pytest.mark.parametrize(

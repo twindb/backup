@@ -1,4 +1,6 @@
 #@IgnoreInspection BashAddShebang
+azure-core ~= 1.24
+azure-storage-blob ~= 12.12
 Click ~= 8.1
 PyMySQL ~= 1.0
 boto3 ~= 1.7

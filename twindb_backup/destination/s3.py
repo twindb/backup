@@ -17,10 +17,7 @@ from botocore.exceptions import ClientError
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.destination.exceptions import (
-    FileNotFound,
-    S3DestinationError,
-)
+from twindb_backup.destination.exceptions import FileNotFound, S3DestinationError
 from twindb_backup.exceptions import OperationError
 
 S3_CONNECT_TIMEOUT = 60
@@ -74,12 +71,8 @@ class S3(BaseDestination):
         super(S3, self).__init__(self.remote_path)
 
         os.environ["AWS_ACCESS_KEY_ID"] = kwargs.get("aws_access_key_id")
-        os.environ["AWS_SECRET_ACCESS_KEY"] = kwargs.get(
-            "aws_secret_access_key"
-        )
-        os.environ["AWS_DEFAULT_REGION"] = kwargs.get(
-            "aws_default_region", AWS_DEFAULT_REGION
-        )
+        os.environ["AWS_SECRET_ACCESS_KEY"] = kwargs.get("aws_secret_access_key")
+        os.environ["AWS_DEFAULT_REGION"] = kwargs.get("aws_default_region", AWS_DEFAULT_REGION)
 
         # Setup an authenticated S3 client that we will use throughout
         self.s3_client = self.setup_s3_client()
@@ -119,11 +112,7 @@ class S3(BaseDestination):
         :type path: str
         :raise S3DestinationError: if failed to delete object.
         """
-        key = (
-            path.replace("s3://%s/" % self._bucket, "")
-            if path.startswith("s3://")
-            else path
-        )
+        key = path.replace("s3://%s/" % self._bucket, "") if path.startswith("s3://") else path
 
         s3client = boto3.resource("s3")
         bucket = s3client.Bucket(self._bucket)
@@ -213,9 +202,7 @@ class S3(BaseDestination):
                             return
                         except ClientError as err:
                             LOG.warning(err)
-                            LOG.warning(
-                                "Will retry in %d seconds", retry_interval
-                            )
+                            LOG.warning("Will retry in %d seconds", retry_interval)
                             time.sleep(retry_interval)
                             retry_interval *= 2
 
@@ -225,9 +212,7 @@ class S3(BaseDestination):
 
         download_proc = None
         try:
-            LOG.debug(
-                "Fetching object %s from bucket %s", object_key, self._bucket
-            )
+            LOG.debug("Fetching object %s from bucket %s", object_key, self._bucket)
 
             read_pipe, write_pipe = os.pipe()
 
@@ -281,9 +266,7 @@ class S3(BaseDestination):
 
         return transfer_config
 
-    def list_files(
-        self, prefix=None, recursive=False, pattern=None, files_only=False
-    ):
+    def list_files(self, prefix=None, recursive=False, pattern=None, files_only=False):
         """
         List files in the destination that have common prefix.
 
@@ -322,23 +305,13 @@ class S3(BaseDestination):
                 for file_object in all_objects:
                     if pattern:
                         if re.search(pattern, file_object.key):
-                            files.append(
-                                "s3://{bucket}/{key}".format(
-                                    bucket=self._bucket, key=file_object.key
-                                )
-                            )
+                            files.append("s3://{bucket}/{key}".format(bucket=self._bucket, key=file_object.key))
                     else:
-                        files.append(
-                            "s3://{bucket}/{key}".format(
-                                bucket=self._bucket, key=file_object.key
-                            )
-                        )
+                        files.append("s3://{bucket}/{key}".format(bucket=self._bucket, key=file_object.key))
 
                 return sorted(files)
             except ClientError as err:
-                LOG.warning(
-                    "%s. Will retry in %d seconds.", err, retry_interval
-                )
+                LOG.warning("%s. Will retry in %d seconds.", err, retry_interval)
                 time.sleep(retry_interval)
                 retry_interval *= 2
 
@@ -354,9 +327,7 @@ class S3(BaseDestination):
         :raises FileNotFound: If filepath doesn't exist.
         """
         try:
-            response = self.s3_client.get_object(
-                Bucket=self._bucket, Key=filepath
-            )
+            response = self.s3_client.get_object(Bucket=self._bucket, Key=filepath)
             return response["Body"].read()
 
         except self.s3_client.exceptions.NoSuchKey:
@@ -384,12 +355,8 @@ class S3(BaseDestination):
             aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
             aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
         )
-        s3_config = Config(
-            connect_timeout=S3_CONNECT_TIMEOUT, read_timeout=S3_READ_TIMEOUT
-        )
-        client = session.client(
-            "s3", region_name=os.environ["AWS_DEFAULT_REGION"], config=s3_config
-        )
+        s3_config = Config(connect_timeout=S3_CONNECT_TIMEOUT, read_timeout=S3_READ_TIMEOUT)
+        client = session.client("s3", region_name=os.environ["AWS_DEFAULT_REGION"], config=s3_config)
 
         return client
 
@@ -404,9 +371,7 @@ class S3(BaseDestination):
         :raise S3DestinationError: if failed to share object.
         """
         run_type = s3_url.split("/")[4]
-        backup_urls = self.list_files(
-            self.remote_path, pattern="/%s/" % run_type
-        )
+        backup_urls = self.list_files(self.remote_path, pattern="/%s/" % run_type)
         if s3_url in backup_urls:
             self._set_file_access(S3FileAccess.public_read, s3_url)
             return self._get_file_url(s3_url)
@@ -425,19 +390,13 @@ class S3(BaseDestination):
         try:
             http_status_code = response["ResponseMetadata"]["HTTPStatusCode"]
         except KeyError as err:
-            raise S3DestinationError(
-                "S3 client returned invalid response: %s" % err
-            )
+            raise S3DestinationError("S3 client returned invalid response: %s" % err)
 
         if http_status_code not in [200, 204]:
-            raise S3DestinationError(
-                "S3 client returned error code: %s" % http_status_code
-            )
+            raise S3DestinationError("S3 client returned error code: %s" % http_status_code)
 
     def write(self, content, filepath):
-        response = self.s3_client.put_object(
-            Body=content, Bucket=self._bucket, Key=filepath
-        )
+        response = self.s3_client.put_object(Body=content, Bucket=self._bucket, Key=filepath)
         self.validate_client_response(response)
 
     def _list_files(self, prefix=None, recursive=False, files_only=False):
@@ -451,18 +410,14 @@ class S3(BaseDestination):
         :param str object_key: The destination key where to upload the object.
         :raise S3DestinationError: if failed to upload object.
         """
-        remote_name = "s3://{bucket}/{name}".format(
-            bucket=self._bucket, name=object_key
-        )
+        remote_name = "s3://{bucket}/{name}".format(bucket=self._bucket, name=object_key)
 
         LOG.debug("Generating S3 transfer config")
         s3_transfer_config = self.get_transfer_config()
 
         LOG.debug("Starting to stream to %s", remote_name)
         try:
-            self.s3_client.upload_fileobj(
-                file_obj, self._bucket, object_key, Config=s3_transfer_config
-            )
+            self.s3_client.upload_fileobj(file_obj, self._bucket, object_key, Config=s3_transfer_config)
             LOG.debug("Successfully streamed to %s", remote_name)
         except ClientError as err:
             raise S3DestinationError(err)
@@ -477,15 +432,11 @@ class S3(BaseDestination):
         :raise S3DestinationError: if object is not available on
             the destination.
         """
-        remote_name = "s3://{bucket}/{name}".format(
-            bucket=self._bucket, name=object_key
-        )
+        remote_name = "s3://{bucket}/{name}".format(bucket=self._bucket, name=object_key)
 
         LOG.debug("Validating upload to %s", remote_name)
 
-        response = self.s3_client.get_object(
-            Bucket=self._bucket, Key=object_key
-        )
+        response = self.s3_client.get_object(Bucket=self._bucket, Key=object_key)
         self.validate_client_response(response)
 
         LOG.debug("Upload successfully validated")
@@ -502,9 +453,7 @@ class S3(BaseDestination):
         :type url: str
         """
         object_key = urlparse(url).path.lstrip("/")
-        self.s3_client.put_object_acl(
-            Bucket=self._bucket, ACL=access_mode, Key=object_key
-        )
+        self.s3_client.put_object_acl(Bucket=self._bucket, ACL=access_mode, Key=object_key)
 
     def _get_file_url(self, s3_url):
         """
@@ -515,18 +464,14 @@ class S3(BaseDestination):
         :rtype: str
         """
         object_key = urlparse(s3_url).path.lstrip("/")
-        return self.s3_client.generate_presigned_url(
-            "get_object", Params={"Bucket": self._bucket, "Key": object_key}
-        )
+        return self.s3_client.generate_presigned_url("get_object", Params={"Bucket": self._bucket, "Key": object_key})
 
     def _get_file_content(self, path):
         attempts = 10  # up to 1024 seconds
         sleep_time = 2
         while sleep_time <= 2**attempts:
             try:
-                response = self.s3_client.get_object(
-                    Bucket=self._bucket, Key=path
-                )
+                response = self.s3_client.get_object(Bucket=self._bucket, Key=path)
                 self.validate_client_response(response)
 
                 content = response["Body"].read()

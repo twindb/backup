@@ -12,14 +12,7 @@ import traceback
 
 import click
 
-from twindb_backup import (
-    INTERVALS,
-    LOCK_FILE,
-    LOG,
-    MEDIA_TYPES,
-    __version__,
-    setup_logging,
-)
+from twindb_backup import INTERVALS, LOCK_FILE, LOG, MEDIA_TYPES, __version__, setup_logging
 from twindb_backup.backup import run_backup_job
 from twindb_backup.cache.cache import Cache, CacheException
 from twindb_backup.clone import clone_mysql
@@ -43,18 +36,14 @@ MEDIA_STATUS_MAP = {
 
 
 @click.group(invoke_without_command=True)
-@click.option(
-    "--debug", help="Print debug messages", is_flag=True, default=False
-)
+@click.option("--debug", help="Print debug messages", is_flag=True, default=False)
 @click.option(
     "--config",
     help="TwinDB Backup config file.",
     default="/etc/twindb/twindb-backup.cfg",
     show_default=True,
 )
-@click.option(
-    "--version", help="Show tool version and exit.", is_flag=True, default=False
-)
+@click.option("--version", help="Show tool version and exit.", is_flag=True, default=False)
 @click.option(
     "--xtrabackup-binary",
     help="Path to xtrabackup binary.",
@@ -119,8 +108,7 @@ def main(
     "--lock-file",
     default=LOCK_FILE,
     show_default=True,
-    help="Lock file to protect against multiple backup tool"
-    " instances at same time.",
+    help="Lock file to protect against multiple backup tool" " instances at same time.",
 )
 @click.option(
     "--binlogs-only",
@@ -152,9 +140,7 @@ def backup(ctx, run_type, lock_file, binlogs_only):
 
 
 @main.command(name="ls")
-@click.option(
-    "--type", "copy_type", type=click.Choice(MEDIA_TYPES), default=None
-)
+@click.option("--type", "copy_type", type=click.Choice(MEDIA_TYPES), default=None)
 @click.pass_context
 def list_backups(ctx, copy_type):
     """List available backup copies"""
@@ -178,9 +164,7 @@ def share_backup(ctx, s3_url):
 
 
 @main.command()
-@click.option(
-    "--type", "copy_type", type=click.Choice(MEDIA_TYPES), default="mysql"
-)
+@click.option("--type", "copy_type", type=click.Choice(MEDIA_TYPES), default="mysql")
 @click.option(
     "--hostname",
     help="Hostname",
@@ -209,9 +193,7 @@ def restore(ctx):
     default=".",
     show_default=True,
 )
-@click.option(
-    "--cache", help="Save full backup copy in this directory", default=None
-)
+@click.option("--cache", help="Save full backup copy in this directory", default=None)
 @click.pass_context
 def restore_mysql(ctx, dst, backup_copy, cache):
     """Restore from mysql backup"""
@@ -226,12 +208,8 @@ def restore_mysql(ctx, dst, backup_copy, cache):
         ensure_empty(dst)
 
         incomplete_copy = MySQLCopy(path=backup_copy)
-        dst_storage = ctx.obj["twindb_config"].destination(
-            backup_source=incomplete_copy.host
-        )
-        mysql_status = MySQLStatus(
-            dst=dst_storage, status_directory=incomplete_copy.host
-        )
+        dst_storage = ctx.obj["twindb_config"].destination(backup_source=incomplete_copy.host)
+        mysql_status = MySQLStatus(dst=dst_storage, status_directory=incomplete_copy.host)
 
         copies = [cp for cp in mysql_status if backup_copy.endswith(cp.name)]
         try:
@@ -244,14 +222,11 @@ def restore_mysql(ctx, dst, backup_copy, cache):
             )
         if copies:
             raise TwinDBBackupError(
-                "Multiple copies match pattern %s. Make sure you give unique "
-                "copy name for restore."
+                "Multiple copies match pattern %s. Make sure you give unique " "copy name for restore."
             )
 
         if cache:
-            restore_from_mysql(
-                ctx.obj["twindb_config"], copy, dst, cache=Cache(cache)
-            )
+            restore_from_mysql(ctx.obj["twindb_config"], copy, dst, cache=Cache(cache))
         else:
             restore_from_mysql(ctx.obj["twindb_config"], copy, dst)
 
@@ -313,8 +288,7 @@ def verify(ctx):
 )
 @click.option(
     "--hostname",
-    help="If backup_copy is latest this option "
-    "specifies hostname where the backup copy was taken.",
+    help="If backup_copy is latest this option " "specifies hostname where the backup copy was taken.",
     default=socket.gethostname(),
     show_default=True,
 )
@@ -328,11 +302,7 @@ def verify_mysql(ctx, hostname, dst, backup_copy):
             list_available_backups(ctx.obj["twindb_config"])
             exit(1)
 
-        print(
-            verify_mysql_backup(
-                ctx.obj["twindb_config"], dst, backup_copy, hostname
-            )
-        )
+        print(verify_mysql_backup(ctx.obj["twindb_config"], dst, backup_copy, hostname))
 
     finally:
 
@@ -352,8 +322,7 @@ def clone(ctx):
 @click.option(
     "--netcat-port",
     default=9990,
-    help="Use this TCP port for netcat file transfers between "
-    "clone source and destination.",
+    help="Use this TCP port for netcat file transfers between " "clone source and destination.",
     show_default=True,
 )
 @click.option(

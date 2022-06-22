@@ -36,6 +36,7 @@ import json
 import logging
 import os
 import sys
+from collections import namedtuple
 
 __author__ = "TwinDB Development Team"
 __email__ = "dev@twindb.com"
@@ -51,8 +52,15 @@ MARIABACKUP_BINARY = "mariabackup"
 MBSTREAM_BINARY = "mbstream"
 MY_CNF_COMMON_PATHS = ["/etc/my.cnf", "/etc/mysql/my.cnf"]
 DEFAULT_FILE_ENCODING = "utf-8"
+GLOBAL_INIT_LOG_LEVEL = logging.DEBUG
 
 LOG = logging.getLogger(__name__)
+LOG.setLevel(GLOBAL_INIT_LOG_LEVEL)
+
+DestTypes = namedtuple("DestinationTypes", "ssh,local,s3,gcs,azure")
+QueryTypes = namedtuple("QueryTypes", ["mysql"])
+SUPPORTED_DESTINATION_TYPES = DestTypes("ssh", "local", "s3", "gcs", "azure")
+SUPPORTED_QUERY_LANGUAGES = QueryTypes("mysql")
 
 
 class LessThanFilter(logging.Filter):  # pylint: disable=too-few-public-methods
@@ -70,10 +78,7 @@ class LessThanFilter(logging.Filter):  # pylint: disable=too-few-public-methods
 def setup_logging(logger, debug=False):  # pragma: no cover
     """Configures logging for the module"""
 
-    fmt_str = (
-        "%(asctime)s: %(levelname)s:"
-        " %(module)s.%(funcName)s():%(lineno)d: %(message)s"
-    )
+    fmt_str = "%(asctime)s: %(levelname)s: %(module)s.%(funcName)s():%(lineno)d: %(message)s"
 
     console_handler = logging.StreamHandler(stream=sys.stdout)
     console_handler.addFilter(LessThanFilter(logging.WARNING))

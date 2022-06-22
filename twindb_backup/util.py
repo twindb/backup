@@ -45,10 +45,7 @@ def ensure_empty(path):
     """
     try:
         if os.listdir(path):
-            msg = (
-                f'You asked to restore backup copy in directory "{path}". '
-                "But it is not empty."
-            )
+            msg = f'You asked to restore backup copy in directory "{path}". ' "But it is not empty."
             raise OperationError(msg)
 
     except OSError as err:

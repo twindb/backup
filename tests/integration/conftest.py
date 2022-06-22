@@ -56,9 +56,7 @@ def get_platform_from_image(image):
     ):
         return "ubuntu"
     else:
-        raise EnvironmentError(
-            f"Cannot guess platform from docker image name {image}"
-        )
+        raise EnvironmentError(f"Cannot guess platform from docker image name {image}")
 
 
 @pytest.fixture
@@ -215,9 +213,7 @@ def get_container(
     )
 
     ip = "172.%d.3.%d" % (network["second_octet"], last_n)
-    networking_config = api.create_networking_config(
-        {network["NAME"]: api.create_endpoint_config(ipv4_address=ip)}
-    )
+    networking_config = api.create_networking_config({network["NAME"]: api.create_endpoint_config(ipv4_address=ip)})
 
     LOG.debug(networking_config)
 
@@ -246,9 +242,7 @@ def get_container(
         api.start(container["Id"])
         LOG.info("Started %r", container)
         with timeout(10):
-            while (
-                docker_execute(client, container["Id"], ["ls", "/tmp"])[0] != 0
-            ):
+            while docker_execute(client, container["Id"], ["ls", "/tmp"])[0] != 0:
                 LOG.info("Waiting for /tmp")
                 time.sleep(1)
         return container
@@ -262,9 +256,7 @@ def get_container(
 def master1(docker_client, container_network, tmpdir_factory):
 
     platform = (
-        os.environ["PLATFORM"]
-        if "PLATFORM" in os.environ
-        else get_platform_from_image(os.environ["DOCKER_IMAGE"])
+        os.environ["PLATFORM"] if "PLATFORM" in os.environ else get_platform_from_image(os.environ["DOCKER_IMAGE"])
     )
 
     bootstrap_script = osp.join(
@@ -320,9 +312,7 @@ def master1(docker_client, container_network, tmpdir_factory):
     finally:
         if container:
             LOG.info("Removing container %s", container["Id"])
-            docker_client.api.remove_container(
-                container=container["Id"], force=True
-            )
+            docker_client.api.remove_container(container=container["Id"], force=True)
 
 
 # noinspection PyShadowingNames
@@ -340,11 +330,7 @@ def slave(docker_client, container_network, tmpdir_factory):
     )
 
     separator_pos = NODE_IMAGE.find(":")
-    image_name = (
-        NODE_IMAGE[: separator_pos + 1]
-        + "slave_"
-        + NODE_IMAGE[separator_pos + 1 :]
-    )
+    image_name = NODE_IMAGE[: separator_pos + 1] + "slave_" + NODE_IMAGE[separator_pos + 1 :]
     twindb_config_dir = tmpdir_factory.mktemp("twindb")
     container = get_container(
         "slave",
@@ -367,9 +353,7 @@ def slave(docker_client, container_network, tmpdir_factory):
         ret, cout = docker_execute(docker_client, container["Id"], ["ls"])
         assert_and_pause((ret == 0,), cout)
 
-        ret, cout = docker_execute(
-            docker_client, container["Id"], ["bash", bootstrap_script]
-        )
+        ret, cout = docker_execute(docker_client, container["Id"], ["bash", bootstrap_script])
         print(cout)
         assert_and_pause((ret == 0,), cout)
 
@@ -378,9 +362,7 @@ def slave(docker_client, container_network, tmpdir_factory):
     finally:
 
         LOG.info("Removing container %s", container["Id"])
-        docker_client.api.remove_container(
-            container=container["Id"], force=True
-        )
+        docker_client.api.remove_container(container=container["Id"], force=True)
 
 
 @pytest.yield_fixture
@@ -406,9 +388,7 @@ def storage_server(docker_client, container_network):
 
     if container:
         LOG.info("Removing container %s", container["Id"])
-        docker_client.api.remove_container(
-            container=container["Id"], force=True
-        )
+        docker_client.api.remove_container(container=container["Id"], force=True)
 
 
 # noinspection PyShadowingNames
@@ -443,9 +423,7 @@ def runner(docker_client, container_network, tmpdir_factory):
 
     finally:
         LOG.info("Removing container %s", container["Id"])
-        docker_client.api.remove_container(
-            container=container["Id"], force=True
-        )
+        docker_client.api.remove_container(container=container["Id"], force=True)
 
 
 def docker_execute(client, container_id, cmd, tty=False):
@@ -507,9 +485,7 @@ def pause_test(msg):
 
             time.sleep(36000)
     except KeyError:
-        LOG.debug(
-            "Define the PAUSE_TEST environment variable if you'd like to pause the test"
-        )
+        LOG.debug("Define the PAUSE_TEST environment variable if you'd like to pause the test")
         LOG.debug("export PAUSE_TEST=1")
         pass
 

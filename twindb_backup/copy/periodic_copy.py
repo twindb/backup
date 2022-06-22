@@ -36,17 +36,12 @@ class PeriodicCopy(BaseCopy):
                 host = chunks[chunks.index(run_type) - 1]
                 name = chunks[-1]
             except ValueError:
-                raise WrongInputData(
-                    'Can not instantiate copy from path "%s".' % path
-                )
+                raise WrongInputData('Can not instantiate copy from path "%s".' % path)
         super(PeriodicCopy, self).__init__(host, name)
         if run_type in INTERVALS:
             self._run_type = run_type
         else:
-            raise WrongInputData(
-                "Wrong value of run_type: %s. Must be one of %s."
-                % (run_type, ", ".join(INTERVALS))
-            )
+            raise WrongInputData("Wrong value of run_type: %s. Must be one of %s." % (run_type, ", ".join(INTERVALS)))
 
     @property
     def host(self):

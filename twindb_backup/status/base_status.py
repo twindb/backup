@@ -191,15 +191,11 @@ class BaseStatus(object):
         try:
             status = json.loads(content)
             md5_stored = status["md5"]
-            md5_calculated = hashlib.md5(
-                status["status"].encode("utf-8")
-            ).hexdigest()
+            md5_calculated = hashlib.md5(status["status"].encode("utf-8")).hexdigest()
             if md5_calculated != md5_stored:
                 raise CorruptedStatus("Checksum mismatch")
 
-            self._status = self._load(
-                b64decode(status["status"]).decode("utf-8")
-            )
+            self._status = self._load(b64decode(status["status"]).decode("utf-8"))
             self._status.sort(key=lambda cp: cp.created_at)
         except TypeError:  # Init from None
             self._status = []

@@ -1,12 +1,7 @@
 """Class to describe MySQL backup copy"""
 import json
 
-from twindb_backup import (
-    MARIABACKUP_BINARY,
-    MBSTREAM_BINARY,
-    XBSTREAM_BINARY,
-    XTRABACKUP_BINARY,
-)
+from twindb_backup import MARIABACKUP_BINARY, MBSTREAM_BINARY, XBSTREAM_BINARY, XTRABACKUP_BINARY
 from twindb_backup.copy.exceptions import WrongInputData
 from twindb_backup.copy.periodic_copy import PeriodicCopy
 from twindb_backup.source.mysql_source import MySQLFlavor
@@ -56,10 +51,7 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
             self._type = None
 
         if "/" in self.name:
-            raise WrongInputData(
-                "name must be relative, without any slashes."
-                " Got %s instead." % self.name
-            )
+            raise WrongInputData("name must be relative, without any slashes." " Got %s instead." % self.name)
 
         self._backup_started = int(kwargs.get("backup_started", 0)) or None
         self._backup_finished = int(kwargs.get("backup_finished", 0)) or None
@@ -67,9 +59,7 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
         self._position = kwargs.get("position", None)
         self._lsn = kwargs.get("lsn", None)
         self._parent = kwargs.get("parent", None)
-        self._server_vendor = MySQLFlavor(
-            kwargs.get("server_vendor", MySQLFlavor.ORACLE)
-        )
+        self._server_vendor = MySQLFlavor(kwargs.get("server_vendor", MySQLFlavor.ORACLE))
 
         if "wsrep_provider_version" in kwargs:
             self._wsrep_provider_version = kwargs.get("wsrep_provider_version")
@@ -79,10 +69,7 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
             self._wsrep_provider_version = None
 
         if "config" in kwargs and "config_files" in kwargs:
-            raise WrongInputData(
-                "Either config or config_files can be used "
-                "to initialize config attribute"
-            )
+            raise WrongInputData("Either config or config_files can be used " "to initialize config attribute")
 
         if "config_files" in kwargs:
             self._config = {}
@@ -176,19 +163,11 @@ class MySQLCopy(PeriodicCopy):  # pylint: disable=too-many-instance-attributes
 
     @property
     def xbstream_binary(self):
-        return (
-            MBSTREAM_BINARY
-            if self.server_vendor is MySQLFlavor.MARIADB
-            else XBSTREAM_BINARY
-        )
+        return MBSTREAM_BINARY if self.server_vendor is MySQLFlavor.MARIADB else XBSTREAM_BINARY
 
     @property
     def xtrabackup_binary(self):
-        return (
-            MARIABACKUP_BINARY
-            if self.server_vendor is MySQLFlavor.MARIADB
-            else XTRABACKUP_BINARY
-        )
+        return MARIABACKUP_BINARY if self.server_vendor is MySQLFlavor.MARIADB else XTRABACKUP_BINARY
 
     @property
     def wsrep_provider_version(self):

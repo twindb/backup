@@ -42,9 +42,7 @@ class BaseCopy(object):  # pylint: disable=too-few-public-methods
                     name=self._name,
                     source_type=self._source_type,
                 )
-            return "{host}/{source_type}/{name}".format(
-                host=self._host, name=self._name, source_type=self._source_type
-            )
+            return "{host}/{source_type}/{name}".format(host=self._host, name=self._name, source_type=self._source_type)
         else:
             raise UnknownSourceType("Source type is not defined")
 

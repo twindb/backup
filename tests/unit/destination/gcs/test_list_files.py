@@ -47,9 +47,7 @@ def setup_mock_bucket(keys):
     ],
 )
 @mock.patch.object(GCS, "_gcs_client")
-def test__list_files_returns_sorted_list_empty_prefix(
-    mock_client, gcs_response, expected_list, gs
-):
+def test__list_files_returns_sorted_list_empty_prefix(mock_client, gcs_response, expected_list, gs):
 
     mock_client.get_bucket.return_value = setup_mock_bucket(gcs_response)
     files_list = gs.list_files(prefix="")
@@ -123,9 +121,7 @@ def test__list_files(mock_client, prefix, keys, result, gs):
     ],
 )
 @mock.patch.object(GCS, "_gcs_client")
-def test__list_files_with_prefix(
-    mock_client, given_prefix, expected_prefix, gs
-):
+def test__list_files_with_prefix(mock_client, given_prefix, expected_prefix, gs):
 
     mock_bucket = setup_mock_bucket([])
     mock_client.get_bucket.return_value = mock_bucket

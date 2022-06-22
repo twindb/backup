@@ -15,10 +15,7 @@ from google.cloud.storage import Client
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.destination.exceptions import (
-    FileNotFound,
-    GCSDestinationError,
-)
+from twindb_backup.destination.exceptions import FileNotFound, GCSDestinationError
 
 GCS_CONNECT_TIMEOUT = 60
 GCS_READ_TIMEOUT = 600
@@ -46,9 +43,7 @@ class GCS(BaseDestination):
         super(GCS, self).__init__(self.bucket)
 
         if "gc_credentials_file" in kwargs:
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = kwargs.get(
-                "gc_credentials_file"
-            )
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = kwargs.get("gc_credentials_file")
         else:
             raise GCSDestinationError(
                 "gc_credentials_file keyword argument must be defined "
@@ -104,9 +99,7 @@ class GCS(BaseDestination):
     def get_stream(self, copy):
         pipe_in, pipe_out = os.pipe()
 
-        proc = Process(
-            target=self._download_to_pipe, args=(copy.key, pipe_in, pipe_out)
-        )
+        proc = Process(target=self._download_to_pipe, args=(copy.key, pipe_in, pipe_out))
         proc.start()
         os.close(pipe_out)
         pipe_in = os.fdopen(pipe_in)
@@ -216,9 +209,7 @@ class GCS(BaseDestination):
         result = []
         blobs = self._bucket_obj.list_blobs(prefix=path)
         for blob in blobs:
-            if blob.name == path or re.match(
-                path + _CHUNK_PART_REGEXP, blob.name
-            ):
+            if blob.name == path or re.match(path + _CHUNK_PART_REGEXP, blob.name):
                 result.append(blob)
         return result
 

@@ -1,10 +1,6 @@
 from textwrap import dedent
 
-from tests.integration.conftest import (
-    assert_and_pause,
-    docker_execute,
-    get_twindb_config_dir,
-)
+from tests.integration.conftest import assert_and_pause, docker_execute, get_twindb_config_dir
 from twindb_backup import LOG
 
 
@@ -68,8 +64,7 @@ def test_verify_on_master(
     cmd = [
         "bash",
         "-c",
-        "twindb-backup --config %s ls | grep /tmp/backup "
-        "| grep mysql | sort | tail -1" % twindb_config_guest,
+        "twindb-backup --config %s ls | grep /tmp/backup " "| grep mysql | sort | tail -1" % twindb_config_guest,
     ]
 
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)

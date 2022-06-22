@@ -14,34 +14,20 @@ from resource import RLIMIT_NOFILE, getrlimit, setrlimit
 
 from pymysql import InternalError
 
-from twindb_backup import (
-    LOCK_FILE,
-    LOG,
-    MY_CNF_COMMON_PATHS,
-    get_timeout,
-    save_measures,
-)
+from twindb_backup import LOCK_FILE, LOG, MY_CNF_COMMON_PATHS, get_timeout, save_measures
 from twindb_backup.copy.binlog_copy import BinlogCopy
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.exceptions import LockWaitTimeoutError, OperationError
 from twindb_backup.export import export_info
-from twindb_backup.exporter.base_exporter import (
-    ExportCategory,
-    ExportMeasureType,
-)
+from twindb_backup.exporter.base_exporter import ExportCategory, ExportMeasureType
 from twindb_backup.modifiers.gpg import Gpg
 from twindb_backup.modifiers.keeplocal import KeepLocal
 from twindb_backup.source.binlog_source import BinlogParser, BinlogSource
 from twindb_backup.source.exceptions import SourceError
 from twindb_backup.source.file_source import FileSource
 from twindb_backup.source.mariadb_source import MariaDBSource
-from twindb_backup.source.mysql_source import (
-    MySQLClient,
-    MySQLConnectInfo,
-    MySQLFlavor,
-    MySQLSource,
-)
+from twindb_backup.source.mysql_source import MySQLClient, MySQLConnectInfo, MySQLFlavor, MySQLSource
 from twindb_backup.ssh.exceptions import SshClientException
 from twindb_backup.status.binlog_status import BinlogStatus
 from twindb_backup.status.mysql_status import MySQLStatus
@@ -74,14 +60,10 @@ def _backup_stream(config, src, dst, callbacks=None):
     # KeepLocal modifier
     if config.keep_local_path:
         keep_local_path = config.keep_local_path
-        kl_modifier = KeepLocal(
-            stream, osp.join(keep_local_path, src.get_name())
-        )
+        kl_modifier = KeepLocal(stream, osp.join(keep_local_path, src.get_name()))
         stream = kl_modifier.get_stream()
         if callbacks is not None:
-            callbacks.append(
-                (kl_modifier, {"keep_local_path": keep_local_path, "dst": dst})
-            )
+            callbacks.append((kl_modifier, {"keep_local_path": keep_local_path, "dst": dst}))
     else:
         LOG.debug("keep_local_path is not present in the config file")
     # GPG modifier
@@ -136,9 +118,7 @@ def backup_mysql(run_type, config):
     status = MySQLStatus(dst=dst)
 
     kwargs = {
-        "backup_type": status.next_backup_type(
-            config.mysql.full_backup, run_type
-        ),
+        "backup_type": status.next_backup_type(config.mysql.full_backup, run_type),
         "dst": dst,
         "xtrabackup_binary": config.mysql.xtrabackup_binary,
     }
@@ -149,9 +129,7 @@ def backup_mysql(run_type, config):
 
     LOG.debug("Creating source %r", kwargs)
     mysql_client = MySQLClient(config.mysql.defaults_file)
-    src = MYSQL_SRC_MAP[mysql_client.server_vendor](
-        MySQLConnectInfo(config.mysql.defaults_file), run_type, **kwargs
-    )
+    src = MYSQL_SRC_MAP[mysql_client.server_vendor](MySQLConnectInfo(config.mysql.defaults_file), run_type, **kwargs)
 
     callbacks = []
     try:
@@ -220,9 +198,7 @@ def backup_binlogs(run_type, config):  # pylint: disable=too-many-locals
         cur.execute("FLUSH BINARY LOGS")
         backup_set = binlogs_to_backup(
             cur,
-            last_binlog=status.latest_backup.name
-            if status.latest_backup
-            else None,
+            last_binlog=status.latest_backup.name if status.latest_backup else None,
         )
 
     for binlog_name in backup_set:
@@ -348,9 +324,7 @@ def timeout(seconds):
         signal.signal(signal.SIGALRM, original_handler)
 
 
-def run_backup_job(
-    twindb_config, run_type, lock_file=LOCK_FILE, binlogs_only=False
-):
+def run_backup_job(twindb_config, run_type, lock_file=LOCK_FILE, binlogs_only=False):
     """
     Grab a lock waiting up to allowed timeout and start backup jobs
 
@@ -369,9 +343,7 @@ def run_backup_job(
             fcntl.flock(file_desriptor, fcntl.LOCK_EX)
             LOG.debug(run_type)
             if getattr(twindb_config.run_intervals, run_type):
-                backup_everything(
-                    run_type, twindb_config, binlogs_only=binlogs_only
-                )
+                backup_everything(run_type, twindb_config, binlogs_only=binlogs_only)
             else:
                 LOG.debug("Not running because run_%s is no", run_type)
         except IOError as err:
