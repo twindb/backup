@@ -13,4 +13,5 @@ pytest ~= 7.1
 pytest-cov ~= 3.0
 pytest-timeout ~= 2.1
 python-magic == 0.4.18
+runlike ~= 1.4
 yamllint ~= 1.23

@@ -6,8 +6,10 @@ from textwrap import dedent
 
 import docker
 import pytest
+import runlike
 from docker.errors import APIError, DockerException
 from docker.types import IPAMConfig, IPAMPool
+from runlike.inspector import Inspector
 
 from tests.integration import ensure_aws_creds
 from twindb_backup import LOG, setup_logging
@@ -196,7 +198,7 @@ def get_container(
             "bind": "/twindb-backup",
             "mode": "rw",
         },
-        "/sys/fs/cgroup": {"bind": "/sys/fs/cgroup", "mode": "ro"},
+        "/sys/fs/cgroup": {"bind": "/sys/fs/cgroup", "mode": "rw"},
     }
     if twindb_config_dir:
         LOG.debug("TwinDB config directory: %s", twindb_config_dir)
@@ -210,7 +212,9 @@ def get_container(
         dns=["8.8.8.8", "208.67.222.222", "208.67.220.220"],
         tmpfs=["/tmp", "/run"],
         privileged=True,
+        auto_remove=True,
     )
+    host_config["CgroupnsMode"] = "host"
 
     ip = "172.%d.3.%d" % (network["second_octet"], last_n)
     networking_config = api.create_networking_config({network["NAME"]: api.create_endpoint_config(ipv4_address=ip)})
@@ -241,6 +245,10 @@ def get_container(
     try:
         api.start(container["Id"])
         LOG.info("Started %r", container)
+        LOG.info("Equivalent command:")
+        ins = Inspector(container_hostname, False, False)
+        ins.inspect()
+        print(ins.format_cli())
         with timeout(10):
             while docker_execute(client, container["Id"], ["ls", "/tmp"])[0] != 0:
                 LOG.info("Waiting for /tmp")
