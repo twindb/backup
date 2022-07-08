@@ -6,13 +6,12 @@ from textwrap import dedent
 
 import docker
 import pytest
-import runlike
 from docker.errors import APIError, DockerException
 from docker.types import IPAMConfig, IPAMPool
 from runlike.inspector import Inspector
 
 from tests.integration import ensure_aws_creds
-from twindb_backup import LOG, setup_logging
+from twindb_backup import LOG
 from twindb_backup.backup import timeout
 from twindb_backup.util import mkdir_p
 
@@ -34,7 +33,6 @@ except KeyError:
 
 NETWORK_NAME = "test_network"
 
-setup_logging(LOG, debug=True)
 ensure_aws_creds()
 
 
@@ -245,10 +243,9 @@ def get_container(
     try:
         api.start(container["Id"])
         LOG.info("Started %r", container)
-        LOG.info("Equivalent command:")
         ins = Inspector(container_hostname, False, False)
         ins.inspect()
-        print(ins.format_cli())
+        LOG.info("Equivalent command: %s", ins.format_cli())
         with timeout(10):
             while docker_execute(client, container["Id"], ["ls", "/tmp"])[0] != 0:
                 LOG.info("Waiting for /tmp")

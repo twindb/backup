@@ -35,9 +35,19 @@ license_file "LICENSE"
 
 skip_transitive_dependency_licensing true
 
+
+source url: "https://www.python.org/ftp/python/#{version}/Python-#{version}.tgz"
+
 version "3.9.5" do
   source sha256: "e0fbd5b6e1ee242524430dee3c91baf4cbbaba4a72dd1674b90fda87b713c7ab"
-  source url: "https://www.python.org/ftp/python/#{version}/Python-#{version}.tgz"
+end
+
+version "3.9.10" do
+  source sha256: "1aa9c0702edbae8f6a2c95f70a49da8420aaa76b7889d3419c186bfc8c0e571e"
+end
+
+version "3.9.13" do
+  source sha256: "829b0d26072a44689a6b0810f5b4a3933ee2a0b8a4bfc99d7c5893ffd4f97c44"
 end
 
 relative_path "Python-#{version}"

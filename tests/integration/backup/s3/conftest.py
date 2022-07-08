@@ -6,10 +6,8 @@ from textwrap import dedent
 
 import pytest
 
-from twindb_backup import LOG, setup_logging
+from twindb_backup import LOG
 from twindb_backup.destination.s3 import S3
-
-setup_logging(LOG, debug=True)
 
 
 @pytest.fixture()

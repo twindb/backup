@@ -9,6 +9,10 @@ def redhat?()
     return %w(rhel fedora).include? ohai['platform_family']
 end
 
+def centos?()
+  return ohai['platform'] == "centos"
+end
+
 def debian?()
     return ohai['platform_family'] == 'debian'
 end

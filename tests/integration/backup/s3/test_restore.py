@@ -3,6 +3,7 @@ import os
 
 from tests.integration.backup.conftest import check_either_file, check_files_if_xtrabackup
 from tests.integration.conftest import assert_and_pause, docker_execute, get_twindb_config_dir
+from twindb_backup import LOG
 
 
 def test__restore_mysql_inc_creates_log_files(

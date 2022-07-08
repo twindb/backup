@@ -38,10 +38,17 @@ DOCKER_IMAGES = {
     default=None,
     show_default=True,
 )
+@click.option(
+    "--debug",
+    help="Print debug messages.",
+    is_flag=True,
+    default=False,
+    show_default=True,
+)
 @click.argument("version", type=click.Choice(SUPPORTED_OS), required=False)
-def run_all(build, pause, docker_image, version):
+def run_all(build, pause, docker_image, debug, version):
     run_on_versions = [version] if version else SUPPORTED_OS
-    setup_logging(LOG, debug=True)
+    setup_logging(LOG, debug=debug)
     for version in run_on_versions:
         env = {
             "OS_VERSION": version,

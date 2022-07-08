@@ -190,10 +190,6 @@ docker-test: ## Test twindb-backup in a docker container
 docker-start: ## Start a container with /twindb-backup for debugging packaging, etc.
 	@docker run \
 		-v ${pwd}:/twindb-backup \
-		-e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
-		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
-		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
-		-e "GC_CREDENTIALS_FILE=${GC_CREDENTIALS_FILE}" \
 		-w /twindb-backup/ \
 		-it \
 		--name builder_xtrabackup \
@@ -202,10 +198,9 @@ docker-start: ## Start a container with /twindb-backup for debugging packaging, 
 		--dns 208.67.222.222 \
 		--env AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 		--env AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+		--env "GC_CREDENTIALS_FILE=${GC_CREDENTIALS_FILE}" \
 		--env PLATFORM=${PLATFORM} \
 		--env OS_VERSION=${OS_VERSION} \
-		--env LC_ALL=C.UTF-8 \
-		--env LANG=C.UTF-8 \
 		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
 		bash -l
 

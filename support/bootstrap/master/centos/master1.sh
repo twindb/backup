@@ -23,4 +23,5 @@ fi
 systemctl stop mysqld
 rm -rf /var/lib/mysql
 mysqld --initialize-insecure
+chown -R mysql:mysql /var/lib/mysql
 systemctl start mysqld

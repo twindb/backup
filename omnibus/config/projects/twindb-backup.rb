@@ -80,12 +80,12 @@ if bionic?
     runtime_dependency 'nmap'
 end
 
-# RHEL/CentOS
-if redhat?
+if centos?
     runtime_dependency 'cronie'
     runtime_dependency 'nmap-ncat'
 end
 
+override :python, version: '3.9.10'
 
 # twindb-backup
 dependency 'twindb-backup'
