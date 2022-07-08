@@ -408,7 +408,8 @@ def _ensure_list_of_str(obj: Union[List[AnyStr], AnyStr]) -> List[Union[str, Lis
             err_msg = (
                 "Our attempt to ensure obj is a list of strings failed,"
                 f"\n\tgiven: {obj=}"
-                f"\n\tfailure occured while ensuring each element of given iterable was a string, at element: obj[{i}]={elem}"
+                f"\n\tfailure occured while ensuring each element of given iterable was a string, "
+                f"at element: obj[{i}]={elem}"
             )
             raise AzureBlobInitError(err_msg)
     return obj
@@ -687,7 +688,10 @@ class AzureBlob(BaseDestination):
         return extract_protocol(path)
 
     def _path_parse(self, path: str, split_fname: bool = False):
-        """Called in multiple places where we need to decompose a path string in order to access specific parts by name."""
+        """
+        Called in multiple places where we need to decompose a path string
+        in order to access specific parts by name.
+        """
         if not path:
             return self.remote_path, {k: v for k, v in self._default_parts.items()}
         # noinspection PyTupleAssignmentBalance
@@ -758,7 +762,8 @@ class AzureBlob(BaseDestination):
                 <objects inside chevrons> => required
 
             such that:
-                optional components that are not provided should be substituted with an ellipsis (the triple period => ...)
+                optional components that are not provided should be substituted with an ellipsis
+                (the triple period => ...)
 
             E.G.:
                 ...://foo/.../hourly/mysql/bar-that.foos.gz
@@ -818,7 +823,8 @@ class AzureBlob(BaseDestination):
                                 if bprop.deleted:
                                     break
                             except AttributeError:
-                                # when calls to get_blob_properties raises AttributeError, then the blob is no longer available and the deletion was successful
+                                # when calls to get_blob_properties raises AttributeError,
+                                # then the blob is no longer available and the deletion was successful
                                 break
                         else:
                             c: ContainerClient
