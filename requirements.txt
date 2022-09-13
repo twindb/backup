@@ -74,7 +74,7 @@ jmespath==1.0.1
     #   botocore
 msrest==0.7.1
     # via azure-storage-blob
-oauthlib==3.2.0
+oauthlib==3.2.1
     # via requests-oauthlib
 paramiko==2.11.0
     # via -r requirements.in
