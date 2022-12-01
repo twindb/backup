@@ -78,7 +78,7 @@ oauthlib==3.2.0
     # via requests-oauthlib
 paramiko==2.11.0
     # via -r requirements.in
-protobuf==4.21.1
+protobuf==4.21.10
     # via
     #   google-api-core
     #   google-cloud-storage
