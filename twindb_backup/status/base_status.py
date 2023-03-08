@@ -196,7 +196,7 @@ class BaseStatus(object):
                 raise CorruptedStatus("Checksum mismatch")
 
             self._status = self._load(b64decode(status["status"]).decode("utf-8"))
-            self._status.sort(key=lambda cp: cp.created_at)
+            self._status.sort(key=lambda cp: cp.created_at, reverse=True)
         except TypeError:  # Init from None
             self._status = []
         except ValueError as err:  # Old format
