@@ -5,13 +5,13 @@ set -exu
 wait_time=2
 for _ in $(seq 5)
 do
-    apt-get update && break
+    apt-get -qq update && break
     echo "Waiting ${wait_time} seconds before retry"
     sleep ${wait_time}
     wait_time=$((wait_time * 2))
 done
 
-apt-get -y install xtrabackup
+apt-get -qqq -y install xtrabackup
 
 TB_VERSION=$(PYTHONPATH=/twindb-backup python -c "from twindb_backup import __version__; print __version__")
 

@@ -1,0 +1,26 @@
+---
+name: "Integration tests"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        version: [ "focal", "bionic", "7" ]
+    steps:
+      - uses: "actions/checkout@v3"
+      - name: "Setup Python env"
+        uses: "actions/setup-python@v2"
+        with:
+          python-version: 3.9
+
+      - name: "Run tests"
+        run: |
+          pip install -U "pip ~= 22.0.0"
+          python -m venv ~/.env
+          source ~/.env/bin/activate
+          make bootstrap
+          python tests/integration/run_all.py --no-pause ${{ matrix.version }}
