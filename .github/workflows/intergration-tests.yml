@@ -6,6 +6,9 @@ on: "workflow_dispatch"
 jobs:
   test:
     runs-on: "ubuntu-latest"
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     strategy:
       matrix:
         version: ["focal", "bionic", "7"]
