@@ -1,15 +1,14 @@
 ---
 name: "Integration tests"
 
-on:
-  workflow_dispatch:
+on: "workflow_dispatch"
 
 jobs:
   test:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        version: [ "focal", "bionic", "7" ]
+        version: ["focal", "bionic", "7"]
     steps:
       - uses: "actions/checkout@v3"
       - name: "Setup Python env"
@@ -24,3 +23,5 @@ jobs:
           source ~/.env/bin/activate
           make bootstrap
           python tests/integration/run_all.py --no-pause ${{ matrix.version }}
+
+...
