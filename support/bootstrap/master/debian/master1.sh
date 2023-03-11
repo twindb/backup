@@ -2,7 +2,6 @@
 
 set -exu
 
-
 wait_time=2
 for _ in $(seq 5)
 do

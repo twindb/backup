@@ -45,7 +45,7 @@ help:
 
 .PHONY: virtualenv
 virtualenv: ## create virtual environment typically used for development purposes
-	python -m venv --prompt='(twindb_backup)' ~/.virtualenvs/twindb-backup/
+	virtualenv -p python3.9 --always-copy --prompt='(twindb_backup)' ~/.virtualenvs/twindb-backup/
 	@printf "To activate run:\n\n. ~/.virtualenvs/twindb-backup/bin/activate\n\n"
 
 .PHONY: pip
