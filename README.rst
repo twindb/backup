@@ -14,7 +14,7 @@ TwinDB Backup
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/gitter/room/twindb/twindb-backup.svg
-    :target: https://gitter.im/twindb/backup
+    :target: https://matrix.to/#/#twindb_backup:gitter.im
     :alt: Join the chat at https://gitter.im/twindb/backup
 
 .. image:: https://pyup.io/repos/github/twindb/backup/shield.svg
