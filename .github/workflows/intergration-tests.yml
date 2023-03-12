@@ -34,14 +34,6 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: "Setup tmate session"
-        uses: "mxschmitt/action-tmate@v3"
-        if: >
-          ${{
-            github.event_name == 'workflow_dispatch'
-            && inputs.debug_enabled
-          }}
-
       - name: "Run tests"
         run: |
           pip install -U "pip ~= 22.0.0"
@@ -49,5 +41,14 @@ jobs:
           source ~/.env/bin/activate
           make bootstrap
           python tests/integration/run_all.py --no-pause ${{ matrix.version }}
+
+      - name: "Setup tmate session"
+        uses: "mxschmitt/action-tmate@v3"
+        if: >
+          ${{
+            failure()
+            && github.event_name == 'workflow_dispatch'
+            && inputs.debug_enabled
+          }}
 
 ...
