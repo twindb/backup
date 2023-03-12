@@ -9,12 +9,21 @@ on:
         description: 'Run the build with tmate debugging enabled'
         required: false
         default: false
+      pause_test:
+        type: "choice"
+        description: "if 1, the test will be paused upon error"
+        required: false
+        default: "0"
+        options:
+          - "0"
+          - "1"
 jobs:
   test:
     runs-on: "ubuntu-latest"
     env:
       AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
       AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+      PAUSE_TEST: "${{ inputs.pause_test }}"
     strategy:
       matrix:
         version: ["focal", "bionic", "7"]
