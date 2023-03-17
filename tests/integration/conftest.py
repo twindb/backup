@@ -156,24 +156,16 @@ def container_network(docker_client):
     network_params["subnet"] = subnet
     network_params["second_octet"] = int(subnet.split(".")[1])
 
-    try:
-        network = api.create_network(
-            name=NETWORK_NAME,
-            driver="bridge",
-            ipam=ipam_config,
-            check_duplicate=True,
-        )
-        LOG.info("Created subnet %s", network_params["subnet"])
-        LOG.debug(network)
-    except APIError as err:
-        if err.status_code == 500:
-            LOG.info("Network %r already exists", network)
-        else:
-            raise
-
+    network = api.create_network(
+        name=NETWORK_NAME,
+        driver="bridge",
+        ipam=ipam_config,
+        check_duplicate=True,
+    )
+    LOG.info("Created subnet %s", network_params["subnet"])
+    LOG.debug(network)
     yield network_params
-    if network:
-        api.remove_network(net_id=network["Id"])
+    api.remove_network(net_id=network["Id"])
 
 
 def get_container(
