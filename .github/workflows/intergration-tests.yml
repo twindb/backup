@@ -6,17 +6,9 @@ on:
     inputs:
       debug_enabled:
         type: "boolean"
-        description: 'Run the build with tmate debugging enabled'
+        description: "Setup a temporary SSH access if a test fails"
         required: false
         default: false
-      pause_test:
-        type: "choice"
-        description: "if 1, the test will be paused upon error"
-        required: false
-        default: "0"
-        options:
-          - "0"
-          - "1"
 jobs:
   test:
     runs-on: "ubuntu-20.04"
@@ -49,13 +41,9 @@ jobs:
 
       - name: "Setup tmate session"
         uses: "mxschmitt/action-tmate@v3"
+        if: "${{ failure() && github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}"
+
         with:
           limit-access-to-actor: true
-        if: >
-          ${{
-            failure()
-            && github.event_name == 'workflow_dispatch'
-            && inputs.debug_enabled
-          }}
 
 ...
