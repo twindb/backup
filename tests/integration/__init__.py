@@ -5,8 +5,8 @@ __author__ = "aleks"
 
 def ensure_aws_creds():
     print("Integration tests need Amazon API credentials:")
-    print("    AWS_ACCESS_KEY_ID")
-    print("    AWS_SECRET_ACCESS_KEY")
+    print(f"    AWS_ACCESS_KEY_ID     .. {'found' if 'AWS_ACCESS_KEY_ID' in environ else 'not found'}")
+    print(f"    AWS_SECRET_ACCESS_KEY .. {'found' if 'AWS_SECRET_ACCESS_KEY' in environ else 'not found'}")
     try:
         try:
             environ["AWS_ACCESS_KEY_ID"]
