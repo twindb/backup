@@ -7,6 +7,7 @@ function install_package() {
 
     for _ in 1 2 3
     do
+        # shellcheck disable=SC2068
         yum -y install $@ && break
         sleep 5
     done

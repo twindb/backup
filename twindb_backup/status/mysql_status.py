@@ -37,7 +37,7 @@ class MySQLStatus(PeriodicStatus):
         for i in range(full_backup_index, len(INTERVALS)):
             period_copies = getattr(self, INTERVALS[i])
             LOG.debug("Checking %d %s copies", len(period_copies), INTERVALS[i])
-            for _, value in period_copies.items():
+            for value in sorted(period_copies.values(), reverse=True):
                 try:
                     if value.type == "full":
                         LOG.debug("Found parent %r", value)

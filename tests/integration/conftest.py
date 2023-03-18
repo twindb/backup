@@ -11,7 +11,7 @@ from docker.types import IPAMConfig, IPAMPool
 from runlike.inspector import Inspector
 
 from tests.integration import ensure_aws_creds
-from twindb_backup import LOG
+from twindb_backup import LOG, setup_logging
 from twindb_backup.backup import timeout
 from twindb_backup.util import mkdir_p
 
@@ -34,6 +34,7 @@ except KeyError:
 NETWORK_NAME = "test_network"
 
 ensure_aws_creds()
+setup_logging(LOG, debug=True)
 
 
 def get_platform_from_image(image):
@@ -252,6 +253,7 @@ def get_container(
 @pytest.fixture(scope="module")
 def master1(docker_client, container_network, tmpdir_factory):
 
+    LOG.info("Starting fixture master1 container")
     platform = (
         os.environ["PLATFORM"] if "PLATFORM" in os.environ else get_platform_from_image(os.environ["DOCKER_IMAGE"])
     )
@@ -315,6 +317,7 @@ def master1(docker_client, container_network, tmpdir_factory):
 # noinspection PyShadowingNames
 @pytest.fixture(scope="module")
 def slave(docker_client, container_network, tmpdir_factory):
+    LOG.info("Starting fixture slave container")
     platform = get_platform_from_image(os.environ["DOCKER_IMAGE"])
     bootstrap_script = osp.join(
         osp.sep,
@@ -362,9 +365,9 @@ def slave(docker_client, container_network, tmpdir_factory):
         docker_client.api.remove_container(container=container["Id"], force=True)
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def storage_server(docker_client, container_network):
-
+    LOG.info("Starting fixture storage_server container")
     bootstrap_script = "/twindb-backup/support/bootstrap/storage_server.sh"
     container = get_container(
         "storage_server",
@@ -539,3 +542,8 @@ def config_content_ssh():
         yearly_copies=0
         """
     )
+
+
+def get_container_hostname(client, container) -> str:
+
+    return client.api.inspect_container(container)["Config"]["Hostname"]

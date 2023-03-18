@@ -47,7 +47,7 @@ SCRIPT
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.provider "virtualbox" do |v|
-        v.memory = 1024
+        v.memory = 4096
         v.cpus = 4
     end
     nodes.each do |node|

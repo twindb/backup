@@ -1,7 +1,8 @@
 import json
 import os
+from textwrap import dedent
 
-from tests.integration.conftest import assert_and_pause, docker_execute, get_twindb_config_dir
+from tests.integration.conftest import assert_and_pause, docker_execute, get_container_hostname, get_twindb_config_dir
 
 
 def test_backup(master1, storage_server, config_content_ssh, docker_client, rsa_private_key):
@@ -15,11 +16,13 @@ def test_backup(master1, storage_server, config_content_ssh, docker_client, rsa_
     ssh_key_host = "%s/id_rsa" % twindb_config_dir
     ssh_key_guest = "/etc/twindb/id_rsa"
 
-    contents = """
-[client]
-user=dba
-password=qwerty
-"""
+    contents = dedent(
+        """
+        [client]
+        user=dba
+        password=qwerty
+        """
+    )
     with open(my_cnf_path, "w") as my_cnf:
         my_cnf.write(contents)
 
@@ -50,7 +53,7 @@ password=qwerty
     cmd = ["twindb-backup", "--config", twindb_config_guest, "status"]
 
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert ret == 0
+    assert_and_pause((ret == 0,), cout)
     status = json.loads(cout)
     assert len(status["hourly"]) == 1
 
@@ -70,8 +73,8 @@ password=qwerty
     ret, cout = docker_execute(docker_client, storage_server["Id"], cmd)
     assert_and_pause((ret == 0,), cout)
 
-    dir_path = "/var/backup/local/master1_1/hourly/mysql"
-    cmd = ["bash", "-c", "ls %s | wc -l" % dir_path]
+    dir_path = f"/var/backup/local/{get_container_hostname(docker_client, master1)}/hourly/mysql"
+    cmd = ["bash", "-o", "pipefail", "-c", f"ls {dir_path} | wc -l"]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd, tty=True)
     assert_and_pause((ret == 0,), cout)
     assert_and_pause(("1" in cout,), cout)
@@ -98,8 +101,8 @@ password=qwerty
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     assert_and_pause((ret == 0,), cout)
 
-    dir_path = "/var/backup/local/master1_1/daily/mysql"
-    cmd = ["bash", "-c", "ls %s | wc -l" % dir_path]
+    dir_path = f"/var/backup/local/{get_container_hostname(docker_client, master1)}/daily/mysql"
+    cmd = ["bash", "-o", "pipefail", "-c", f"ls {dir_path} | wc -l"]
     ret, cout = docker_execute(docker_client, master1["Id"], cmd, tty=True)
     print(cout)
     assert_and_pause((ret == 0,), cout)
