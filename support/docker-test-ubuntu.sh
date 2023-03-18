@@ -20,8 +20,8 @@ apt-get install -qq \
 easy_install pip
 
 # install percona repository
-wget https://repo.percona.com/apt/percona-release_0.1-4.$(lsb_release -sc)_all.deb
-dpkg -i percona-release_0.1-4.$(lsb_release -sc)_all.deb
+wget "https://repo.percona.com/apt/percona-release_0.1-4.$(lsb_release -sc)_all.deb"
+dpkg -i "percona-release_0.1-4.$(lsb_release -sc)_all.deb"
 apt-get update
 
 apt-get install -qq \
@@ -32,7 +32,7 @@ apt-get install -qq \
 mysql_install_db && mysqld --user=root &
 
 timeout=300
-while [ ${timeout} -gt 0 ] ; do mysqladmin ping && break; sleep 1; timeout=$((${timeout} - 1)); done
+while [ ${timeout} -gt 0 ] ; do mysqladmin ping && break; sleep 1; timeout=$((timeout - 1)); done
 
 cd /twindb-backup
 pip install --editable .
