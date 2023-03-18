@@ -20,7 +20,7 @@ rules:
     line-length:
         allow-non-breakable-inline-mappings: true
         allow-non-breakable-words: true
-        max: 80
+        max: 120
     new-line-at-end-of-file: "enable"
     new-lines: "enable"
     octal-values: "enable"

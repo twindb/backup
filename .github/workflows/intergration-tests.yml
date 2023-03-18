@@ -1,0 +1,52 @@
+---
+name: "Integration tests"
+
+on:
+  schedule:
+    # Run integration tests at midnight UTC every day
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: "boolean"
+        description: "Setup a temporary SSH access if a test fails"
+        required: false
+        default: false
+jobs:
+  test:
+    runs-on: "ubuntu-20.04"
+    env:
+      AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+      AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+      PAUSE_TEST: "${{ inputs.pause_test }}"
+    strategy:
+      matrix:
+        version: ["focal", "bionic", "7"]
+    steps:
+      - uses: "actions/checkout@v3"
+      - name: "Setup Python env"
+        uses: "actions/setup-python@v2"
+        with:
+          python-version: 3.9
+
+      - name: "Disable apparmor"
+        run: |
+          sudo ln -s /etc/apparmor.d/usr.sbin.mysqld /etc/apparmor.d/disable/
+          sudo apparmor_parser -R /etc/apparmor.d/disable/usr.sbin.mysqld
+
+      - name: "Run tests"
+        run: |
+          pip install -U "pip ~= 22.0.0"
+          python -m venv ~/.env
+          source ~/.env/bin/activate
+          make bootstrap
+          python tests/integration/run_all.py --no-pause ${{ matrix.version }}
+
+      - name: "Setup tmate session"
+        uses: "mxschmitt/action-tmate@v3"
+        if: "${{ failure() && github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}"
+
+        with:
+          limit-access-to-actor: true
+
+...

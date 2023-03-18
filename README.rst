@@ -6,6 +6,9 @@ TwinDB Backup
 .. image:: https://github.com/twindb/backup/actions/workflows/makefile.yml/badge.svg
     :target: https://github.com/twindb/backup/actions/workflows/makefile.yml
 
+.. image:: https://github.com/twindb/backup/actions/workflows/intergration-tests.yml/badge.svg
+    :target: https://github.com/twindb/backup/actions/workflows/intergration-tests.yml
+
 .. image:: https://img.shields.io/codecov/c/github/twindb/backup.svg
     :target: https://codecov.io/gh/twindb/backup
 

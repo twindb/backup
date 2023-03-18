@@ -22,6 +22,7 @@ fi
 # MySQL sets random root password. Reset to empty
 systemctl stop mysqld
 rm -rf /var/lib/mysql
+mkdir /var/lib/mysql
 mysqld --initialize-insecure
 chown -R mysql:mysql /var/lib/mysql
 systemctl start mysqld

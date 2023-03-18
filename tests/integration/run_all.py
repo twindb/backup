@@ -5,16 +5,13 @@ import click
 
 from twindb_backup import LOG, setup_logging
 
-SUPPORTED_OS = [
-    "focal",
-    "bionic",
-    "7",
-]
 DOCKER_IMAGES = {
     "focal": "twindb/backup-test:focal",
     "bionic": "twindb/backup-test:bionic",
     "7": "twindb/backup-test:centos-7",
 }
+
+SUPPORTED_OS = list(DOCKER_IMAGES.keys())
 
 
 @click.command()

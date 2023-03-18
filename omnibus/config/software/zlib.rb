@@ -24,7 +24,7 @@ version("1.2.11") { source sha256: "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed
 version("1.2.8")  { source sha256: "36658cb768a54c1d4dec43c3116c27ed893e88b02ecfcb44f2166f9c0b7f2a0d" }
 version("1.2.6")  { source sha256: "21235e08552e6feba09ea5e8d750805b3391c62fb81c71a235c0044dc7a8a61b" }
 
-source url: "https://zlib.net/fossils/zlib-#{version}.tar.gz"
+source url: "https://twindb-release.s3.amazonaws.com/zlib-#{version}.tar.gz"
 
 license "Zlib"
 license_file "README"
