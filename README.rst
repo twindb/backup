@@ -111,9 +111,6 @@ How do I get set up?
 
 **TwinDB Backup** can be installed from a DEB/RPM package.
 
-The packages are available in the `Releases <https://github.com/twindb/backup/releases>`_.
-
-
 Installing TwinDB Backup on Ubuntu
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -121,19 +118,19 @@ Install appropriate Percona XtraBackup version (2.4 for MySQL 5.6, 5.7 or 8.0 fo
 
 .. code-block:: console
 
-    # # Download the package
-    # wget https://downloads.percona.com/downloads/Percona-XtraBackup-2.4/Percona-XtraBackup-2.4.26/binary/debian/bionic/x86_64/percona-xtrabackup-24_2.4.26-1.bionic_amd64.deb
-    # # Install XtraBackup
-    # apt install ./percona-xtrabackup-24_2.4.26-1.bionic_amd64.deb
+    # Download the package
+    wget https://downloads.percona.com/downloads/Percona-XtraBackup-2.4/Percona-XtraBackup-2.4.26/binary/debian/focal/x86_64/percona-xtrabackup-24_2.4.26-1.focal_amd64.deb
+    # Install XtraBackup
+    apt install ./percona-xtrabackup-24_2.4.26-1.focal_amd64.deb
 
 Install TwinDB Backup.
 
 .. code-block:: console
 
-    # # Download the package
-    # wget https://twindb-release.s3.amazonaws.com/twindb-backup/3.0.0/bionic/twindb-backup_3.0.0-1_amd64.deb
-    # # Install TwinDB Backup
-    # apt install ./twindb-backup_3.0.0-1_amd64.deb
+    # Download the package
+    wget https://twindb-release.s3.amazonaws.com/twindb-backup/3.1.1/focal/twindb-backup_3.1.1-1_amd64.deb
+    # Install TwinDB Backup
+    apt install ./twindb-backup_3.1.1-1_amd64.deb
 
 Installing TwinDB Backup on CentOS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -142,13 +139,13 @@ Install appropriate Percona XtraBackup version (2.4 for MySQL 5.6, 5.7 or 8.0 fo
 
 .. code-block:: console
 
-    # yum install https://downloads.percona.com/downloads/Percona-XtraBackup-2.4/Percona-XtraBackup-2.4.26/binary/redhat/7/x86_64/percona-xtrabackup-24-2.4.26-1.el7.x86_64.rpm
+        yum install https://downloads.percona.com/downloads/Percona-XtraBackup-2.4/Percona-XtraBackup-2.4.26/binary/redhat/7/x86_64/percona-xtrabackup-24-2.4.26-1.el7.x86_64.rpm
 
 Install TwinDB Backup.
 
 .. code-block:: console
 
-    # yum install https://twindb-release.s3.amazonaws.com/twindb-backup/3.0.0/7/twindb-backup-3.0.0-1.x86_64.rpm
+    yum install https://twindb-release.s3.amazonaws.com/twindb-backup/3.1.1/7/twindb-backup-3.1.1-1.x86_64.rpm
 
 Configuring TwinDB Backup
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -168,7 +165,7 @@ Possible ``OS_VERSION`` values:
 
 .. code-block:: console
 
-    # export OS_VERSION=bionic
+    # export OS_VERSION=focal
     # make package
 
 The package file will be generated in ``omnibus/pkg/``:
@@ -176,7 +173,7 @@ The package file will be generated in ``omnibus/pkg/``:
 .. code-block:: console
 
     $ ls omnibus/pkg/*.deb
-    omnibus/pkg/twindb-backup_2.20.0-1_amd64.deb
+    omnibus/pkg/twindb-backup_3.1.1-1_amd64.deb
 
 Once the package is built you can install it with rpm/dpkg or upload it to your repository
 and install it with apt or yum.
