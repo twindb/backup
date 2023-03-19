@@ -111,9 +111,6 @@ How do I get set up?
 
 **TwinDB Backup** can be installed from a DEB/RPM package.
 
-The packages are available in the `Releases <https://github.com/twindb/backup/releases>`_.
-
-
 Installing TwinDB Backup on Ubuntu
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
