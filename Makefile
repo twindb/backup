@@ -118,7 +118,6 @@ lint: ## check style with pylint
 
 test: ## Run tests quickly with the default Python and generate code coverage report
 	pytest -xv --cov-report term-missing --cov=./twindb_backup tests/unit
-	codecov
 
 test-including-azure-blob: ## Like 'make test' but includes tests for azure blob destination
 	coverage run --source=twindb_backup -m pytest -xv tests/unit
