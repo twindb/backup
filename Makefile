@@ -50,7 +50,7 @@ virtualenv: ## create virtual environment typically used for development purpose
 
 .PHONY: pip
 pip:
-	pip install -U "pip ~= 22.2"
+	pip install -U "pip ~= 23.0"
 
 .PHONY: pip-tools
 pip-tools: pip
@@ -90,8 +90,9 @@ clean-pyc: ## remove Python file artifacts
 
 clean-test: ## remove test and coverage artifacts
 	rm -fr .tox/
-	rm -f .coverage
+	rm -f .coverage coverage.xml
 	rm -fr htmlcov/
+	rm -rf .pytest_cache
 
 clean-docker:
 	@sudo docker rm twindb-backup-build-${PLATFORM}
@@ -117,8 +118,7 @@ lint: ## check style with pylint
 
 
 test: ## Run tests quickly with the default Python and generate code coverage report
-	pytest -xv --cov-report term-missing --cov=./twindb_backup tests/unit
-	codecov
+	pytest -xv --cov-report term-missing --cov-report xml --cov=./twindb_backup tests/unit
 
 test-including-azure-blob: ## Like 'make test' but includes tests for azure blob destination
 	coverage run --source=twindb_backup -m pytest -xv tests/unit
