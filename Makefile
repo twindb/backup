@@ -50,7 +50,7 @@ virtualenv: ## create virtual environment typically used for development purpose
 
 .PHONY: pip
 pip:
-	pip install -U "pip ~= 22.2"
+	pip install -U "pip ~= 23.0"
 
 .PHONY: pip-tools
 pip-tools: pip
