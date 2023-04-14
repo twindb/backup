@@ -6,17 +6,15 @@
 #
 alabaster==0.7.13
     # via sphinx
-astroid==2.15.0
+astroid==2.15.2
     # via pylint
-attrs==22.2.0
-    # via pytest
 babel==2.12.1
     # via sphinx
 black==22.12.0
     # via -r requirements_dev.in
-boto3==1.26.89
+boto3==1.26.113
     # via moto
-botocore==1.29.89
+botocore==1.29.113
     # via
     #   boto3
     #   moto
@@ -35,13 +33,9 @@ click==8.1.3
     # via
     #   black
     #   runlike
-codecov==2.1.12
-    # via -r requirements_dev.in
-coverage[toml]==7.2.1
-    # via
-    #   codecov
-    #   pytest-cov
-cryptography==39.0.2
+coverage[toml]==7.2.3
+    # via pytest-cov
+cryptography==40.0.1
     # via moto
 dill==0.3.6
     # via pylint
@@ -49,13 +43,13 @@ docker==5.0.3
     # via -r requirements_dev.in
 docutils==0.17.1
     # via sphinx
-exceptiongroup==1.1.0
+exceptiongroup==1.1.1
     # via pytest
 idna==3.4
     # via requests
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==6.0.0
+importlib-metadata==6.3.0
     # via sphinx
 iniconfig==2.0.0
     # via pytest
@@ -81,19 +75,19 @@ mccabe==0.7.0
     # via pylint
 mock==4.0.3
     # via -r requirements_dev.in
-moto==4.1.4
+moto==4.1.7
     # via -r requirements_dev.in
 mypy-extensions==1.0.0
     # via black
-packaging==23.0
+packaging==23.1
     # via
     #   pytest
     #   sphinx
-pathspec==0.11.0
+pathspec==0.11.1
     # via
     #   black
     #   yamllint
-platformdirs==3.1.1
+platformdirs==3.2.0
     # via
     #   black
     #   pylint
@@ -103,11 +97,11 @@ pycodestyle==2.10.0
     # via -r requirements_dev.in
 pycparser==2.21
     # via cffi
-pygments==2.14.0
+pygments==2.15.0
     # via sphinx
-pylint==2.17.0
+pylint==2.17.2
     # via -r requirements_dev.in
-pytest==7.2.2
+pytest==7.3.0
     # via
     #   -r requirements_dev.in
     #   pytest-cov
@@ -128,7 +122,6 @@ pyyaml==6.0
     #   yamllint
 requests==2.28.2
     # via
-    #   codecov
     #   docker
     #   moto
     #   responses
@@ -163,9 +156,9 @@ tomli==2.0.1
     #   coverage
     #   pylint
     #   pytest
-tomlkit==0.11.6
+tomlkit==0.11.7
     # via pylint
-types-pyyaml==6.0.12.8
+types-pyyaml==6.0.12.9
     # via responses
 typing-extensions==4.5.0
     # via
@@ -185,7 +178,7 @@ wrapt==1.15.0
     # via astroid
 xmltodict==0.13.0
     # via moto
-yamllint==1.29.0
+yamllint==1.30.0
     # via -r requirements_dev.in
 zipp==3.15.0
     # via importlib-metadata

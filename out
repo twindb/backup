@@ -1,0 +1,1542 @@
+pip install -U "pip ~= 22.2"
+Requirement already satisfied: pip~=22.2 in /home/aleks/.virtualenvs/backup/lib/python3.9/site-packages (22.3.1)
+
+[notice] A new release of pip available: 22.3.1 -> 23.0.1
+[notice] To update, run: pip install --upgrade pip
+pip install -U "pip-tools ~= 6.6"
+Requirement already satisfied: pip-tools~=6.6 in /home/aleks/.virtualenvs/backup/lib/python3.9/site-packages (6.13.0)
+Requirement already satisfied: click>=8 in /home/aleks/.virtualenvs/backup/lib/python3.9/site-packages (from pip-tools~=6.6) (8.1.3)
+Requirement already satisfied: wheel in /home/aleks/.virtualenvs/backup/lib/python3.9/site-packages (from pip-tools~=6.6) (0.38.4)
+Requirement already satisfied: pip>=22.2 in /home/aleks/.virtualenvs/backup/lib/python3.9/site-packages (from pip-tools~=6.6) (22.3.1)
+Requirement already satisfied: setuptools in /home/aleks/.virtualenvs/backup/lib/python3.9/site-packages (from pip-tools~=6.6) (62.3.4)
+Requirement already satisfied: build in /home/aleks/.virtualenvs/backup/lib/python3.9/site-packages (from pip-tools~=6.6) (0.10.0)
+Requirement already satisfied: pyproject_hooks in /home/aleks/.virtualenvs/backup/lib/python3.9/site-packages (from build->pip-tools~=6.6) (1.0.0)
+Requirement already satisfied: packaging>=19.0 in /home/aleks/.virtualenvs/backup/lib/python3.9/site-packages (from build->pip-tools~=6.6) (23.0)
+Requirement already satisfied: tomli>=1.1.0 in /home/aleks/.virtualenvs/backup/lib/python3.9/site-packages (from build->pip-tools~=6.6) (2.0.1)
+
+[notice] A new release of pip available: 22.3.1 -> 23.0.1
+[notice] To update, run: pip install --upgrade pip
+pip-compile --upgrade --verbose --output-file requirements.txt requirements.in
+WARNING: the legacy dependency resolver is deprecated and will be removed in future versions of pip-tools. The default resolver will be changed to 'backtracking' in pip-tools 7.0.0. Specify --resolver=backtracking to silence this warning.
+Using indexes:
+  https://pypi.org/simple
+
+                          ROUND 1                           
+Current constraints:
+  azure-core~=1.24 (from -r requirements.in (line 2))
+  azure-storage-blob~=12.12 (from -r requirements.in (line 3))
+  boto3~=1.7 (from -r requirements.in (line 6))
+  Click~=8.1 (from -r requirements.in (line 4))
+  datadog~=0.22 (from -r requirements.in (line 9))
+  google~=3.0 (from -r requirements.in (line 11))
+  google-cloud-storage~=2.3.0 (from -r requirements.in (line 12))
+  paramiko~=2.5 (from -r requirements.in (line 10))
+  psutil~=5.4 (from -r requirements.in (line 7))
+  pyasn1~=0.4 (from -r requirements.in (line 8))
+  PyMySQL~=1.0 (from -r requirements.in (line 5))
+  statsd~=3.3 (from -r requirements.in (line 13))
+  statsd-tags~=3.2 (from -r requirements.in (line 14))
+
+Finding the best candidates:
+  found candidate azure-core==1.26.4 (constraint was ~=1.24)
+  found candidate azure-storage-blob==12.16.0 (constraint was ~=12.12)
+  found candidate boto3==1.26.113 (constraint was ~=1.7)
+  found candidate click==8.1.3 (constraint was ~=8.1)
+  found candidate datadog==0.45.0 (constraint was ~=0.22)
+  found candidate google==3.0.0 (constraint was ~=3.0)
+  found candidate google-cloud-storage==2.3.0 (constraint was ~=2.3.0)
+  found candidate paramiko==2.12.0 (constraint was ~=2.5)
+  found candidate psutil==5.9.4 (constraint was ~=5.4)
+  found candidate pyasn1==0.4.8 (constraint was ~=0.4)
+  found candidate pymysql==1.0.3 (constraint was ~=1.0)
+  found candidate statsd==3.3.0 (constraint was ~=3.3)
+  found candidate statsd-tags==3.2.1.post1 (constraint was ~=3.2)
+
+Finding secondary dependencies:
+  datadog==0.45.0           requires requests>=2.6.0
+  statsd==3.3.0             requires -
+  boto3==1.26.113           requires botocore<1.30.0,>=1.29.113, jmespath<2.0.0,>=0.7.1, s3transfer<0.7.0,>=0.6.0
+  azure-storage-blob==12.16.0 requires azure-core<2.0.0,>=1.26.0, cryptography>=2.1.4, isodate>=0.6.1, typing-extensions>=4.0.1
+  google==3.0.0             requires beautifulsoup4
+  pyasn1==0.4.8             requires -
+  google-cloud-storage==2.3.0 requires google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5, google-auth<3.0dev,>=1.25.0, google-cloud-core<3.0dev,>=2.3.0, google-resumable-media>=2.3.2, protobuf, requests<3.0.0dev,>=2.18.0
+  statsd-tags==3.2.1.post1  requires -
+  azure-core==1.26.4        requires requests>=2.18.4, six>=1.11.0, typing-extensions>=4.3.0
+  pymysql==1.0.3            requires -
+  click==8.1.3              requires -
+  paramiko==2.12.0          requires bcrypt>=3.1.3, cryptography>=2.5, pynacl>=1.0.1, six
+  psutil==5.9.4             requires -
+
+New dependencies found in this round:
+  adding ('azure-core', '<2.0.0,>=1.26.0', [])
+  adding ('bcrypt', '>=3.1.3', [])
+  adding ('beautifulsoup4', '', [])
+  adding ('botocore', '<1.30.0,>=1.29.113', [])
+  adding ('cryptography', '>=2.1.4,>=2.5', [])
+  adding ('google-api-core', '!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5', [])
+  adding ('google-auth', '<3.0dev,>=1.25.0', [])
+  adding ('google-cloud-core', '<3.0dev,>=2.3.0', [])
+  adding ('google-resumable-media', '>=2.3.2', [])
+  adding ('isodate', '>=0.6.1', [])
+  adding ('jmespath', '<2.0.0,>=0.7.1', [])
+  adding ('protobuf', '', [])
+  adding ('pynacl', '>=1.0.1', [])
+  adding ('requests', '<3.0.0dev,>=2.18.0,>=2.18.4,>=2.6.0', [])
+  adding ('s3transfer', '<0.7.0,>=0.6.0', [])
+  adding ('six', '>=1.11.0', [])
+  adding ('typing-extensions', '>=4.0.1,>=4.3.0', [])
+Removed dependencies in this round:
+------------------------------------------------------------
+Result of round 1: not stable
+
+                          ROUND 2                           
+Current constraints:
+  azure-core<2.0.0,>=1.26.0,~=1.24 (from -r requirements.in (line 2))
+  azure-storage-blob~=12.12 (from -r requirements.in (line 3))
+  bcrypt>=3.1.3 (from paramiko==2.12.0->-r requirements.in (line 10))
+  beautifulsoup4 (from google==3.0.0->-r requirements.in (line 11))
+  boto3~=1.7 (from -r requirements.in (line 6))
+  botocore<1.30.0,>=1.29.113 (from boto3==1.26.113->-r requirements.in (line 6))
+  Click~=8.1 (from -r requirements.in (line 4))
+  cryptography>=2.1.4,>=2.5 (from paramiko==2.12.0->-r requirements.in (line 10))
+  datadog~=0.22 (from -r requirements.in (line 9))
+  google~=3.0 (from -r requirements.in (line 11))
+  google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5 (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  google-auth<3.0dev,>=1.25.0 (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  google-cloud-core<3.0dev,>=2.3.0 (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  google-cloud-storage~=2.3.0 (from -r requirements.in (line 12))
+  google-resumable-media>=2.3.2 (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  isodate>=0.6.1 (from azure-storage-blob==12.16.0->-r requirements.in (line 3))
+  jmespath<2.0.0,>=0.7.1 (from boto3==1.26.113->-r requirements.in (line 6))
+  paramiko~=2.5 (from -r requirements.in (line 10))
+  protobuf (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  psutil~=5.4 (from -r requirements.in (line 7))
+  pyasn1~=0.4 (from -r requirements.in (line 8))
+  PyMySQL~=1.0 (from -r requirements.in (line 5))
+  pynacl>=1.0.1 (from paramiko==2.12.0->-r requirements.in (line 10))
+  requests<3.0.0dev,>=2.18.0,>=2.18.4,>=2.6.0 (from datadog==0.45.0->-r requirements.in (line 9))
+  s3transfer<0.7.0,>=0.6.0 (from boto3==1.26.113->-r requirements.in (line 6))
+  six>=1.11.0 (from paramiko==2.12.0->-r requirements.in (line 10))
+  statsd~=3.3 (from -r requirements.in (line 13))
+  statsd-tags~=3.2 (from -r requirements.in (line 14))
+  typing-extensions>=4.0.1,>=4.3.0 (from azure-core==1.26.4->-r requirements.in (line 2))
+
+Finding the best candidates:
+  found candidate azure-core==1.26.4 (constraint was ~=1.24,>=1.26.0,<2.0.0)
+  found candidate azure-storage-blob==12.16.0 (constraint was ~=12.12)
+  found candidate bcrypt==4.0.1 (constraint was >=3.1.3)
+  found candidate beautifulsoup4==4.12.2 (constraint was <any>)
+  found candidate boto3==1.26.113 (constraint was ~=1.7)
+  found candidate botocore==1.29.113 (constraint was >=1.29.113,<1.30.0)
+  found candidate click==8.1.3 (constraint was ~=8.1)
+  found candidate cryptography==40.0.1 (constraint was >=2.1.4,>=2.5)
+  found candidate datadog==0.45.0 (constraint was ~=0.22)
+  found candidate google==3.0.0 (constraint was ~=3.0)
+  found candidate google-api-core==2.11.0 (constraint was >=1.31.5,!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev)
+  found candidate google-auth==2.17.3 (constraint was >=1.25.0,<3.0dev)
+  found candidate google-cloud-core==2.3.2 (constraint was >=2.3.0,<3.0dev)
+  found candidate google-cloud-storage==2.3.0 (constraint was ~=2.3.0)
+  found candidate google-resumable-media==2.4.1 (constraint was >=2.3.2)
+  found candidate isodate==0.6.1 (constraint was >=0.6.1)
+  found candidate jmespath==1.0.1 (constraint was >=0.7.1,<2.0.0)
+  found candidate paramiko==2.12.0 (constraint was ~=2.5)
+  found candidate protobuf==4.22.3 (constraint was <any>)
+  found candidate psutil==5.9.4 (constraint was ~=5.4)
+  found candidate pyasn1==0.4.8 (constraint was ~=0.4)
+  found candidate pymysql==1.0.3 (constraint was ~=1.0)
+  found candidate pynacl==1.5.0 (constraint was >=1.0.1)
+  found candidate requests==2.28.2 (constraint was >=2.18.0,>=2.18.4,>=2.6.0,<3.0.0dev)
+  found candidate s3transfer==0.6.0 (constraint was >=0.6.0,<0.7.0)
+  found candidate six==1.16.0 (constraint was >=1.11.0)
+  found candidate statsd==3.3.0 (constraint was ~=3.3)
+  found candidate statsd-tags==3.2.1.post1 (constraint was ~=3.2)
+  found candidate typing-extensions==4.5.0 (constraint was >=4.0.1,>=4.3.0)
+
+Finding secondary dependencies:
+  six==1.16.0               requires -
+  beautifulsoup4==4.12.2    requires soupsieve>1.2
+  cryptography==40.0.1      requires cffi>=1.12
+  google-cloud-core==2.3.2  requires google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.6, google-auth<3.0dev,>=1.25.0
+  datadog==0.45.0           requires requests>=2.6.0
+  google-api-core==2.11.0   requires google-auth<3.0dev,>=2.14.1, googleapis-common-protos<2.0dev,>=1.56.2, protobuf!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0dev,>=3.19.5, requests<3.0.0dev,>=2.18.0
+  statsd-tags==3.2.1.post1  requires -
+  isodate==0.6.1            requires six
+  statsd==3.3.0             requires -
+  jmespath==1.0.1           requires -
+  protobuf==4.22.3          requires -
+  google==3.0.0             requires beautifulsoup4
+  pymysql==1.0.3            requires -
+  requests==2.28.2          requires certifi>=2017.4.17, charset-normalizer<4,>=2, idna<4,>=2.5, urllib3<1.27,>=1.21.1
+  google-cloud-storage==2.3.0 requires google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5, google-auth<3.0dev,>=1.25.0, google-cloud-core<3.0dev,>=2.3.0, google-resumable-media>=2.3.2, protobuf, requests<3.0.0dev,>=2.18.0
+  paramiko==2.12.0          requires bcrypt>=3.1.3, cryptography>=2.5, pynacl>=1.0.1, six
+  google-resumable-media==2.4.1 requires google-crc32c<2.0dev,>=1.0
+  pyasn1==0.4.8             requires -
+  boto3==1.26.113           requires botocore<1.30.0,>=1.29.113, jmespath<2.0.0,>=0.7.1, s3transfer<0.7.0,>=0.6.0
+  psutil==5.9.4             requires -
+  s3transfer==0.6.0         requires botocore<2.0a.0,>=1.12.36
+  bcrypt==4.0.1             requires -
+  azure-storage-blob==12.16.0 requires azure-core<2.0.0,>=1.26.0, cryptography>=2.1.4, isodate>=0.6.1, typing-extensions>=4.0.1
+  botocore==1.29.113        requires jmespath<2.0.0,>=0.7.1, python-dateutil<3.0.0,>=2.1, urllib3<1.27,>=1.25.4
+  pynacl==1.5.0             requires cffi>=1.4.1
+  azure-core==1.26.4        requires requests>=2.18.4, six>=1.11.0, typing-extensions>=4.3.0
+  click==8.1.3              requires -
+  typing-extensions==4.5.0  requires -
+  google-auth==2.17.3       requires cachetools<6.0,>=2.0.0, pyasn1-modules>=0.2.1, rsa<5,>=3.1.4; python_version >= "3.6", six>=1.9.0
+
+New dependencies found in this round:
+  adding ('botocore', '<1.30.0,<2.0a.0,>=1.12.36,>=1.29.113', [])
+  adding ('cachetools', '<6.0,>=2.0.0', [])
+  adding ('certifi', '>=2017.4.17', [])
+  adding ('cffi', '>=1.12,>=1.4.1', [])
+  adding ('charset-normalizer', '<4,>=2', [])
+  adding ('google-api-core', '!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5,>=1.31.6', [])
+  adding ('google-auth', '<3.0dev,>=1.25.0,>=2.14.1', [])
+  adding ('google-crc32c', '<2.0dev,>=1.0', [])
+  adding ('googleapis-common-protos', '<2.0dev,>=1.56.2', [])
+  adding ('idna', '<4,>=2.5', [])
+  adding ('protobuf', '!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0dev,>=3.19.5', [])
+  adding ('pyasn1-modules', '>=0.2.1', [])
+  adding ('python-dateutil', '<3.0.0,>=2.1', [])
+  adding ('rsa', '<5,>=3.1.4', [])
+  adding ('six', '>=1.11.0,>=1.9.0', [])
+  adding ('soupsieve', '>1.2', [])
+  adding ('urllib3', '<1.27,>=1.21.1,>=1.25.4', [])
+Removed dependencies in this round:
+  removing ('botocore', '<1.30.0,>=1.29.113', [])
+  removing ('google-api-core', '!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5', [])
+  removing ('google-auth', '<3.0dev,>=1.25.0', [])
+  removing ('protobuf', '', [])
+  removing ('six', '>=1.11.0', [])
+------------------------------------------------------------
+Result of round 2: not stable
+
+                          ROUND 3                           
+Current constraints:
+  azure-core<2.0.0,>=1.26.0,~=1.24 (from -r requirements.in (line 2))
+  azure-storage-blob~=12.12 (from -r requirements.in (line 3))
+  bcrypt>=3.1.3 (from paramiko==2.12.0->-r requirements.in (line 10))
+  beautifulsoup4 (from google==3.0.0->-r requirements.in (line 11))
+  boto3~=1.7 (from -r requirements.in (line 6))
+  botocore<1.30.0,<2.0a.0,>=1.12.36,>=1.29.113 (from boto3==1.26.113->-r requirements.in (line 6))
+  cachetools<6.0,>=2.0.0 (from google-auth==2.17.3->google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  certifi>=2017.4.17 (from requests==2.28.2->datadog==0.45.0->-r requirements.in (line 9))
+  cffi>=1.12,>=1.4.1 (from pynacl==1.5.0->paramiko==2.12.0->-r requirements.in (line 10))
+  charset-normalizer<4,>=2 (from requests==2.28.2->datadog==0.45.0->-r requirements.in (line 9))
+  Click~=8.1 (from -r requirements.in (line 4))
+  cryptography>=2.1.4,>=2.5 (from paramiko==2.12.0->-r requirements.in (line 10))
+  datadog~=0.22 (from -r requirements.in (line 9))
+  google~=3.0 (from -r requirements.in (line 11))
+  google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5,>=1.31.6 (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  google-auth<3.0dev,>=1.25.0,>=2.14.1 (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  google-cloud-core<3.0dev,>=2.3.0 (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  google-cloud-storage~=2.3.0 (from -r requirements.in (line 12))
+  google-crc32c<2.0dev,>=1.0 (from google-resumable-media==2.4.1->google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  google-resumable-media>=2.3.2 (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  googleapis-common-protos<2.0dev,>=1.56.2 (from google-api-core==2.11.0->google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  idna<4,>=2.5 (from requests==2.28.2->datadog==0.45.0->-r requirements.in (line 9))
+  isodate>=0.6.1 (from azure-storage-blob==12.16.0->-r requirements.in (line 3))
+  jmespath<2.0.0,>=0.7.1 (from boto3==1.26.113->-r requirements.in (line 6))
+  paramiko~=2.5 (from -r requirements.in (line 10))
+  protobuf!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0dev,>=3.19.5 (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  psutil~=5.4 (from -r requirements.in (line 7))
+  pyasn1~=0.4 (from -r requirements.in (line 8))
+  pyasn1-modules>=0.2.1 (from google-auth==2.17.3->google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  PyMySQL~=1.0 (from -r requirements.in (line 5))
+  pynacl>=1.0.1 (from paramiko==2.12.0->-r requirements.in (line 10))
+  python-dateutil<3.0.0,>=2.1 (from botocore==1.29.113->boto3==1.26.113->-r requirements.in (line 6))
+  requests<3.0.0dev,>=2.18.0,>=2.18.4,>=2.6.0 (from datadog==0.45.0->-r requirements.in (line 9))
+  rsa<5,>=3.1.4 (from google-auth==2.17.3->google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  s3transfer<0.7.0,>=0.6.0 (from boto3==1.26.113->-r requirements.in (line 6))
+  six>=1.11.0,>=1.9.0 (from paramiko==2.12.0->-r requirements.in (line 10))
+  soupsieve>1.2 (from beautifulsoup4==4.12.2->google==3.0.0->-r requirements.in (line 11))
+  statsd~=3.3 (from -r requirements.in (line 13))
+  statsd-tags~=3.2 (from -r requirements.in (line 14))
+  typing-extensions>=4.0.1,>=4.3.0 (from azure-core==1.26.4->-r requirements.in (line 2))
+  urllib3<1.27,>=1.21.1,>=1.25.4 (from requests==2.28.2->datadog==0.45.0->-r requirements.in (line 9))
+
+Finding the best candidates:
+  found candidate azure-core==1.26.4 (constraint was ~=1.24,>=1.26.0,<2.0.0)
+  found candidate azure-storage-blob==12.16.0 (constraint was ~=12.12)
+  found candidate bcrypt==4.0.1 (constraint was >=3.1.3)
+  found candidate beautifulsoup4==4.12.2 (constraint was <any>)
+  found candidate boto3==1.26.113 (constraint was ~=1.7)
+  found candidate botocore==1.29.113 (constraint was >=1.12.36,>=1.29.113,<1.30.0,<2.0a.0)
+  found candidate cachetools==5.3.0 (constraint was >=2.0.0,<6.0)
+  found candidate certifi==2022.12.7 (constraint was >=2017.4.17)
+  found candidate cffi==1.15.1 (constraint was >=1.12,>=1.4.1)
+  found candidate charset-normalizer==3.1.0 (constraint was >=2,<4)
+  found candidate click==8.1.3 (constraint was ~=8.1)
+  found candidate cryptography==40.0.1 (constraint was >=2.1.4,>=2.5)
+  found candidate datadog==0.45.0 (constraint was ~=0.22)
+  found candidate google==3.0.0 (constraint was ~=3.0)
+  found candidate google-api-core==2.11.0 (constraint was >=1.31.5,>=1.31.6,!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev)
+  found candidate google-auth==2.17.3 (constraint was >=1.25.0,>=2.14.1,<3.0dev)
+  found candidate google-cloud-core==2.3.2 (constraint was >=2.3.0,<3.0dev)
+  found candidate google-cloud-storage==2.3.0 (constraint was ~=2.3.0)
+  found candidate google-crc32c==1.5.0 (constraint was >=1.0,<2.0dev)
+  found candidate google-resumable-media==2.4.1 (constraint was >=2.3.2)
+  found candidate googleapis-common-protos==1.59.0 (constraint was >=1.56.2,<2.0dev)
+  found candidate idna==3.4 (constraint was >=2.5,<4)
+  found candidate isodate==0.6.1 (constraint was >=0.6.1)
+  found candidate jmespath==1.0.1 (constraint was >=0.7.1,<2.0.0)
+  found candidate paramiko==2.12.0 (constraint was ~=2.5)
+  found candidate protobuf==4.22.3 (constraint was >=3.19.5,!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0dev)
+  found candidate psutil==5.9.4 (constraint was ~=5.4)
+  found candidate pyasn1==0.4.8 (constraint was ~=0.4)
+  found candidate pyasn1-modules==0.2.8 (constraint was >=0.2.1)
+  found candidate pymysql==1.0.3 (constraint was ~=1.0)
+  found candidate pynacl==1.5.0 (constraint was >=1.0.1)
+  found candidate python-dateutil==2.8.2 (constraint was >=2.1,<3.0.0)
+  found candidate requests==2.28.2 (constraint was >=2.18.0,>=2.18.4,>=2.6.0,<3.0.0dev)
+  found candidate rsa==4.9 (constraint was >=3.1.4,<5)
+  found candidate s3transfer==0.6.0 (constraint was >=0.6.0,<0.7.0)
+  found candidate six==1.16.0 (constraint was >=1.11.0,>=1.9.0)
+  found candidate soupsieve==2.4 (constraint was >1.2)
+  found candidate statsd==3.3.0 (constraint was ~=3.3)
+  found candidate statsd-tags==3.2.1.post1 (constraint was ~=3.2)
+  found candidate typing-extensions==4.5.0 (constraint was >=4.0.1,>=4.3.0)
+  found candidate urllib3==1.26.15 (constraint was >=1.21.1,>=1.25.4,<1.27)
+
+Finding secondary dependencies:
+  certifi==2022.12.7        requires -
+  charset-normalizer==3.1.0 requires -
+  bcrypt==4.0.1             requires -
+  google-api-core==2.11.0   requires google-auth<3.0dev,>=2.14.1, googleapis-common-protos<2.0dev,>=1.56.2, protobuf!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0dev,>=3.19.5, requests<3.0.0dev,>=2.18.0
+  statsd==3.3.0             requires -
+  urllib3==1.26.15          requires -
+  google-auth==2.17.3       requires cachetools<6.0,>=2.0.0, pyasn1-modules>=0.2.1, rsa<5,>=3.1.4; python_version >= "3.6", six>=1.9.0
+  typing-extensions==4.5.0  requires -
+  google-cloud-core==2.3.2  requires google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.6, google-auth<3.0dev,>=1.25.0
+  idna==3.4                 requires -
+  azure-core==1.26.4        requires requests>=2.18.4, six>=1.11.0, typing-extensions>=4.3.0
+  cachetools==5.3.0         requires -
+  botocore==1.29.113        requires jmespath<2.0.0,>=0.7.1, python-dateutil<3.0.0,>=2.1, urllib3<1.27,>=1.25.4
+  paramiko==2.12.0          requires bcrypt>=3.1.3, cryptography>=2.5, pynacl>=1.0.1, six
+  python-dateutil==2.8.2    requires six>=1.5
+  jmespath==1.0.1           requires -
+  pyasn1==0.4.8             requires -
+  rsa==4.9                  requires pyasn1>=0.1.3
+  azure-storage-blob==12.16.0 requires azure-core<2.0.0,>=1.26.0, cryptography>=2.1.4, isodate>=0.6.1, typing-extensions>=4.0.1
+  click==8.1.3              requires -
+  six==1.16.0               requires -
+  protobuf==4.22.3          requires -
+  isodate==0.6.1            requires six
+  googleapis-common-protos==1.59.0 requires protobuf!=3.20.0,!=3.20.1,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0dev,>=3.19.5
+  s3transfer==0.6.0         requires botocore<2.0a.0,>=1.12.36
+  psutil==5.9.4             requires -
+  requests==2.28.2          requires certifi>=2017.4.17, charset-normalizer<4,>=2, idna<4,>=2.5, urllib3<1.27,>=1.21.1
+  pynacl==1.5.0             requires cffi>=1.4.1
+  pymysql==1.0.3            requires -
+  pyasn1-modules==0.2.8     requires pyasn1<0.5.0,>=0.4.6
+  soupsieve==2.4            requires -
+  google==3.0.0             requires beautifulsoup4
+  cryptography==40.0.1      requires cffi>=1.12
+  google-cloud-storage==2.3.0 requires google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5, google-auth<3.0dev,>=1.25.0, google-cloud-core<3.0dev,>=2.3.0, google-resumable-media>=2.3.2, protobuf, requests<3.0.0dev,>=2.18.0
+  statsd-tags==3.2.1.post1  requires -
+  cffi==1.15.1              requires pycparser
+  google-crc32c==1.5.0      requires -
+  boto3==1.26.113           requires botocore<1.30.0,>=1.29.113, jmespath<2.0.0,>=0.7.1, s3transfer<0.7.0,>=0.6.0
+  google-resumable-media==2.4.1 requires google-crc32c<2.0dev,>=1.0
+  beautifulsoup4==4.12.2    requires soupsieve>1.2
+  datadog==0.45.0           requires requests>=2.6.0
+
+New dependencies found in this round:
+  adding ('pyasn1', '<0.5.0,>=0.1.3,>=0.4.6', [])
+  adding ('pycparser', '', [])
+  adding ('six', '>=1.11.0,>=1.5,>=1.9.0', [])
+Removed dependencies in this round:
+  removing ('six', '>=1.11.0,>=1.9.0', [])
+------------------------------------------------------------
+Result of round 3: not stable
+
+                          ROUND 4                           
+Current constraints:
+  azure-core<2.0.0,>=1.26.0,~=1.24 (from -r requirements.in (line 2))
+  azure-storage-blob~=12.12 (from -r requirements.in (line 3))
+  bcrypt>=3.1.3 (from paramiko==2.12.0->-r requirements.in (line 10))
+  beautifulsoup4 (from google==3.0.0->-r requirements.in (line 11))
+  boto3~=1.7 (from -r requirements.in (line 6))
+  botocore<1.30.0,<2.0a.0,>=1.12.36,>=1.29.113 (from boto3==1.26.113->-r requirements.in (line 6))
+  cachetools<6.0,>=2.0.0 (from google-auth==2.17.3->google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  certifi>=2017.4.17 (from requests==2.28.2->datadog==0.45.0->-r requirements.in (line 9))
+  cffi>=1.12,>=1.4.1 (from pynacl==1.5.0->paramiko==2.12.0->-r requirements.in (line 10))
+  charset-normalizer<4,>=2 (from requests==2.28.2->datadog==0.45.0->-r requirements.in (line 9))
+  Click~=8.1 (from -r requirements.in (line 4))
+  cryptography>=2.1.4,>=2.5 (from paramiko==2.12.0->-r requirements.in (line 10))
+  datadog~=0.22 (from -r requirements.in (line 9))
+  google~=3.0 (from -r requirements.in (line 11))
+  google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5,>=1.31.6 (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  google-auth<3.0dev,>=1.25.0,>=2.14.1 (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  google-cloud-core<3.0dev,>=2.3.0 (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  google-cloud-storage~=2.3.0 (from -r requirements.in (line 12))
+  google-crc32c<2.0dev,>=1.0 (from google-resumable-media==2.4.1->google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  google-resumable-media>=2.3.2 (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  googleapis-common-protos<2.0dev,>=1.56.2 (from google-api-core==2.11.0->google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  idna<4,>=2.5 (from requests==2.28.2->datadog==0.45.0->-r requirements.in (line 9))
+  isodate>=0.6.1 (from azure-storage-blob==12.16.0->-r requirements.in (line 3))
+  jmespath<2.0.0,>=0.7.1 (from boto3==1.26.113->-r requirements.in (line 6))
+  paramiko~=2.5 (from -r requirements.in (line 10))
+  protobuf!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0dev,>=3.19.5 (from google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  psutil~=5.4 (from -r requirements.in (line 7))
+  pyasn1<0.5.0,>=0.1.3,>=0.4.6,~=0.4 (from -r requirements.in (line 8))
+  pyasn1-modules>=0.2.1 (from google-auth==2.17.3->google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  pycparser (from cffi==1.15.1->pynacl==1.5.0->paramiko==2.12.0->-r requirements.in (line 10))
+  PyMySQL~=1.0 (from -r requirements.in (line 5))
+  pynacl>=1.0.1 (from paramiko==2.12.0->-r requirements.in (line 10))
+  python-dateutil<3.0.0,>=2.1 (from botocore==1.29.113->boto3==1.26.113->-r requirements.in (line 6))
+  requests<3.0.0dev,>=2.18.0,>=2.18.4,>=2.6.0 (from datadog==0.45.0->-r requirements.in (line 9))
+  rsa<5,>=3.1.4 (from google-auth==2.17.3->google-cloud-storage==2.3.0->-r requirements.in (line 12))
+  s3transfer<0.7.0,>=0.6.0 (from boto3==1.26.113->-r requirements.in (line 6))
+  six>=1.11.0,>=1.5,>=1.9.0 (from paramiko==2.12.0->-r requirements.in (line 10))
+  soupsieve>1.2 (from beautifulsoup4==4.12.2->google==3.0.0->-r requirements.in (line 11))
+  statsd~=3.3 (from -r requirements.in (line 13))
+  statsd-tags~=3.2 (from -r requirements.in (line 14))
+  typing-extensions>=4.0.1,>=4.3.0 (from azure-core==1.26.4->-r requirements.in (line 2))
+  urllib3<1.27,>=1.21.1,>=1.25.4 (from requests==2.28.2->datadog==0.45.0->-r requirements.in (line 9))
+
+Finding the best candidates:
+  found candidate azure-core==1.26.4 (constraint was ~=1.24,>=1.26.0,<2.0.0)
+  found candidate azure-storage-blob==12.16.0 (constraint was ~=12.12)
+  found candidate bcrypt==4.0.1 (constraint was >=3.1.3)
+  found candidate beautifulsoup4==4.12.2 (constraint was <any>)
+  found candidate boto3==1.26.113 (constraint was ~=1.7)
+  found candidate botocore==1.29.113 (constraint was >=1.12.36,>=1.29.113,<1.30.0,<2.0a.0)
+  found candidate cachetools==5.3.0 (constraint was >=2.0.0,<6.0)
+  found candidate certifi==2022.12.7 (constraint was >=2017.4.17)
+  found candidate cffi==1.15.1 (constraint was >=1.12,>=1.4.1)
+  found candidate charset-normalizer==3.1.0 (constraint was >=2,<4)
+  found candidate click==8.1.3 (constraint was ~=8.1)
+  found candidate cryptography==40.0.1 (constraint was >=2.1.4,>=2.5)
+  found candidate datadog==0.45.0 (constraint was ~=0.22)
+  found candidate google==3.0.0 (constraint was ~=3.0)
+  found candidate google-api-core==2.11.0 (constraint was >=1.31.5,>=1.31.6,!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev)
+  found candidate google-auth==2.17.3 (constraint was >=1.25.0,>=2.14.1,<3.0dev)
+  found candidate google-cloud-core==2.3.2 (constraint was >=2.3.0,<3.0dev)
+  found candidate google-cloud-storage==2.3.0 (constraint was ~=2.3.0)
+  found candidate google-crc32c==1.5.0 (constraint was >=1.0,<2.0dev)
+  found candidate google-resumable-media==2.4.1 (constraint was >=2.3.2)
+  found candidate googleapis-common-protos==1.59.0 (constraint was >=1.56.2,<2.0dev)
+  found candidate idna==3.4 (constraint was >=2.5,<4)
+  found candidate isodate==0.6.1 (constraint was >=0.6.1)
+  found candidate jmespath==1.0.1 (constraint was >=0.7.1,<2.0.0)
+  found candidate paramiko==2.12.0 (constraint was ~=2.5)
+  found candidate protobuf==4.22.3 (constraint was >=3.19.5,!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0dev)
+  found candidate psutil==5.9.4 (constraint was ~=5.4)
+  found candidate pyasn1==0.4.8 (constraint was >=0.1.3,~=0.4,>=0.4.6,<0.5.0)
+  found candidate pyasn1-modules==0.2.8 (constraint was >=0.2.1)
+  found candidate pycparser==2.21 (constraint was <any>)
+  found candidate pymysql==1.0.3 (constraint was ~=1.0)
+  found candidate pynacl==1.5.0 (constraint was >=1.0.1)
+  found candidate python-dateutil==2.8.2 (constraint was >=2.1,<3.0.0)
+  found candidate requests==2.28.2 (constraint was >=2.18.0,>=2.18.4,>=2.6.0,<3.0.0dev)
+  found candidate rsa==4.9 (constraint was >=3.1.4,<5)
+  found candidate s3transfer==0.6.0 (constraint was >=0.6.0,<0.7.0)
+  found candidate six==1.16.0 (constraint was >=1.11.0,>=1.5,>=1.9.0)
+  found candidate soupsieve==2.4 (constraint was >1.2)
+  found candidate statsd==3.3.0 (constraint was ~=3.3)
+  found candidate statsd-tags==3.2.1.post1 (constraint was ~=3.2)
+  found candidate typing-extensions==4.5.0 (constraint was >=4.0.1,>=4.3.0)
+  found candidate urllib3==1.26.15 (constraint was >=1.21.1,>=1.25.4,<1.27)
+
+Finding secondary dependencies:
+  requests==2.28.2          requires certifi>=2017.4.17, charset-normalizer<4,>=2, idna<4,>=2.5, urllib3<1.27,>=1.21.1
+  six==1.16.0               requires -
+  google==3.0.0             requires beautifulsoup4
+  pynacl==1.5.0             requires cffi>=1.4.1
+  pyasn1==0.4.8             requires -
+  google-auth==2.17.3       requires cachetools<6.0,>=2.0.0, pyasn1-modules>=0.2.1, rsa<5,>=3.1.4; python_version >= "3.6", six>=1.9.0
+  soupsieve==2.4            requires -
+  statsd-tags==3.2.1.post1  requires -
+  statsd==3.3.0             requires -
+  bcrypt==4.0.1             requires -
+  urllib3==1.26.15          requires -
+  datadog==0.45.0           requires requests>=2.6.0
+  azure-core==1.26.4        requires requests>=2.18.4, six>=1.11.0, typing-extensions>=4.3.0
+  typing-extensions==4.5.0  requires -
+  protobuf==4.22.3          requires -
+  google-cloud-storage==2.3.0 requires google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5, google-auth<3.0dev,>=1.25.0, google-cloud-core<3.0dev,>=2.3.0, google-resumable-media>=2.3.2, protobuf, requests<3.0.0dev,>=2.18.0
+  azure-storage-blob==12.16.0 requires azure-core<2.0.0,>=1.26.0, cryptography>=2.1.4, isodate>=0.6.1, typing-extensions>=4.0.1
+  jmespath==1.0.1           requires -
+  cffi==1.15.1              requires pycparser
+  idna==3.4                 requires -
+  isodate==0.6.1            requires six
+  boto3==1.26.113           requires botocore<1.30.0,>=1.29.113, jmespath<2.0.0,>=0.7.1, s3transfer<0.7.0,>=0.6.0
+  certifi==2022.12.7        requires -
+  beautifulsoup4==4.12.2    requires soupsieve>1.2
+  charset-normalizer==3.1.0 requires -
+  cryptography==40.0.1      requires cffi>=1.12
+  google-cloud-core==2.3.2  requires google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.6, google-auth<3.0dev,>=1.25.0
+  cachetools==5.3.0         requires -
+  pyasn1-modules==0.2.8     requires pyasn1<0.5.0,>=0.4.6
+  pymysql==1.0.3            requires -
+  google-crc32c==1.5.0      requires -
+  psutil==5.9.4             requires -
+  botocore==1.29.113        requires jmespath<2.0.0,>=0.7.1, python-dateutil<3.0.0,>=2.1, urllib3<1.27,>=1.25.4
+  paramiko==2.12.0          requires bcrypt>=3.1.3, cryptography>=2.5, pynacl>=1.0.1, six
+  google-api-core==2.11.0   requires google-auth<3.0dev,>=2.14.1, googleapis-common-protos<2.0dev,>=1.56.2, protobuf!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0dev,>=3.19.5, requests<3.0.0dev,>=2.18.0
+  python-dateutil==2.8.2    requires six>=1.5
+  s3transfer==0.6.0         requires botocore<2.0a.0,>=1.12.36
+  googleapis-common-protos==1.59.0 requires protobuf!=3.20.0,!=3.20.1,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0dev,>=3.19.5
+  google-resumable-media==2.4.1 requires google-crc32c<2.0dev,>=1.0
+  pycparser==2.21           requires -
+  rsa==4.9                  requires pyasn1>=0.1.3
+  click==8.1.3              requires -
+------------------------------------------------------------
+Result of round 4: stable, done
+
+#
+# This file is autogenerated by pip-compile with Python 3.9
+# by the following command:
+#
+#    pip-compile --output-file=requirements.txt requirements.in
+#
+azure-core==1.26.4
+    # via
+    #   -r requirements.in
+    #   azure-storage-blob
+azure-storage-blob==12.16.0
+    # via -r requirements.in
+bcrypt==4.0.1
+    # via paramiko
+beautifulsoup4==4.12.2
+    # via google
+boto3==1.26.113
+    # via -r requirements.in
+botocore==1.29.113
+    # via
+    #   boto3
+    #   s3transfer
+cachetools==5.3.0
+    # via google-auth
+certifi==2022.12.7
+    # via requests
+cffi==1.15.1
+    # via
+    #   cryptography
+    #   pynacl
+charset-normalizer==3.1.0
+    # via requests
+click==8.1.3
+    # via -r requirements.in
+cryptography==40.0.1
+    # via
+    #   azure-storage-blob
+    #   paramiko
+datadog==0.45.0
+    # via -r requirements.in
+google==3.0.0
+    # via -r requirements.in
+google-api-core==2.11.0
+    # via
+    #   google-cloud-core
+    #   google-cloud-storage
+google-auth==2.17.3
+    # via
+    #   google-api-core
+    #   google-cloud-core
+    #   google-cloud-storage
+google-cloud-core==2.3.2
+    # via google-cloud-storage
+google-cloud-storage==2.3.0
+    # via -r requirements.in
+google-crc32c==1.5.0
+    # via google-resumable-media
+google-resumable-media==2.4.1
+    # via google-cloud-storage
+googleapis-common-protos==1.59.0
+    # via google-api-core
+idna==3.4
+    # via requests
+isodate==0.6.1
+    # via azure-storage-blob
+jmespath==1.0.1
+    # via
+    #   boto3
+    #   botocore
+paramiko==2.12.0
+    # via -r requirements.in
+protobuf==4.22.3
+    # via
+    #   google-api-core
+    #   google-cloud-storage
+    #   googleapis-common-protos
+psutil==5.9.4
+    # via -r requirements.in
+pyasn1==0.4.8
+    # via
+    #   -r requirements.in
+    #   pyasn1-modules
+    #   rsa
+pyasn1-modules==0.2.8
+    # via google-auth
+pycparser==2.21
+    # via cffi
+pymysql==1.0.3
+    # via -r requirements.in
+pynacl==1.5.0
+    # via paramiko
+python-dateutil==2.8.2
+    # via botocore
+requests==2.28.2
+    # via
+    #   azure-core
+    #   datadog
+    #   google-api-core
+    #   google-cloud-storage
+rsa==4.9
+    # via google-auth
+s3transfer==0.6.0
+    # via boto3
+six==1.16.0
+    # via
+    #   azure-core
+    #   google-auth
+    #   isodate
+    #   paramiko
+    #   python-dateutil
+soupsieve==2.4
+    # via beautifulsoup4
+statsd==3.3.0
+    # via -r requirements.in
+statsd-tags==3.2.1.post1
+    # via -r requirements.in
+typing-extensions==4.5.0
+    # via
+    #   azure-core
+    #   azure-storage-blob
+urllib3==1.26.15
+    # via
+    #   botocore
+    #   requests
+pip-compile --upgrade --verbose --output-file requirements_dev.txt requirements_dev.in
+WARNING: the legacy dependency resolver is deprecated and will be removed in future versions of pip-tools. The default resolver will be changed to 'backtracking' in pip-tools 7.0.0. Specify --resolver=backtracking to silence this warning.
+Using indexes:
+  https://pypi.org/simple
+
+                          ROUND 1                           
+Current constraints:
+  black~=22.3 (from -r requirements_dev.in (line 2))
+  bumpversion~=0.6 (from -r requirements_dev.in (line 4))
+  docker~=5.0 (from -r requirements_dev.in (line 5))
+  isort~=5.10 (from -r requirements_dev.in (line 6))
+  mock~=4.0 (from -r requirements_dev.in (line 7))
+  moto~=4.1 (from -r requirements_dev.in (line 8))
+  pycodestyle~=2.3 (from -r requirements_dev.in (line 9))
+  pylint~=2.13 (from -r requirements_dev.in (line 10))
+  pytest~=7.1 (from -r requirements_dev.in (line 11))
+  pytest-cov~=3.0 (from -r requirements_dev.in (line 12))
+  pytest-timeout~=2.1 (from -r requirements_dev.in (line 13))
+  python-magic==0.4.18 (from -r requirements_dev.in (line 14))
+  runlike~=1.4 (from -r requirements_dev.in (line 15))
+  Sphinx~=4.5 (from -r requirements_dev.in (line 3))
+  yamllint~=1.23 (from -r requirements_dev.in (line 16))
+
+Finding the best candidates:
+  found candidate black==22.12.0 (constraint was ~=22.3)
+  found candidate bumpversion==0.6.0 (constraint was ~=0.6)
+  found candidate docker==5.0.3 (constraint was ~=5.0)
+  found candidate isort==5.12.0 (constraint was ~=5.10)
+  found candidate mock==4.0.3 (constraint was ~=4.0)
+  found candidate moto==4.1.7 (constraint was ~=4.1)
+  found candidate pycodestyle==2.10.0 (constraint was ~=2.3)
+  found candidate pylint==2.17.2 (constraint was ~=2.13)
+  found candidate pytest==7.3.0 (constraint was ~=7.1)
+  found candidate pytest-cov==3.0.0 (constraint was ~=3.0)
+  found candidate pytest-timeout==2.1.0 (constraint was ~=2.1)
+  found candidate python-magic==0.4.18 (constraint was ==0.4.18)
+  found candidate runlike==1.4.9 (constraint was ~=1.4)
+  found candidate sphinx==4.5.0 (constraint was ~=4.5)
+  found candidate yamllint==1.30.0 (constraint was ~=1.23)
+
+Finding secondary dependencies:
+  sphinx==4.5.0             requires alabaster<0.8,>=0.7, babel>=1.3, docutils<0.18,>=0.14, imagesize, importlib-metadata>=4.4; python_version < "3.10", Jinja2>=2.3, packaging, Pygments>=2.0, requests>=2.5.0, snowballstemmer>=1.1, sphinxcontrib-applehelp, sphinxcontrib-devhelp, sphinxcontrib-htmlhelp>=2.0.0, sphinxcontrib-jsmath, sphinxcontrib-qthelp, sphinxcontrib-serializinghtml>=1.1.5
+  black==22.12.0            requires click>=8.0.0, mypy-extensions>=0.4.3, pathspec>=0.9.0, platformdirs>=2, tomli>=1.1.0; python_full_version < "3.11.0a7", typing-extensions>=3.10.0.0; python_version < "3.10"
+  mock==4.0.3               requires -
+  pytest-cov==3.0.0         requires coverage[toml]>=5.2.1, pytest>=4.6
+  pycodestyle==2.10.0       requires -
+  pylint==2.17.2            requires astroid<=2.17.0-dev0,>=2.15.2, dill>=0.2; python_version < "3.11", isort<6,>=4.2.5, mccabe<0.8,>=0.6, platformdirs>=2.2.0, tomli>=1.1.0; python_version < "3.11", tomlkit>=0.10.1, typing-extensions>=3.10.0; python_version < "3.10"
+  bumpversion==0.6.0        requires bump2version
+  pytest-timeout==2.1.0     requires pytest>=5.0.0
+  runlike==1.4.9            requires click<9.0.0,>=8.0.1
+  moto==4.1.7               requires boto3>=1.9.201, botocore>=1.12.201, cryptography>=3.3.1, Jinja2>=2.10.1, python-dateutil<3.0.0,>=2.1, requests>=2.5, responses>=0.13.0, werkzeug!=2.2.0,!=2.2.1,>=0.5, xmltodict
+  python-magic==0.4.18      requires -
+  yamllint==1.30.0          requires pathspec>=0.5.3, pyyaml, setuptools
+  docker==5.0.3             requires requests!=2.18.0,>=2.14.2, websocket-client>=0.32.0
+  pytest==7.3.0             requires exceptiongroup>=1.0.0rc8; python_version < "3.11", iniconfig, packaging, pluggy<2.0,>=0.12, tomli>=1.0.0; python_version < "3.11"
+  isort==5.12.0             requires -
+
+New dependencies found in this round:
+  adding ('alabaster', '<0.8,>=0.7', [])
+  adding ('astroid', '<=2.17.0-dev0,>=2.15.2', [])
+  adding ('babel', '>=1.3', [])
+  adding ('boto3', '>=1.9.201', [])
+  adding ('botocore', '>=1.12.201', [])
+  adding ('bump2version', '', [])
+  adding ('click', '<9.0.0,>=8.0.0,>=8.0.1', [])
+  adding ('coverage', '>=5.2.1', ['toml'])
+  adding ('cryptography', '>=3.3.1', [])
+  adding ('dill', '>=0.2', [])
+  adding ('docutils', '<0.18,>=0.14', [])
+  adding ('exceptiongroup', '>=1.0.0rc8', [])
+  adding ('imagesize', '', [])
+  adding ('importlib-metadata', '>=4.4', [])
+  adding ('iniconfig', '', [])
+  adding ('isort', '<6,>=4.2.5', [])
+  adding ('jinja2', '>=2.10.1,>=2.3', [])
+  adding ('mccabe', '<0.8,>=0.6', [])
+  adding ('mypy-extensions', '>=0.4.3', [])
+  adding ('packaging', '', [])
+  adding ('pathspec', '>=0.5.3,>=0.9.0', [])
+  adding ('platformdirs', '>=2,>=2.2.0', [])
+  adding ('pluggy', '<2.0,>=0.12', [])
+  adding ('pygments', '>=2.0', [])
+  adding ('pytest', '>=4.6,>=5.0.0', [])
+  adding ('python-dateutil', '<3.0.0,>=2.1', [])
+  adding ('pyyaml', '', [])
+  adding ('requests', '!=2.18.0,>=2.14.2,>=2.5.0', [])
+  adding ('responses', '>=0.13.0', [])
+  adding ('setuptools', '', [])
+  adding ('snowballstemmer', '>=1.1', [])
+  adding ('sphinxcontrib-applehelp', '', [])
+  adding ('sphinxcontrib-devhelp', '', [])
+  adding ('sphinxcontrib-htmlhelp', '>=2.0.0', [])
+  adding ('sphinxcontrib-jsmath', '', [])
+  adding ('sphinxcontrib-qthelp', '', [])
+  adding ('sphinxcontrib-serializinghtml', '>=1.1.5', [])
+  adding ('tomli', '>=1.0.0,>=1.1.0', [])
+  adding ('tomlkit', '>=0.10.1', [])
+  adding ('typing-extensions', '>=3.10.0.0', [])
+  adding ('websocket-client', '>=0.32.0', [])
+  adding ('werkzeug', '!=2.2.0,!=2.2.1,>=0.5', [])
+  adding ('xmltodict', '', [])
+Removed dependencies in this round:
+------------------------------------------------------------
+Result of round 1: not stable
+
+                          ROUND 2                           
+Current constraints:
+  alabaster<0.8,>=0.7 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  astroid<=2.17.0-dev0,>=2.15.2 (from pylint==2.17.2->-r requirements_dev.in (line 10))
+  babel>=1.3 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  black~=22.3 (from -r requirements_dev.in (line 2))
+  boto3>=1.9.201 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  botocore>=1.12.201 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  bump2version (from bumpversion==0.6.0->-r requirements_dev.in (line 4))
+  bumpversion~=0.6 (from -r requirements_dev.in (line 4))
+  click<9.0.0,>=8.0.0,>=8.0.1 (from black==22.12.0->-r requirements_dev.in (line 2))
+  coverage[toml]>=5.2.1 (from pytest-cov==3.0.0->-r requirements_dev.in (line 12))
+  cryptography>=3.3.1 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  dill>=0.2 (from pylint==2.17.2->-r requirements_dev.in (line 10))
+  docker~=5.0 (from -r requirements_dev.in (line 5))
+  docutils<0.18,>=0.14 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  exceptiongroup>=1.0.0rc8 (from pytest==7.3.0->-r requirements_dev.in (line 11))
+  imagesize (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  importlib-metadata>=4.4 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  iniconfig (from pytest==7.3.0->-r requirements_dev.in (line 11))
+  isort<6,>=4.2.5,~=5.10 (from -r requirements_dev.in (line 6))
+  Jinja2>=2.10.1,>=2.3 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  mccabe<0.8,>=0.6 (from pylint==2.17.2->-r requirements_dev.in (line 10))
+  mock~=4.0 (from -r requirements_dev.in (line 7))
+  moto~=4.1 (from -r requirements_dev.in (line 8))
+  mypy-extensions>=0.4.3 (from black==22.12.0->-r requirements_dev.in (line 2))
+  packaging (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  pathspec>=0.5.3,>=0.9.0 (from black==22.12.0->-r requirements_dev.in (line 2))
+  platformdirs>=2,>=2.2.0 (from black==22.12.0->-r requirements_dev.in (line 2))
+  pluggy<2.0,>=0.12 (from pytest==7.3.0->-r requirements_dev.in (line 11))
+  pycodestyle~=2.3 (from -r requirements_dev.in (line 9))
+  Pygments>=2.0 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  pylint~=2.13 (from -r requirements_dev.in (line 10))
+  pytest>=4.6,>=5.0.0,~=7.1 (from -r requirements_dev.in (line 11))
+  pytest-cov~=3.0 (from -r requirements_dev.in (line 12))
+  pytest-timeout~=2.1 (from -r requirements_dev.in (line 13))
+  python-dateutil<3.0.0,>=2.1 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  python-magic==0.4.18 (from -r requirements_dev.in (line 14))
+  pyyaml (from yamllint==1.30.0->-r requirements_dev.in (line 16))
+  requests!=2.18.0,>=2.14.2,>=2.5.0 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  responses>=0.13.0 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  runlike~=1.4 (from -r requirements_dev.in (line 15))
+  setuptools (from yamllint==1.30.0->-r requirements_dev.in (line 16))
+  snowballstemmer>=1.1 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  Sphinx~=4.5 (from -r requirements_dev.in (line 3))
+  sphinxcontrib-applehelp (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-devhelp (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-htmlhelp>=2.0.0 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-jsmath (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-qthelp (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-serializinghtml>=1.1.5 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  tomli>=1.0.0,>=1.1.0 (from black==22.12.0->-r requirements_dev.in (line 2))
+  tomlkit>=0.10.1 (from pylint==2.17.2->-r requirements_dev.in (line 10))
+  typing-extensions>=3.10.0.0 (from black==22.12.0->-r requirements_dev.in (line 2))
+  websocket-client>=0.32.0 (from docker==5.0.3->-r requirements_dev.in (line 5))
+  werkzeug!=2.2.0,!=2.2.1,>=0.5 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  xmltodict (from moto==4.1.7->-r requirements_dev.in (line 8))
+  yamllint~=1.23 (from -r requirements_dev.in (line 16))
+
+Finding the best candidates:
+  found candidate alabaster==0.7.13 (constraint was >=0.7,<0.8)
+  found candidate astroid==2.15.2 (constraint was >=2.15.2,<=2.17.0-dev0)
+  found candidate babel==2.12.1 (constraint was >=1.3)
+  found candidate black==22.12.0 (constraint was ~=22.3)
+  found candidate boto3==1.26.113 (constraint was >=1.9.201)
+  found candidate botocore==1.29.113 (constraint was >=1.12.201)
+  found candidate bump2version==1.0.1 (constraint was <any>)
+  found candidate bumpversion==0.6.0 (constraint was ~=0.6)
+  found candidate click==8.1.3 (constraint was >=8.0.0,>=8.0.1,<9.0.0)
+  found candidate coverage[toml]==7.2.3 (constraint was >=5.2.1)
+  found candidate cryptography==40.0.1 (constraint was >=3.3.1)
+  found candidate dill==0.3.6 (constraint was >=0.2)
+  found candidate docker==5.0.3 (constraint was ~=5.0)
+  found candidate docutils==0.17.1 (constraint was >=0.14,<0.18)
+  found candidate exceptiongroup==1.1.1 (constraint was >=1.0.0rc8)
+  found candidate imagesize==1.4.1 (constraint was <any>)
+  found candidate importlib-metadata==6.3.0 (constraint was >=4.4)
+  found candidate iniconfig==2.0.0 (constraint was <any>)
+  found candidate isort==5.12.0 (constraint was >=4.2.5,~=5.10,<6)
+  found candidate jinja2==3.1.2 (constraint was >=2.10.1,>=2.3)
+  found candidate mccabe==0.7.0 (constraint was >=0.6,<0.8)
+  found candidate mock==4.0.3 (constraint was ~=4.0)
+  found candidate moto==4.1.7 (constraint was ~=4.1)
+  found candidate mypy-extensions==1.0.0 (constraint was >=0.4.3)
+  found candidate packaging==23.1 (constraint was <any>)
+  found candidate pathspec==0.11.1 (constraint was >=0.5.3,>=0.9.0)
+  found candidate platformdirs==3.2.0 (constraint was >=2,>=2.2.0)
+  found candidate pluggy==1.0.0 (constraint was >=0.12,<2.0)
+  found candidate pycodestyle==2.10.0 (constraint was ~=2.3)
+  found candidate pygments==2.15.0 (constraint was >=2.0)
+  found candidate pylint==2.17.2 (constraint was ~=2.13)
+  found candidate pytest==7.3.0 (constraint was >=4.6,>=5.0.0,~=7.1)
+  found candidate pytest-cov==3.0.0 (constraint was ~=3.0)
+  found candidate pytest-timeout==2.1.0 (constraint was ~=2.1)
+  found candidate python-dateutil==2.8.2 (constraint was >=2.1,<3.0.0)
+  found candidate python-magic==0.4.18 (constraint was ==0.4.18)
+  found candidate pyyaml==6.0 (constraint was <any>)
+  found candidate requests==2.28.2 (constraint was >=2.14.2,!=2.18.0,>=2.5.0)
+  found candidate responses==0.23.1 (constraint was >=0.13.0)
+  found candidate runlike==1.4.9 (constraint was ~=1.4)
+  found candidate setuptools==67.6.1 (constraint was <any>)
+  found candidate snowballstemmer==2.2.0 (constraint was >=1.1)
+  found candidate sphinx==4.5.0 (constraint was ~=4.5)
+  found candidate sphinxcontrib-applehelp==1.0.4 (constraint was <any>)
+  found candidate sphinxcontrib-devhelp==1.0.2 (constraint was <any>)
+  found candidate sphinxcontrib-htmlhelp==2.0.1 (constraint was >=2.0.0)
+  found candidate sphinxcontrib-jsmath==1.0.1 (constraint was <any>)
+  found candidate sphinxcontrib-qthelp==1.0.3 (constraint was <any>)
+  found candidate sphinxcontrib-serializinghtml==1.1.5 (constraint was >=1.1.5)
+  found candidate tomli==2.0.1 (constraint was >=1.0.0,>=1.1.0)
+  found candidate tomlkit==0.11.7 (constraint was >=0.10.1)
+  found candidate typing-extensions==4.5.0 (constraint was >=3.10.0.0)
+  found candidate websocket-client==1.5.1 (constraint was >=0.32.0)
+  found candidate werkzeug==2.2.3 (constraint was >=0.5,!=2.2.0,!=2.2.1)
+  found candidate xmltodict==0.13.0 (constraint was <any>)
+  found candidate yamllint==1.30.0 (constraint was ~=1.23)
+
+Finding secondary dependencies:
+  isort==5.12.0             requires -
+  pytest==7.3.0             requires exceptiongroup>=1.0.0rc8; python_version < "3.11", iniconfig, packaging, pluggy<2.0,>=0.12, tomli>=1.0.0; python_version < "3.11"
+  tomlkit==0.11.7           requires -
+  astroid==2.15.2           requires lazy-object-proxy>=1.4.0, typing-extensions>=4.0.0; python_version < "3.11", wrapt<2,>=1.11; python_version < "3.11"
+  black==22.12.0            requires click>=8.0.0, mypy-extensions>=0.4.3, pathspec>=0.9.0, platformdirs>=2, tomli>=1.1.0; python_full_version < "3.11.0a7", typing-extensions>=3.10.0.0; python_version < "3.10"
+  bump2version==1.0.1       requires -
+  responses==0.23.1         requires pyyaml, requests<3.0,>=2.22.0, types-PyYAML, urllib3>=1.25.10
+  websocket-client==1.5.1   requires -
+  sphinxcontrib-qthelp==1.0.3 requires -
+  iniconfig==2.0.0          requires -
+  pytest-cov==3.0.0         requires coverage[toml]>=5.2.1, pytest>=4.6
+  snowballstemmer==2.2.0    requires -
+  pytest-timeout==2.1.0     requires pytest>=5.0.0
+  imagesize==1.4.1          requires -
+  python-magic==0.4.18      requires -
+  docker==5.0.3             requires requests!=2.18.0,>=2.14.2, websocket-client>=0.32.0
+  bumpversion==0.6.0        requires bump2version
+  mccabe==0.7.0             requires -
+  pluggy==1.0.0             requires -
+  mock==4.0.3               requires -
+  moto==4.1.7               requires boto3>=1.9.201, botocore>=1.12.201, cryptography>=3.3.1, Jinja2>=2.10.1, python-dateutil<3.0.0,>=2.1, requests>=2.5, responses>=0.13.0, werkzeug!=2.2.0,!=2.2.1,>=0.5, xmltodict
+  pathspec==0.11.1          requires -
+  botocore==1.29.113        requires jmespath<2.0.0,>=0.7.1, python-dateutil<3.0.0,>=2.1, urllib3<1.27,>=1.25.4
+  jinja2==3.1.2             requires MarkupSafe>=2.0
+  coverage[toml]==7.2.3     requires tomli; python_full_version <= "3.11.0a6" and extra == "toml"
+  platformdirs==3.2.0       requires -
+  pycodestyle==2.10.0       requires -
+  sphinx==4.5.0             requires alabaster<0.8,>=0.7, babel>=1.3, docutils<0.18,>=0.14, imagesize, importlib-metadata>=4.4; python_version < "3.10", Jinja2>=2.3, packaging, Pygments>=2.0, requests>=2.5.0, snowballstemmer>=1.1, sphinxcontrib-applehelp, sphinxcontrib-devhelp, sphinxcontrib-htmlhelp>=2.0.0, sphinxcontrib-jsmath, sphinxcontrib-qthelp, sphinxcontrib-serializinghtml>=1.1.5
+  typing-extensions==4.5.0  requires -
+  setuptools==67.6.1        requires -
+  requests==2.28.2          requires certifi>=2017.4.17, charset-normalizer<4,>=2, idna<4,>=2.5, urllib3<1.27,>=1.21.1
+  exceptiongroup==1.1.1     requires -
+  sphinxcontrib-devhelp==1.0.2 requires -
+  mypy-extensions==1.0.0    requires -
+  boto3==1.26.113           requires botocore<1.30.0,>=1.29.113, jmespath<2.0.0,>=0.7.1, s3transfer<0.7.0,>=0.6.0
+  alabaster==0.7.13         requires -
+  tomli==2.0.1              requires -
+  python-dateutil==2.8.2    requires six>=1.5
+  xmltodict==0.13.0         requires -
+  runlike==1.4.9            requires click<9.0.0,>=8.0.1
+  click==8.1.3              requires -
+  packaging==23.1           requires -
+  importlib-metadata==6.3.0 requires zipp>=0.5
+  docutils==0.17.1          requires -
+  sphinxcontrib-htmlhelp==2.0.1 requires -
+  sphinxcontrib-applehelp==1.0.4 requires -
+  sphinxcontrib-jsmath==1.0.1 requires -
+  pygments==2.15.0          requires -
+  sphinxcontrib-serializinghtml==1.1.5 requires -
+  yamllint==1.30.0          requires pathspec>=0.5.3, pyyaml, setuptools
+  pylint==2.17.2            requires astroid<=2.17.0-dev0,>=2.15.2, dill>=0.2; python_version < "3.11", isort<6,>=4.2.5, mccabe<0.8,>=0.6, platformdirs>=2.2.0, tomli>=1.1.0; python_version < "3.11", tomlkit>=0.10.1, typing-extensions>=3.10.0; python_version < "3.10"
+  pyyaml==6.0               requires -
+  werkzeug==2.2.3           requires MarkupSafe>=2.1.1
+  babel==2.12.1             requires -
+  dill==0.3.6               requires -
+  cryptography==40.0.1      requires cffi>=1.12
+
+New dependencies found in this round:
+  adding ('botocore', '<1.30.0,>=1.12.201,>=1.29.113', [])
+  adding ('certifi', '>=2017.4.17', [])
+  adding ('cffi', '>=1.12', [])
+  adding ('charset-normalizer', '<4,>=2', [])
+  adding ('idna', '<4,>=2.5', [])
+  adding ('jmespath', '<2.0.0,>=0.7.1', [])
+  adding ('lazy-object-proxy', '>=1.4.0', [])
+  adding ('markupsafe', '>=2.0,>=2.1.1', [])
+  adding ('requests', '!=2.18.0,<3.0,>=2.14.2,>=2.22.0,>=2.5', [])
+  adding ('s3transfer', '<0.7.0,>=0.6.0', [])
+  adding ('six', '>=1.5', [])
+  adding ('types-pyyaml', '', [])
+  adding ('typing-extensions', '>=3.10.0.0,>=4.0.0', [])
+  adding ('urllib3', '<1.27,>=1.21.1,>=1.25.10,>=1.25.4', [])
+  adding ('wrapt', '<2,>=1.11', [])
+  adding ('zipp', '>=0.5', [])
+Removed dependencies in this round:
+  removing ('botocore', '>=1.12.201', [])
+  removing ('requests', '!=2.18.0,>=2.14.2,>=2.5.0', [])
+  removing ('typing-extensions', '>=3.10.0.0', [])
+------------------------------------------------------------
+Result of round 2: not stable
+
+                          ROUND 3                           
+Current constraints:
+  alabaster<0.8,>=0.7 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  astroid<=2.17.0-dev0,>=2.15.2 (from pylint==2.17.2->-r requirements_dev.in (line 10))
+  babel>=1.3 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  black~=22.3 (from -r requirements_dev.in (line 2))
+  boto3>=1.9.201 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  botocore<1.30.0,>=1.12.201,>=1.29.113 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  bump2version (from bumpversion==0.6.0->-r requirements_dev.in (line 4))
+  bumpversion~=0.6 (from -r requirements_dev.in (line 4))
+  certifi>=2017.4.17 (from requests==2.28.2->moto==4.1.7->-r requirements_dev.in (line 8))
+  cffi>=1.12 (from cryptography==40.0.1->moto==4.1.7->-r requirements_dev.in (line 8))
+  charset-normalizer<4,>=2 (from requests==2.28.2->moto==4.1.7->-r requirements_dev.in (line 8))
+  click<9.0.0,>=8.0.0,>=8.0.1 (from black==22.12.0->-r requirements_dev.in (line 2))
+  coverage[toml]>=5.2.1 (from pytest-cov==3.0.0->-r requirements_dev.in (line 12))
+  cryptography>=3.3.1 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  dill>=0.2 (from pylint==2.17.2->-r requirements_dev.in (line 10))
+  docker~=5.0 (from -r requirements_dev.in (line 5))
+  docutils<0.18,>=0.14 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  exceptiongroup>=1.0.0rc8 (from pytest==7.3.0->-r requirements_dev.in (line 11))
+  idna<4,>=2.5 (from requests==2.28.2->moto==4.1.7->-r requirements_dev.in (line 8))
+  imagesize (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  importlib-metadata>=4.4 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  iniconfig (from pytest==7.3.0->-r requirements_dev.in (line 11))
+  isort<6,>=4.2.5,~=5.10 (from -r requirements_dev.in (line 6))
+  Jinja2>=2.10.1,>=2.3 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  jmespath<2.0.0,>=0.7.1 (from boto3==1.26.113->moto==4.1.7->-r requirements_dev.in (line 8))
+  lazy-object-proxy>=1.4.0 (from astroid==2.15.2->pylint==2.17.2->-r requirements_dev.in (line 10))
+  MarkupSafe>=2.0,>=2.1.1 (from Jinja2==3.1.2->moto==4.1.7->-r requirements_dev.in (line 8))
+  mccabe<0.8,>=0.6 (from pylint==2.17.2->-r requirements_dev.in (line 10))
+  mock~=4.0 (from -r requirements_dev.in (line 7))
+  moto~=4.1 (from -r requirements_dev.in (line 8))
+  mypy-extensions>=0.4.3 (from black==22.12.0->-r requirements_dev.in (line 2))
+  packaging (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  pathspec>=0.5.3,>=0.9.0 (from black==22.12.0->-r requirements_dev.in (line 2))
+  platformdirs>=2,>=2.2.0 (from black==22.12.0->-r requirements_dev.in (line 2))
+  pluggy<2.0,>=0.12 (from pytest==7.3.0->-r requirements_dev.in (line 11))
+  pycodestyle~=2.3 (from -r requirements_dev.in (line 9))
+  Pygments>=2.0 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  pylint~=2.13 (from -r requirements_dev.in (line 10))
+  pytest>=4.6,>=5.0.0,~=7.1 (from -r requirements_dev.in (line 11))
+  pytest-cov~=3.0 (from -r requirements_dev.in (line 12))
+  pytest-timeout~=2.1 (from -r requirements_dev.in (line 13))
+  python-dateutil<3.0.0,>=2.1 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  python-magic==0.4.18 (from -r requirements_dev.in (line 14))
+  pyyaml (from yamllint==1.30.0->-r requirements_dev.in (line 16))
+  requests!=2.18.0,<3.0,>=2.14.2,>=2.22.0,>=2.5 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  responses>=0.13.0 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  runlike~=1.4 (from -r requirements_dev.in (line 15))
+  s3transfer<0.7.0,>=0.6.0 (from boto3==1.26.113->moto==4.1.7->-r requirements_dev.in (line 8))
+  setuptools (from yamllint==1.30.0->-r requirements_dev.in (line 16))
+  six>=1.5 (from python-dateutil==2.8.2->moto==4.1.7->-r requirements_dev.in (line 8))
+  snowballstemmer>=1.1 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  Sphinx~=4.5 (from -r requirements_dev.in (line 3))
+  sphinxcontrib-applehelp (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-devhelp (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-htmlhelp>=2.0.0 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-jsmath (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-qthelp (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-serializinghtml>=1.1.5 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  tomli>=1.0.0,>=1.1.0 (from black==22.12.0->-r requirements_dev.in (line 2))
+  tomlkit>=0.10.1 (from pylint==2.17.2->-r requirements_dev.in (line 10))
+  types-PyYAML (from responses==0.23.1->moto==4.1.7->-r requirements_dev.in (line 8))
+  typing-extensions>=3.10.0.0,>=4.0.0 (from black==22.12.0->-r requirements_dev.in (line 2))
+  urllib3<1.27,>=1.21.1,>=1.25.10,>=1.25.4 (from requests==2.28.2->moto==4.1.7->-r requirements_dev.in (line 8))
+  websocket-client>=0.32.0 (from docker==5.0.3->-r requirements_dev.in (line 5))
+  werkzeug!=2.2.0,!=2.2.1,>=0.5 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  wrapt<2,>=1.11 (from astroid==2.15.2->pylint==2.17.2->-r requirements_dev.in (line 10))
+  xmltodict (from moto==4.1.7->-r requirements_dev.in (line 8))
+  yamllint~=1.23 (from -r requirements_dev.in (line 16))
+  zipp>=0.5 (from importlib-metadata==6.3.0->Sphinx==4.5.0->-r requirements_dev.in (line 3))
+
+Finding the best candidates:
+  found candidate alabaster==0.7.13 (constraint was >=0.7,<0.8)
+  found candidate astroid==2.15.2 (constraint was >=2.15.2,<=2.17.0-dev0)
+  found candidate babel==2.12.1 (constraint was >=1.3)
+  found candidate black==22.12.0 (constraint was ~=22.3)
+  found candidate boto3==1.26.113 (constraint was >=1.9.201)
+  found candidate botocore==1.29.113 (constraint was >=1.12.201,>=1.29.113,<1.30.0)
+  found candidate bump2version==1.0.1 (constraint was <any>)
+  found candidate bumpversion==0.6.0 (constraint was ~=0.6)
+  found candidate certifi==2022.12.7 (constraint was >=2017.4.17)
+  found candidate cffi==1.15.1 (constraint was >=1.12)
+  found candidate charset-normalizer==3.1.0 (constraint was >=2,<4)
+  found candidate click==8.1.3 (constraint was >=8.0.0,>=8.0.1,<9.0.0)
+  found candidate coverage[toml]==7.2.3 (constraint was >=5.2.1)
+  found candidate cryptography==40.0.1 (constraint was >=3.3.1)
+  found candidate dill==0.3.6 (constraint was >=0.2)
+  found candidate docker==5.0.3 (constraint was ~=5.0)
+  found candidate docutils==0.17.1 (constraint was >=0.14,<0.18)
+  found candidate exceptiongroup==1.1.1 (constraint was >=1.0.0rc8)
+  found candidate idna==3.4 (constraint was >=2.5,<4)
+  found candidate imagesize==1.4.1 (constraint was <any>)
+  found candidate importlib-metadata==6.3.0 (constraint was >=4.4)
+  found candidate iniconfig==2.0.0 (constraint was <any>)
+  found candidate isort==5.12.0 (constraint was >=4.2.5,~=5.10,<6)
+  found candidate jinja2==3.1.2 (constraint was >=2.10.1,>=2.3)
+  found candidate jmespath==1.0.1 (constraint was >=0.7.1,<2.0.0)
+  found candidate lazy-object-proxy==1.9.0 (constraint was >=1.4.0)
+  found candidate markupsafe==2.1.2 (constraint was >=2.0,>=2.1.1)
+  found candidate mccabe==0.7.0 (constraint was >=0.6,<0.8)
+  found candidate mock==4.0.3 (constraint was ~=4.0)
+  found candidate moto==4.1.7 (constraint was ~=4.1)
+  found candidate mypy-extensions==1.0.0 (constraint was >=0.4.3)
+  found candidate packaging==23.1 (constraint was <any>)
+  found candidate pathspec==0.11.1 (constraint was >=0.5.3,>=0.9.0)
+  found candidate platformdirs==3.2.0 (constraint was >=2,>=2.2.0)
+  found candidate pluggy==1.0.0 (constraint was >=0.12,<2.0)
+  found candidate pycodestyle==2.10.0 (constraint was ~=2.3)
+  found candidate pygments==2.15.0 (constraint was >=2.0)
+  found candidate pylint==2.17.2 (constraint was ~=2.13)
+  found candidate pytest==7.3.0 (constraint was >=4.6,>=5.0.0,~=7.1)
+  found candidate pytest-cov==3.0.0 (constraint was ~=3.0)
+  found candidate pytest-timeout==2.1.0 (constraint was ~=2.1)
+  found candidate python-dateutil==2.8.2 (constraint was >=2.1,<3.0.0)
+  found candidate python-magic==0.4.18 (constraint was ==0.4.18)
+  found candidate pyyaml==6.0 (constraint was <any>)
+  found candidate requests==2.28.2 (constraint was >=2.14.2,!=2.18.0,>=2.22.0,>=2.5,<3.0)
+  found candidate responses==0.23.1 (constraint was >=0.13.0)
+  found candidate runlike==1.4.9 (constraint was ~=1.4)
+  found candidate s3transfer==0.6.0 (constraint was >=0.6.0,<0.7.0)
+  found candidate setuptools==67.6.1 (constraint was <any>)
+  found candidate six==1.16.0 (constraint was >=1.5)
+  found candidate snowballstemmer==2.2.0 (constraint was >=1.1)
+  found candidate sphinx==4.5.0 (constraint was ~=4.5)
+  found candidate sphinxcontrib-applehelp==1.0.4 (constraint was <any>)
+  found candidate sphinxcontrib-devhelp==1.0.2 (constraint was <any>)
+  found candidate sphinxcontrib-htmlhelp==2.0.1 (constraint was >=2.0.0)
+  found candidate sphinxcontrib-jsmath==1.0.1 (constraint was <any>)
+  found candidate sphinxcontrib-qthelp==1.0.3 (constraint was <any>)
+  found candidate sphinxcontrib-serializinghtml==1.1.5 (constraint was >=1.1.5)
+  found candidate tomli==2.0.1 (constraint was >=1.0.0,>=1.1.0)
+  found candidate tomlkit==0.11.7 (constraint was >=0.10.1)
+  found candidate types-pyyaml==6.0.12.9 (constraint was <any>)
+  found candidate typing-extensions==4.5.0 (constraint was >=3.10.0.0,>=4.0.0)
+  found candidate urllib3==1.26.15 (constraint was >=1.21.1,>=1.25.10,>=1.25.4,<1.27)
+  found candidate websocket-client==1.5.1 (constraint was >=0.32.0)
+  found candidate werkzeug==2.2.3 (constraint was >=0.5,!=2.2.0,!=2.2.1)
+  found candidate wrapt==1.15.0 (constraint was >=1.11,<2)
+  found candidate xmltodict==0.13.0 (constraint was <any>)
+  found candidate yamllint==1.30.0 (constraint was ~=1.23)
+  found candidate zipp==3.15.0 (constraint was >=0.5)
+
+Finding secondary dependencies:
+  idna==3.4                 requires -
+  jinja2==3.1.2             requires MarkupSafe>=2.0
+  moto==4.1.7               requires boto3>=1.9.201, botocore>=1.12.201, cryptography>=3.3.1, Jinja2>=2.10.1, python-dateutil<3.0.0,>=2.1, requests>=2.5, responses>=0.13.0, werkzeug!=2.2.0,!=2.2.1,>=0.5, xmltodict
+  packaging==23.1           requires -
+  requests==2.28.2          requires certifi>=2017.4.17, charset-normalizer<4,>=2, idna<4,>=2.5, urllib3<1.27,>=1.21.1
+  werkzeug==2.2.3           requires MarkupSafe>=2.1.1
+  isort==5.12.0             requires -
+  wrapt==1.15.0             requires -
+  websocket-client==1.5.1   requires -
+  astroid==2.15.2           requires lazy-object-proxy>=1.4.0, typing-extensions>=4.0.0; python_version < "3.11", wrapt<2,>=1.11; python_version < "3.11"
+  importlib-metadata==6.3.0 requires zipp>=0.5
+  botocore==1.29.113        requires jmespath<2.0.0,>=0.7.1, python-dateutil<3.0.0,>=2.1, urllib3<1.27,>=1.25.4
+  imagesize==1.4.1          requires -
+  pathspec==0.11.1          requires -
+  sphinxcontrib-devhelp==1.0.2 requires -
+  tomlkit==0.11.7           requires -
+  yamllint==1.30.0          requires pathspec>=0.5.3, pyyaml, setuptools
+  python-magic==0.4.18      requires -
+  iniconfig==2.0.0          requires -
+  responses==0.23.1         requires pyyaml, requests<3.0,>=2.22.0, types-PyYAML, urllib3>=1.25.10
+  runlike==1.4.9            requires click<9.0.0,>=8.0.1
+  mccabe==0.7.0             requires -
+  jmespath==1.0.1           requires -
+  boto3==1.26.113           requires botocore<1.30.0,>=1.29.113, jmespath<2.0.0,>=0.7.1, s3transfer<0.7.0,>=0.6.0
+  click==8.1.3              requires -
+  bumpversion==0.6.0        requires bump2version
+  six==1.16.0               requires -
+  xmltodict==0.13.0         requires -
+  bump2version==1.0.1       requires -
+  dill==0.3.6               requires -
+  babel==2.12.1             requires -
+  snowballstemmer==2.2.0    requires -
+  alabaster==0.7.13         requires -
+  docutils==0.17.1          requires -
+  sphinxcontrib-qthelp==1.0.3 requires -
+  cffi==1.15.1              requires pycparser
+  exceptiongroup==1.1.1     requires -
+  sphinxcontrib-serializinghtml==1.1.5 requires -
+  pycodestyle==2.10.0       requires -
+  tomli==2.0.1              requires -
+  platformdirs==3.2.0       requires -
+  certifi==2022.12.7        requires -
+  docker==5.0.3             requires requests!=2.18.0,>=2.14.2, websocket-client>=0.32.0
+  pygments==2.15.0          requires -
+  zipp==3.15.0              requires -
+  cryptography==40.0.1      requires cffi>=1.12
+  pytest-timeout==2.1.0     requires pytest>=5.0.0
+  sphinxcontrib-applehelp==1.0.4 requires -
+  types-pyyaml==6.0.12.9    requires -
+  pluggy==1.0.0             requires -
+  setuptools==67.6.1        requires -
+  sphinxcontrib-jsmath==1.0.1 requires -
+  pytest-cov==3.0.0         requires coverage[toml]>=5.2.1, pytest>=4.6
+  coverage[toml]==7.2.3     requires tomli; python_full_version <= "3.11.0a6" and extra == "toml"
+  pylint==2.17.2            requires astroid<=2.17.0-dev0,>=2.15.2, dill>=0.2; python_version < "3.11", isort<6,>=4.2.5, mccabe<0.8,>=0.6, platformdirs>=2.2.0, tomli>=1.1.0; python_version < "3.11", tomlkit>=0.10.1, typing-extensions>=3.10.0; python_version < "3.10"
+  urllib3==1.26.15          requires -
+  pytest==7.3.0             requires exceptiongroup>=1.0.0rc8; python_version < "3.11", iniconfig, packaging, pluggy<2.0,>=0.12, tomli>=1.0.0; python_version < "3.11"
+  lazy-object-proxy==1.9.0  requires -
+  python-dateutil==2.8.2    requires six>=1.5
+  markupsafe==2.1.2         requires -
+  mypy-extensions==1.0.0    requires -
+  typing-extensions==4.5.0  requires -
+  s3transfer==0.6.0         requires botocore<2.0a.0,>=1.12.36
+  sphinxcontrib-htmlhelp==2.0.1 requires -
+  pyyaml==6.0               requires -
+  sphinx==4.5.0             requires alabaster<0.8,>=0.7, babel>=1.3, docutils<0.18,>=0.14, imagesize, importlib-metadata>=4.4; python_version < "3.10", Jinja2>=2.3, packaging, Pygments>=2.0, requests>=2.5.0, snowballstemmer>=1.1, sphinxcontrib-applehelp, sphinxcontrib-devhelp, sphinxcontrib-htmlhelp>=2.0.0, sphinxcontrib-jsmath, sphinxcontrib-qthelp, sphinxcontrib-serializinghtml>=1.1.5
+  mock==4.0.3               requires -
+  charset-normalizer==3.1.0 requires -
+  black==22.12.0            requires click>=8.0.0, mypy-extensions>=0.4.3, pathspec>=0.9.0, platformdirs>=2, tomli>=1.1.0; python_full_version < "3.11.0a7", typing-extensions>=3.10.0.0; python_version < "3.10"
+
+New dependencies found in this round:
+  adding ('botocore', '<1.30.0,<2.0a.0,>=1.12.201,>=1.12.36,>=1.29.113', [])
+  adding ('pycparser', '', [])
+Removed dependencies in this round:
+  removing ('botocore', '<1.30.0,>=1.12.201,>=1.29.113', [])
+------------------------------------------------------------
+Result of round 3: not stable
+
+                          ROUND 4                           
+Current constraints:
+  alabaster<0.8,>=0.7 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  astroid<=2.17.0-dev0,>=2.15.2 (from pylint==2.17.2->-r requirements_dev.in (line 10))
+  babel>=1.3 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  black~=22.3 (from -r requirements_dev.in (line 2))
+  boto3>=1.9.201 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  botocore<1.30.0,<2.0a.0,>=1.12.201,>=1.12.36,>=1.29.113 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  bump2version (from bumpversion==0.6.0->-r requirements_dev.in (line 4))
+  bumpversion~=0.6 (from -r requirements_dev.in (line 4))
+  certifi>=2017.4.17 (from requests==2.28.2->moto==4.1.7->-r requirements_dev.in (line 8))
+  cffi>=1.12 (from cryptography==40.0.1->moto==4.1.7->-r requirements_dev.in (line 8))
+  charset-normalizer<4,>=2 (from requests==2.28.2->moto==4.1.7->-r requirements_dev.in (line 8))
+  click<9.0.0,>=8.0.0,>=8.0.1 (from black==22.12.0->-r requirements_dev.in (line 2))
+  coverage[toml]>=5.2.1 (from pytest-cov==3.0.0->-r requirements_dev.in (line 12))
+  cryptography>=3.3.1 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  dill>=0.2 (from pylint==2.17.2->-r requirements_dev.in (line 10))
+  docker~=5.0 (from -r requirements_dev.in (line 5))
+  docutils<0.18,>=0.14 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  exceptiongroup>=1.0.0rc8 (from pytest==7.3.0->-r requirements_dev.in (line 11))
+  idna<4,>=2.5 (from requests==2.28.2->moto==4.1.7->-r requirements_dev.in (line 8))
+  imagesize (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  importlib-metadata>=4.4 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  iniconfig (from pytest==7.3.0->-r requirements_dev.in (line 11))
+  isort<6,>=4.2.5,~=5.10 (from -r requirements_dev.in (line 6))
+  Jinja2>=2.10.1,>=2.3 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  jmespath<2.0.0,>=0.7.1 (from boto3==1.26.113->moto==4.1.7->-r requirements_dev.in (line 8))
+  lazy-object-proxy>=1.4.0 (from astroid==2.15.2->pylint==2.17.2->-r requirements_dev.in (line 10))
+  MarkupSafe>=2.0,>=2.1.1 (from Jinja2==3.1.2->moto==4.1.7->-r requirements_dev.in (line 8))
+  mccabe<0.8,>=0.6 (from pylint==2.17.2->-r requirements_dev.in (line 10))
+  mock~=4.0 (from -r requirements_dev.in (line 7))
+  moto~=4.1 (from -r requirements_dev.in (line 8))
+  mypy-extensions>=0.4.3 (from black==22.12.0->-r requirements_dev.in (line 2))
+  packaging (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  pathspec>=0.5.3,>=0.9.0 (from black==22.12.0->-r requirements_dev.in (line 2))
+  platformdirs>=2,>=2.2.0 (from black==22.12.0->-r requirements_dev.in (line 2))
+  pluggy<2.0,>=0.12 (from pytest==7.3.0->-r requirements_dev.in (line 11))
+  pycodestyle~=2.3 (from -r requirements_dev.in (line 9))
+  pycparser (from cffi==1.15.1->cryptography==40.0.1->moto==4.1.7->-r requirements_dev.in (line 8))
+  Pygments>=2.0 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  pylint~=2.13 (from -r requirements_dev.in (line 10))
+  pytest>=4.6,>=5.0.0,~=7.1 (from -r requirements_dev.in (line 11))
+  pytest-cov~=3.0 (from -r requirements_dev.in (line 12))
+  pytest-timeout~=2.1 (from -r requirements_dev.in (line 13))
+  python-dateutil<3.0.0,>=2.1 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  python-magic==0.4.18 (from -r requirements_dev.in (line 14))
+  pyyaml (from yamllint==1.30.0->-r requirements_dev.in (line 16))
+  requests!=2.18.0,<3.0,>=2.14.2,>=2.22.0,>=2.5 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  responses>=0.13.0 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  runlike~=1.4 (from -r requirements_dev.in (line 15))
+  s3transfer<0.7.0,>=0.6.0 (from boto3==1.26.113->moto==4.1.7->-r requirements_dev.in (line 8))
+  setuptools (from yamllint==1.30.0->-r requirements_dev.in (line 16))
+  six>=1.5 (from python-dateutil==2.8.2->moto==4.1.7->-r requirements_dev.in (line 8))
+  snowballstemmer>=1.1 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  Sphinx~=4.5 (from -r requirements_dev.in (line 3))
+  sphinxcontrib-applehelp (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-devhelp (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-htmlhelp>=2.0.0 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-jsmath (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-qthelp (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  sphinxcontrib-serializinghtml>=1.1.5 (from Sphinx==4.5.0->-r requirements_dev.in (line 3))
+  tomli>=1.0.0,>=1.1.0 (from black==22.12.0->-r requirements_dev.in (line 2))
+  tomlkit>=0.10.1 (from pylint==2.17.2->-r requirements_dev.in (line 10))
+  types-PyYAML (from responses==0.23.1->moto==4.1.7->-r requirements_dev.in (line 8))
+  typing-extensions>=3.10.0,>=4.0.0 (from black==22.12.0->-r requirements_dev.in (line 2))
+  urllib3<1.27,>=1.21.1,>=1.25.10,>=1.25.4 (from requests==2.28.2->moto==4.1.7->-r requirements_dev.in (line 8))
+  websocket-client>=0.32.0 (from docker==5.0.3->-r requirements_dev.in (line 5))
+  werkzeug!=2.2.0,!=2.2.1,>=0.5 (from moto==4.1.7->-r requirements_dev.in (line 8))
+  wrapt<2,>=1.11 (from astroid==2.15.2->pylint==2.17.2->-r requirements_dev.in (line 10))
+  xmltodict (from moto==4.1.7->-r requirements_dev.in (line 8))
+  yamllint~=1.23 (from -r requirements_dev.in (line 16))
+  zipp>=0.5 (from importlib-metadata==6.3.0->Sphinx==4.5.0->-r requirements_dev.in (line 3))
+
+Finding the best candidates:
+  found candidate alabaster==0.7.13 (constraint was >=0.7,<0.8)
+  found candidate astroid==2.15.2 (constraint was >=2.15.2,<=2.17.0-dev0)
+  found candidate babel==2.12.1 (constraint was >=1.3)
+  found candidate black==22.12.0 (constraint was ~=22.3)
+  found candidate boto3==1.26.113 (constraint was >=1.9.201)
+  found candidate botocore==1.29.113 (constraint was >=1.12.201,>=1.12.36,>=1.29.113,<1.30.0,<2.0a.0)
+  found candidate bump2version==1.0.1 (constraint was <any>)
+  found candidate bumpversion==0.6.0 (constraint was ~=0.6)
+  found candidate certifi==2022.12.7 (constraint was >=2017.4.17)
+  found candidate cffi==1.15.1 (constraint was >=1.12)
+  found candidate charset-normalizer==3.1.0 (constraint was >=2,<4)
+  found candidate click==8.1.3 (constraint was >=8.0.0,>=8.0.1,<9.0.0)
+  found candidate coverage[toml]==7.2.3 (constraint was >=5.2.1)
+  found candidate cryptography==40.0.1 (constraint was >=3.3.1)
+  found candidate dill==0.3.6 (constraint was >=0.2)
+  found candidate docker==5.0.3 (constraint was ~=5.0)
+  found candidate docutils==0.17.1 (constraint was >=0.14,<0.18)
+  found candidate exceptiongroup==1.1.1 (constraint was >=1.0.0rc8)
+  found candidate idna==3.4 (constraint was >=2.5,<4)
+  found candidate imagesize==1.4.1 (constraint was <any>)
+  found candidate importlib-metadata==6.3.0 (constraint was >=4.4)
+  found candidate iniconfig==2.0.0 (constraint was <any>)
+  found candidate isort==5.12.0 (constraint was >=4.2.5,~=5.10,<6)
+  found candidate jinja2==3.1.2 (constraint was >=2.10.1,>=2.3)
+  found candidate jmespath==1.0.1 (constraint was >=0.7.1,<2.0.0)
+  found candidate lazy-object-proxy==1.9.0 (constraint was >=1.4.0)
+  found candidate markupsafe==2.1.2 (constraint was >=2.0,>=2.1.1)
+  found candidate mccabe==0.7.0 (constraint was >=0.6,<0.8)
+  found candidate mock==4.0.3 (constraint was ~=4.0)
+  found candidate moto==4.1.7 (constraint was ~=4.1)
+  found candidate mypy-extensions==1.0.0 (constraint was >=0.4.3)
+  found candidate packaging==23.1 (constraint was <any>)
+  found candidate pathspec==0.11.1 (constraint was >=0.5.3,>=0.9.0)
+  found candidate platformdirs==3.2.0 (constraint was >=2,>=2.2.0)
+  found candidate pluggy==1.0.0 (constraint was >=0.12,<2.0)
+  found candidate pycodestyle==2.10.0 (constraint was ~=2.3)
+  found candidate pycparser==2.21 (constraint was <any>)
+  found candidate pygments==2.15.0 (constraint was >=2.0)
+  found candidate pylint==2.17.2 (constraint was ~=2.13)
+  found candidate pytest==7.3.0 (constraint was >=4.6,>=5.0.0,~=7.1)
+  found candidate pytest-cov==3.0.0 (constraint was ~=3.0)
+  found candidate pytest-timeout==2.1.0 (constraint was ~=2.1)
+  found candidate python-dateutil==2.8.2 (constraint was >=2.1,<3.0.0)
+  found candidate python-magic==0.4.18 (constraint was ==0.4.18)
+  found candidate pyyaml==6.0 (constraint was <any>)
+  found candidate requests==2.28.2 (constraint was >=2.14.2,!=2.18.0,>=2.22.0,>=2.5,<3.0)
+  found candidate responses==0.23.1 (constraint was >=0.13.0)
+  found candidate runlike==1.4.9 (constraint was ~=1.4)
+  found candidate s3transfer==0.6.0 (constraint was >=0.6.0,<0.7.0)
+  found candidate setuptools==67.6.1 (constraint was <any>)
+  found candidate six==1.16.0 (constraint was >=1.5)
+  found candidate snowballstemmer==2.2.0 (constraint was >=1.1)
+  found candidate sphinx==4.5.0 (constraint was ~=4.5)
+  found candidate sphinxcontrib-applehelp==1.0.4 (constraint was <any>)
+  found candidate sphinxcontrib-devhelp==1.0.2 (constraint was <any>)
+  found candidate sphinxcontrib-htmlhelp==2.0.1 (constraint was >=2.0.0)
+  found candidate sphinxcontrib-jsmath==1.0.1 (constraint was <any>)
+  found candidate sphinxcontrib-qthelp==1.0.3 (constraint was <any>)
+  found candidate sphinxcontrib-serializinghtml==1.1.5 (constraint was >=1.1.5)
+  found candidate tomli==2.0.1 (constraint was >=1.0.0,>=1.1.0)
+  found candidate tomlkit==0.11.7 (constraint was >=0.10.1)
+  found candidate types-pyyaml==6.0.12.9 (constraint was <any>)
+  found candidate typing-extensions==4.5.0 (constraint was >=3.10.0,>=4.0.0)
+  found candidate urllib3==1.26.15 (constraint was >=1.21.1,>=1.25.10,>=1.25.4,<1.27)
+  found candidate websocket-client==1.5.1 (constraint was >=0.32.0)
+  found candidate werkzeug==2.2.3 (constraint was >=0.5,!=2.2.0,!=2.2.1)
+  found candidate wrapt==1.15.0 (constraint was >=1.11,<2)
+  found candidate xmltodict==0.13.0 (constraint was <any>)
+  found candidate yamllint==1.30.0 (constraint was ~=1.23)
+  found candidate zipp==3.15.0 (constraint was >=0.5)
+
+Finding secondary dependencies:
+  platformdirs==3.2.0       requires -
+  typing-extensions==4.5.0  requires -
+  boto3==1.26.113           requires botocore<1.30.0,>=1.29.113, jmespath<2.0.0,>=0.7.1, s3transfer<0.7.0,>=0.6.0
+  certifi==2022.12.7        requires -
+  pyyaml==6.0               requires -
+  requests==2.28.2          requires certifi>=2017.4.17, charset-normalizer<4,>=2, idna<4,>=2.5, urllib3<1.27,>=1.21.1
+  websocket-client==1.5.1   requires -
+  bump2version==1.0.1       requires -
+  pytest==7.3.0             requires exceptiongroup>=1.0.0rc8; python_version < "3.11", iniconfig, packaging, pluggy<2.0,>=0.12, tomli>=1.0.0; python_version < "3.11"
+  idna==3.4                 requires -
+  mock==4.0.3               requires -
+  coverage[toml]==7.2.3     requires tomli; python_full_version <= "3.11.0a6" and extra == "toml"
+  pytest-cov==3.0.0         requires coverage[toml]>=5.2.1, pytest>=4.6
+  black==22.12.0            requires click>=8.0.0, mypy-extensions>=0.4.3, pathspec>=0.9.0, platformdirs>=2, tomli>=1.1.0; python_full_version < "3.11.0a7", typing-extensions>=3.10.0.0; python_version < "3.10"
+  bumpversion==0.6.0        requires bump2version
+  python-magic==0.4.18      requires -
+  s3transfer==0.6.0         requires botocore<2.0a.0,>=1.12.36
+  cryptography==40.0.1      requires cffi>=1.12
+  mypy-extensions==1.0.0    requires -
+  pathspec==0.11.1          requires -
+  runlike==1.4.9            requires click<9.0.0,>=8.0.1
+  lazy-object-proxy==1.9.0  requires -
+  urllib3==1.26.15          requires -
+  werkzeug==2.2.3           requires MarkupSafe>=2.1.1
+  importlib-metadata==6.3.0 requires zipp>=0.5
+  responses==0.23.1         requires pyyaml, requests<3.0,>=2.22.0, types-PyYAML, urllib3>=1.25.10
+  sphinxcontrib-htmlhelp==2.0.1 requires -
+  babel==2.12.1             requires -
+  setuptools==67.6.1        requires -
+  botocore==1.29.113        requires jmespath<2.0.0,>=0.7.1, python-dateutil<3.0.0,>=2.1, urllib3<1.27,>=1.25.4
+  pycparser==2.21           requires -
+  cffi==1.15.1              requires pycparser
+  pylint==2.17.2            requires astroid<=2.17.0-dev0,>=2.15.2, dill>=0.2; python_version < "3.11", isort<6,>=4.2.5, mccabe<0.8,>=0.6, platformdirs>=2.2.0, tomli>=1.1.0; python_version < "3.11", tomlkit>=0.10.1, typing-extensions>=3.10.0; python_version < "3.10"
+  pytest-timeout==2.1.0     requires pytest>=5.0.0
+  six==1.16.0               requires -
+  isort==5.12.0             requires -
+  python-dateutil==2.8.2    requires six>=1.5
+  wrapt==1.15.0             requires -
+  jinja2==3.1.2             requires MarkupSafe>=2.0
+  alabaster==0.7.13         requires -
+  pygments==2.15.0          requires -
+  sphinx==4.5.0             requires alabaster<0.8,>=0.7, babel>=1.3, docutils<0.18,>=0.14, imagesize, importlib-metadata>=4.4; python_version < "3.10", Jinja2>=2.3, packaging, Pygments>=2.0, requests>=2.5.0, snowballstemmer>=1.1, sphinxcontrib-applehelp, sphinxcontrib-devhelp, sphinxcontrib-htmlhelp>=2.0.0, sphinxcontrib-jsmath, sphinxcontrib-qthelp, sphinxcontrib-serializinghtml>=1.1.5
+  xmltodict==0.13.0         requires -
+  iniconfig==2.0.0          requires -
+  moto==4.1.7               requires boto3>=1.9.201, botocore>=1.12.201, cryptography>=3.3.1, Jinja2>=2.10.1, python-dateutil<3.0.0,>=2.1, requests>=2.5, responses>=0.13.0, werkzeug!=2.2.0,!=2.2.1,>=0.5, xmltodict
+  packaging==23.1           requires -
+  docutils==0.17.1          requires -
+  yamllint==1.30.0          requires pathspec>=0.5.3, pyyaml, setuptools
+  charset-normalizer==3.1.0 requires -
+  snowballstemmer==2.2.0    requires -
+  docker==5.0.3             requires requests!=2.18.0,>=2.14.2, websocket-client>=0.32.0
+  pycodestyle==2.10.0       requires -
+  sphinxcontrib-applehelp==1.0.4 requires -
+  zipp==3.15.0              requires -
+  markupsafe==2.1.2         requires -
+  sphinxcontrib-jsmath==1.0.1 requires -
+  exceptiongroup==1.1.1     requires -
+  jmespath==1.0.1           requires -
+  dill==0.3.6               requires -
+  sphinxcontrib-devhelp==1.0.2 requires -
+  astroid==2.15.2           requires lazy-object-proxy>=1.4.0, typing-extensions>=4.0.0; python_version < "3.11", wrapt<2,>=1.11; python_version < "3.11"
+  imagesize==1.4.1          requires -
+  pluggy==1.0.0             requires -
+  sphinxcontrib-serializinghtml==1.1.5 requires -
+  sphinxcontrib-qthelp==1.0.3 requires -
+  tomlkit==0.11.7           requires -
+  tomli==2.0.1              requires -
+  mccabe==0.7.0             requires -
+  types-pyyaml==6.0.12.9    requires -
+  click==8.1.3              requires -
+------------------------------------------------------------
+Result of round 4: stable, done
+
+#
+# This file is autogenerated by pip-compile with Python 3.9
+# by the following command:
+#
+#    pip-compile --output-file=requirements_dev.txt requirements_dev.in
+#
+alabaster==0.7.13
+    # via sphinx
+astroid==2.15.2
+    # via pylint
+babel==2.12.1
+    # via sphinx
+black==22.12.0
+    # via -r requirements_dev.in
+boto3==1.26.113
+    # via moto
+botocore==1.29.113
+    # via
+    #   boto3
+    #   moto
+    #   s3transfer
+bump2version==1.0.1
+    # via bumpversion
+bumpversion==0.6.0
+    # via -r requirements_dev.in
+certifi==2022.12.7
+    # via requests
+cffi==1.15.1
+    # via cryptography
+charset-normalizer==3.1.0
+    # via requests
+click==8.1.3
+    # via
+    #   black
+    #   runlike
+coverage[toml]==7.2.3
+    # via pytest-cov
+cryptography==40.0.1
+    # via moto
+dill==0.3.6
+    # via pylint
+docker==5.0.3
+    # via -r requirements_dev.in
+docutils==0.17.1
+    # via sphinx
+exceptiongroup==1.1.1
+    # via pytest
+idna==3.4
+    # via requests
+imagesize==1.4.1
+    # via sphinx
+importlib-metadata==6.3.0
+    # via sphinx
+iniconfig==2.0.0
+    # via pytest
+isort==5.12.0
+    # via
+    #   -r requirements_dev.in
+    #   pylint
+jinja2==3.1.2
+    # via
+    #   moto
+    #   sphinx
+jmespath==1.0.1
+    # via
+    #   boto3
+    #   botocore
+lazy-object-proxy==1.9.0
+    # via astroid
+markupsafe==2.1.2
+    # via
+    #   jinja2
+    #   werkzeug
+mccabe==0.7.0
+    # via pylint
+mock==4.0.3
+    # via -r requirements_dev.in
+moto==4.1.7
+    # via -r requirements_dev.in
+mypy-extensions==1.0.0
+    # via black
+packaging==23.1
+    # via
+    #   pytest
+    #   sphinx
+pathspec==0.11.1
+    # via
+    #   black
+    #   yamllint
+platformdirs==3.2.0
+    # via
+    #   black
+    #   pylint
+pluggy==1.0.0
+    # via pytest
+pycodestyle==2.10.0
+    # via -r requirements_dev.in
+pycparser==2.21
+    # via cffi
+pygments==2.15.0
+    # via sphinx
+pylint==2.17.2
+    # via -r requirements_dev.in
+pytest==7.3.0
+    # via
+    #   -r requirements_dev.in
+    #   pytest-cov
+    #   pytest-timeout
+pytest-cov==3.0.0
+    # via -r requirements_dev.in
+pytest-timeout==2.1.0
+    # via -r requirements_dev.in
+python-dateutil==2.8.2
+    # via
+    #   botocore
+    #   moto
+python-magic==0.4.18
+    # via -r requirements_dev.in
+pyyaml==6.0
+    # via
+    #   responses
+    #   yamllint
+requests==2.28.2
+    # via
+    #   docker
+    #   moto
+    #   responses
+    #   sphinx
+responses==0.23.1
+    # via moto
+runlike==1.4.9
+    # via -r requirements_dev.in
+s3transfer==0.6.0
+    # via boto3
+six==1.16.0
+    # via python-dateutil
+snowballstemmer==2.2.0
+    # via sphinx
+sphinx==4.5.0
+    # via -r requirements_dev.in
+sphinxcontrib-applehelp==1.0.4
+    # via sphinx
+sphinxcontrib-devhelp==1.0.2
+    # via sphinx
+sphinxcontrib-htmlhelp==2.0.1
+    # via sphinx
+sphinxcontrib-jsmath==1.0.1
+    # via sphinx
+sphinxcontrib-qthelp==1.0.3
+    # via sphinx
+sphinxcontrib-serializinghtml==1.1.5
+    # via sphinx
+tomli==2.0.1
+    # via
+    #   black
+    #   coverage
+    #   pylint
+    #   pytest
+tomlkit==0.11.7
+    # via pylint
+types-pyyaml==6.0.12.9
+    # via responses
+typing-extensions==4.5.0
+    # via
+    #   astroid
+    #   black
+    #   pylint
+urllib3==1.26.15
+    # via
+    #   botocore
+    #   requests
+    #   responses
+websocket-client==1.5.1
+    # via docker
+werkzeug==2.2.3
+    # via moto
+wrapt==1.15.0
+    # via astroid
+xmltodict==0.13.0
+    # via moto
+yamllint==1.30.0
+    # via -r requirements_dev.in
+zipp==3.15.0
+    # via importlib-metadata
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools

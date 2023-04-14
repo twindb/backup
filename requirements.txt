@@ -4,19 +4,19 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
-azure-core==1.26.3
+azure-core==1.26.4
     # via
     #   -r requirements.in
     #   azure-storage-blob
-azure-storage-blob==12.15.0
+azure-storage-blob==12.16.0
     # via -r requirements.in
 bcrypt==4.0.1
     # via paramiko
-beautifulsoup4==4.11.2
+beautifulsoup4==4.12.2
     # via google
-boto3==1.26.89
+boto3==1.26.113
     # via -r requirements.in
-botocore==1.29.89
+botocore==1.29.113
     # via
     #   boto3
     #   s3transfer
@@ -32,12 +32,11 @@ charset-normalizer==3.1.0
     # via requests
 click==8.1.3
     # via -r requirements.in
-cryptography==39.0.2
+cryptography==40.0.1
     # via
-    #   -r requirements.in
     #   azure-storage-blob
     #   paramiko
-datadog==0.44.0
+datadog==0.45.0
     # via -r requirements.in
 google==3.0.0
     # via -r requirements.in
@@ -45,7 +44,7 @@ google-api-core==2.11.0
     # via
     #   google-cloud-core
     #   google-cloud-storage
-google-auth==2.16.2
+google-auth==2.17.3
     # via
     #   google-api-core
     #   google-cloud-core
@@ -58,7 +57,7 @@ google-crc32c==1.5.0
     # via google-resumable-media
 google-resumable-media==2.4.1
     # via google-cloud-storage
-googleapis-common-protos==1.58.0
+googleapis-common-protos==1.59.0
     # via google-api-core
 idna==3.4
     # via requests
@@ -70,7 +69,7 @@ jmespath==1.0.1
     #   botocore
 paramiko==2.12.0
     # via -r requirements.in
-protobuf==4.22.1
+protobuf==4.22.3
     # via
     #   google-api-core
     #   google-cloud-storage
@@ -86,7 +85,7 @@ pyasn1-modules==0.2.8
     # via google-auth
 pycparser==2.21
     # via cffi
-pymysql==1.0.2
+pymysql==1.0.3
     # via -r requirements.in
 pynacl==1.5.0
     # via paramiko
