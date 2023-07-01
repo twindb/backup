@@ -1,10 +1,6 @@
 ---
 name: "Integration tests"
 
-permissions:
-  id-token: "write"  # This is required for requesting the JWT
-  contents: "read"
-
 on:
   schedule:
     # Run integration tests at midnight UTC every day
@@ -20,19 +16,14 @@ jobs:
   test:
     runs-on: "ubuntu-20.04"
     env:
+      AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+      AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
       PAUSE_TEST: "${{ inputs.pause_test }}"
     strategy:
       matrix:
         version: ["focal", "bionic", "7"]
     steps:
       - uses: "actions/checkout@v3"
-      - name: "Configure AWS Credentials"
-        uses: "aws-actions/configure-aws-credentials@v2"
-        with:
-          role-to-assume: "arn:aws:iam::303467602807:role/twindb-test-runner"
-          role-session-name: "twindb-backup-integration-test"
-          aws-region: "us-west-1"
-
       - name: "Setup Python env"
         uses: "actions/setup-python@v2"
         with:
