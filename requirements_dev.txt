@@ -6,15 +6,15 @@
 #
 alabaster==0.7.13
     # via sphinx
-astroid==2.15.5
+astroid==2.15.6
     # via pylint
 babel==2.12.1
     # via sphinx
 black==22.12.0
     # via -r requirements_dev.in
-boto3==1.26.153
+boto3==1.28.3
     # via moto
-botocore==1.29.153
+botocore==1.31.3
     # via
     #   boto3
     #   moto
@@ -27,9 +27,9 @@ certifi==2023.5.7
     # via requests
 cffi==1.15.1
     # via cryptography
-charset-normalizer==3.1.0
+charset-normalizer==3.2.0
     # via requests
-click==8.1.3
+click==8.1.5
     # via
     #   black
     #   runlike
@@ -43,13 +43,13 @@ docker==5.0.3
     # via -r requirements_dev.in
 docutils==0.17.1
     # via sphinx
-exceptiongroup==1.1.1
+exceptiongroup==1.1.2
     # via pytest
 idna==3.4
     # via requests
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==6.6.0
+importlib-metadata==6.8.0
     # via sphinx
 iniconfig==2.0.0
     # via pytest
@@ -75,7 +75,7 @@ mccabe==0.7.0
     # via pylint
 mock==4.0.3
     # via -r requirements_dev.in
-moto==4.1.11
+moto==4.1.12
     # via -r requirements_dev.in
 mypy-extensions==1.0.0
     # via black
@@ -87,11 +87,11 @@ pathspec==0.11.1
     # via
     #   black
     #   yamllint
-platformdirs==3.5.3
+platformdirs==3.9.0
     # via
     #   black
     #   pylint
-pluggy==1.0.0
+pluggy==1.2.0
     # via pytest
 pycodestyle==2.10.0
     # via -r requirements_dev.in
@@ -101,7 +101,7 @@ pygments==2.15.1
     # via sphinx
 pylint==2.17.4
     # via -r requirements_dev.in
-pytest==7.3.2
+pytest==7.4.0
     # via
     #   -r requirements_dev.in
     #   pytest-cov
@@ -160,7 +160,7 @@ tomlkit==0.11.8
     # via pylint
 types-pyyaml==6.0.12.10
     # via responses
-typing-extensions==4.6.3
+typing-extensions==4.7.1
     # via
     #   astroid
     #   black
@@ -170,7 +170,7 @@ urllib3==1.26.16
     #   botocore
     #   requests
     #   responses
-websocket-client==1.5.3
+websocket-client==1.6.1
     # via docker
 werkzeug==2.3.6
     # via moto
@@ -180,5 +180,5 @@ xmltodict==0.13.0
     # via moto
 yamllint==1.32.0
     # via -r requirements_dev.in
-zipp==3.15.0
+zipp==3.16.2
     # via importlib-metadata
