@@ -54,7 +54,7 @@ pip:
 
 .PHONY: pip-tools
 pip-tools: pip
-	pip install -U "pip-tools ~= 6.6"
+	pip install -U "pip-tools ~= 7.0"
 
 .PHONY: setuptools
 setuptools: pip
