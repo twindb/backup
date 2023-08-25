@@ -11,20 +11,32 @@ from twindb_backup.source.base_source import BaseSource
 
 
 class FileSource(BaseSource):
-    """FileSource class"""
+    """
+    FileSource class describes a local directory or file.
+    The get_stream() method will return a compressed content of it.
 
-    def __init__(self, path, run_type):
+    :param path: Path to local file or directory.
+    :type path: str
+    :param run_type: A string "daily", "weekly", etc.
+    :type run_type: str
+    :param tar_options: Additional options passed to ``tar``.
+    :type tar_options: str
+    """
+
+    def __init__(self, path, run_type, tar_options: str = None):
         self.path = path
         self._suffix = "tar"
         self._media_type = "files"
+        self._tar_options = tar_options
         super(FileSource, self).__init__(run_type)
 
     @property
     def media_type(self):
         """Get media type. Media type is a general term that describes
-        what you backup. For directories media_type is 'file'.
+        what you back up. For directories media_type is 'file'.
 
         :return: 'file'
+        :rtype: str
         """
         return self._media_type
 
@@ -35,10 +47,13 @@ class FileSource(BaseSource):
 
         :return:
         """
-        cmd = "tar cf - %s" % self.path
+        cmd = ["tar", "cf", "-"]
+        if self._tar_options:
+            cmd.append(self._tar_options)
+        cmd.append(self.path)
         try:
-            LOG.debug("Running %s", cmd)
-            proc = Popen(shlex.split(cmd), stderr=PIPE, stdout=PIPE)
+            LOG.debug("Running %s", " ".join(cmd))
+            proc = Popen(cmd, stderr=PIPE, stdout=PIPE)
 
             yield proc.stdout
 
