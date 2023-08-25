@@ -1,3 +1,5 @@
+"""Tests that cover the FileSource().tar_options property."""
+
 from textwrap import dedent
 
 from twindb_backup.configuration import TwinDBBackupConfig
