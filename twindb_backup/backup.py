@@ -15,6 +15,7 @@ from resource import RLIMIT_NOFILE, getrlimit, setrlimit
 from pymysql import InternalError
 
 from twindb_backup import LOCK_FILE, LOG, MY_CNF_COMMON_PATHS, get_timeout, save_measures
+from twindb_backup.configuration import TwinDBBackupConfig
 from twindb_backup.copy.binlog_copy import BinlogCopy
 from twindb_backup.copy.mysql_copy import MySQLCopy
 from twindb_backup.destination.exceptions import DestinationError
@@ -75,7 +76,7 @@ def _backup_stream(config, src, dst, callbacks=None):
     dst.save(stream, src.get_name())
 
 
-def backup_files(run_type, config):
+def backup_files(run_type, config: TwinDBBackupConfig):
     """Backup local directories
 
     :param run_type: Run type
@@ -87,7 +88,7 @@ def backup_files(run_type, config):
     try:
         for directory in config.backup_dirs:
             LOG.debug("copying %s", directory)
-            src = FileSource(directory, run_type)
+            src = FileSource(directory, run_type, tar_options=config.tar_options)
             dst = config.destination()
             _backup_stream(config, src, dst)
             src.apply_retention_policy(dst, config, run_type)

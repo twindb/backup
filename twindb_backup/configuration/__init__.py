@@ -197,6 +197,17 @@ class TwinDBBackupConfig:
             LOG.error("Section 'source' is mandatory")
             raise ConfigurationError(err) from err
 
+    @property
+    def tar_options(self):
+        """
+        :return: Additional options passed to ``tar``.
+        :rtype: str
+        """
+        try:
+            return self.__cfg.get("source", "tar_options")
+        except NoOptionError:
+            return None
+
     def destination(self, backup_source=socket.gethostname()):
         """
         :param backup_source: Hostname of the host where backup is taken from.

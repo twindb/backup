@@ -29,7 +29,7 @@ class BaseSource(object):
         """
         Construct instance of BaseSource()
 
-        :param run_type: Run type e.g. hourly, daily, etc
+        :param run_type: Run type e.g. hourly, daily, etc.
         :type run_type: str
         """
         self.run_type = run_type
