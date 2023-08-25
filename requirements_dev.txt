@@ -12,9 +12,9 @@ babel==2.12.1
     # via sphinx
 black==22.12.0
     # via -r requirements_dev.in
-boto3==1.28.11
+boto3==1.28.34
     # via moto
-botocore==1.31.11
+botocore==1.31.34
     # via
     #   boto3
     #   moto
@@ -29,13 +29,13 @@ cffi==1.15.1
     # via cryptography
 charset-normalizer==3.2.0
     # via requests
-click==8.1.6
+click==8.1.7
     # via
     #   black
     #   runlike
-coverage[toml]==7.2.7
+coverage[toml]==7.3.0
     # via pytest-cov
-cryptography==41.0.2
+cryptography==41.0.3
     # via moto
 dill==0.3.7
     # via pylint
@@ -43,7 +43,7 @@ docker==5.0.3
     # via -r requirements_dev.in
 docutils==0.17.1
     # via sphinx
-exceptiongroup==1.1.2
+exceptiongroup==1.1.3
     # via pytest
 idna==3.4
     # via requests
@@ -75,7 +75,7 @@ mccabe==0.7.0
     # via pylint
 mock==4.0.3
     # via -r requirements_dev.in
-moto==4.1.13
+moto==4.2.0
     # via -r requirements_dev.in
 mypy-extensions==1.0.0
     # via black
@@ -83,23 +83,23 @@ packaging==23.1
     # via
     #   pytest
     #   sphinx
-pathspec==0.11.1
+pathspec==0.11.2
     # via
     #   black
     #   yamllint
-platformdirs==3.9.1
+platformdirs==3.10.0
     # via
     #   black
     #   pylint
 pluggy==1.2.0
     # via pytest
-pycodestyle==2.10.0
+pycodestyle==2.11.0
     # via -r requirements_dev.in
 pycparser==2.21
     # via cffi
-pygments==2.15.1
+pygments==2.16.1
     # via sphinx
-pylint==2.17.4
+pylint==2.17.5
     # via -r requirements_dev.in
 pytest==7.4.0
     # via
@@ -126,11 +126,11 @@ requests==2.31.0
     #   moto
     #   responses
     #   sphinx
-responses==0.23.1
+responses==0.23.3
     # via moto
 runlike==1.4.9
     # via -r requirements_dev.in
-s3transfer==0.6.1
+s3transfer==0.6.2
     # via boto3
 six==1.16.0
     # via python-dateutil
@@ -156,7 +156,7 @@ tomli==2.0.1
     #   coverage
     #   pylint
     #   pytest
-tomlkit==0.11.8
+tomlkit==0.12.1
     # via pylint
 types-pyyaml==6.0.12.11
     # via responses
@@ -170,9 +170,9 @@ urllib3==1.26.16
     #   botocore
     #   requests
     #   responses
-websocket-client==1.6.1
+websocket-client==1.6.2
     # via docker
-werkzeug==2.3.6
+werkzeug==2.3.7
     # via moto
 wrapt==1.15.0
     # via astroid

@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
-azure-core==1.28.0
+azure-core==1.29.3
     # via
     #   -r requirements.in
     #   azure-storage-blob
@@ -14,9 +14,9 @@ bcrypt==4.0.1
     # via paramiko
 beautifulsoup4==4.12.2
     # via google
-boto3==1.28.11
+boto3==1.28.34
     # via -r requirements.in
-botocore==1.31.11
+botocore==1.31.34
     # via
     #   boto3
     #   s3transfer
@@ -30,9 +30,9 @@ cffi==1.15.1
     #   pynacl
 charset-normalizer==3.2.0
     # via requests
-click==8.1.6
+click==8.1.7
     # via -r requirements.in
-cryptography==41.0.2
+cryptography==41.0.3
     # via
     #   azure-storage-blob
     #   paramiko
@@ -57,7 +57,7 @@ google-crc32c==1.5.0
     # via google-resumable-media
 google-resumable-media==2.5.0
     # via google-cloud-storage
-googleapis-common-protos==1.59.1
+googleapis-common-protos==1.60.0
     # via google-api-core
 idna==3.4
     # via requests
@@ -69,7 +69,7 @@ jmespath==1.0.1
     #   botocore
 paramiko==2.12.0
     # via -r requirements.in
-protobuf==4.23.4
+protobuf==4.24.1
     # via
     #   google-api-core
     #   google-cloud-storage
@@ -99,7 +99,7 @@ requests==2.31.0
     #   google-cloud-storage
 rsa==4.9
     # via google-auth
-s3transfer==0.6.1
+s3transfer==0.6.2
     # via boto3
 six==1.16.0
     # via
