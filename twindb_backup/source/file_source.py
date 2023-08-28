@@ -49,7 +49,7 @@ class FileSource(BaseSource):
         """
         cmd = ["tar", "cf", "-"]
         if self._tar_options:
-            cmd.append(self._tar_options)
+            cmd.extend(self._tar_options.split(" "))
         cmd.append(self.path)
         try:
             LOG.debug("Running %s", " ".join(cmd))
