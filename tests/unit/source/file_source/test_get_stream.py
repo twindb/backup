@@ -7,7 +7,14 @@ from twindb_backup.source.file_source import FileSource
 
 @pytest.mark.parametrize(
     "tar_options, expected_command",
-    [(None, ["tar", "cf", "-", "foo"]), ("--exclude-vcs-ignores", ["tar", "cf", "-", "--exclude-vcs-ignores", "foo"])],
+    [
+        (None, ["tar", "cf", "-", "foo"]),
+        ("--exclude-vcs-ignores", ["tar", "cf", "-", "--exclude-vcs-ignores", "foo"]),
+        (
+            "--exclude-vcs-ignores --exclude-ignore=FILE",
+            ["tar", "cf", "-", "--exclude-vcs-ignores", "--exclude-ignore=FILE", "foo"],
+        ),
+    ],
 )
 @mock.patch("twindb_backup.source.file_source.Popen")
 def test_get_stream(mock_popen, tar_options, expected_command):
