@@ -30,6 +30,17 @@ If the directory contains spaces it must be quoted..
     backup_dirs = /etc /root /home "/path/to/important files"
     backup_mysql = yes
 
+When you back up files, ``tar_options`` might be useful. It's a string that is passed to the ``tar`` command.
+Personally, I added it to skip files ``.gitignore`` would ignore.
+
+.. code-block:: ini
+
+    [source]
+
+    backup_dirs = /etc /root /home "/path/to/important files"
+    tar_options = --exclude-vcs-ignores
+
+
 Backup Destination
 ~~~~~~~~~~~~~~~~~~
 
