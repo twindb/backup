@@ -6,10 +6,9 @@ Installation
 
 Supported versions:
 
- * CentOS 7
- * Ubuntu bionic, focal
+ * Ubuntu jammy, focal
 
-**TwinDB Backup** can be installed from a DEB/RPM package.
+**TwinDB Backup** can be installed from a DEB package.
 The packages are available in the `Releases <https://github.com/twindb/backup/releases>`_.
 
 How to build TwinDB Backup manually
@@ -20,9 +19,8 @@ The TwinDB Backup package can build on a machine with Docker service.
 ``make package`` will build the package for the operating system defined in the ``OS_VERSION`` environment variable.
 Possible ``OS_VERSION`` values:
 
- * 7
- * bionic
- * focal.
+ * jammy
+ * focal
 
 .. code-block:: console
 
@@ -38,7 +36,7 @@ The package file will be generated in ``omnibus/pkg/``:
 .. code-block:: console
 
     $ ls omnibus/pkg/*.deb
-    omnibus/pkg/twindb-backup_2.20.0-1_amd64.deb
+    omnibus/pkg/twindb-backup_3.2.0-1_amd64.deb
 
 Once the package is built you can install it with rpm/dpkg or upload it to your repository
 and install it with apt or yum.
@@ -54,6 +52,3 @@ in ``/etc/twindb/twindb-backup.cfg`` and a cron configuration in
 ``/etc/cron.d/twindb-backup``.
 
 For configuration see :ref:`usage`.
-
-.. _the repository website: https://packagecloud.io/TwinDB/main/install
-.. _the TwinDB Repo cookbook: https://supermarket.chef.io/cookbooks/twindb-repo

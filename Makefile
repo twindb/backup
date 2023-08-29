@@ -27,8 +27,8 @@ PYTHON := python
 PYTHON_LIB := $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; import sys; sys.stdout.write(get_python_lib())" )
 
 
-PLATFORM ?= centos
-OS_VERSION ?= 7
+PLATFORM ?= ubuntu
+OS_VERSION ?= jammy
 
 pwd := $(shell pwd)
 build_dir = ${pwd}/build
@@ -140,18 +140,6 @@ docs: ## generate Sphinx HTML documentation, including API docs
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html
 
-servedocs: docs ## compile the docs watching for changes
-	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
-
-release: clean ## package and upload a release
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
-
-dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
-	ls -l dist
-
 install: clean ## install the package to the active Python's site-packages
 	if test -z "${DESTDIR}" ; \
 	then $(PYTHON) setup.py install \
@@ -204,29 +192,13 @@ docker-start: ## Start a container with /twindb-backup for debugging packaging, 
 		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
 		bash -l
 
-ifeq ($(OS_VERSION),6)
-        PLATFORM = centos
-endif
-ifeq ($(OS_VERSION),7)
-        PLATFORM = centos
-endif
 ifeq ($(OS_VERSION),focal)
         PLATFORM = ubuntu
 endif
-ifeq ($(OS_VERSION),xenial)
+ifeq ($(OS_VERSION),jammy)
         PLATFORM = ubuntu
 endif
-ifeq ($(OS_VERSION),bionic)
-        PLATFORM = ubuntu
-endif
-ifeq ($(OS_VERSION),cosmic)
-        PLATFORM = ubuntu
-endif
-
-ifeq ($(OS_VERSION),stretch)
-        PLATFORM = debian
-endif
-package: ## Build package - OS_VERSION must be one of: 7, bionic, focal.
+package: ## Build package - OS_VERSION must be one of: jammy, focal.
 	@docker run \
 		-v ${pwd}:/twindb-backup \
 		--name builder_xtrabackup \

@@ -51,6 +51,7 @@ version "3.9.13" do
 end
 
 relative_path "Python-#{version}"
+major_version, minor_version = version.split(".")
 
 LIB_PATH = %W{#{install_dir}/embedded/lib #{install_dir}/embedded/lib64 #{install_dir}/lib #{install_dir}/lib64 #{install_dir}/libexec}.freeze
 
@@ -75,10 +76,11 @@ build do
 
   link "#{install_dir}/embedded/bin/python3", "#{install_dir}/embedded/bin/python"
 
-  delete("#{install_dir}/embedded/lib/python3.9/lib-dynload/dbm.*")
-  delete("#{install_dir}/embedded/lib/python3.9/lib-dynload/_sqlite3.*")
-  delete("#{install_dir}/embedded/lib/python3.9/test")
-  command "find #{install_dir}/embedded/lib/python3.9 -name '__pycache__' -type d -print -exec rm -r {} +"
+  delete("#{install_dir}/embedded/lib/python#{major_version}.#{minor_version}/lib-dynload/dbm.*")
+  delete("#{install_dir}/embedded/lib/python#{major_version}.#{minor_version}/lib-dynload/_sqlite3.*")
+  delete "#{install_dir}/embedded/lib/python#{major_version}.#{minor_version}/lib-dynload/nis.cpython-*"
+  delete("#{install_dir}/embedded/lib/python#{major_version}.#{minor_version}/test")
+  command "find #{install_dir}/embedded/lib/python#{major_version}.#{minor_version} -name '__pycache__' -type d -print -exec rm -r {} +"
 end
 
 project.exclude "embedded/bin/python3*-config"

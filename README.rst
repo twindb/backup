@@ -128,24 +128,9 @@ Install TwinDB Backup.
 .. code-block:: console
 
     # Download the package
-    wget https://twindb-release.s3.amazonaws.com/twindb-backup/3.1.1/focal/twindb-backup_3.1.1-1_amd64.deb
+    wget https://twindb-release.s3.amazonaws.com/twindb-backup/3.2.0/focal/twindb-backup_3.2.0-1_amd64.deb
     # Install TwinDB Backup
-    apt install ./twindb-backup_3.1.1-1_amd64.deb
-
-Installing TwinDB Backup on CentOS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Install appropriate Percona XtraBackup version (2.4 for MySQL 5.6, 5.7 or 8.0 for MySQL 8.0).
-
-.. code-block:: console
-
-        yum install https://downloads.percona.com/downloads/Percona-XtraBackup-2.4/Percona-XtraBackup-2.4.26/binary/redhat/7/x86_64/percona-xtrabackup-24-2.4.26-1.el7.x86_64.rpm
-
-Install TwinDB Backup.
-
-.. code-block:: console
-
-    yum install https://twindb-release.s3.amazonaws.com/twindb-backup/3.1.1/7/twindb-backup-3.1.1-1.x86_64.rpm
+    apt install ./twindb-backup_3.2.0-1_amd64.deb
 
 Configuring TwinDB Backup
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -159,8 +144,7 @@ The TwinDB Backup package can build on a machine with Docker service.
 ``make package`` will build the package for the operating system defined in the ``OS_VERSION`` environment variable.
 Possible ``OS_VERSION`` values:
 
- * 7
- * bionic
+ * jammy
  * focal.
 
 .. code-block:: console
@@ -173,7 +157,7 @@ The package file will be generated in ``omnibus/pkg/``:
 .. code-block:: console
 
     $ ls omnibus/pkg/*.deb
-    omnibus/pkg/twindb-backup_3.1.1-1_amd64.deb
+    omnibus/pkg/twindb-backup_3.2.0-1_amd64.deb
 
 Once the package is built you can install it with rpm/dpkg or upload it to your repository
 and install it with apt or yum.
