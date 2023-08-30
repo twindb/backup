@@ -16,8 +16,7 @@ from twindb_backup.backup import timeout
 from twindb_backup.util import mkdir_p
 
 SUPPORTED_IMAGES = [
-    "twindb/backup-test:centos-7",
-    "twindb/backup-test:bionic",
+    "twindb/backup-test:jammy",
     "twindb/backup-test:focal",
     "twindb/backup-test:focal-mariadb-10",
 ]
@@ -53,6 +52,7 @@ def get_platform_from_image(image):
             ("xenial" in image),
             ("bionic" in image),
             ("focal" in image),
+            ("jammy" in image),
         )
     ):
         return "ubuntu"
