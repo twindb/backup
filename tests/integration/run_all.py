@@ -6,9 +6,8 @@ import click
 from twindb_backup import LOG, setup_logging
 
 DOCKER_IMAGES = {
-    "focal": "twindb/backup-test:focal",
+    "jammy": "twindb/backup-test:jammy",
     "bionic": "twindb/backup-test:bionic",
-    "7": "twindb/backup-test:centos-7",
 }
 
 SUPPORTED_OS = list(DOCKER_IMAGES.keys())
