@@ -327,7 +327,7 @@ def slave(docker_client, container_network, tmpdir_factory):
     )
 
     separator_pos = NODE_IMAGE.find(":")
-    image_name = NODE_IMAGE[: separator_pos + 1] + "slave_" + NODE_IMAGE[separator_pos + 1:]
+    image_name = NODE_IMAGE[: separator_pos + 1] + "slave_" + NODE_IMAGE[separator_pos + 1 :]
     twindb_config_dir = tmpdir_factory.mktemp("twindb")
     container = get_container(
         "slave",

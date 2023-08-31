@@ -87,7 +87,6 @@ def test__restore_mysql_inc_creates_log_files(
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     assert_and_pause((ret == 0,), cout)
 
-
     check_files_if_xtrabackup(
         docker_client,
         master1["Id"],
