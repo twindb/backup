@@ -19,6 +19,8 @@ package="/twindb-backup/omnibus/pkg/twindb-backup_${TB_VERSION}-1_amd64.deb"
 
 apt -y install "$package"
 
+chmod 644 /etc/mysql/mysql.conf.d/mysqld.cnf
+
 set +u
 if ! test -z "${DEV}"; then
     /bin/cp -R /twindb-backup/twindb_backup /opt/twindb-backup/embedded/lib/python3.9/site-packages
