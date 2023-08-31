@@ -77,7 +77,7 @@ password=qwerty
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     assert_and_pause((ret == 0,), cout)
 
-    for fl in ["backup-my.cnf", "ibdata1", "ib_logfile0"]:
+    for fl in ["backup-my.cnf", "ibdata1"]:
         cmd = ["test", "-f", osp.join(dst_dir, fl)]
         ret, cout = docker_execute(docker_client, master1["Id"], cmd)
         assert_and_pause((ret == 0,), cout)
@@ -86,7 +86,7 @@ password=qwerty
         docker_client,
         master1["Id"],
         dst_dir,
-        ["ib_logfile1", "xtrabackup_logfile"],
+        ["xtrabackup_logfile"],
     )
     check_either_file(
         docker_client,

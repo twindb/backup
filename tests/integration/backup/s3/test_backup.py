@@ -581,7 +581,6 @@ def test_take_mysql_backup_aenc_restores_full(
     files_to_test = []
     mysql_files = [
         "ibdata1",
-        "ib_logfile0",
         "backup-my.cnf",
     ]
     for datadir_file in mysql_files:
@@ -596,7 +595,7 @@ def test_take_mysql_backup_aenc_restores_full(
         docker_client,
         master1["Id"],
         dst_dir,
-        ["ib_logfile1", "xtrabackup_logfile"],
+        ["xtrabackup_logfile"],
     )
     check_either_file(
         docker_client,
@@ -733,7 +732,6 @@ def test_take_mysql_backup_aenc_restores_inc(
 
     for datadir_file in [
         "ibdata1",
-        "ib_logfile0",
         "backup-my.cnf",
     ]:
         cmd = ["bash", "-c", f"test -f {osp.join(dst_dir, datadir_file)}"]
@@ -747,7 +745,7 @@ def test_take_mysql_backup_aenc_restores_inc(
         docker_client,
         master1["Id"],
         dst_dir,
-        ["ib_logfile1", "xtrabackup_logfile"],
+        ["xtrabackup_logfile"],
     )
 
     check_either_file(

@@ -8,7 +8,7 @@ class profile::master {
     owner   => 'mysql',
     source  => 'puppet:///modules/profile/my-master.cnf',
     notify  => Service['mysql'],
-    require => Package['percona-server-server-5.7']
+    require => Package['mysql-server']
   }
 
   file { "/home/${profile::base::user}/mysql_grants.sql":
@@ -81,6 +81,6 @@ class profile::master {
   service { 'mysql':
     ensure  => running,
     enable  => true,
-    require => Package['percona-server-server-5.7'],
+    require => Package['mysql-server'],
   }
 }

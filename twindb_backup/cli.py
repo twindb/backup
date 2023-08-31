@@ -355,7 +355,7 @@ def clone_mysql_backup(
 ):
     """
     Clone mysql backup on remote server and make it a slave.
-    By default it will take a slave from a local MySQL on port 3306.
+    By default, it will take a slave from a local MySQL on port 3306.
 
     Source and destinations are strings hostname:port.
     E.g. 10.10.10.10:3306.

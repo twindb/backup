@@ -45,7 +45,7 @@ help:
 
 .PHONY: virtualenv
 virtualenv: ## create virtual environment typically used for development purposes
-	virtualenv -p python3.9 --always-copy --prompt='(twindb_backup)' ~/.virtualenvs/twindb-backup/
+	virtualenv -p python3 --always-copy --prompt='(twindb_backup)' ~/.virtualenvs/twindb-backup/
 	@printf "To activate run:\n\n. ~/.virtualenvs/twindb-backup/bin/activate\n\n"
 
 .PHONY: pip
@@ -94,9 +94,6 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -rf .pytest_cache
 
-clean-docker:
-	@sudo docker rm twindb-backup-build-${PLATFORM}
-
 
 clean-docs:
 	rm -rf docs/_build
@@ -129,9 +126,6 @@ test-including-azure-blob: ## Like 'make test' but includes tests for azure blob
 test-integration: ## Run integration tests. Must be run in vagrant
 	py.test -xsv tests/integration/
 
-coverage: ## check code coverage quickly with the default Python
-	py.test --cov-report term-missing  --cov=twindb_backup tests/unit
-
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/twindb_backup.rst
 	# rm -f docs/modules.rst
@@ -155,25 +149,6 @@ install: clean ## install the package to the active Python's site-packages
 		install -m 600 -o root support/twindb-backup.cfg "${DESTDIR}/etc/twindb" ; \
 	fi
 
-docker-test: ## Test twindb-backup in a docker container
-	@sudo docker run \
-		-v `pwd`:/twindb-backup:rw \
-		-e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
-		-e "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" \
-		-e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
-		-e "GC_CREDENTIALS_FILE=${GC_CREDENTIALS_FILE}" \
-		-e "OS_VERSION"=${OS_VERSION} \
-		-e "CI"=${CI} \
-		-e "TRAVIS"=${TRAVIS} \
-		-e "TRAVIS_BRANCH"=${TRAVIS_BRANCH} \
-		-e "TRAVIS_COMMIT"=${TRAVIS_COMMIT} \
-		-e "TRAVIS_JOB_NUMBER"=${TRAVIS_JOB_NUMBER} \
-		-e "TRAVIS_PULL_REQUEST"=${TRAVIS_PULL_REQUEST} \
-		-e "TRAVIS_JOB_ID"=${TRAVIS_JOB_ID} \
-		-e "TRAVIS_REPO_SLUG"=${TRAVIS_REPO_SLUG} \
-		-e "TRAVIS_TAG"=${TRAVIS_TAG} \
-		${DOCKER_IMAGE} /bin/bash /twindb-backup/support/docker-test-${PLATFORM}.sh
-
 .PHONY: docker-start
 docker-start: ## Start a container with /twindb-backup for debugging packaging, etc.
 	@docker run \
@@ -182,8 +157,6 @@ docker-start: ## Start a container with /twindb-backup for debugging packaging, 
 		-it \
 		--name builder_xtrabackup \
 		--rm \
-		--dns 8.8.8.8 \
-		--dns 208.67.222.222 \
 		--env AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 		--env AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
 		--env "GC_CREDENTIALS_FILE=${GC_CREDENTIALS_FILE}" \
@@ -203,8 +176,6 @@ package: ## Build package - OS_VERSION must be one of: jammy, focal.
 		-v ${pwd}:/twindb-backup \
 		--name builder_xtrabackup \
 		--rm \
-		--dns 8.8.8.8 \
-		--dns 208.67.222.222 \
 		--env AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 		--env AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
 		--env PLATFORM=${PLATFORM} \

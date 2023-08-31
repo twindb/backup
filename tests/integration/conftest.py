@@ -18,9 +18,7 @@ from twindb_backup.util import mkdir_p
 SUPPORTED_IMAGES = [
     "twindb/backup-test:jammy",
     "twindb/backup-test:focal",
-    "twindb/backup-test:focal-mariadb-10",
 ]
-
 
 try:
     NODE_IMAGE = os.environ["DOCKER_IMAGE"]
@@ -252,7 +250,6 @@ def get_container(
 # noinspection PyShadowingNames
 @pytest.fixture(scope="module")
 def master1(docker_client, container_network, tmpdir_factory):
-
     LOG.info("Starting fixture master1 container")
     platform = (
         os.environ["PLATFORM"] if "PLATFORM" in os.environ else get_platform_from_image(os.environ["DOCKER_IMAGE"])
@@ -545,5 +542,4 @@ def config_content_ssh():
 
 
 def get_container_hostname(client, container) -> str:
-
     return client.api.inspect_container(container)["Config"]["Hostname"]

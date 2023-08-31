@@ -87,15 +87,11 @@ def test__restore_mysql_inc_creates_log_files(
     ret, cout = docker_execute(docker_client, master1["Id"], cmd)
     assert_and_pause((ret == 0,), cout)
 
-    cmd = ["test", "-f", "/tmp/dst_full_log_files/ib_logfile0"]
-    ret, cout = docker_execute(docker_client, master1["Id"], cmd)
-    assert_and_pause((ret == 0,), cout)
-
     check_files_if_xtrabackup(
         docker_client,
         master1["Id"],
         "/tmp/dst_full_log_files",
-        ["ib_logfile1", "xtrabackup_logfile"],
+        ["xtrabackup_logfile"],
     )
 
     check_either_file(

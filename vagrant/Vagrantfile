@@ -3,13 +3,13 @@
 nodes = [
     { :hostname   => 'master1',
       :ip         => '192.168.36.250',
-      :box        => 'ubuntu/focal64',
-      :ram        => 3072
+      :box        => 'ubuntu/jammy64',
+      :ram        => 8192
     },
     { :hostname   => 'master2',
       :ip         => '192.168.36.251',
-      :box        => 'ubuntu/focal64',
-      :ram        => 3072
+      :box        => 'ubuntu/jammy64',
+      :ram        => 8192
     }
 ]
 
@@ -47,8 +47,8 @@ SCRIPT
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.provider "virtualbox" do |v|
-        v.memory = 4096
-        v.cpus = 4
+        v.memory = 8192
+        v.cpus = 12
     end
     nodes.each do |node|
         config.vm.define node[:hostname] do |nodeconfig|

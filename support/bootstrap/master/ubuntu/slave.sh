@@ -22,6 +22,8 @@ apt -y install "$package"
 rm -rf /var/lib/mysql
 mkdir /var/lib/mysql
 
+chmod 644 /etc/mysql/mysql.conf.d/mysqld.cnf
+
 set +u
 if ! test -z "${DEV}"; then
     /bin/cp -R /twindb-backup/twindb_backup /opt/twindb-backup/embedded/lib/python3.9/site-packages
