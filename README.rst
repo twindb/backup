@@ -128,9 +128,9 @@ Install TwinDB Backup.
 .. code-block:: console
 
     # Download the package
-    wget https://twindb-release.s3.amazonaws.com/twindb-backup/3.2.1/focal/twindb-backup_3.2.1-1_amd64.deb
+    wget https://twindb-release.s3.amazonaws.com/twindb-backup/3.3.0/focal/twindb-backup_3.3.0-1_amd64.deb
     # Install TwinDB Backup
-    apt install ./twindb-backup_3.2.1-1_amd64.deb
+    apt install ./twindb-backup_3.3.0-1_amd64.deb
 
 Configuring TwinDB Backup
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -158,7 +158,7 @@ The package file will be generated in ``omnibus/pkg/``:
 .. code-block:: console
 
     $ ls omnibus/pkg/*.deb
-    omnibus/pkg/twindb-backup_3.2.1-1_amd64.deb
+    omnibus/pkg/twindb-backup_3.3.0-1_amd64.deb
 
 Once the package is built you can install it with rpm/dpkg or upload it to your repository
 and install it with apt or yum.

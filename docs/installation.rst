@@ -38,7 +38,7 @@ The package file will be generated in ``omnibus/pkg/``:
 .. code-block:: console
 
     $ ls omnibus/pkg/*.deb
-    omnibus/pkg/twindb-backup_3.2.1-1_amd64.deb
+    omnibus/pkg/twindb-backup_3.3.0-1_amd64.deb
 
 Once the package is built you can install it with rpm/dpkg or upload it to your repository
 and install it with apt or yum.
