@@ -7,6 +7,7 @@ Installation
 Supported versions:
 
  * Ubuntu jammy, focal
+ * CentOS 7
 
 **TwinDB Backup** can be installed from a DEB package.
 The packages are available in the `Releases <https://github.com/twindb/backup/releases>`_.
@@ -21,10 +22,11 @@ Possible ``OS_VERSION`` values:
 
  * jammy
  * focal
+ * 7 (for CentOS 7)
 
 .. code-block:: console
 
-    # export OS_VERSION=bionic
+    # export OS_VERSION=jammy
     # make package
 
 .. note:: The build process requires a lot of available memory.

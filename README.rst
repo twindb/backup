@@ -24,7 +24,7 @@ TwinDB Backup
     :target: https://pyup.io/repos/github/twindb/backup/
     :alt: Updates
 
-TwinDB Backup is a multipurpose tool for backing up MySQL database and regulare files/directories on the file system.
+TwinDB Backup is a multipurpose tool for backing up MySQL database and regular files/directories on the file system.
 It can store backup copies on a remote SSH server, Amazon S3 or
 Google Cloud Storage.
 
@@ -145,7 +145,8 @@ The TwinDB Backup package can build on a machine with Docker service.
 Possible ``OS_VERSION`` values:
 
  * jammy
- * focal.
+ * focal
+ * 7 (for CentOS 7)
 
 .. code-block:: console
 
