@@ -171,6 +171,10 @@ endif
 ifeq ($(OS_VERSION),jammy)
         PLATFORM = ubuntu
 endif
+ifeq ($(OS_VERSION),7)
+        PLATFORM = centos
+endif
+
 package: ## Build package - OS_VERSION must be one of: jammy, focal.
 	@docker run \
 		-v ${pwd}:/twindb-backup \

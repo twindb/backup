@@ -65,7 +65,8 @@ class profile::base {
     'docker.io',
     'strace',
     'jq',
-    'make'
+    'make',
+    'apparmor-utils'
   ]
 
   package { $packages:
@@ -100,4 +101,17 @@ class profile::base {
     require => File['/etc/twindb']
   }
 
+  service { 'apparmor':
+    ensure => stopped,
+    enable => false,
+  }
+
+  exec { 'disable apparmor':
+    path    => '/bin:/sbin:/usr/sbin',
+    command => 'aa-disable /etc/apparmor.d/usr.sbin.mysqld',
+    creates => '/etc/apparmor.d/disable/usr.sbin.mysqld',
+    require => [
+      Package['apparmor-utils'],
+    ]
+  }
 }

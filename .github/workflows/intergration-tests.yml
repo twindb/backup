@@ -21,7 +21,7 @@ jobs:
       PAUSE_TEST: "${{ inputs.pause_test }}"
     strategy:
       matrix:
-        version: ["focal", "jammy"]
+        version: ["focal", "jammy", "7"]
     steps:
       - uses: "actions/checkout@v3"
       - name: "Setup Python env"

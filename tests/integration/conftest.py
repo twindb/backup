@@ -18,6 +18,7 @@ from twindb_backup.util import mkdir_p
 SUPPORTED_IMAGES = [
     "twindb/backup-test:jammy",
     "twindb/backup-test:focal",
+    "twindb/backup-test:centos-7",
 ]
 
 try:
