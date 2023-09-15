@@ -7,9 +7,11 @@ import boto3
 from twindb_backup import __version__
 
 OS_VERSIONS = [
-    # # ubuntu
+    # ubuntu
     "jammy",
     "focal",
+    # CentOS
+    "7"
 ]
 PKG_DIR = "omnibus/pkg"
 
@@ -22,18 +24,22 @@ OS_DETAILS = {
         "flavor": "Ubuntu",
         "name": "Ubuntu focal"
     },
+    "7": {
+        "flavor": "CentOS",
+        "name": "CentOS 7"
+    },
 }
 
 
 def main():
     my_env = environ
 
+    session = boto3.Session(profile_name="twindb")
+    client = session.client("s3")
     for os in OS_VERSIONS:
         run(["make", "clean"])
         my_env["OS_VERSION"] = os
         run(["make", "package"], env=my_env, check=True)
-        session = boto3.Session(profile_name="twindb")
-        client = session.client("s3")
         for fi_name in listdir(PKG_DIR):
             if (
                 fi_name.endswith(".rpm")
@@ -47,7 +53,6 @@ def main():
                     )
                 print(f"https://twindb-release.s3.amazonaws.com/{key}")
 
-    client = boto3.client("s3")
     for flavor in sorted((set([x["flavor"] for x in OS_DETAILS.values()]))):
         print("## %s" % flavor)
         for os, details in OS_DETAILS.items():
