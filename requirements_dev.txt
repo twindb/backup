@@ -174,7 +174,7 @@ urllib3==1.26.18
     #   responses
 websocket-client==1.6.4
     # via docker
-werkzeug==3.0.0
+werkzeug==3.0.2
     # via moto
 wrapt==1.15.0
     # via astroid
