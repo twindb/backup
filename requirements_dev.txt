@@ -59,7 +59,7 @@ isort==5.12.0
     # via
     #   -r requirements_dev.in
     #   pylint
-jinja2==3.1.2
+jinja2==3.1.4
     # via
     #   moto
     #   sphinx
