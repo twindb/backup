@@ -117,7 +117,7 @@ typing-extensions==4.8.0
     # via
     #   azure-core
     #   azure-storage-blob
-urllib3==1.26.18
+urllib3==2.2.2
     # via
     #   botocore
     #   requests
