@@ -167,7 +167,7 @@ typing-extensions==4.8.0
     #   astroid
     #   black
     #   pylint
-urllib3==1.26.18
+urllib3==2.2.2
     # via
     #   botocore
     #   requests
