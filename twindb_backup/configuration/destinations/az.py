@@ -4,12 +4,7 @@
 class AZConfig:
     """Azure Blob Storage Configuration."""
 
-    def __init__(
-        self,
-        connection_string,
-        container_name,
-        chunk_size=1024*1024*4 # 4MiB
-    ):
+    def __init__(self, connection_string, container_name, chunk_size=1024 * 1024 * 4):  # 4MiB
 
         self._connection_string = connection_string
         self._container_name = container_name

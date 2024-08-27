@@ -2,11 +2,11 @@
 """
 Module for Azure destination.
 """
+import builtins
 import os
 import re
 import socket
 import time
-
 from contextlib import contextmanager
 from multiprocessing import Process
 from urllib.parse import urlparse
@@ -15,13 +15,14 @@ from azure.storage.blob import BlobServiceClient
 
 from twindb_backup import LOG
 from twindb_backup.destination.base_destination import BaseDestination
-from twindb_backup.destination.exceptions import (
-    FileNotFound,
-    S3DestinationError,
-)
+from twindb_backup.destination.exceptions import FileNotFound, S3DestinationError
 from twindb_backup.exceptions import OperationError
 
-### DEFAULT VALUES SECTION
+"""
+DEFAULT VALUES SECTION
+"""
+
+
 class AZFileAccess(object):  # pylint: disable=too-few-public-methods
     """Access modes for AZ files"""
 
@@ -46,25 +47,30 @@ class AZ(BaseDestination):
         self._container_name = kwargs.get("container_name")
         self._connection_string = kwargs.get("connection_string")
         self._hostname = kwargs.get("hostname", socket.gethostname())
-        self._chunk_size = kwargs.get("chunk_size", 4*1024*1024)
+        self._chunk_size = kwargs.get("chunk_size", 4 * 1024 * 1024)
 
         self.remote_path = "/"
         super(AZ, self).__init__(self.remote_path)
 
         try:
-          LOG.debug("Initilizing Azure connection to the storage account using connection string (length=" + str(len(self._connection_string)) + ")")
-          self.service_client = BlobServiceClient.from_connection_string(self._connection_string)
-        except:
-          LOG.error("Failed to connect to Azure storage account using the connection string")
-          exit(1)
+            LOG.debug(
+                "Initilizing Azure connection to the storage account using connection string (length="
+                + str(len(self._connection_string))
+                + ")"
+            )
+            self.service_client = BlobServiceClient.from_connection_string(self._connection_string)
+        except builtins.Exception as err:
+            # TODO: add more specific exception handling
+            LOG.error("Failed to connect to Azure storage account using the connection string")
+            raise err
 
         # Check to see if the container exists, otherwise create the container
         try:
-          LOG.debug("Setting up the container(" + self._container_name + ") connection")
-          self.client = self.service_client.get_container_client(self._container_name)
-        except:
-          LOG.debug("The container(" + self._container_name + ") does not exist... creating it")
-          self.create_container()
+            LOG.debug("Setting up the container(" + self._container_name + ") connection")
+            self.client = self.service_client.get_container_client(self._container_name)
+        except builtins.Exception:
+            LOG.debug("The container(" + self._container_name + ") does not exist... creating it")
+            self.create_container()
 
     def bucket(self):
         """S3 bucket name.... compatibility???"""
@@ -75,9 +81,7 @@ class AZ(BaseDestination):
         return create_container(self)
 
     def create_container(self):
-        """Creates the container in the Azure storage account that will store the backups.
-
-        """
+        """Creates the container in the Azure storage account that will store the backups."""
         container_exists = True
 
         try:
@@ -89,9 +93,7 @@ class AZ(BaseDestination):
         LOG.info("Azure container creation was successful %s", self._container_name)
         return True
 
-    def list_files(
-        self, prefix=None, recursive=False, pattern=None, files_only=False
-    ):
+    def list_files(self, prefix=None, recursive=False, pattern=None, files_only=False):
         """
         List files in the destination that have common prefix.
         """
@@ -99,11 +101,11 @@ class AZ(BaseDestination):
         files = []
         LOG.debug("AZ Listing files")
         for blob in self.client.list_blobs():
-          if pattern:
-            if re.search(pattern, blob.name):
-              files.append(blob.name)
-          else:
-            files.append(blob.name)
+            if pattern:
+                if re.search(pattern, blob.name):
+                    files.append(blob.name)
+            else:
+                files.append(blob.name)
 
         return sorted(files)
 
@@ -111,7 +113,7 @@ class AZ(BaseDestination):
         raise NotImplementedError
 
     def _uplaod_blob_options(self, **kwargs):
-      return True
+        return True
 
     def delete(self, path):
         """
@@ -119,48 +121,49 @@ class AZ(BaseDestination):
         """
 
         try:
-         LOG.info("Deleting blob: " + path)
-         return self.client.delete_blob(path)
-        except:
-         LOG.error("FAILED to delete blob: " + path)
-         raise
+            LOG.info("Deleting blob: " + path)
+            return self.client.delete_blob(path)
+        except builtins.Exception as err:
+            # TODO: add more specific exception handling
+            LOG.error("FAILED to delete blob: " + path)
+            raise err
 
     def delete_all_objects(self):
-       """
-       Delete all blobs in the container
-       """
-       LOG.info("Deleting ALL blobs in container: " + self._container_name)
-       for blob in slef.ls():
-         self.delete(blob)
+        """
+        Delete all blobs in the container
+        """
+        LOG.info("Deleting ALL blobs in container: " + self._container_name)
+        for blob in self.ls():
+            self.delete(blob)
 
-       return True
+        return True
 
     def delete_bucket(self, force=False):
-       """
-       Delete the container and contents, this is a recursive delete (including all blobs in the container)
-       """
-       try:
-          LOG.info("Performing recusrsive delete of container and all blobs in container: " + self._container_name)
-          self.client.delete_container()
-       except:
-          raise
+        """
+        Delete the container and contents, this is a recursive delete (including all blobs in the container)
+        """
+        try:
+            LOG.info("Performing recusrsive delete of container and all blobs in container: " + self._container_name)
+            self.client.delete_container()
+        except builtins.Exception as err:
+            # TODO: add more specific exception handling
+            raise err
 
-       return True
+        return True
 
     def read(self, filepath):
         """
         Read the status blob (filepath)  and return contents to the caller
         """
         try:
-          LOG.debug("Attempting to read blob: " + filepath)
-          blob_client = self.client.get_blob_client(filepath)
-          return blob_client.download_blob().readall().decode("utf-8")
+            LOG.debug("Attempting to read blob: " + filepath)
+            blob_client = self.client.get_blob_client(filepath)
+            return blob_client.download_blob().readall().decode("utf-8")
 
-        except Exception as err:
-             LOG.info("The blob " + filepath + " does not exist or there was an issue reading it")
-
-        except:
-          raise
+        except builtins.Exception as err:
+            # TODO: add more specific exception handling
+            LOG.info("The blob " + filepath + " does not exist or there was an issue reading it")
+            raise err
 
     def save(self, handler, filepath):
         """
@@ -174,15 +177,13 @@ class AZ(BaseDestination):
         blob_client = self.client.get_blob_client(filepath)
 
         with handler as file_obj:
-          try:
-            blob_client.upload_blob(file_obj)
+            try:
+                blob_client.upload_blob(file_obj)
 
-          except Exception as err:
-             LOG.info("The blob " + filepath + " already exists, no need to upload (ignoring)")
-
-          except:
-            raise
-
+            except builtins.Exception as err:
+                # TODO: add more specific exception handling
+                LOG.info("The blob " + filepath + " already exists, no need to upload (ignoring)")
+                raise err
 
     @contextmanager
     def get_stream(self, copy):
@@ -209,16 +210,15 @@ class AZ(BaseDestination):
             # anyway... let's decompile it, grab the host and the actual file name
             # then do some matching based on what really exists :P
             LOG.debug("Transforming requested restore path: " + path)
-            exploded_path = path.split('/')
-            host = exploded_path[1]                      # first element, the call path begins with /
-            file = exploded_path[len(exploded_path)-1]   # last element
-            path = ''
+            exploded_path = path.split("/")
+            host = exploded_path[1]  # first element, the call path begins with /
+            file = exploded_path[len(exploded_path) - 1]  # last element
+            path = ""
             for blob in self.list_files(pattern=file):
-              if re.search(host, blob):
-                path = blob
+                if re.search(host, blob):
+                    path = blob
 
             LOG.debug("Tranformed path to match existing blob: " + path)
-
 
             blob_client = self.client.get_blob_client(path)
             with os.fdopen(write_fd, "wb") as w_pipe:
@@ -227,15 +227,18 @@ class AZ(BaseDestination):
                     for _ in range(10):
                         try:
                             w_pipe.write(blob_client.download_blob().readall())
-                        except:
-                            raise
+                        except builtins.Exception as err:
+                            # TODO: add more specific exception handling
+                            LOG.error(f"Failed to download and write blob {path} encountered error: {err}")
+                            raise err
 
                 except IOError as err:
                     LOG.error(err)
-                    exit(1)
+                    raise err
 
-                except:
-                    raise
+                except builtins.Exception as err:
+                    # TODO: add more specific exception handling
+                    raise err
 
         download_proc = None
         try:
