@@ -8,7 +8,7 @@ azure-core==1.29.4
     # via
     #   -r requirements.in
     #   azure-storage-blob
-azure-storage-blob==12.18.3
+azure-storage-blob==12.22.0
     # via -r requirements.in
 bcrypt==4.0.1
     # via paramiko

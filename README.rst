@@ -54,6 +54,7 @@ backup destination. It can be:
 
 - Amazon S3 bucket
 - Google Cloud Storage bucket
+- Azure Blob Storage account
 - Any server with SSH demon
 
 .. figure:: https://user-images.githubusercontent.com/1763754/56677794-20901b80-6676-11e9-8f71-8de0b0b6f066.png
@@ -92,6 +93,7 @@ Features
 **TwinDB Backup** storage options:
 
 - Amazon S3
+- Azure Blob Storage
 - Google Cloud Storage
 - Remote SSH server
 - Optional local copy
@@ -147,6 +149,7 @@ Possible ``OS_VERSION`` values:
  * jammy
  * focal
  * 7 (for CentOS 7)
+ * 8 (for CentOS 8)
 
 .. code-block:: console
 

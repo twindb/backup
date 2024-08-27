@@ -174,6 +174,9 @@ endif
 ifeq ($(OS_VERSION),7)
         PLATFORM = centos
 endif
+ifeq ($(OS_VERSION),8)
+        PLATFORM = centos
+endif
 
 package: ## Build package - OS_VERSION must be one of: jammy, focal.
 	@docker run \

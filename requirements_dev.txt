@@ -8,6 +8,8 @@ alabaster==0.7.13
     # via sphinx
 astroid==2.15.8
     # via pylint
+azure-storage-blob==12.22.0
+    # via -r requirements.in
 babel==2.13.0
     # via sphinx
 black==22.12.0
