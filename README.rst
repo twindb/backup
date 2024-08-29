@@ -25,8 +25,8 @@ TwinDB Backup
     :alt: Updates
 
 TwinDB Backup is a multipurpose tool for backing up MySQL database and regular files/directories on the file system.
-It can store backup copies on a remote SSH server, Amazon S3 or
-Google Cloud Storage.
+It can store backup copies on a remote SSH server, Amazon S3, Azure Blob Storage,
+or Google Cloud Storage.
 
 TwinDB Backup accepts a backup copy stream from any of supported sources
 (MySQL Server, Percona Server, Percona XtraDB Cluster, or file system)
@@ -53,8 +53,8 @@ After the stream passed all modifiers it is sent to one of the configured
 backup destination. It can be:
 
 - Amazon S3 bucket
-- Google Cloud Storage bucket
 - Azure Blob Storage account
+- Google Cloud Storage bucket
 - Any server with SSH demon
 
 .. figure:: https://user-images.githubusercontent.com/1763754/56677794-20901b80-6676-11e9-8f71-8de0b0b6f066.png
@@ -185,6 +185,7 @@ Credits
   * `Arda Beyazoğlu <https://github.com/ardabeyazoglu>`_
   * `Egor Lyutov <https://github.com/el4v>`_
   * `fonthead <https://github.com/fonthead>`_
+  * `James Salzman <https://github.com/Jsalz2000>`_
   * `Maksym Kryva <https://github.com/mkryva>`_
   * `Manjot Singh <https://github.com/ManjotS>`_
   * `Michael Rikmas <https://github.com/catyellow>`_
