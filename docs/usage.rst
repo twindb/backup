@@ -100,6 +100,7 @@ In the ``[az]`` section you specify Azure credentials as well as Azure Blob Stor
 
     connection_string = "DefaultEndpointsProtocol=https;AccountName=ACCOUNT_NAME;AccountKey=ACCOUNT_KEY;EndpointSuffix=core.windows.net"
     container_name = twindb-backups
+    remote_path = /backups/mysql # optional
 
 
 Google Cloud Storage

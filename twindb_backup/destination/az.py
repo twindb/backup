@@ -26,7 +26,7 @@ class AZ(BaseDestination):
         connection_string: str,
         hostname: str = socket.gethostname(),
         chunk_size: int = 4 * 1024 * 1024,  # TODO: Add support for chunk size
-        remote_path: str = "/",  # TODO: Add support for remote path input
+        remote_path: str = "/",
     ) -> None:
         """Creates an instance of the Azure Blob Storage Destination class,
           initializes the ContainerClient and validates the connection settings
@@ -49,6 +49,9 @@ class AZ(BaseDestination):
         super(AZ, self).__init__(self._remote_path)
 
         self._container_client = self._connect()
+
+    """HELPER FUNCTIONS
+    """
 
     def _connect(self) -> ContainerClient:
         """Connects to an Azure Storage Account and initializes a ContainerClient,
@@ -80,6 +83,17 @@ class AZ(BaseDestination):
 
         return client
 
+    def render_path(self, path: str) -> str:
+        """Renders the absolute path for the Azure Blob Storage Destination
+
+        Returns:
+            str: Absolute path to the blob in the container
+        """
+        return f"{self._remote_path}/{path}"
+
+    """BaseDestination ABSTRACT METHODS IMPLEMENTATION
+    """
+
     def delete(self, path: str) -> None:
         """Deletes a blob from the Azure storage account's container
 
@@ -89,11 +103,11 @@ class AZ(BaseDestination):
         Raises:
             err: Raises an error if the blob failed to be deleted
         """
-        LOG.debug("Attempting to delete blob: " + path)
+        LOG.debug(f"Attempting to delete blob: {self.render_path(path)}")
         try:
-            self._container_client.delete_blob(path)
+            self._container_client.delete_blob(self.render_path(path))
         except builtins.Exception as err:
-            LOG.error(f"Failed to delete blob {path}. Error: {type(err).__name__}, Reason: {err}")
+            LOG.error(f"Failed to delete blob {self.render_path(path)}. Error: {type(err).__name__}, Reason: {err}")
             raise err
 
     @contextmanager
@@ -107,16 +121,15 @@ class AZ(BaseDestination):
             T.Generator(T.BinaryIO): A generator that yields a stream of the blob's content
         """
 
-        LOG.debug("Attempting to stream blob: " + copy.key)
+        LOG.debug(f"Attempting to stream blob: {self.render_path(copy.key)}")
         pipe_in, pipe_out = os.pipe()
-        path = f"{self._remote_path}/{copy.key}"
 
         def _download_to_pipe(blob_key: str, pipe_in: int, pipe_out: int) -> None:
             os.close(pipe_in)
             with os.fdopen(pipe_out, "wb") as pipe_out_file:
                 self._container_client.download_blob(blob_key).readinto(pipe_out_file)
 
-        proc = Process(target=_download_to_pipe, args=(path, pipe_in, pipe_out))
+        proc = Process(target=_download_to_pipe, args=(self.render_path(copy.key), pipe_in, pipe_out))
         proc.start()
         os.close(pipe_out)
         try:
@@ -137,14 +150,14 @@ class AZ(BaseDestination):
         Returns:
             bytes: Content of the blob
         """
-        LOG.debug("Attempting to read blob: " + filepath)
+        LOG.debug(f"Attempting to read blob: {self.render_path(filepath)}")
         try:
-            return self._container_client.download_blob(filepath, encoding="utf-8").read()
+            return self._container_client.download_blob(self.render_path(filepath), encoding="utf-8").read()
         except ae.ResourceNotFoundError as err:
-            LOG.debug(f"File {filepath} does not exist in container {self._container_name}")
-            raise FileNotFound(f"File {filepath} does not exist in container {self._container_name}")
+            LOG.debug(f"File {self.render_path(filepath)} does not exist in container {self._container_name}")
+            raise FileNotFound(f"File {self.render_path(filepath)} does not exist in container {self._container_name}")
         except builtins.Exception as err:
-            LOG.error(f"Failed to read blob {filepath}. Error: {type(err).__name__}, Reason: {err}")
+            LOG.error(f"Failed to read blob {self.render_path(filepath)}. Error: {type(err).__name__}, Reason: {err}")
             raise err
 
     def save(self, handler: T.BinaryIO, filepath: str) -> None:
@@ -158,10 +171,10 @@ class AZ(BaseDestination):
             err: Raises an error if the blob failed to be written
         """
 
-        LOG.debug("Attempting to save blob: " + filepath)
+        LOG.debug(f"Attempting to save blob: {self.render_path(filepath)}")
         with handler as file_obj:
             try:
-                self._container_client.upload_blob(filepath, file_obj)
+                self._container_client.upload_blob(self.render_path(filepath), file_obj)
             except builtins.Exception as err:
                 LOG.error(f"Failed to upload blob or it already exists. Error {type(err).__name__}, Reason: {err}")
                 raise err
@@ -177,9 +190,9 @@ class AZ(BaseDestination):
             err: Raises an error if the blob failed to be written
         """
 
-        LOG.debug("Attempting to write blob: " + filepath)
+        LOG.debug(f"Attempting to write blob: {self.render_path(filepath)}")
         try:
-            self._container_client.upload_blob(filepath, content, overwrite=True)
+            self._container_client.upload_blob(self.render_path(filepath), content, overwrite=True)
         except builtins.Exception as err:
             LOG.error(f"Failed to upload or overwrite blob. Error {type(err).__name__}, Reason: {err}")
             raise err

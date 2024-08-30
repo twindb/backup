@@ -257,6 +257,7 @@ class TwinDBBackupConfig:
                     connection_string=self.az.connection_string,
                     container_name=self.az.container_name,
                     chunk_size=self.az.chunk_size,
+                    remote_path=self.az.remote_path,
                     hostname=backup_source,
                 )
             else:
