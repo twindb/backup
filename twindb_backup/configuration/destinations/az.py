@@ -7,11 +7,22 @@ class AZConfig:
     def __init__(
         self, connection_string: str, container_name: str, chunk_size: int = 1024 * 1024 * 4, remote_path: str = "/"
     ):
-
         self._connection_string = connection_string
         self._container_name = container_name
         self._chunk_size = chunk_size
         self._remote_path = remote_path
+        self.validate_config()
+
+    def validate_config(self):
+        """Validate configuration."""
+        if not isinstance(self._connection_string, str):
+            raise ValueError("CONNECTION_STRING must be a string")
+        if not isinstance(self._container_name, str):
+            raise ValueError("CONTAINER_NAME must be a string")
+        if not isinstance(self._chunk_size, int):
+            raise ValueError("CHUNK_SIZE must be an integer")
+        if not isinstance(self._remote_path, str):
+            raise ValueError("REMOTE_PATH must be a string")
 
     @property
     def connection_string(self) -> str:

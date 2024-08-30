@@ -68,3 +68,9 @@ target/
 # asdf
 .envrc
 .tool-versions
+
+# vscode
+.vscode/
+
+# environment
+.env

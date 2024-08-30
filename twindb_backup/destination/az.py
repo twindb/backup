@@ -36,6 +36,7 @@ class AZ(BaseDestination):
             connection_string (str): Connection string for the Azure storage account
             hostname (str, optional): Hostname of the host performing the backup. Defaults to socket.gethostname().
             chunk_size (int, optional): Size in bytes for read/write streams. Defaults to 4*1024*1024.
+            remote_path (str, optional): Remote base path in the container to store backups. Defaults to "/".
 
         Raises:
             err: Raises an error if the client cannot be initialized
