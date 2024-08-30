@@ -1,6 +1,7 @@
 import socket
 from unittest.mock import MagicMock, patch
 
+import azure.core.exceptions as ae
 import pytest
 from azure.storage.blob import ContainerClient
 
@@ -74,6 +75,22 @@ def test_init_container_not_exists():
             az.ContainerClient.exists.assert_called_once()
             az.ContainerClient.create_container.assert_called_once()
             assert isinstance(c._container_client, ContainerClient)
+
+
+def test_init_container_create_fails():
+    """Test initialization of AZ with container not existing, fails to create container, re-raising error."""
+    with patch("twindb_backup.destination.az.ContainerClient.exists") as mc:
+        mc.return_value = False
+        with patch("twindb_backup.destination.az.ContainerClient.create_container") as mc_create_container:
+            mc_create_container.side_effect = ae.HttpResponseError()
+
+            p = AZParams()
+            with pytest.raises(Exception):
+                c = az.AZ(**dict(p))
+
+                az.ContainerClient.exists.assert_called_once()
+                az.ContainerClient.create_container.assert_called_once()
+                assert isinstance(c._container_client, ContainerClient)
 
 
 def test_init_success():
