@@ -1,4 +1,9 @@
 import collections
+from unittest.mock import MagicMock, patch
+
+from azure.storage.blob import ContainerClient
+
+import twindb_backup.destination.az as az
 
 
 class AZParams(collections.Mapping):
@@ -38,3 +43,12 @@ class AZConfigParams(collections.Mapping):
 
     def __getitem__(self, key):
         return self.__dict__[key]
+
+
+def mocked_az():
+    with patch("twindb_backup.destination.az.AZ._connect") as mc:
+        mc.return_value = MagicMock(spec=ContainerClient)
+        p = AZParams()
+        c = az.AZ(**dict(p))
+
+    return c
