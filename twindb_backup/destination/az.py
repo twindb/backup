@@ -92,6 +92,22 @@ class AZ(BaseDestination):
         """
         return f"{self._remote_path}/{path}"
 
+    def _download_to_pipe(self, blob_key: str, pipe_in: int, pipe_out: int) -> None:
+        """Downloads a blob from Azure Blob Storage and writes it to a pipe
+
+        Args:
+            blob_key (str): The path to the blob in the container
+            pipe_in (int): The pipe to read the blob content from, closed in child process.
+            pipe_out (int): The pipe to write the blob content to, closed in parent process.
+        """
+        os.close(pipe_in)
+        with os.fdopen(pipe_out, "wb") as pipe_out_file:
+            try:
+                self._container_client.download_blob(blob_key).readinto(pipe_out_file)
+            except builtins.Exception as err:
+                LOG.error(f"Failed to download blob {blob_key}. Error: {type(err).__name__}, Reason: {err}")
+                raise err
+
     """BaseDestination ABSTRACT METHODS IMPLEMENTATION
     """
 
@@ -125,12 +141,7 @@ class AZ(BaseDestination):
         LOG.debug(f"Attempting to stream blob: {self.render_path(copy.key)}")
         pipe_in, pipe_out = os.pipe()
 
-        def _download_to_pipe(blob_key: str, pipe_in: int, pipe_out: int) -> None:
-            os.close(pipe_in)
-            with os.fdopen(pipe_out, "wb") as pipe_out_file:
-                self._container_client.download_blob(blob_key).readinto(pipe_out_file)
-
-        proc = Process(target=_download_to_pipe, args=(self.render_path(copy.key), pipe_in, pipe_out))
+        proc = Process(target=self._download_to_pipe, args=(self.render_path(copy.key), pipe_in, pipe_out))
         proc.start()
         os.close(pipe_out)
         try:
@@ -138,6 +149,9 @@ class AZ(BaseDestination):
                 yield pipe_in_file
         finally:
             proc.join()
+            if proc.exitcode != 0:
+                LOG.error(f"Failed to stream blob {self.render_path(copy.key)}")
+                raise builtins.Exception(f"Failed to stream blob {self.render_path(copy.key)}")
 
     def read(self, filepath: str) -> bytes:
         """Read content of a file path from Azure Blob Storage
