@@ -5,7 +5,7 @@ Module for Azure destination.
 import builtins
 import os
 import socket
-import typing as T
+import typing as t
 from contextlib import contextmanager
 from multiprocessing import Process
 
@@ -13,6 +13,7 @@ import azure.core.exceptions as ae
 from azure.storage.blob import ContainerClient
 
 from twindb_backup import LOG
+from twindb_backup.copy.base_copy import BaseCopy
 from twindb_backup.destination.base_destination import BaseDestination
 from twindb_backup.destination.exceptions import FileNotFound
 
@@ -87,6 +88,9 @@ class AZ(BaseDestination):
     def render_path(self, path: str) -> str:
         """Renders the absolute path for the Azure Blob Storage Destination
 
+        Args:
+            path (str): Relative path to the blob in the container
+
         Returns:
             str: Absolute path to the blob in the container
         """
@@ -128,14 +132,14 @@ class AZ(BaseDestination):
             raise err
 
     @contextmanager
-    def get_stream(self, copy):
+    def get_stream(self, copy: BaseCopy) -> t.Generator[t.BinaryIO, None, None]:
         """Streams a blob from Azure Blob Storage into a pipe
 
         Args:
             copy (BaseCopy): A copy object to stream from Azure
 
         Yields:
-            T.Generator(T.BinaryIO): A generator that yields a stream of the blob's content
+            t.Generator(t.BinaryIO): A generator that yields a stream of the blob's content
         """
 
         LOG.debug(f"Attempting to stream blob: {self.render_path(copy.key)}")
@@ -168,18 +172,18 @@ class AZ(BaseDestination):
         LOG.debug(f"Attempting to read blob: {self.render_path(filepath)}")
         try:
             return self._container_client.download_blob(self.render_path(filepath), encoding="utf-8").read()
-        except ae.ResourceNotFoundError as err:
+        except ae.ResourceNotFoundError:
             LOG.debug(f"File {self.render_path(filepath)} does not exist in container {self._container_name}")
             raise FileNotFound(f"File {self.render_path(filepath)} does not exist in container {self._container_name}")
         except builtins.Exception as err:
             LOG.error(f"Failed to read blob {self.render_path(filepath)}. Error: {type(err).__name__}, Reason: {err}")
             raise err
 
-    def save(self, handler: T.BinaryIO, filepath: str) -> None:
+    def save(self, handler: t.BinaryIO, filepath: str) -> None:
         """Save a stream given as handler to filepath in Azure Blob Storage
 
         Args:
-            handler (T.BinaryIO): Incoming stream
+            handler (t.BinaryIO): Incoming stream
             filepath (str): Relative path to a blob in the container
 
         Raises:
@@ -212,7 +216,7 @@ class AZ(BaseDestination):
             LOG.error(f"Failed to upload or overwrite blob. Error {type(err).__name__}, Reason: {err}")
             raise err
 
-    def _list_files(self, prefix: str = "", recursive: bool = False, files_only: bool = False) -> T.List[str]:
+    def _list_files(self, prefix: str = "", recursive: bool = False, files_only: bool = False) -> t.List[str]:
         """List files in the Azure Blob Storage container
 
         Args:

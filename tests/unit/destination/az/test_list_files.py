@@ -80,7 +80,7 @@ def test_list_files_prefix():
     c._container_client.list_blobs.return_value = BLOBS
 
     # Prefix is used as a filter in list_blobs, and because its mocked - it makes no difference.
-    blob_names = c._list_files(random.choices(string.ascii_lowercase), False, False)
+    blob_names = c._list_files("".join(random.SystemRandom().choices(string.ascii_lowercase, k=10)), False, False)
     blob_names_recursive = c._list_files(PREFIX, False, False)
 
     assert blob_names == blob_names_recursive
