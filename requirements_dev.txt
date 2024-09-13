@@ -182,5 +182,5 @@ xmltodict==0.13.0
     # via moto
 yamllint==1.32.0
     # via -r requirements_dev.in
-zipp==3.17.0
+zipp==3.20.2
     # via importlib-metadata
