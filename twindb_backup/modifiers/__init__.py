@@ -6,6 +6,7 @@ and return the modified stream for a next modifier or backup destination.
 
 Modifiers also do reverse operation - i.e. decompress, decrypt.
 """
+
 from twindb_backup.modifiers.bzip2 import Bzip2
 from twindb_backup.modifiers.gzip import Gzip
 from twindb_backup.modifiers.lbzip2 import Lbzip2

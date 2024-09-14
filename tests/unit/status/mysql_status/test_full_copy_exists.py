@@ -79,7 +79,7 @@ from twindb_backup.status.mysql_status import MySQLStatus
                 "monthly": {},
                 "yearly": {},
             },
-            False  # Because daily backup type is incremental and
+            False,  # Because daily backup type is incremental and
             # weekly is incremental
         ),
         (
@@ -92,7 +92,7 @@ from twindb_backup.status.mysql_status import MySQLStatus
                 "monthly": {},
                 "yearly": {},
             },
-            True  # Because weekly backup type is incremental but
+            True,  # Because weekly backup type is incremental but
             # weekly is full
         ),
         (

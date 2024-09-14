@@ -1,5 +1,6 @@
 """Binlog status is a class for a binlog copies status.
 """
+
 import json
 from base64 import b64encode
 

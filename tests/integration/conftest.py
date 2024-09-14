@@ -372,7 +372,7 @@ def storage_server(docker_client, container_network):
         docker_client,
         container_network,
         last_n=3,
-        image="centos:centos7",
+        image="ubuntu:jammy",
         command=["bash", bootstrap_script],
     )
     # docker_execute(docker_client, container["id"], ["bash", bootstrap_script])

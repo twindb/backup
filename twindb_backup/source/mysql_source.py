@@ -1,6 +1,7 @@
 """
 Module defines MySQL source class for backing up local MySQL.
 """
+
 from __future__ import print_function
 
 import os

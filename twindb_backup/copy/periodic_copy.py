@@ -1,4 +1,5 @@
 """Interval class for a backup copy"""
+
 from twindb_backup import INTERVALS
 from twindb_backup.copy.base_copy import BaseCopy
 from twindb_backup.copy.exceptions import WrongInputData

@@ -1,4 +1,5 @@
 """Retention policy configuration"""
+
 from collections import namedtuple
 
 RetentionPolicy = namedtuple("RetentionPolicy", ["hourly", "daily", "weekly", "monthly", "yearly"])
