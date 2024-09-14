@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
 set -exu
-yum clean all
+apt-get update
 
 function install_package() {
 
     for _ in 1 2 3
     do
         # shellcheck disable=SC2068
-        yum -y install $@ && break
+        apt-get -y install $@ && break
         sleep 5
     done
 }
@@ -21,6 +21,7 @@ function start_sshd() {
         /usr/bin/ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -P ""
     fi
 
+    mkdir -p /run/sshd
     mkdir -p /root/.ssh/
     /bin/chown root:root /root/.ssh
     /bin/chmod 700 /root/.ssh/
@@ -33,11 +34,9 @@ function start_sshd() {
 }
 
 
-rpm -q epel-release || install_package epel-release
 install_package \
     openssh-server \
-    nc \
+    netcat \
     sudo
-
 
 start_sshd
