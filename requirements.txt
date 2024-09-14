@@ -67,7 +67,7 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-paramiko==2.12.0
+paramiko==3.4.1
     # via -r requirements.in
 proto-plus==1.24.0
     # via google-api-core
@@ -108,7 +108,6 @@ six==1.16.0
     # via
     #   azure-core
     #   isodate
-    #   paramiko
     #   python-dateutil
 soupsieve==2.6
     # via beautifulsoup4
