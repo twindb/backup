@@ -1,6 +1,7 @@
 """
 Module defines MySQL binlog source class for backing them up.
 """
+
 import struct
 from contextlib import contextmanager
 from os import path as osp

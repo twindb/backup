@@ -1,6 +1,7 @@
 """
 Module defines clone feature
 """
+
 import hashlib
 from contextlib import contextmanager
 from multiprocessing import Process

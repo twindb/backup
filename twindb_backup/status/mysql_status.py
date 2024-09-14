@@ -1,4 +1,5 @@
 """Class to store and work with status file"""
+
 from __future__ import print_function
 
 import json

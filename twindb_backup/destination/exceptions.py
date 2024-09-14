@@ -1,6 +1,7 @@
 """
 Module for destination exceptions.
 """
+
 from twindb_backup.exceptions import TwinDBBackupError
 
 

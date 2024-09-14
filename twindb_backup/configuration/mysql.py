@@ -1,4 +1,5 @@
 """MySQL instance configuration"""
+
 from twindb_backup import INTERVALS
 
 

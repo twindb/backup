@@ -1,4 +1,5 @@
 """Tests that cover the FileSource().get_stream() method."""
+
 import mock
 import pytest
 

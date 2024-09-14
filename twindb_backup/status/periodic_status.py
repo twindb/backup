@@ -1,6 +1,7 @@
 """Periodic status is a class for a periodic copies status.
 For now status is created/maintained for MySQL copies only.
 """
+
 from twindb_backup import INTERVALS
 from twindb_backup.status.base_status import BaseStatus
 

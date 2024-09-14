@@ -1,5 +1,6 @@
 """Base status is a class for a general purpose status.
 """
+
 import hashlib
 import json
 import socket

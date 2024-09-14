@@ -1,6 +1,7 @@
 """
 Module that implements SSH client.
 """
+
 import socket
 from contextlib import contextmanager
 

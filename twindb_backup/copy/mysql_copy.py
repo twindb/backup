@@ -1,4 +1,5 @@
 """Class to describe MySQL backup copy"""
+
 import json
 
 from twindb_backup import MARIABACKUP_BINARY, MBSTREAM_BINARY, XBSTREAM_BINARY, XTRABACKUP_BINARY

@@ -1,4 +1,5 @@
 """Run policy configuration"""
+
 from collections import namedtuple
 
 from twindb_backup import INTERVALS
