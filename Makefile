@@ -109,7 +109,7 @@ isort: ## Fix import order errors
 lint: ## check style with pylint
 	yamllint --no-warnings -f parsable .
 	isort --check-only twindb_backup tests
-	black --check twindb_backup tests
+	black --diff --check twindb_backup tests
 	pycodestyle twindb_backup
 	pylint twindb_backup
 
