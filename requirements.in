@@ -8,6 +8,7 @@ psutil ~= 5.4
 pyasn1 ~= 0.4
 datadog ~= 0.22
 paramiko ~= 3.4
+requests<2.32.0  # See https://github.com/docker/docker-py/issues/3256
 google ~= 3.0
 google-cloud-storage ~= 2.3.0
 statsd ~= 3.3

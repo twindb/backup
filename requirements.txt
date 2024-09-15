@@ -94,8 +94,9 @@ pynacl==1.5.0
     # via paramiko
 python-dateutil==2.9.0.post0
     # via botocore
-requests==2.32.3
+requests==2.31.0
     # via
+    #   -r requirements.in
     #   azure-core
     #   datadog
     #   google-api-core
