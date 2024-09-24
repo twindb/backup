@@ -8,15 +8,15 @@ azure-core==1.31.0
     # via
     #   -r requirements.in
     #   azure-storage-blob
-azure-storage-blob==12.22.0
+azure-storage-blob==12.23.0
     # via -r requirements.in
 bcrypt==4.2.0
     # via paramiko
 beautifulsoup4==4.12.3
     # via google
-boto3==1.35.19
+boto3==1.35.25
     # via -r requirements.in
-botocore==1.35.19
+botocore==1.35.25
     # via
     #   boto3
     #   s3transfer
@@ -36,15 +36,15 @@ cryptography==43.0.1
     # via
     #   azure-storage-blob
     #   paramiko
-datadog==0.50.0
+datadog==0.50.1
     # via -r requirements.in
 google==3.0.0
     # via -r requirements.in
-google-api-core==2.19.2
+google-api-core==2.20.0
     # via
     #   google-cloud-core
     #   google-cloud-storage
-google-auth==2.34.0
+google-auth==2.35.0
     # via
     #   google-api-core
     #   google-cloud-core
@@ -59,7 +59,7 @@ google-resumable-media==2.7.2
     # via google-cloud-storage
 googleapis-common-protos==1.65.0
     # via google-api-core
-idna==3.9
+idna==3.10
     # via requests
 isodate==0.6.1
     # via azure-storage-blob
@@ -67,11 +67,11 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-paramiko==3.4.1
+paramiko==3.5.0
     # via -r requirements.in
 proto-plus==1.24.0
     # via google-api-core
-protobuf==5.28.1
+protobuf==5.28.2
     # via
     #   google-api-core
     #   google-cloud-storage
