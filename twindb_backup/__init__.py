@@ -57,9 +57,9 @@ GLOBAL_INIT_LOG_LEVEL = logging.DEBUG
 LOG = logging.getLogger(__name__)
 LOG.setLevel(GLOBAL_INIT_LOG_LEVEL)
 
-DestTypes = namedtuple("DestinationTypes", "ssh,local,s3,gcs,azure")
+DestTypes = namedtuple("DestinationTypes", "ssh,local,s3,gcs,az")
 QueryTypes = namedtuple("QueryTypes", ["mysql"])
-SUPPORTED_DESTINATION_TYPES = DestTypes("ssh", "local", "s3", "gcs", "azure")
+SUPPORTED_DESTINATION_TYPES = DestTypes("ssh", "local", "s3", "gcs", "az")
 SUPPORTED_QUERY_LANGUAGES = QueryTypes("mysql")
 
 

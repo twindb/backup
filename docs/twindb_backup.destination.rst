@@ -4,14 +4,6 @@ twindb\_backup.destination package
 Submodules
 ----------
 
-twindb\_backup.destination.azblob module
-----------------------------------------
-
-.. automodule:: twindb_backup.destination.azblob
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 twindb\_backup.destination.base\_destination module
 ---------------------------------------------------
 
@@ -24,6 +16,14 @@ twindb\_backup.destination.exceptions module
 --------------------------------------------
 
 .. automodule:: twindb_backup.destination.exceptions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+twindb\_backup.destination.az module
+-------------------------------------
+
+.. automodule:: twindb_backup.destination.az
    :members:
    :undoc-members:
    :show-inheritance:

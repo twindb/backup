@@ -4,6 +4,14 @@ twindb\_backup.configuration.destinations package
 Submodules
 ----------
 
+twindb\_backup.configuration.destinations.az module
+----------------------------------------------------
+
+.. automodule:: twindb_backup.configuration.destinations.az
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 twindb\_backup.configuration.destinations.gcs module
 ----------------------------------------------------
 
