@@ -1,4 +1,4 @@
-from os import listdir, environ
+from os import environ, listdir
 from os import path as osp
 from subprocess import run
 
@@ -11,23 +11,14 @@ OS_VERSIONS = [
     "jammy",
     "focal",
     # CentOS
-    "7"
+    "7",
 ]
 PKG_DIR = "omnibus/pkg"
 
 OS_DETAILS = {
-    "jammy": {
-        "flavor": "Ubuntu",
-        "name": "Ubuntu jammy"
-    },
-    "focal": {
-        "flavor": "Ubuntu",
-        "name": "Ubuntu focal"
-    },
-    "7": {
-        "flavor": "CentOS",
-        "name": "CentOS 7"
-    },
+    "jammy": {"flavor": "Ubuntu", "name": "Ubuntu jammy"},
+    "focal": {"flavor": "Ubuntu", "name": "Ubuntu focal"},
+    "7": {"flavor": "CentOS", "name": "CentOS 7"},
 }
 
 
@@ -41,15 +32,14 @@ def main():
         my_env["OS_VERSION"] = os
         run(["make", "package"], env=my_env, check=True)
         for fi_name in listdir(PKG_DIR):
-            if (
-                fi_name.endswith(".rpm")
-                or fi_name.endswith(".deb")
-                or fi_name.endswith(".json")
-            ):
+            if fi_name.endswith(".rpm") or fi_name.endswith(".deb") or fi_name.endswith(".json"):
                 key = f"twindb-backup/{__version__}/{os}/{fi_name}"
                 with open(osp.join(PKG_DIR, fi_name), "rb") as fp:
                     client.put_object(
-                        ACL="public-read", Body=fp, Bucket="twindb-release", Key=key,
+                        ACL="public-read",
+                        Body=fp,
+                        Bucket="twindb-release",
+                        Key=key,
                     )
                 print(f"https://twindb-release.s3.amazonaws.com/{key}")
 
@@ -60,7 +50,7 @@ def main():
                 print(f"  * {details['name']}")
                 key = f"twindb-backup/{__version__}/{os}/"
                 response = client.list_objects(
-                    Bucket='twindb-release',
+                    Bucket="twindb-release",
                     Prefix=key,
                 )
                 for fil in response["Contents"]:

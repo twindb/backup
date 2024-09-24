@@ -47,7 +47,7 @@ Backup Destination
 The ``[destination]`` section specifies where to store backup copies.
 
 ``backup_destination`` can be either ``ssh`` (if you want to store backups on a remote SSH server),
-or ``s3`` (if you want to store backups in Amazon S3), or ``gsc`` (if the backup should be stored in Google Cloud).
+``s3`` (if you want to store backups in Amazon S3), ``az`` (if the backup should be stored in Azure Blob Storage), or ``gcs`` (if the backup should be stored in Google Cloud).
 
 In the optional ``keep_local_path`` you can specify a local path where the tool will store a local copy of the backup.
 It's useful if you want to stream a MySQL backup to S3 and would like to keep a local copy as well.
@@ -88,6 +88,20 @@ In the ``[s3]`` section you specify Amazon credentials as well as an S3 bucket w
     AWS_SECRET_ACCESS_KEY = YYYYY
     AWS_DEFAULT_REGION = us-east-1
     BUCKET = twindb-backups
+
+Azure Blob Storage
+~~~~~~~~~~~~~~~~~~~~
+
+In the ``[az]`` section you specify Azure credentials as well as Azure Blob Storage container where to store backups.
+
+.. code-block:: ini
+
+    [az]
+
+    connection_string = "DefaultEndpointsProtocol=https;AccountName=ACCOUNT_NAME;AccountKey=ACCOUNT_KEY;EndpointSuffix=core.windows.net"
+    container_name = twindb-backups
+    remote_path = /backups/mysql # optional
+
 
 Google Cloud Storage
 ~~~~~~~~~~~~~~~~~~~~

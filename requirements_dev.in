@@ -1,4 +1,5 @@
 #@IgnoreInspection BashAddShebang
+azure-storage-blob ~= 12.19
 black ~= 24.3
 Sphinx ~= 4.5
 bumpversion ~= 0.6

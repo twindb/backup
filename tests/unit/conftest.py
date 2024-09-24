@@ -28,6 +28,11 @@ AWS_SECRET_ACCESS_KEY="YYYYY"
 AWS_DEFAULT_REGION="us-east-1"
 BUCKET="twindb-backups"
 
+[az]
+connection_string="DefaultEndpointsProtocol=https;AccountName=ACCOUNT_NAME;AccountKey=ACCOUNT_KEY;EndpointSuffix=core.windows.net"
+container_name="twindb-backups"
+remote_path="/backups/mysql"
+
 [gcs]
 GC_CREDENTIALS_FILE="XXXXX"
 GC_ENCRYPTION_KEY=

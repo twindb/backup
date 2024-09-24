@@ -64,3 +64,13 @@ target/
 /vagrant/README.html
 /.pytest_cache/
 /.venv/
+
+# asdf
+.envrc
+.tool-versions
+
+# vscode
+.vscode/
+
+# environment
+.env
