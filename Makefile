@@ -31,6 +31,7 @@ PLATFORM ?= ubuntu
 OS_VERSION ?= jammy
 
 pwd := $(shell pwd)
+ARCH := $(shell uname -m)
 build_dir = ${pwd}/build
 top_dir = ${build_dir}/rpmbuild
 version = $(shell python -c 'from twindb_backup import __version__; print(__version__)')
@@ -165,6 +166,9 @@ endif
 ifeq ($(OS_VERSION),jammy)
         PLATFORM = ubuntu
 endif
+ifeq ($(OS_VERSION),noble)
+        PLATFORM = ubuntu
+endif
 ifeq ($(OS_VERSION),7)
         PLATFORM = centos
 endif
@@ -181,7 +185,7 @@ package: ## Build package - OS_VERSION must be one of: jammy, focal.
 		--env AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
 		--env PLATFORM=${PLATFORM} \
 		--env OS_VERSION=${OS_VERSION} \
-		"twindb/omnibus-${PLATFORM}:${OS_VERSION}" \
+		"twindb/omnibus-ubuntu:${OS_VERSION}-${ARCH}" \
 		bash -l /twindb-backup/omnibus/omnibus_build.sh
 
 install_package:
