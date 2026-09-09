@@ -4,10 +4,26 @@ Module defines Base destination class and destination exception(s).
 """
 import re
 from abc import abstractmethod
+from contextlib import contextmanager
 
 from twindb_backup import LOG
 from twindb_backup.destination.exceptions import DestinationError
 from twindb_backup.exceptions import TwinDBBackupInternalError
+
+
+class ClusterLock(object):
+    """Represents the outcome of :meth:`BaseDestination.cluster_lock`.
+
+    ``acquired`` is ``True`` when this process holds the lock and may
+    proceed with the backup, or ``False`` when another cluster member
+    already holds it and the current run should skip.
+    """
+
+    __slots__ = ("acquired", "holder")
+
+    def __init__(self, acquired, holder=None):
+        self.acquired = bool(acquired)
+        self.holder = holder
 
 
 class BaseDestination(object):
@@ -113,6 +129,24 @@ class BaseDestination(object):
         to save on network transfers.
         """
         raise NotImplementedError
+
+    @contextmanager
+    def cluster_lock(self, identifier, ttl=60):
+        """Acquire a cluster-wide exclusive lock so that only one replica
+        uploads backups for a given ``identifier`` at a time.
+
+        The default implementation is a no-op that always reports the
+        lock as acquired; destinations that support a native
+        coordination primitive (e.g. Azure blob leases) override this.
+
+        :param identifier: A stable cluster-scoped identifier. Typically
+            the value of ``config.server_name``.
+        :param ttl: Lease duration in seconds. Ignored by the base
+            implementation.
+        :yields: :class:`ClusterLock`
+        """
+        _ = identifier, ttl
+        yield ClusterLock(acquired=True)
 
     @staticmethod
     def _match_files(files, pattern=None):

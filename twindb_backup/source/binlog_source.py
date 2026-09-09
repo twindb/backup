@@ -124,8 +124,8 @@ class BinlogSource(BaseSource):
     :type binlog_file: str
     """
 
-    def __init__(self, run_type, mysql_client, binlog_file=None):
-        super(BinlogSource, self).__init__(run_type)
+    def __init__(self, run_type, mysql_client, binlog_file=None, server_name=None):
+        super(BinlogSource, self).__init__(run_type, server_name=server_name)
         self._mysql_client = mysql_client
         self._media_type = "binlog"
         self._binlog_file = binlog_file

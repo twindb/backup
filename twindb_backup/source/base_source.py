@@ -25,15 +25,20 @@ class BaseSource(object):
     _created_at = None
     _file_name_prefix = ""
 
-    def __init__(self, run_type):
+    def __init__(self, run_type, server_name=None):
         """
         Construct instance of BaseSource()
 
         :param run_type: Run type e.g. hourly, daily, etc.
         :type run_type: str
+        :param server_name: Optional identifier used as the per-source
+            segment of the remote backup path. Defaults to
+                ``socket.gethostname()``. Set to a cluster-wide value (e.g.
+                ``prod-primary-db``) to make every replica share one path.
+        :type server_name: str or None
         """
         self.run_type = run_type
-        self._host = socket.gethostname()
+        self._host = server_name or socket.gethostname()
         self._created_at = time.strftime("%Y-%m-%d_%H_%M_%S")
 
     @abstractmethod

@@ -15,13 +15,15 @@ def test_download_to_pipe_success():
         c = mocked_az()
 
         mc_dbr = MagicMock()
-        c._container_client.download_blob.return_value = mc_dbr
+        c.container_client.download_blob.return_value = mc_dbr
 
         c._download_to_pipe(c.render_path("foo-key"), 100, 200)
 
         mc_os.close.assert_called_once_with(100)
         mc_os.fdopen.assert_called_once_with(200, "wb")
-        c._container_client.download_blob.assert_called_once_with(c.render_path("foo-key"))
+        c.container_client.download_blob.assert_called_once_with(
+            c.render_path("foo-key"), max_concurrency=c.config.max_concurrency
+        )
         mc_dbr.readinto.assert_called_once_with(mc_fdopen.__enter__())
 
 
@@ -30,11 +32,13 @@ def test_download_to_pipe_fail():
     with patch("twindb_backup.destination.az.os") as mc_os:
         c = mocked_az()
 
-        c._container_client.download_blob.side_effect = ae.HttpResponseError()
+        c.container_client.download_blob.side_effect = ae.HttpResponseError()
 
         with pytest.raises(Exception):
             c._download_to_pipe(c.render_path("foo-key"), 100, 200)
 
         mc_os.close.assert_called_once_with(100)
         mc_os.fdopen.assert_called_once_with(200, "wb")
-        c._container_client.download_blob.assert_called_once_with(c.render_path("foo-key"))
+        c.container_client.download_blob.assert_called_once_with(
+            c.render_path("foo-key"), max_concurrency=c.config.max_concurrency
+        )

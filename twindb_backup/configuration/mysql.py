@@ -15,6 +15,7 @@ class MySQLConfig:
         self._expire_log_days = int(kwargs.get("expire_log_days", 7))
         self._xtrabackup_binary = kwargs.get("xtrabackup_binary")
         self._xbstream_binary = kwargs.get("xbstream_binary")
+        self._hostname = kwargs.get("hostname", "127.0.0.1")
 
     @property
     def defaults_file(self):
@@ -56,3 +57,9 @@ class MySQLConfig:
         """Set path to xbstream"""
 
         self._xbstream_binary = path
+
+    @property
+    def hostname(self):
+        """MySQL hostname to connect to"""
+
+        return self._hostname

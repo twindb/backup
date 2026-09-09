@@ -13,15 +13,19 @@ def test_write_success():
 
     c.write(CONTENT, EXAMPLE_FILE)
 
-    c._container_client.upload_blob.assert_called_once_with(c.render_path(EXAMPLE_FILE), CONTENT, overwrite=True)
+    c.container_client.upload_blob.assert_called_once_with(
+        c.render_path(EXAMPLE_FILE), CONTENT, overwrite=True, max_concurrency=c.config.max_concurrency
+    )
 
 
 def test_write_fail():
     """Tests AZ.write method, re-raises an exception on failure"""
     c = mocked_az()
-    c._container_client.upload_blob.side_effect = ae.HttpResponseError()
+    c.container_client.upload_blob.side_effect = ae.HttpResponseError()
 
     with pytest.raises(Exception):
         c.write(CONTENT, EXAMPLE_FILE)
 
-    c._container_client.upload_blob.assert_called_once_with(c.render_path(EXAMPLE_FILE), CONTENT, overwrite=True)
+    c.container_client.upload_blob.assert_called_once_with(
+        c.render_path(EXAMPLE_FILE), CONTENT, overwrite=True, max_concurrency=c.config.max_concurrency
+    )

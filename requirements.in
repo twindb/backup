@@ -1,5 +1,6 @@
 #@IgnoreInspection BashAddShebang
 azure-core ~= 1.24
+azure-identity
 azure-storage-blob ~= 12.19
 Click ~= 8.1
 PyMySQL ~= 1.0

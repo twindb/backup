@@ -23,12 +23,12 @@ class FileSource(BaseSource):
     :type tar_options: str
     """
 
-    def __init__(self, path, run_type, tar_options: str = None):
+    def __init__(self, path, run_type, tar_options: str = None, server_name=None):
         self.path = path
         self._suffix = "tar"
         self._media_type = "files"
         self._tar_options = tar_options
-        super(FileSource, self).__init__(run_type)
+        super(FileSource, self).__init__(run_type, server_name=server_name)
 
     @property
     def media_type(self):

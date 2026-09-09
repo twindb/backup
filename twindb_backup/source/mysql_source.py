@@ -180,7 +180,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
         self._file_name_prefix = "mysql"
         self.dst = kwargs.get("dst", None)
         self._xtrabackup = kwargs.get("xtrabackup_binary") or XTRABACKUP_BINARY
-        super(MySQLSource, self).__init__(run_type)
+        super(MySQLSource, self).__init__(run_type, server_name=kwargs.get("server_name"))
 
     @property
     def backup_tool(self):
@@ -216,7 +216,7 @@ class MySQLSource(BaseSource):  # pylint: disable=too-many-instance-attributes
             self._xtrabackup,
             "--defaults-file=%s" % self._connect_info.defaults_file,
             "--stream=xbstream",
-            "--host=127.0.0.1",
+            f"--host={self._connect_info.hostname}",
             "--backup",
         ]
         cmd += ["--target-dir", "."]

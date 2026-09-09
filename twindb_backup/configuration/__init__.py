@@ -3,12 +3,13 @@
 Module to process configuration file.
 """
 import socket
+import typing as t
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from shlex import split
 
 from twindb_backup import INTERVALS, LOG
 from twindb_backup.configuration.compression import CompressionConfig
-from twindb_backup.configuration.destinations.az import AZConfig
+from twindb_backup.configuration.destinations.az import AZClientConfig, AZConfig
 from twindb_backup.configuration.destinations.gcs import GCSConfig
 from twindb_backup.configuration.destinations.s3 import S3Config
 from twindb_backup.configuration.destinations.ssh import SSHConfig
@@ -103,10 +104,17 @@ class TwinDBBackupConfig:
     def az(self):  # pylint: disable=invalid-name
         """Azure Blob configuration"""
         try:
-            return AZConfig(**self.__read_options_from_section("az"))
-
+            az_config = self.__cast_options(self.__read_options_from_section("az"))
         except NoSectionError:
             return None
+
+        az_client_config = {}
+        try:
+            az_client_config = self.__cast_options(self.__read_options_from_section("az.client"))
+        except Exception:
+            pass
+
+        return AZConfig(client_config=AZClientConfig(**az_client_config), **az_config)
 
     @property
     def s3(self):  # pylint: disable=invalid-name
@@ -219,13 +227,35 @@ class TwinDBBackupConfig:
         except NoOptionError:
             return None
 
-    def destination(self, backup_source=socket.gethostname()):
+    @property
+    def server_name(self):
+        """Identifier used to namespace backup paths and the status file.
+
+        Defaults to ``socket.gethostname()`` when ``[source] server_name``
+        is not set. Override it (e.g. to a cluster-wide identifier like
+        ``prod-primary-db``) to let every replica in a MySQL cluster
+        share a single backup path instead of one per hostname.
         """
-        :param backup_source: Hostname of the host where backup is taken from.
+        try:
+            value = self.__cfg.get("source", "server_name").strip().strip("\"'").strip()
+        except (NoOptionError, NoSectionError):
+            value = ""
+        return value or socket.gethostname()
+
+    def destination(self, backup_source=None):
+        """
+        :param backup_source: Identifier used to namespace per-source paths
+            on destinations that support it (SSH, S3, GCS). Defaults to
+            :pyattr:`server_name` (which in turn defaults to the local
+            hostname). Azure Blob does not use this argument — its path
+            layout is governed entirely by ``[source] server_name`` and
+            the destination's ``remote_path``.
         :type backup_source: str
         :return: Backup destination instance
         :rtype: BaseDestination
         """
+        if backup_source is None:
+            backup_source = self.server_name
         try:
             backup_destination = self.__cfg.get("destination", "backup_destination")
             if backup_destination == "ssh":
@@ -254,11 +284,7 @@ class TwinDBBackupConfig:
                 )
             elif backup_destination == "az":
                 return AZ(
-                    connection_string=self.az.connection_string,
-                    container_name=self.az.container_name,
-                    chunk_size=self.az.chunk_size,
-                    remote_path=self.az.remote_path,
-                    hostname=backup_source,
+                    config=self.az,
                 )
             else:
                 raise ConfigurationError(f"Unsupported destination '{backup_destination}'")
@@ -280,3 +306,22 @@ class TwinDBBackupConfig:
 
     def __repr__(self):
         return f"{self.__class__.__name__}: {self._config_file}"
+
+    def __cast_options(self, options: t.Dict[str, str]) -> t.Dict[str, t.Union[str, int, bool]]:
+        """Cast options to their correct types
+
+        Args:
+            options (t.Dict[str, str]): A dictionary of kwargs to cast
+
+        Returns:
+            t.Dict[str, t.Union[str, int, bool]]: An updated dictionary with the correct types
+        """
+        for k, v in options.items():
+            if v.lower() == "true":
+                options[k] = True
+            elif v.lower() == "false":
+                options[k] = False
+            elif v.isdigit():
+                options[k] = int(v)
+
+        return options
